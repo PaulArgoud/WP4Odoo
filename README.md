@@ -39,43 +39,6 @@ Modular WordPress plugin providing comprehensive, bidirectional integration betw
 
 ![WP4ODOO Architecture](assets/images/architecture.svg)
 
-```
-┌──────────────────────────────────────────────────────────┐
-│                         WordPress                        │
-│                                                          │
-│ ┌──────────┐ ┌──────────┐ ┌───────────────┐              │
-│ │   CRM    │ │  Sales   │ │  WooCommerce  │   Modules    │
-│ │  Module  │ │  Module  │ │    Module     │              │
-│ └────┬─────┘ └────┬─────┘ └──────┬────────┘              │
-│      │            │              │                       │
-│      └────────────┼──────────────┘                       │
-│                   ▼                                      │
-│           ┌──────────────┐     ┌────────────────┐        │
-│           │  Sync Engine │◄────│ Queue Manager  │        │
-│           │  (cron job)  │     └────────────────┘        │
-│           └──────┬───────┘                               │
-│                  │                                       │
-│           ┌──────▼───────┐     ┌────────────────┐        │
-│           │ Field Mapper │     │ Webhook Handler│◄─ REST │
-│           └──────┬───────┘     └────────┬───────┘   API  │
-│                  │                      │                │
-│           ┌──────▼──────────────────────▼────┐           │
-│           │          Odoo Client             │           │
-│           │  ┌──────────┐  ┌──────────────┐  │           │
-│           │  │ JSON-RPC │  │   XML-RPC    │  │           │
-│           │  │Transport │  │  Transport   │  │           │
-│           │  └──────────┘  └──────────────┘  │           │
-│           └──────────────┬───────────────────┘           │
-│                          │                               │
-└──────────────────────────┼───────────────────────────────┘
-                           │ HTTP
-                           ▼
-                 ┌──────────────────┐
-                 │     Odoo ERP     │
-                 │      (v14+)      │
-                 └──────────────────┘
-```
-
 ### Module System
 
 Each Odoo domain is encapsulated in an independent module extending `Module_Base`:
