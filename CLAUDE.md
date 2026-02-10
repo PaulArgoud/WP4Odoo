@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-WordPress plugin providing bidirectional sync between WordPress/WooCommerce and Odoo ERP (v17+). **Version 1.3.0** — core infrastructure, admin UI, API layer, CRM module, Sales module with customer portal, WooCommerce module, PHPUnit tests, and full i18n (FR) are complete.
+WordPress plugin providing bidirectional sync between WordPress/WooCommerce and Odoo ERP (v17+). **Version 1.3.1** — core infrastructure, admin UI, API layer, CRM module, Sales module with customer portal, WooCommerce module (HPOS compatible), PHPUnit tests, CI/CD, and full i18n (FR) are complete.
 
 For detailed architecture, diagrams, and data flows, see [ARCHITECTURE.md](ARCHITECTURE.md).
 
@@ -31,7 +31,7 @@ For detailed architecture, diagrams, and data flows, see [ARCHITECTURE.md](ARCHI
 - `phpstan-bootstrap.php` stubs plugin constants and `WP4Odoo_Plugin` singleton
 - Run: `php -d memory_limit=1G vendor/bin/phpstan analyse --memory-limit=1G`
 
-**Live testing** — symlink or copy into `wp-content/plugins/`. VS Code workspace `wpoc.code-workspace` includes live directory at `/Volumes/Cloud/Avalia/Travail/Sites internet/monbeautableau.fr/api/wp-content/plugins`.
+**Live testing** — symlink or copy into `wp-content/plugins/`. VS Code workspace `wp4odoo.code-workspace` includes live directory at `/Volumes/Cloud/Avalia/Travail/Sites internet/monbeautableau.fr/api/wp-content/plugins`.
 
 ## Conventions
 
@@ -85,11 +85,11 @@ For detailed architecture, diagrams, and data flows, see [ARCHITECTURE.md](ARCHI
 | `Entity_Map_Repository` | Static DB access for `wp4odoo_entity_map`: `get_odoo_id()`, `get_wp_id()`, `save()`, `remove()` |
 | `Sync_Queue_Repository` | Static DB access for `wp4odoo_sync_queue`: `enqueue()`, `fetch_pending()`, `update_status()`, `get_stats()`, `cleanup()`, `retry_failed()`, `cancel()`, `get_pending()` |
 | `Partner_Service` | Shared `res.partner` lookup/creation: `get_partner_id_for_user()`, `get_or_create()`, `get_user_for_partner()` |
-| `Sync_Engine` | Queue processor: transient locking, backoff, batch processing (delegates DB to `Sync_Queue_Repository`) |
+| `Sync_Engine` | Queue processor: MySQL advisory locking, backoff, batch processing (delegates DB to `Sync_Queue_Repository`) |
 | `Queue_Manager` | Helpers: `push()`, `pull()`, `cancel()`, `get_pending()` (delegates to `Sync_Queue_Repository`) |
 | `Field_Mapper` | Static type conversions: Many2one, dates, HTML, booleans, prices, relations |
 | `Query_Service` | Paginated data access: `get_queue_jobs()`, `get_log_entries()` |
-| `Webhook_Handler` | REST API endpoints for Odoo webhook notifications |
+| `Webhook_Handler` | REST API endpoints for Odoo webhook notifications, per-IP rate limiting |
 | `Logger` | DB-backed structured logger with level filtering |
 
 ### CRM Module (`includes/modules/`)
@@ -123,7 +123,7 @@ For detailed architecture, diagrams, and data flows, see [ARCHITECTURE.md](ARCHI
 
 ## Implementation Status
 
-### Complete (v1.3.0)
+### Complete (v1.3.1)
 
 - **Core API** — Transport interface, JSON-RPC/XML-RPC transports, Odoo_Client, Odoo_Auth
 - **Core Infrastructure** — Sync_Engine, Queue_Manager, Field_Mapper, Query_Service, Webhook_Handler, Logger, Entity_Map_Repository, Sync_Queue_Repository, Partner_Service
@@ -134,8 +134,10 @@ For detailed architecture, diagrams, and data flows, see [ARCHITECTURE.md](ARCHI
 - **PHPUnit** — 95 tests, 154 assertions
 - **PHPStan** — level 5, 0 errors on 28 files
 - **i18n** — translated strings (EN source, FR translation)
-- **Security** — encrypted API keys, nonce verification, index.php in all dirs, uninstall.php
+- **Security** — encrypted API keys, nonce verification, webhook rate limiting, index.php in all dirs, uninstall.php
+- **CI/CD** — GitHub Actions (PHP 8.2 + 8.3, PHPUnit, PHPStan)
+- **WooCommerce HPOS** — compatibility declared via `before_woocommerce_init`
 
 ### TODO
 
-- **Future** — bulk import/export, product images, WooCommerce tax/shipping mapping, product variants, multi-currency, WooCommerce HPOS (High-Performance Order Storage) support
+- **Future** — bulk import/export, product images, WooCommerce tax/shipping mapping, product variants, multi-currency

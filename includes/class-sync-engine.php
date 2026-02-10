@@ -11,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Queue processor for synchronization jobs.
  *
  * Reads pending jobs from {prefix}wp4odoo_sync_queue, processes them
- * in batches with transient-based locking and exponential backoff.
+ * in batches with MySQL advisory locking and exponential backoff.
  *
  * @package WP4Odoo
  * @since   1.0.0
@@ -19,14 +19,17 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Sync_Engine {
 
 	/**
-	 * Transient name used for process lock.
+	 * MySQL advisory lock name.
 	 */
-	private const LOCK_TRANSIENT = 'wp4odoo_sync_lock';
+	private const LOCK_NAME = 'wp4odoo_sync';
 
 	/**
-	 * Lock duration in seconds.
+	 * Lock acquisition timeout in seconds.
+	 *
+	 * GET_LOCK waits up to this duration for the lock to become available.
+	 * 1 second is sufficient: if another process holds the lock, we skip.
 	 */
-	private const LOCK_TIMEOUT = 300;
+	private const LOCK_TIMEOUT = 1;
 
 	/**
 	 * Logger instance.
@@ -45,7 +48,7 @@ class Sync_Engine {
 	/**
 	 * Process the sync queue.
 	 *
-	 * Acquires a transient lock, fetches pending jobs ordered by priority
+	 * Acquires a MySQL advisory lock, fetches pending jobs ordered by priority
 	 * and scheduled_at, processes them in batches, releases the lock.
 	 *
 	 * @return int Number of jobs processed successfully.
@@ -217,17 +220,21 @@ class Sync_Engine {
 	}
 
 	/**
-	 * Acquire the processing lock.
+	 * Acquire the processing lock via MySQL advisory lock.
+	 *
+	 * Uses GET_LOCK() which is atomic and server-level.
+	 * Returns true if the lock was acquired, false if another process holds it.
 	 *
 	 * @return bool True if lock acquired.
 	 */
 	private function acquire_lock(): bool {
-		if ( get_transient( self::LOCK_TRANSIENT ) ) {
-			return false;
-		}
+		global $wpdb;
 
-		set_transient( self::LOCK_TRANSIENT, time(), self::LOCK_TIMEOUT );
-		return true;
+		$result = $wpdb->get_var(
+			$wpdb->prepare( 'SELECT GET_LOCK( %s, %d )', self::LOCK_NAME, self::LOCK_TIMEOUT )
+		);
+
+		return '1' === (string) $result;
 	}
 
 	/**
@@ -236,6 +243,10 @@ class Sync_Engine {
 	 * @return void
 	 */
 	private function release_lock(): void {
-		delete_transient( self::LOCK_TRANSIENT );
+		global $wpdb;
+
+		$wpdb->query(
+			$wpdb->prepare( 'SELECT RELEASE_LOCK( %s )', self::LOCK_NAME )
+		);
 	}
 }

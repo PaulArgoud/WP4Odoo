@@ -24,6 +24,16 @@ class Webhook_Handler {
 	private const API_NAMESPACE = 'wp4odoo/v1';
 
 	/**
+	 * Maximum webhook requests per IP within the rate limit window.
+	 */
+	private const RATE_LIMIT_MAX = 100;
+
+	/**
+	 * Rate limit window in seconds.
+	 */
+	private const RATE_LIMIT_WINDOW = 60;
+
+	/**
 	 * Logger instance.
 	 *
 	 * @var Logger
@@ -215,6 +225,16 @@ class Webhook_Handler {
 	 * @return bool|\WP_Error True if valid, WP_Error otherwise.
 	 */
 	public function validate_webhook_token( \WP_REST_Request $request ): bool|\WP_Error {
+		$ip = sanitize_text_field(
+			$request->get_header( 'X-Forwarded-For' ) ?: ( $_SERVER['REMOTE_ADDR'] ?? 'unknown' )
+		);
+
+		// Rate limiting (before token check to protect against brute-force).
+		$rate_check = $this->check_rate_limit( $ip );
+		if ( is_wp_error( $rate_check ) ) {
+			return $rate_check;
+		}
+
 		$token  = $request->get_header( 'X-Odoo-Token' );
 		$stored = get_option( 'wp4odoo_webhook_token', '' );
 
@@ -228,7 +248,7 @@ class Webhook_Handler {
 
 		if ( ! hash_equals( $stored, (string) $token ) ) {
 			$this->logger->warning( 'Invalid webhook token received.', [
-				'ip' => $request->get_header( 'X-Forwarded-For' ) ?: ( $_SERVER['REMOTE_ADDR'] ?? 'unknown' ),
+				'ip' => $ip,
 			] );
 
 			return new \WP_Error(
@@ -271,5 +291,36 @@ class Webhook_Handler {
 			$token = wp_generate_password( 48, false );
 			update_option( 'wp4odoo_webhook_token', $token );
 		}
+	}
+
+	/**
+	 * Check the per-IP rate limit for webhook requests.
+	 *
+	 * Uses a transient counter with a 60-second window.
+	 * Returns WP_Error with 429 status if the limit is exceeded.
+	 *
+	 * @param string $ip Client IP address.
+	 * @return true|\WP_Error True if under limit, WP_Error if exceeded.
+	 */
+	private function check_rate_limit( string $ip ): true|\WP_Error {
+		$key   = 'wp4odoo_rate_' . md5( $ip );
+		$count = (int) get_transient( $key );
+
+		if ( $count >= self::RATE_LIMIT_MAX ) {
+			$this->logger->warning( 'Rate limit exceeded for webhook endpoint.', [
+				'ip'    => $ip,
+				'count' => $count,
+			] );
+
+			return new \WP_Error(
+				'wp4odoo_rate_limited',
+				__( 'Too many requests. Please try again later.', 'wp4odoo' ),
+				[ 'status' => 429 ]
+			);
+		}
+
+		set_transient( $key, $count + 1, self::RATE_LIMIT_WINDOW );
+
+		return true;
 	}
 }

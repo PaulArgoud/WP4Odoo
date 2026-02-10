@@ -1,0 +1,29 @@
+# Dependencies
+/vendor/
+
+# Composer
+composer.phar
+composer.lock
+
+# IDE / Editor
+*.code-workspace
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+CLAUDE.md
+
+# PHPUnit
+.phpunit.result.cache
+.phpunit.cache/
+
+# PHPStan
+/tmp/phpstan/
+
+# Compiled translations (regenerated from .po)
+*.mo
+
+# Environment / Secrets
+.env

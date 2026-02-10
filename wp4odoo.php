@@ -1,13 +1,13 @@
 <?php
 /**
  * Plugin Name: WordPress For Odoo
- * Plugin URI: https://github.com/your-repo/wp4odoo
+ * Plugin URI: https://github.com/PaulArgoud/wordpress-for-odoo
  * Description: A comprehensive, modular WordPress connector for Odoo ERP. Supports CRM, Sales & Invoicing, and WooCommerce synchronization across multiple Odoo versions (17+).
- * Version: 1.3.0
+ * Version: 1.3.1
  * Requires at least: 6.0
  * Requires PHP: 8.2
- * Author: Your Name
- * Author URI: https://yourwebsite.com
+ * Author: Paul ARGOUD
+ * Author URI: https://paul.argoud.net
  * License: GPL v2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: wp4odoo
@@ -21,7 +21,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Plugin constants
-define( 'WP4ODOO_VERSION', '1.3.0' );
+define( 'WP4ODOO_VERSION', '1.3.1' );
 define( 'WP4ODOO_PLUGIN_FILE', __FILE__ );
 define( 'WP4ODOO_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'WP4ODOO_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
@@ -137,6 +137,9 @@ final class WP4Odoo_Plugin {
         // Cron for sync
         add_action( 'wp4odoo_scheduled_sync', [ $this, 'run_scheduled_sync' ] );
         add_filter( 'cron_schedules', [ $this, 'add_cron_intervals' ] );
+
+        // WooCommerce HPOS compatibility
+        add_action( 'before_woocommerce_init', [ $this, 'declare_hpos_compatibility' ] );
     }
 
     /**
@@ -289,6 +292,21 @@ final class WP4Odoo_Plugin {
             'display'  => __( 'Every 15 Minutes', 'wp4odoo' ),
         ];
         return $schedules;
+    }
+
+    /**
+     * Declare compatibility with WooCommerce HPOS (High-Performance Order Storage).
+     *
+     * @return void
+     */
+    public function declare_hpos_compatibility(): void {
+        if ( class_exists( \Automattic\WooCommerce\Utilities\FeaturesUtil::class ) ) {
+            \Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility(
+                'custom_order_tables',
+                WP4ODOO_PLUGIN_FILE,
+                true
+            );
+        }
     }
 
     /**

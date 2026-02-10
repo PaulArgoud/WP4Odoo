@@ -76,11 +76,12 @@ WordPress For Odoo/
 │   ├── class-module-base.php          # Abstract base class for modules
 │   ├── class-entity-map-repository.php # Static DB access for wp4odoo_entity_map
 │   ├── class-sync-queue-repository.php # Static DB access for wp4odoo_sync_queue
-│   ├── class-sync-engine.php          # Queue processor, batch operations, locking
+│   ├── class-partner-service.php       # Shared res.partner lookup/creation service
+│   ├── class-sync-engine.php          # Queue processor, batch operations, advisory locking
 │   ├── class-queue-manager.php        # Helpers for enqueuing sync jobs
 │   ├── class-query-service.php        # Paginated queries (queue jobs, log entries)
 │   ├── class-field-mapper.php         # Type conversions (Many2one, dates, HTML)
-│   ├── class-webhook-handler.php      # REST API endpoints for Odoo webhooks
+│   ├── class-webhook-handler.php      # REST API endpoints for Odoo webhooks, rate limiting
 │   └── class-logger.php              # DB-backed logger with level filtering
 │
 ├── admin/
@@ -103,11 +104,16 @@ WordPress For Odoo/
 ├── templates/
 │   └── customer-portal.php           #   Customer portal HTML template (orders/invoices tabs)
 │
-├── tests/                             # PHPUnit tests
+├── tests/                             # PHPUnit tests (95 tests, 154 assertions)
 │   ├── bootstrap.php                 #   WP function stubs + class loading
 │   └── Unit/
-│       ├── FieldMapperTest.php       #   30 tests for Field_Mapper pure PHP methods
-│       └── ModuleBaseHashTest.php    #   4 tests for generate_sync_hash()
+│       ├── EntityMapRepositoryTest.php  #   10 tests for Entity_Map_Repository
+│       ├── FieldMapperTest.php          #   30 tests for Field_Mapper
+│       ├── ModuleBaseHashTest.php       #   4 tests for generate_sync_hash()
+│       ├── PartnerServiceTest.php       #   11 tests for Partner_Service
+│       ├── QueueManagerTest.php         #   7 tests for Queue_Manager
+│       ├── SyncQueueRepositoryTest.php  #   16 tests for Sync_Queue_Repository
+│       └── WooCommerceModuleTest.php    #   18 tests for WooCommerce_Module
 │
 ├── uninstall.php                      # Cleanup on plugin uninstall
 │
@@ -146,7 +152,7 @@ Each Odoo domain is encapsulated in an independent module extending `Module_Base
 Module_Base (abstract)
 ├── CRM_Module          → res.partner, crm.lead         [COMPLETE]
 ├── Sales_Module        → product.template, sale.order, account.move  [COMPLETE]
-├── WooCommerce_Module  → + stock.quant, woocommerce hooks
+├── WooCommerce_Module  → + stock.quant, woocommerce hooks  [COMPLETE]
 └── [Custom_Module]     → extensible via action hook
 ```
 
@@ -209,7 +215,7 @@ WP Event               Sync Engine (cron)           Odoo
 | `created_at` | Timestamp when the job was enqueued |
 
 **Reliability mechanisms:**
-- WordPress transient locking (prevents parallel execution)
+- MySQL advisory locking via `GET_LOCK()` / `RELEASE_LOCK()` (prevents parallel execution)
 - Exponential backoff on failure
 - Deduplication: updates an existing `pending` job rather than creating a duplicate
 - Configurable batch size (50 items per cron tick by default)
@@ -312,7 +318,7 @@ Namespace: `wp-json/wp4odoo/v1/`
 | `/webhook/test` | `GET` | Public | Health check |
 | `/sync/{module}/{entity}` | `POST` | WP Auth | Triggers sync for a specific module/entity |
 
-The webhook is authenticated via an `X-Odoo-Token` header compared against `wp4odoo_webhook_token`.
+The webhook is authenticated via an `X-Odoo-Token` header compared against `wp4odoo_webhook_token`. Rate limiting: 100 requests per IP per 60-second window (returns HTTP 429 when exceeded).
 
 ## Sync Flows
 
@@ -360,8 +366,9 @@ Reading:  wp_options → sodium_crypto_secretbox_open() → API key (plaintext)
 ### Request Authentication
 
 - **Admin AJAX**: `manage_options` capability + nonce verification
-- **Incoming webhooks**: token in `X-Odoo-Token` header
+- **Incoming webhooks**: token in `X-Odoo-Token` header + per-IP rate limiting (100 req/min)
 - **REST API sync**: standard WordPress authentication (cookie/nonce or Application Passwords)
+- **WooCommerce HPOS**: compatibility declared via `before_woocommerce_init` hook
 
 ### Input Sanitization
 
@@ -463,23 +470,32 @@ state → _invoice_state, payment_state → _payment_state, partner_id → _wp4o
 
 **Settings:** `import_products`, `portal_enabled`, `orders_per_page`
 
-### WooCommerce — STUB (`includes/modules/class-woocommerce-module.php`)
+### WooCommerce — COMPLETE
 
-> **Status:** The module class exists with Odoo model and field mapping definitions, but `boot()` is empty. No hooks are registered and no sync logic is implemented yet.
+**Files:** `class-woocommerce-module.php` (product/order/stock/invoice sync)
 
-**Planned bidirectional sync:**
+**Odoo models:** `product.template`, `sale.order`, `stock.quant`, `account.move`
 
-| Entity | WP → Odoo | Odoo → WP | Matching |
-|--------|-----------|-----------|----------|
-| Products | `woocommerce_update_product` | webhook | SKU |
-| Orders | `woocommerce_new_order` | webhook | — |
-| Customers | `woocommerce_new_order` | webhook | Email |
-| Stock | `woocommerce_product_set_stock` | webhook | SKU |
+| Direction | Source | Destination | Matching |
+|-----------|--------|-------------|----------|
+| WP → Odoo | `woocommerce_update_product` | `product.template` create/update | SKU |
+| WP → Odoo | `woocommerce_new_order` | `sale.order` create | — |
+| WP → Odoo | `woocommerce_order_status_changed` | `sale.order` update | Mapping |
+| Odoo → WP | Webhook `product.template` | WC product update | SKU |
+| Odoo → WP | Webhook `sale.order` | WC order status update | Mapping |
+| Odoo → WP | Webhook `stock.quant` | `wc_update_product_stock()` | SKU |
+| Odoo → WP | Webhook `account.move` | `wp4odoo_invoice` CPT | Mapping |
 
-**Planned order status mapping:**
+**Key features:**
+- Mutually exclusive with Sales_Module (same Odoo models)
+- Uses `Partner_Service` for customer resolution (WP user → Odoo partner)
+- WC-native APIs: `wc_get_product()`, `wc_get_order()`, `wc_update_product_stock()`
+- HPOS compatible (High-Performance Order Storage)
+- `wp4odoo_invoice` CPT for invoices (WC has no native invoice type)
+
+**Order status mapping (Odoo → WC):**
 
 ```php
-// Default
 $map = [
     'draft'   => 'pending',
     'sent'    => 'on-hold',
@@ -493,6 +509,24 @@ add_filter('wp4odoo_order_status_map', function($map) { /* ... */ });
 ```
 
 **Anti-loop protection:** The `WP4ODOO_IMPORTING` constant is defined during pull operations to prevent WooCommerce hooks from re-enqueuing a sync.
+
+**Settings:** `sync_products`, `sync_orders`, `sync_stock`, `auto_confirm_orders`
+
+### Partner Service
+
+**File:** `class-partner-service.php`
+
+Shared service for managing WP user ↔ Odoo `res.partner` relationships. Used by `Portal_Manager` and `WooCommerce_Module`.
+
+**Resolution flow (3-step):**
+1. Check `wp4odoo_entity_map` for existing mapping
+2. Search Odoo by email (`res.partner` domain)
+3. Create new partner if not found
+
+**Key methods:**
+- `get_partner_id_for_user(int $user_id)` — Get Odoo partner ID for a WP user
+- `get_or_create(string $email, array $data, ?int $user_id)` — Get existing or create new partner
+- `get_user_for_partner(int $partner_id)` — Reverse lookup: Odoo partner → WP user
 
 ## Hooks & Filters
 
@@ -512,8 +546,8 @@ add_filter('wp4odoo_order_status_map', function($map) { /* ... */ });
 |--------|-------|
 | `wp4odoo_map_to_odoo_{module}_{entity}` | Modify mapped Odoo values before push |
 | `wp4odoo_map_from_odoo_{module}_{entity}` | Modify mapped WP data during pull |
-| `wp4odoo_woo_product_to_odoo` | Modify product data before push (planned) |
-| `wp4odoo_order_status_map` | Customize order status mapping (planned) |
+| `wp4odoo_woo_product_to_odoo` | Modify product data before push |
+| `wp4odoo_order_status_map` | Customize WC ↔ Odoo order status mapping |
 | `wp4odoo_ssl_verify` | Enable/disable SSL verification |
 
 ## Cron
