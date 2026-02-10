@@ -5,6 +5,68 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.9.0] - 2026-02-10
+
+### Added
+
+#### Onboarding — Activation Redirect & Setup Notice
+- Post-activation redirect to the settings page (consumes a transient set by `activate()`)
+- Dismissible admin notice on all pages until the Odoo connection is configured
+- Inline `<script>` AJAX dismiss via `wp4odoo_dismiss_onboarding` handler — no need to enqueue `admin.js` globally
+- New option: `wp4odoo_onboarding_dismissed`
+
+#### Onboarding — Setup Checklist
+- Progress bar + 3-step checklist on the settings page (between `<h1>` and tabs)
+- Auto-detected steps: Connect Odoo, Enable a module, Configure webhooks in Odoo
+- Auto-dismiss when all steps completed; manual dismiss via × button
+- "Configure webhooks" step uses a "Mark as done" action (no server-side verification possible)
+- 2 new AJAX handlers: `wp4odoo_dismiss_checklist`, `wp4odoo_confirm_webhooks`
+- New options: `wp4odoo_checklist_dismissed`, `wp4odoo_checklist_webhooks_confirmed`
+
+#### Documentation — Inline Odoo Help
+- 3 collapsible `<details>` blocks in the Connection tab (pure HTML, no JS required):
+  1. **Getting Started** (shown only if URL is empty): prerequisites + required Odoo modules per feature
+  2. **How to generate an API key**: step-by-step instructions for Odoo 14-16 and 17+
+  3. **How to configure webhooks**: native webhooks (17+) and Automated Actions (14-16) with Python code template
+
+#### WP-CLI Commands
+- `wp wp4odoo status` — connection info, queue stats, module list
+- `wp wp4odoo test` — test Odoo connection
+- `wp wp4odoo sync run` — process queue
+- `wp wp4odoo queue stats [--format=table|json|csv]` — queue statistics
+- `wp wp4odoo queue list [--page=N] [--per-page=N]` — paginated job list
+- `wp wp4odoo queue retry` — retry all failed jobs
+- `wp wp4odoo queue cleanup [--days=N]` — delete old completed/failed jobs
+- `wp wp4odoo queue cancel <id>` — cancel a pending job
+- `wp wp4odoo module list` — list modules with enabled/disabled status
+- `wp wp4odoo module enable <id>` — enable a module
+- `wp wp4odoo module disable <id>` — disable a module
+- New file: `includes/class-cli.php` — loaded only in WP-CLI context (not via `Dependency_Loader`)
+
+### Changed
+- `Admin_Ajax` now has 15 handlers (added `dismiss_onboarding`, `dismiss_checklist`, `confirm_webhooks`)
+- `Admin` — 2 new hooks: `admin_init` (redirect), `admin_notices` (setup notice)
+- `Settings_Page` — `render_setup_checklist()` with `has_any_module_enabled()` helper
+- `admin.js` — 2 new bindings: `bindDismissChecklist()`, `bindConfirmWebhooks()`
+- `admin.css` — inline help section styles, setup checklist styles
+- `Sync_Engine::get_stats()` docblock updated to include `last_completed_at`
+- PHPStan: 0 errors on 40 files
+- PHPUnit: 138 tests, 215 assertions
+- Plugin version bumped from 1.8.0 to 1.9.0
+
+#### New Files
+- `includes/class-cli.php` — WP-CLI command class
+- `admin/views/partial-checklist.php` — Setup checklist template
+- `phpstan-wp-cli-stubs.php` — `WP_CLI\Utils` namespace stubs for PHPStan
+
+#### Translations
+- Regenerated `.pot`, merged `.po`, recompiled `.mo` — 249 translated strings, 0 fuzzy, 0 untranslated (was 205)
+- 44 new French translations for onboarding, inline help, and checklist strings
+
+#### Documentation
+- `ARCHITECTURE.md` — updated with CLI, onboarding, checklist, inline help sections; updated file counts and handler counts
+- `README.md` — updated with WP-CLI commands, onboarding mention, new file/handler counts
+
 ## [1.8.0] - 2026-02-10
 
 ### Fixed
@@ -52,7 +114,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Translated 7 new strings + fixed 6 stale fuzzy entries from previous versions
 
 #### Documentation
-- `CLAUDE.md` — updated version (1.8.0), test counts (138/215), AJAX handler count (12)
 - `ARCHITECTURE.md` — updated test counts (138/215), SyncQueueRepositoryTest count (16→18), AJAX handler count (12), added `fetch_queue` to handler list
 - `README.md` — updated test counts (138/215)
 
@@ -80,8 +141,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### Documentation
 - `README.md` — updated test counts (136/209), added multi-currency guard and product image pull to features and module table, removed 2 undocumented filters (`wp4odoo_order_status_map`, `wp4odoo_woo_product_to_odoo`)
 - `ARCHITECTURE.md` — updated test counts (136/209), added CurrencyTest to directory listing, fixed individual test counts (PartnerService 11→10, WooCommerceModule 21→22, BulkSync 10→12), added currency fields to Sales field mappings, added multi-currency guard to WooCommerce key features, removed same 2 ghost filters
-- `CLAUDE.md` — fixed Core Infrastructure file count (15→14)
-Des fichie
+
 ## [1.6.0] - 2026-02-10
 
 ### Added
@@ -206,7 +266,6 @@ Des fichie
 #### Documentation
 - `ARCHITECTURE.md` — 8 corrections: Partner_Service added, WooCommerce marked COMPLETE, test files updated (7 of 7), locking/rate limiting/HPOS documented, filters no longer marked "planned"
 - `README.md` — CI badge, HPOS mention, rate limiting, `/sync` endpoint added
-- `CLAUDE.md` — version bump, locking/rate limiting/HPOS/CI updated, workspace filename fixed
 
 #### Cleanup
 - Deleted orphan `messages.mo` at project root
@@ -294,7 +353,6 @@ Des fichie
 - 67 tests, 107 assertions — all green (was 34 tests, 47 assertions)
 
 #### Documentation
-- `CLAUDE.md` — added `Entity_Map_Repository` and `Sync_Queue_Repository` to Key Classes table, updated version
 - `ARCHITECTURE.md` — added repository files to directory tree, noted delegation in Module_Base description
 - `CHANGELOG.md` — added this entry
 
@@ -317,7 +375,6 @@ Des fichie
 
 #### Documentation Audit
 - `ARCHITECTURE.md` — fixed all `wp4wp4odoo_` references, added missing DB columns (`max_attempts`, `error_message`, `processed_at`, `odoo_model`, `last_synced_at`), clarified contact field mapping (first_name/last_name stored as `x_wp_first_name`/`x_wp_last_name` then composed by `Contact_Refiner`), marked WooCommerce module as stub, marked unimplemented filters as planned
-- `CLAUDE.md` — added missing `Odoo_Client` methods (`search_count`, `fields_get`, `execute`, `is_connected`), added `Queue_Manager::get_pending()`, updated version references
 - `CHANGELOG.md` — added this entry
 
 #### Translations

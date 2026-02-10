@@ -4,7 +4,6 @@ declare( strict_types=1 );
 namespace WP4Odoo\Modules;
 
 use WP4Odoo\CPT_Helper;
-use WP4Odoo\Entity_Map_Repository;
 use WP4Odoo\Field_Mapper;
 use WP4Odoo\Module_Base;
 use WP4Odoo\Partner_Service;
@@ -20,6 +19,13 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Uses WooCommerce native post types for products and orders.
  * Invoices use a custom post type (WC has no native invoice type).
  * Customer (res.partner) management is delegated to Partner_Service.
+ *
+ * Domain logic is split into dedicated handlers:
+ * - Product_Handler  — product / variant load, save, delete
+ * - Order_Handler    — order load, save, status mapping
+ * - Variant_Handler  — variant pull from Odoo (product.product → WC variation)
+ * - Image_Handler    — product featured image import
+ * - Currency_Guard   — currency mismatch detection (static utility)
  *
  * Mutually exclusive with Sales_Module: only one can be active at a time.
  *
@@ -98,6 +104,20 @@ class WooCommerce_Module extends Module_Base {
 	private Partner_Service $partner_service;
 
 	/**
+	 * Product handler for WC product/variant CRUD.
+	 *
+	 * @var Product_Handler
+	 */
+	private Product_Handler $product_handler;
+
+	/**
+	 * Order handler for WC order CRUD and status mapping.
+	 *
+	 * @var Order_Handler
+	 */
+	private Order_Handler $order_handler;
+
+	/**
 	 * Variant handler for product.product → WC variation import.
 	 *
 	 * @var Variant_Handler
@@ -130,8 +150,10 @@ class WooCommerce_Module extends Module_Base {
 		}
 
 		$this->partner_service  = new Partner_Service( fn() => $this->client() );
-		$this->variant_handler = new Variant_Handler( $this->logger, fn() => $this->client() );
-		$this->image_handler   = new Image_Handler( $this->logger );
+		$this->product_handler  = new Product_Handler( $this->logger );
+		$this->order_handler    = new Order_Handler( $this->logger, $this->partner_service );
+		$this->variant_handler  = new Variant_Handler( $this->logger, fn() => $this->client() );
+		$this->image_handler    = new Image_Handler( $this->logger );
 		$settings = $this->get_settings();
 
 		// Capture raw Odoo data during product pull for image processing.
@@ -245,9 +267,6 @@ class WooCommerce_Module extends Module_Base {
 	/**
 	 * Capture raw Odoo data during product pull for post-save image processing.
 	 *
-	 * Registered as a filter on wp4odoo_map_from_odoo_woocommerce_product
-	 * at priority 1 so it runs before any user filters.
-	 *
 	 * @param array  $wp_data     The mapped WordPress data.
 	 * @param array  $odoo_data   The raw Odoo record data.
 	 * @param string $entity_type The entity type.
@@ -279,9 +298,6 @@ class WooCommerce_Module extends Module_Base {
 
 	/**
 	 * Pull a single product.product variant from Odoo.
-	 *
-	 * Reads variant data, finds the parent WC product via the template
-	 * mapping, and delegates to Variant_Handler.
 	 *
 	 * @param int   $odoo_id Odoo product.product ID.
 	 * @param int   $wp_id   Existing WC variation ID (0 if unknown).
@@ -323,9 +339,6 @@ class WooCommerce_Module extends Module_Base {
 
 	/**
 	 * Enqueue variant pulls for a product template.
-	 *
-	 * Searches for product.product records linked to the template.
-	 * If more than one variant exists, queues a pull for each.
 	 *
 	 * @param int $template_odoo_id Odoo product.template ID.
 	 * @param int $wp_parent_id     WC parent product ID.
@@ -464,7 +477,7 @@ class WooCommerce_Module extends Module_Base {
 		] );
 	}
 
-	// ─── Data Loading ────────────────────────────────────────
+	// ─── Data Loading (delegates to handlers) ───────────────
 
 	/**
 	 * Load WordPress data for an entity.
@@ -475,87 +488,12 @@ class WooCommerce_Module extends Module_Base {
 	 */
 	protected function load_wp_data( string $entity_type, int $wp_id ): array {
 		return match ( $entity_type ) {
-			'product' => $this->load_product_data( $wp_id ),
-			'variant' => $this->load_variant_data( $wp_id ),
-			'order'   => $this->load_order_data( $wp_id ),
+			'product' => $this->product_handler->load( $wp_id ),
+			'variant' => $this->product_handler->load_variant( $wp_id ),
+			'order'   => $this->order_handler->load( $wp_id ),
 			'invoice' => $this->load_invoice_data( $wp_id ),
 			default   => $this->unsupported_entity( $entity_type, 'load' ),
 		};
-	}
-
-	/**
-	 * Load WooCommerce product data.
-	 *
-	 * @param int $wp_id Product ID.
-	 * @return array
-	 */
-	private function load_product_data( int $wp_id ): array {
-		$product = wc_get_product( $wp_id );
-		if ( ! $product ) {
-			return [];
-		}
-
-		return [
-			'name'           => $product->get_name(),
-			'sku'            => $product->get_sku(),
-			'regular_price'  => $product->get_regular_price(),
-			'stock_quantity' => $product->get_stock_quantity(),
-			'weight'         => $product->get_weight(),
-			'description'    => $product->get_description(),
-		];
-	}
-
-	/**
-	 * Load WooCommerce variation data.
-	 *
-	 * @param int $wp_id Variation ID.
-	 * @return array
-	 */
-	private function load_variant_data( int $wp_id ): array {
-		$product = wc_get_product( $wp_id );
-		if ( ! $product ) {
-			return [];
-		}
-
-		return [
-			'sku'            => $product->get_sku(),
-			'regular_price'  => $product->get_regular_price(),
-			'stock_quantity' => $product->get_stock_quantity(),
-			'weight'         => $product->get_weight(),
-			'display_name'   => $product->get_name(),
-		];
-	}
-
-	/**
-	 * Load WooCommerce order data.
-	 *
-	 * @param int $wp_id Order ID.
-	 * @return array
-	 */
-	private function load_order_data( int $wp_id ): array {
-		$order = wc_get_order( $wp_id );
-		if ( ! $order ) {
-			return [];
-		}
-
-		// Resolve partner_id via Partner_Service.
-		$partner_id = null;
-		$email      = $order->get_billing_email();
-		if ( $email ) {
-			$user_id    = $order->get_customer_id();
-			$partner_id = $this->partner_service->get_or_create(
-				$email,
-				[ 'name' => $order->get_formatted_billing_full_name() ],
-				$user_id
-			);
-		}
-
-		return [
-			'total'        => $order->get_total(),
-			'date_created' => $order->get_date_created() ? $order->get_date_created()->format( 'Y-m-d H:i:s' ) : '',
-			'status'       => $order->get_status(),
-			'partner_id'   => $partner_id,
-		];
 	}
 
 	/**
@@ -568,7 +506,7 @@ class WooCommerce_Module extends Module_Base {
 		return CPT_Helper::load( $wp_id, 'wp4odoo_invoice', self::INVOICE_META );
 	}
 
-	// ─── Data Saving ─────────────────────────────────────────
+	// ─── Data Saving (delegates to handlers) ────────────────
 
 	/**
 	 * Save data to WordPress.
@@ -580,155 +518,13 @@ class WooCommerce_Module extends Module_Base {
 	 */
 	protected function save_wp_data( string $entity_type, array $data, int $wp_id = 0 ): int {
 		return match ( $entity_type ) {
-			'product' => $this->save_product_data( $data, $wp_id ),
-			'variant' => $this->save_variant_data( $data, $wp_id ),
-			'order'   => $this->save_order_data( $data, $wp_id ),
+			'product' => $this->product_handler->save( $data, $wp_id ),
+			'variant' => $this->product_handler->save_variant( $data, $wp_id ),
+			'order'   => $this->order_handler->save( $data, $wp_id ),
 			'stock'   => $this->save_stock_data( $data ),
 			'invoice' => $this->save_invoice_data( $data, $wp_id ),
 			default   => $this->unsupported_entity_save( $entity_type ),
 		};
-	}
-
-	/**
-	 * Save product data to WooCommerce.
-	 *
-	 * @param array $data  Mapped product data.
-	 * @param int   $wp_id Existing product ID (0 to create).
-	 * @return int Product ID or 0 on failure.
-	 */
-	private function save_product_data( array $data, int $wp_id = 0 ): int {
-		if ( $wp_id > 0 ) {
-			$product = wc_get_product( $wp_id );
-		} else {
-			$product = new \WC_Product();
-		}
-
-		if ( ! $product ) {
-			$this->logger->error( 'Failed to get or create WC product.', [ 'wp_id' => $wp_id ] );
-			return 0;
-		}
-
-		// Currency guard: skip price if Odoo currency ≠ WC shop currency.
-		$odoo_currency     = isset( $data['_wp4odoo_currency'] )
-			? ( Field_Mapper::many2one_to_name( $data['_wp4odoo_currency'] ) ?? '' )
-			: '';
-		$wc_currency       = function_exists( 'get_woocommerce_currency' ) ? get_woocommerce_currency() : '';
-		$currency_mismatch = '' !== $odoo_currency && '' !== $wc_currency && $odoo_currency !== $wc_currency;
-
-		if ( $currency_mismatch ) {
-			$this->logger->warning( 'Product currency mismatch, skipping price update.', [
-				'wp_product_id' => $wp_id,
-				'odoo_currency' => $odoo_currency,
-				'wc_currency'   => $wc_currency,
-			] );
-		}
-
-		if ( isset( $data['name'] ) ) {
-			$product->set_name( $data['name'] );
-		}
-		if ( isset( $data['sku'] ) ) {
-			$product->set_sku( $data['sku'] );
-		}
-		if ( isset( $data['regular_price'] ) && ! $currency_mismatch ) {
-			$product->set_regular_price( (string) $data['regular_price'] );
-		}
-		if ( isset( $data['weight'] ) ) {
-			$product->set_weight( (string) $data['weight'] );
-		}
-		if ( isset( $data['description'] ) ) {
-			$product->set_description( $data['description'] );
-		}
-		if ( isset( $data['stock_quantity'] ) ) {
-			$product->set_manage_stock( true );
-			$product->set_stock_quantity( (int) $data['stock_quantity'] );
-		}
-
-		$saved_id = $product->save();
-
-		// Store Odoo currency code in product meta.
-		if ( $saved_id > 0 && '' !== $odoo_currency ) {
-			update_post_meta( $saved_id, '_wp4odoo_currency', $odoo_currency );
-		}
-
-		return $saved_id > 0 ? $saved_id : 0;
-	}
-
-	/**
-	 * Save variant (variation) data to WooCommerce.
-	 *
-	 * Delegates to the Variant_Handler for creating/updating variations.
-	 *
-	 * @param array $data  Mapped variant data.
-	 * @param int   $wp_id Existing variation ID (0 to create).
-	 * @return int Variation ID or 0 on failure.
-	 */
-	private function save_variant_data( array $data, int $wp_id = 0 ): int {
-		// Variant saving is handled by pull_variant() → Variant_Handler.
-		// This method covers the base class save_wp_data path.
-		if ( $wp_id > 0 ) {
-			$variation = wc_get_product( $wp_id );
-			if ( ! $variation ) {
-				return 0;
-			}
-
-			// Currency guard: skip price if Odoo currency ≠ WC shop currency.
-			$odoo_currency     = isset( $data['_wp4odoo_currency'] )
-				? ( Field_Mapper::many2one_to_name( $data['_wp4odoo_currency'] ) ?? '' )
-				: '';
-			$wc_currency       = function_exists( 'get_woocommerce_currency' ) ? get_woocommerce_currency() : '';
-			$currency_mismatch = '' !== $odoo_currency && '' !== $wc_currency && $odoo_currency !== $wc_currency;
-
-			if ( isset( $data['sku'] ) && '' !== $data['sku'] ) {
-				$variation->set_sku( $data['sku'] );
-			}
-			if ( isset( $data['regular_price'] ) && ! $currency_mismatch ) {
-				$variation->set_regular_price( (string) $data['regular_price'] );
-			}
-			if ( isset( $data['stock_quantity'] ) ) {
-				$variation->set_manage_stock( true );
-				$variation->set_stock_quantity( (int) $data['stock_quantity'] );
-			}
-			if ( isset( $data['weight'] ) && $data['weight'] ) {
-				$variation->set_weight( (string) $data['weight'] );
-			}
-
-			$saved_id = $variation->save();
-			return $saved_id > 0 ? $saved_id : 0;
-		}
-
-		// Cannot create variation without parent context; handled by Variant_Handler.
-		$this->logger->warning( 'Variant creation without parent context is not supported via save_wp_data.' );
-		return 0;
-	}
-
-	/**
-	 * Save order data to WooCommerce.
-	 *
-	 * Primarily used for status updates from Odoo.
-	 *
-	 * @param array $data  Mapped order data.
-	 * @param int   $wp_id Existing order ID (0 to skip — order creation from Odoo is not supported).
-	 * @return int Order ID or 0 on failure.
-	 */
-	private function save_order_data( array $data, int $wp_id = 0 ): int {
-		if ( 0 === $wp_id ) {
-			$this->logger->warning( 'Order creation from Odoo is not supported. Use WooCommerce to create orders.' );
-			return 0;
-		}
-
-		$order = wc_get_order( $wp_id );
-		if ( ! $order ) {
-			$this->logger->error( 'WC order not found.', [ 'wp_id' => $wp_id ] );
-			return 0;
-		}
-
-		if ( isset( $data['status'] ) ) {
-			$order->set_status( $this->map_odoo_status_to_wc( $data['status'] ) );
-		}
-
-		$order->save();
-
-		return $wp_id;
 	}
 
 	/**
@@ -786,7 +582,7 @@ class WooCommerce_Module extends Module_Base {
 		return CPT_Helper::save( $data, $wp_id, 'wp4odoo_invoice', self::INVOICE_META, __( 'Invoice', 'wp4odoo' ), $this->logger );
 	}
 
-	// ─── Delete ──────────────────────────────────────────────
+	// ─── Delete (delegates to handler) ──────────────────────
 
 	/**
 	 * Delete a WordPress entity.
@@ -797,12 +593,7 @@ class WooCommerce_Module extends Module_Base {
 	 */
 	protected function delete_wp_data( string $entity_type, int $wp_id ): bool {
 		if ( 'product' === $entity_type || 'variant' === $entity_type ) {
-			$product = wc_get_product( $wp_id );
-			if ( $product ) {
-				$product->delete( true );
-				return true;
-			}
-			return false;
+			return $this->product_handler->delete( $wp_id );
 		}
 
 		if ( 'invoice' === $entity_type ) {
@@ -818,23 +609,6 @@ class WooCommerce_Module extends Module_Base {
 	}
 
 	// ─── Helpers ─────────────────────────────────────────────
-
-	/**
-	 * Map an Odoo sale.order state to a WooCommerce order status.
-	 *
-	 * @param string $odoo_state Odoo state value.
-	 * @return string WC status (without 'wc-' prefix).
-	 */
-	private function map_odoo_status_to_wc( string $odoo_state ): string {
-		return match ( $odoo_state ) {
-			'draft'  => 'pending',
-			'sent'   => 'on-hold',
-			'sale'   => 'processing',
-			'done'   => 'completed',
-			'cancel' => 'cancelled',
-			default  => 'on-hold',
-		};
-	}
 
 	/**
 	 * Log a warning for an unsupported entity type (load context).

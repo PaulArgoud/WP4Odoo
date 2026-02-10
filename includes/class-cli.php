@@ -1,0 +1,357 @@
+<?php
+declare( strict_types=1 );
+
+namespace WP4Odoo;
+
+use WP4Odoo\API\Odoo_Auth;
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+/**
+ * WP-CLI commands for WordPress For Odoo.
+ *
+ * Registered as `wp wp4odoo <subcommand>`.
+ *
+ * @package WP4Odoo
+ * @since   1.9.0
+ */
+class CLI {
+
+	/**
+	 * Show plugin status: connection, queue stats, modules.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     wp wp4odoo status
+	 *
+	 * @subcommand status
+	 */
+	public function status(): void {
+		$credentials = Odoo_Auth::get_credentials();
+		$connected   = ! empty( $credentials['url'] );
+
+		\WP_CLI::line( '' );
+		\WP_CLI::line( 'WordPress For Odoo v' . WP4ODOO_VERSION );
+		\WP_CLI::line( str_repeat( '─', 40 ) );
+
+		// Connection.
+		if ( $connected ) {
+			\WP_CLI::success( sprintf( 'Connected to %s (db: %s, protocol: %s)',
+				$credentials['url'],
+				$credentials['database'],
+				$credentials['protocol']
+			) );
+		} else {
+			\WP_CLI::warning( 'Not configured — no Odoo URL set.' );
+		}
+
+		// Queue stats.
+		$stats = Sync_Engine::get_stats();
+		\WP_CLI::line( '' );
+		\WP_CLI::line( 'Queue:' );
+		\WP_CLI\Utils\format_items( 'table', [
+			[
+				'pending'    => $stats['pending'],
+				'processing' => $stats['processing'],
+				'completed'  => $stats['completed'],
+				'failed'     => $stats['failed'],
+			],
+		], [ 'pending', 'processing', 'completed', 'failed' ] );
+
+		if ( '' !== $stats['last_completed_at'] ) {
+			\WP_CLI::line( 'Last completed: ' . $stats['last_completed_at'] );
+		}
+
+		// Modules.
+		$modules = \WP4Odoo_Plugin::instance()->get_modules();
+		\WP_CLI::line( '' );
+		\WP_CLI::line( 'Modules:' );
+		$rows = [];
+		foreach ( $modules as $id => $module ) {
+			$enabled = get_option( 'wp4odoo_module_' . $id . '_enabled' );
+			$rows[]  = [
+				'id'      => $id,
+				'status'  => $enabled ? 'enabled' : 'disabled',
+			];
+		}
+		\WP_CLI\Utils\format_items( 'table', $rows, [ 'id', 'status' ] );
+	}
+
+	/**
+	 * Test the Odoo connection.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     wp wp4odoo test
+	 *
+	 * @subcommand test
+	 */
+	public function test(): void {
+		$credentials = Odoo_Auth::get_credentials();
+
+		if ( empty( $credentials['url'] ) ) {
+			\WP_CLI::error( 'No Odoo connection configured. Go to Odoo Connector settings first.' );
+		}
+
+		\WP_CLI::line( sprintf( 'Testing connection to %s...', $credentials['url'] ) );
+
+		$result = Odoo_Auth::test_connection(
+			$credentials['url'],
+			$credentials['database'],
+			$credentials['username'],
+			$credentials['api_key'],
+			$credentials['protocol']
+		);
+
+		if ( $result['success'] ) {
+			\WP_CLI::success( sprintf( 'Connection successful! UID: %d', $result['uid'] ?? 0 ) );
+		} else {
+			\WP_CLI::error( sprintf( 'Connection failed: %s', $result['message'] ) );
+		}
+	}
+
+	/**
+	 * Run sync queue processing.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     wp wp4odoo sync run
+	 *
+	 * @subcommand sync
+	 * @when after_wp_load
+	 */
+	public function sync( array $args ): void {
+		$sub = $args[0] ?? 'run';
+
+		if ( 'run' !== $sub ) {
+			\WP_CLI::error( sprintf( 'Unknown subcommand: %s. Usage: wp wp4odoo sync run', $sub ) );
+		}
+
+		\WP_CLI::line( 'Processing sync queue...' );
+
+		$engine    = new Sync_Engine();
+		$processed = $engine->process_queue();
+
+		\WP_CLI::success( sprintf( '%d job(s) processed.', $processed ) );
+	}
+
+	/**
+	 * Manage the sync queue.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     wp wp4odoo queue stats
+	 *     wp wp4odoo queue list --page=1 --per-page=20
+	 *     wp wp4odoo queue retry
+	 *     wp wp4odoo queue cleanup --days=7
+	 *     wp wp4odoo queue cancel 42
+	 *
+	 * @subcommand queue
+	 * @when after_wp_load
+	 */
+	public function queue( array $args, array $assoc_args ): void {
+		$sub = $args[0] ?? 'stats';
+
+		switch ( $sub ) {
+			case 'stats':
+				$this->queue_stats( $assoc_args );
+				break;
+			case 'list':
+				$this->queue_list( $assoc_args );
+				break;
+			case 'retry':
+				$this->queue_retry();
+				break;
+			case 'cleanup':
+				$this->queue_cleanup( $assoc_args );
+				break;
+			case 'cancel':
+				$job_id = isset( $args[1] ) ? (int) $args[1] : 0;
+				$this->queue_cancel( $job_id );
+				break;
+			default:
+				\WP_CLI::error( sprintf( 'Unknown subcommand: %s. Available: stats, list, retry, cleanup, cancel', $sub ) );
+		}
+	}
+
+	/**
+	 * Manage modules.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     wp wp4odoo module list
+	 *     wp wp4odoo module enable crm
+	 *     wp wp4odoo module disable crm
+	 *
+	 * @subcommand module
+	 * @when after_wp_load
+	 */
+	public function module( array $args ): void {
+		$sub = $args[0] ?? 'list';
+
+		switch ( $sub ) {
+			case 'list':
+				$this->module_list();
+				break;
+			case 'enable':
+				$id = $args[1] ?? '';
+				$this->module_toggle( $id, true );
+				break;
+			case 'disable':
+				$id = $args[1] ?? '';
+				$this->module_toggle( $id, false );
+				break;
+			default:
+				\WP_CLI::error( sprintf( 'Unknown subcommand: %s. Available: list, enable, disable', $sub ) );
+		}
+	}
+
+	// ─── Queue helpers ──────────────────────────────────────
+
+	/**
+	 * Display queue statistics.
+	 *
+	 * @param array $assoc_args Associative arguments.
+	 */
+	private function queue_stats( array $assoc_args ): void {
+		$stats  = Sync_Engine::get_stats();
+		$format = $assoc_args['format'] ?? 'table';
+
+		\WP_CLI\Utils\format_items( $format, [
+			[
+				'pending'           => $stats['pending'],
+				'processing'        => $stats['processing'],
+				'completed'         => $stats['completed'],
+				'failed'            => $stats['failed'],
+				'last_completed_at' => $stats['last_completed_at'] ?: '—',
+			],
+		], [ 'pending', 'processing', 'completed', 'failed', 'last_completed_at' ] );
+	}
+
+	/**
+	 * List queue jobs.
+	 *
+	 * @param array $assoc_args Associative arguments.
+	 */
+	private function queue_list( array $assoc_args ): void {
+		$page     = max( 1, (int) ( $assoc_args['page'] ?? 1 ) );
+		$per_page = max( 1, min( 100, (int) ( $assoc_args['per-page'] ?? 30 ) ) );
+		$format   = $assoc_args['format'] ?? 'table';
+
+		$data = Query_Service::get_queue_jobs( $page, $per_page );
+
+		if ( empty( $data['items'] ) ) {
+			\WP_CLI::line( 'No jobs found.' );
+			return;
+		}
+
+		$rows = [];
+		foreach ( $data['items'] as $job ) {
+			$rows[] = [
+				'id'            => $job->id,
+				'module'        => $job->module,
+				'entity_type'   => $job->entity_type,
+				'direction'     => $job->direction,
+				'action'        => $job->action,
+				'status'        => $job->status,
+				'attempts'      => $job->attempts . '/' . $job->max_attempts,
+				'created_at'    => $job->created_at,
+			];
+		}
+
+		\WP_CLI\Utils\format_items( $format, $rows, [
+			'id', 'module', 'entity_type', 'direction', 'action', 'status', 'attempts', 'created_at',
+		] );
+
+		\WP_CLI::line( sprintf( 'Page %d/%d (%d total)', $page, $data['pages'], $data['total'] ) );
+	}
+
+	/**
+	 * Retry all failed jobs.
+	 */
+	private function queue_retry(): void {
+		$count = Sync_Engine::retry_failed();
+		\WP_CLI::success( sprintf( '%d failed job(s) retried.', $count ) );
+	}
+
+	/**
+	 * Clean up old completed/failed jobs.
+	 *
+	 * @param array $assoc_args Associative arguments.
+	 */
+	private function queue_cleanup( array $assoc_args ): void {
+		$days    = max( 1, (int) ( $assoc_args['days'] ?? 7 ) );
+		$deleted = Sync_Engine::cleanup( $days );
+		\WP_CLI::success( sprintf( '%d job(s) deleted (older than %d days).', $deleted, $days ) );
+	}
+
+	/**
+	 * Cancel a pending job by ID.
+	 *
+	 * @param int $job_id Job ID.
+	 */
+	private function queue_cancel( int $job_id ): void {
+		if ( $job_id <= 0 ) {
+			\WP_CLI::error( 'Please provide a valid job ID. Usage: wp wp4odoo queue cancel <id>' );
+		}
+
+		if ( Queue_Manager::cancel( $job_id ) ) {
+			\WP_CLI::success( sprintf( 'Job %d cancelled.', $job_id ) );
+		} else {
+			\WP_CLI::error( sprintf( 'Unable to cancel job %d (not found or not pending).', $job_id ) );
+		}
+	}
+
+	// ─── Module helpers ─────────────────────────────────────
+
+	/**
+	 * List all modules with their status.
+	 */
+	private function module_list(): void {
+		$modules = \WP4Odoo_Plugin::instance()->get_modules();
+
+		if ( empty( $modules ) ) {
+			\WP_CLI::line( 'No modules registered.' );
+			return;
+		}
+
+		$rows = [];
+		foreach ( $modules as $id => $module ) {
+			$enabled = get_option( 'wp4odoo_module_' . $id . '_enabled' );
+			$rows[]  = [
+				'id'      => $id,
+				'name'    => $module->get_name(),
+				'status'  => $enabled ? 'enabled' : 'disabled',
+			];
+		}
+
+		\WP_CLI\Utils\format_items( 'table', $rows, [ 'id', 'name', 'status' ] );
+	}
+
+	/**
+	 * Enable or disable a module.
+	 *
+	 * @param string $id      Module identifier.
+	 * @param bool   $enabled True to enable, false to disable.
+	 */
+	private function module_toggle( string $id, bool $enabled ): void {
+		if ( empty( $id ) ) {
+			\WP_CLI::error( 'Please provide a module ID. Usage: wp wp4odoo module enable <id>' );
+		}
+
+		$modules = \WP4Odoo_Plugin::instance()->get_modules();
+		if ( ! isset( $modules[ $id ] ) ) {
+			\WP_CLI::error( sprintf( 'Unknown module: %s. Use "wp wp4odoo module list" to see available modules.', $id ) );
+		}
+
+		update_option( 'wp4odoo_module_' . $id . '_enabled', $enabled );
+
+		if ( $enabled ) {
+			\WP_CLI::success( sprintf( 'Module "%s" enabled.', $id ) );
+		} else {
+			\WP_CLI::success( sprintf( 'Module "%s" disabled.', $id ) );
+		}
+	}
+}

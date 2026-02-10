@@ -380,8 +380,11 @@ namespace {
 	require_once WP4ODOO_PLUGIN_DIR . 'includes/class-module-base.php';
 	require_once WP4ODOO_PLUGIN_DIR . 'includes/class-sync-engine.php';
 	require_once WP4ODOO_PLUGIN_DIR . 'includes/class-queue-manager.php';
+	require_once WP4ODOO_PLUGIN_DIR . 'includes/modules/class-currency-guard.php';
 	require_once WP4ODOO_PLUGIN_DIR . 'includes/modules/class-variant-handler.php';
 	require_once WP4ODOO_PLUGIN_DIR . 'includes/modules/class-image-handler.php';
+	require_once WP4ODOO_PLUGIN_DIR . 'includes/modules/class-product-handler.php';
+	require_once WP4ODOO_PLUGIN_DIR . 'includes/modules/class-order-handler.php';
 	require_once WP4ODOO_PLUGIN_DIR . 'includes/modules/class-woocommerce-module.php';
 	require_once WP4ODOO_PLUGIN_DIR . 'includes/modules/class-portal-manager.php';
 	require_once WP4ODOO_PLUGIN_DIR . 'includes/modules/class-sales-module.php';

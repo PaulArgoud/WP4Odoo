@@ -47,7 +47,7 @@ Modular WordPress plugin providing bidirectional synchronization between WordPre
 
 ```
 WordPress For Odoo/
-├── wp4odoo.php              # Entry point, singleton, autoloader, hooks (~270 lines)
+├── wp4odoo.php              # Entry point, singleton, autoloader, hooks, WP-CLI registration (~280 lines)
 ├── CLAUDE.md                          # Instructions for Claude Code
 ├── ARCHITECTURE.md                    # This file
 ├── CHANGELOG.md                       # Version history
@@ -67,15 +67,18 @@ WordPress For Odoo/
 │   │   ├── class-contact-refiner.php  # CRM: name/country/state refinement filters
 │   │   ├── class-sales-module.php     # Sales: orders, invoices (delegates CPT ops to CPT_Helper)
 │   │   ├── class-portal-manager.php   # Sales: customer portal shortcode, AJAX, queries
+│   │   ├── class-currency-guard.php      # WooCommerce: static currency mismatch detection utility
 │   │   ├── class-variant-handler.php    # WooCommerce: variant import (product.product → WC variations)
 │   │   ├── class-image-handler.php      # WooCommerce: product image import (Odoo image_1920 → WC thumbnail)
-│   │   └── class-woocommerce-module.php  # WooCommerce: products/orders/stock/variants/images sync
+│   │   ├── class-product-handler.php    # WooCommerce: product CRUD with currency guard
+│   │   ├── class-order-handler.php      # WooCommerce: order CRUD + Odoo status mapping
+│   │   └── class-woocommerce-module.php  # WooCommerce: sync coordinator (delegates to handlers)
 │   │
 │   ├── admin/
-│   │   ├── class-admin.php            # Admin menu, asset enqueuing, plugin action link
+│   │   ├── class-admin.php            # Admin menu, assets, activation redirect, setup notice
 │   │   ├── class-bulk-handler.php     # Bulk product import/export operations
-│   │   ├── class-admin-ajax.php       # 12 AJAX handlers (test, retry, cleanup, logs, module settings, bulk import/export, etc.)
-│   │   └── class-settings-page.php    # Settings API, 5-tab rendering, sanitize callbacks
+│   │   ├── class-admin-ajax.php       # 15 AJAX handlers (test, retry, cleanup, logs, module settings, bulk, onboarding, checklist)
+│   │   └── class-settings-page.php    # Settings API, 5-tab rendering, setup checklist, sanitize callbacks
 │   │
 │   ├── class-dependency-loader.php    # Loads all plugin class files (require_once)
 │   ├── class-database-migration.php   # Table creation (dbDelta) and default options
@@ -90,14 +93,16 @@ WordPress For Odoo/
 │   ├── class-field-mapper.php         # Type conversions (Many2one, dates, HTML)
 │   ├── class-cpt-helper.php           # Shared CPT register/load/save helpers
 │   ├── class-webhook-handler.php      # REST API endpoints for Odoo webhooks, rate limiting
+│   ├── class-cli.php                 # WP-CLI commands (loaded only in CLI context)
 │   └── class-logger.php              # DB-backed logger with level filtering
 │
 ├── admin/
-│   ├── css/admin.css                  # Admin styles (~240 lines)
-│   ├── js/admin.js                    # Admin JS: AJAX interactions (~350 lines)
+│   ├── css/admin.css                  # Admin styles (~400 lines)
+│   ├── js/admin.js                    # Admin JS: AJAX interactions (~570 lines)
 │   └── views/                         # Admin page templates
-│       ├── page-settings.php          #   Main wrapper (h1 + nav-tabs + tab dispatch)
-│       ├── tab-connection.php         #   Odoo connection form + webhook token
+│       ├── page-settings.php          #   Main wrapper (h1 + checklist + nav-tabs + tab dispatch)
+│       ├── partial-checklist.php      #   Setup checklist (progress bar + 3 steps)
+│       ├── tab-connection.php         #   Odoo connection form + inline help + webhook token
 │       ├── tab-sync.php               #   Sync settings + logging settings
 │       ├── tab-modules.php            #   Module cards with AJAX toggles + inline settings panels
 │       ├── tab-queue.php              #   Stats cards + paginated jobs table
@@ -112,7 +117,7 @@ WordPress For Odoo/
 ├── templates/
 │   └── customer-portal.php           #   Customer portal HTML template (orders/invoices tabs)
 │
-├── tests/                             # PHPUnit tests (138 tests, 215 assertions, 36 files analysed)
+├── tests/                             # PHPUnit tests (138 tests, 215 assertions, 40 files analysed)
 │   ├── bootstrap.php                 #   WP function stubs + class loading
 │   └── Unit/
 │       ├── EntityMapRepositoryTest.php  #   10 tests for Entity_Map_Repository
@@ -319,6 +324,9 @@ Managed via `dbDelta()` in `Database_Migration::create_tables()`:
 | `wp4odoo_module_{id}_mappings` | `array` | Custom field mappings |
 | `wp4odoo_webhook_token` | `string` | Auto-generated webhook auth token |
 | `wp4odoo_db_version` | `string` | DB schema version |
+| `wp4odoo_onboarding_dismissed` | `bool` | Setup notice dismissed |
+| `wp4odoo_checklist_dismissed` | `bool` | Setup checklist dismissed |
+| `wp4odoo_checklist_webhooks_confirmed` | `bool` | Webhooks step marked done |
 
 ## REST API
 
@@ -403,9 +411,9 @@ All user inputs are sanitized with:
 | Logs | `tab-logs.php` | Filter bar (level, module, dates), AJAX paginated log table, purge |
 
 **Key classes:**
-- `Admin` — orchestrator: menu registration, asset enqueuing, plugin settings link
-- `Settings_Page` — Settings API registration, tab rendering, sanitize callbacks
-- `Admin_Ajax` — 12 handlers: test_connection, retry_failed, cleanup_queue, cancel_job, purge_logs, fetch_logs, queue_stats, toggle_module, save_module_settings, bulk_import_products, bulk_export_products, fetch_queue
+- `Admin` — orchestrator: menu registration, asset enqueuing, plugin settings link, activation redirect, setup notice
+- `Settings_Page` — Settings API registration, tab rendering, setup checklist, sanitize callbacks
+- `Admin_Ajax` — 15 handlers: test_connection, retry_failed, cleanup_queue, cancel_job, purge_logs, fetch_logs, queue_stats, toggle_module, save_module_settings, bulk_import_products, bulk_export_products, fetch_queue, dismiss_onboarding, dismiss_checklist, confirm_webhooks
 
 ## Modules Detail
 
@@ -486,7 +494,7 @@ currency_id → _invoice_currency (Many2one → code string)
 
 ### WooCommerce — COMPLETE
 
-**Files:** `class-woocommerce-module.php` (product/order/stock/variant/invoice sync), `class-variant-handler.php` (variant import), `class-image-handler.php` (product image pull from Odoo)
+**Files:** `class-woocommerce-module.php` (sync coordinator), `class-product-handler.php` (product CRUD), `class-order-handler.php` (order CRUD + status mapping), `class-variant-handler.php` (variant import), `class-image-handler.php` (product image pull), `class-currency-guard.php` (currency mismatch detection)
 
 **Odoo models:** `product.template`, `product.product`, `sale.order`, `stock.quant`, `account.move`
 
@@ -546,6 +554,41 @@ Shared service for managing WP user ↔ Odoo `res.partner` relationships. Used b
 - `get_partner_id_for_user(int $user_id)` — Get Odoo partner ID for a WP user
 - `get_or_create(string $email, array $data, ?int $user_id)` — Get existing or create new partner
 - `get_user_for_partner(int $partner_id)` — Reverse lookup: Odoo partner → WP user
+
+### WP-CLI
+
+**File:** `class-cli.php` (loaded only when `WP_CLI` is defined)
+
+| Command | Action |
+|---------|--------|
+| `wp wp4odoo status` | Connection info, queue stats, module list |
+| `wp wp4odoo test` | Test Odoo connection |
+| `wp wp4odoo sync run` | Process sync queue |
+| `wp wp4odoo queue stats` | Queue statistics (supports `--format`) |
+| `wp wp4odoo queue list` | Paginated job list (`--page`, `--per-page`) |
+| `wp wp4odoo queue retry` | Retry all failed jobs |
+| `wp wp4odoo queue cleanup` | Delete old jobs (`--days`) |
+| `wp wp4odoo queue cancel <id>` | Cancel a pending job |
+| `wp wp4odoo module list` | List modules with status |
+| `wp wp4odoo module enable <id>` | Enable a module |
+| `wp wp4odoo module disable <id>` | Disable a module |
+
+Pure delegation to existing services — no business logic in CLI class.
+
+### Onboarding
+
+**Post-activation redirect:** Transient consumed on `admin_init` → redirect to settings page (skips bulk activation, AJAX, WP-CLI).
+
+**Setup notice:** Dismissible admin notice on all pages until connection is configured or dismissed. Inline `<script>` for AJAX dismiss.
+
+**Setup checklist:** 3-step progress widget on the settings page:
+1. Connect Odoo (auto-detected: URL + API key)
+2. Enable a module (auto-detected: any `wp4odoo_module_*_enabled`)
+3. Configure webhooks (manual: "Mark as done" button)
+
+Auto-dismissed when all steps completed. Dismiss via × button persisted in `wp4odoo_checklist_dismissed`.
+
+**Inline documentation:** 3 collapsible `<details>` blocks in the Connection tab: Getting Started (prerequisites), API key generation (Odoo 14-16 and 17+), webhook configuration (native and Automated Actions).
 
 ## Hooks & Filters
 

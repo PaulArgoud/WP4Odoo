@@ -3,7 +3,7 @@
  * Plugin Name: WordPress For Odoo
  * Plugin URI: https://github.com/PaulArgoud/wordpress-for-odoo
  * Description: A comprehensive, modular WordPress connector for Odoo ERP. Supports CRM, Sales & Invoicing, and WooCommerce synchronization across multiple Odoo versions (14+).
- * Version: 1.8.0
+ * Version: 1.9.0
  * Requires at least: 6.0
  * Requires PHP: 8.2
  * Author: Paul ARGOUD
@@ -21,7 +21,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Plugin constants
-define( 'WP4ODOO_VERSION', '1.8.0' );
+define( 'WP4ODOO_VERSION', '1.9.0' );
 define( 'WP4ODOO_PLUGIN_FILE', __FILE__ );
 define( 'WP4ODOO_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'WP4ODOO_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
@@ -117,6 +117,9 @@ final class WP4Odoo_Plugin {
         if ( ! wp_next_scheduled( 'wp4odoo_scheduled_sync' ) ) {
             wp_schedule_event( time(), 'wp4odoo_five_minutes', 'wp4odoo_scheduled_sync' );
         }
+
+        // Flag for post-activation redirect.
+        set_transient( 'wp4odoo_activated', '1', 60 );
 
         flush_rewrite_rules();
     }
@@ -270,3 +273,9 @@ function wp4odoo(): WP4Odoo_Plugin {
 
 // Initialize
 wp4odoo();
+
+// WP-CLI commands (only loaded in CLI context).
+if ( defined( 'WP_CLI' ) && WP_CLI ) {
+    require_once WP4ODOO_PLUGIN_DIR . 'includes/class-cli.php';
+    \WP_CLI::add_command( 'wp4odoo', WP4Odoo\CLI::class );
+}

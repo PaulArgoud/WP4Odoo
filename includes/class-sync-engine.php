@@ -120,7 +120,7 @@ class Sync_Engine {
 	/**
 	 * Get queue statistics.
 	 *
-	 * @return array{pending: int, processing: int, completed: int, failed: int, total: int}
+	 * @return array{pending: int, processing: int, completed: int, failed: int, total: int, last_completed_at: string}
 	 */
 	public static function get_stats(): array {
 		return Sync_Queue_Repository::get_stats();

@@ -19,3 +19,6 @@ parameters:
           path: includes/api/class-odoo-jsonrpc.php
         - identifier: identical.alwaysFalse
           path: includes/api/class-odoo-xmlrpc.php
+        # WP_CLI constant is defined as false in PHPStan bootstrap but true at runtime
+        - identifier: booleanAnd.rightAlwaysFalse
+          path: includes/admin/class-admin.php

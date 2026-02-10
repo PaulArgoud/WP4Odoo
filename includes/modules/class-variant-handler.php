@@ -4,7 +4,6 @@ declare( strict_types=1 );
 namespace WP4Odoo\Modules;
 
 use WP4Odoo\Entity_Map_Repository;
-use WP4Odoo\Field_Mapper;
 use WP4Odoo\Logger;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -112,15 +111,14 @@ class Variant_Handler {
 			$existing_wp_id = Entity_Map_Repository::get_wp_id( 'woocommerce', 'variant', $variant_odoo_id );
 
 			// Currency guard: skip price if Odoo currency ≠ WC shop currency.
-			$odoo_currency = Field_Mapper::many2one_to_name( $variant['currency_id'] ?? false ) ?? '';
-			$wc_currency   = function_exists( 'get_woocommerce_currency' ) ? get_woocommerce_currency() : '';
-			$skip_price    = '' !== $odoo_currency && '' !== $wc_currency && $odoo_currency !== $wc_currency;
+			$guard      = Currency_Guard::check( $variant['currency_id'] ?? false );
+			$skip_price = $guard['mismatch'];
 
 			if ( $skip_price ) {
 				$this->logger->warning( 'Variant currency mismatch, skipping price.', [
 					'variant_odoo_id' => $variant_odoo_id,
-					'odoo_currency'   => $odoo_currency,
-					'wc_currency'     => $wc_currency,
+					'odoo_currency'   => $guard['odoo_currency'],
+					'wc_currency'     => $guard['wc_currency'],
 				] );
 			}
 

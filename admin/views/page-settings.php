@@ -15,6 +15,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 <div class="wrap">
 	<h1><?php esc_html_e( 'WordPress For Odoo', 'wp4odoo' ); ?></h1>
 
+	<?php $this->render_setup_checklist(); ?>
+
 	<?php $this->render_tabs( $active_tab ); ?>
 
 	<div class="wp4odoo-tab-content" style="margin-top: 20px;">

@@ -92,6 +92,67 @@ class Settings_Page {
 	}
 
 	/**
+	 * Render the setup checklist if not yet completed or dismissed.
+	 *
+	 * @return void
+	 */
+	public function render_setup_checklist(): void {
+		if ( get_option( 'wp4odoo_checklist_dismissed' ) ) {
+			return;
+		}
+
+		$connection = get_option( 'wp4odoo_connection', [] );
+
+		$steps = [
+			[
+				'done'   => ! empty( $connection['url'] ) && ! empty( $connection['api_key'] ),
+				'label'  => __( 'Connect to Odoo', 'wp4odoo' ),
+				'tab'    => 'connection',
+				'action' => '',
+			],
+			[
+				'done'   => $this->has_any_module_enabled(),
+				'label'  => __( 'Enable a module', 'wp4odoo' ),
+				'tab'    => 'modules',
+				'action' => '',
+			],
+			[
+				'done'   => (bool) get_option( 'wp4odoo_checklist_webhooks_confirmed' ),
+				'label'  => __( 'Configure webhooks in Odoo', 'wp4odoo' ),
+				'tab'    => '',
+				'action' => 'wp4odoo_confirm_webhooks',
+			],
+		];
+
+		$done    = count( array_filter( $steps, fn( $s ) => $s['done'] ) );
+		$total   = count( $steps );
+		$percent = (int) round( ( $done / $total ) * 100 );
+
+		// Auto-dismiss when all steps are done.
+		if ( $done === $total ) {
+			update_option( 'wp4odoo_checklist_dismissed', true );
+			return;
+		}
+
+		include WP4ODOO_PLUGIN_DIR . 'admin/views/partial-checklist.php';
+	}
+
+	/**
+	 * Check whether at least one module is enabled.
+	 *
+	 * @return bool
+	 */
+	private function has_any_module_enabled(): bool {
+		$modules = \WP4Odoo_Plugin::instance()->get_modules();
+		foreach ( $modules as $id => $module ) {
+			if ( get_option( 'wp4odoo_module_' . $id . '_enabled' ) ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
 	 * Render the tab navigation bar.
 	 *
 	 * @param string $active_tab The currently active tab slug.

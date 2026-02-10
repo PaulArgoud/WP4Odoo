@@ -38,6 +38,9 @@ class Admin_Ajax {
 			'wp4odoo_save_module_settings',
 			'wp4odoo_bulk_import_products',
 			'wp4odoo_bulk_export_products',
+			'wp4odoo_dismiss_onboarding',
+			'wp4odoo_dismiss_checklist',
+			'wp4odoo_confirm_webhooks',
 		];
 
 		foreach ( $actions as $action ) {
@@ -386,6 +389,49 @@ class Admin_Ajax {
 
 		wp_send_json_success( [
 			'message' => __( 'Settings saved.', 'wp4odoo' ),
+		] );
+	}
+
+	// ─── Onboarding ────────────────────────────────────────
+
+	/**
+	 * Dismiss the onboarding setup notice.
+	 *
+	 * @return void
+	 */
+	public function dismiss_onboarding(): void {
+		$this->verify_request();
+
+		update_option( 'wp4odoo_onboarding_dismissed', true );
+
+		wp_send_json_success();
+	}
+
+	/**
+	 * Dismiss the setup checklist.
+	 *
+	 * @return void
+	 */
+	public function dismiss_checklist(): void {
+		$this->verify_request();
+
+		update_option( 'wp4odoo_checklist_dismissed', true );
+
+		wp_send_json_success();
+	}
+
+	/**
+	 * Confirm that webhooks have been configured in Odoo.
+	 *
+	 * @return void
+	 */
+	public function confirm_webhooks(): void {
+		$this->verify_request();
+
+		update_option( 'wp4odoo_checklist_webhooks_confirmed', true );
+
+		wp_send_json_success( [
+			'message' => __( 'Webhooks marked as configured.', 'wp4odoo' ),
 		] );
 	}
 

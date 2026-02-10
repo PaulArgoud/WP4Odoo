@@ -16,8 +16,10 @@ Modular WordPress plugin providing comprehensive, bidirectional integration betw
 - **Webhooks** — REST API endpoints for real-time notifications from Odoo, with per-IP rate limiting
 - **Encrypted Credentials** — API keys encrypted at rest with libsodium (OpenSSL fallback)
 - **Admin Dashboard** — 5-tab settings interface: Connection, Sync, Modules, Queue, Logs
+- **Onboarding** — Post-activation redirect, setup notice, 3-step checklist with progress bar, inline Odoo documentation (API keys, webhooks)
+- **WP-CLI** — Full command suite: `wp wp4odoo status|test|sync|queue|module` for headless management
 - **Extensible** — Register custom modules via `wp4odoo_register_modules` action hook; filter data with `wp4odoo_map_to_odoo_*` / `wp4odoo_map_from_odoo_*`
-- **Internationalized** — English source strings, French translation included
+- **Internationalized** — English source strings, French translation included (249 strings)
 
 ## Requirements
 
@@ -43,10 +45,10 @@ Modular WordPress plugin providing comprehensive, bidirectional integration betw
 
 Each Odoo domain is encapsulated in an independent module extending `Module_Base`:
 
-| Module | Odoo Models | Key Features |
-|--------|-------------|--------------|
-| **CRM** | `res.partner`, `crm.lead` | Contact sync, lead form shortcode, email dedup, archive-on-delete |
-| **Sales** | `product.template`, `sale.order`, `account.move` | Order/invoice CPTs, customer portal shortcode, currency display |
+| Module          | Odoo Models                                                                        | Key Features                                                                                                                       |
+|-----------------|------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------|
+| **CRM**         | `res.partner`, `crm.lead`                                                          | Contact sync, lead form shortcode, email dedup, archive-on-delete                                                                  |
+| **Sales**       | `product.template`, `sale.order`, `account.move`                                   | Order/invoice CPTs, customer portal shortcode, currency display                                                                    |
 | **WooCommerce** | `product.template`, `product.product`, `sale.order`, `stock.quant`, `account.move` | WC-native product/order/stock sync, product variants, product image pull, multi-currency guard, bulk import/export, status mapping |
 
 Third-party modules can be registered:
@@ -77,10 +79,10 @@ All synchronization goes through a persistent database queue — no Odoo API cal
 
 ## Shortcodes
 
-| Shortcode | Description |
-|-----------|-------------|
+| Shortcode                   | Description                                                                                       |
+|-----------------------------|---------------------------------------------------------------------------------------------------|
 | `[wp4odoo_customer_portal]` | Customer portal with Orders and Invoices tabs (requires logged-in user linked to an Odoo partner) |
-| `[wp4odoo_lead_form]` | Lead capture form with AJAX submission, creates `crm.lead` in Odoo |
+| `[wp4odoo_lead_form]`       | Lead capture form with AJAX submission, creates `crm.lead` in Odoo                                |
 
 ## REST API
 
@@ -96,7 +98,7 @@ Namespace: `wp-json/wp4odoo/v1/`
 
 ### Actions
 
-| Hook | Description |
+| Hook                       | Description                                       |
 |----------------------------|---------------------------------------------------|
 | `wp4odoo_init`             | Plugin initialized                                |
 | `wp4odoo_loaded`           | All plugins loaded                                |
@@ -106,11 +108,27 @@ Namespace: `wp-json/wp4odoo/v1/`
 
 ### Filters
 
-| Filter | Description |
-|--------|-------------|
-| `wp4odoo_map_to_odoo_{module}_{entity}` | Modify data before push to Odoo |
+| Filter                                    | Description                       |
+|-------------------------------------------|-----------------------------------|
+| `wp4odoo_map_to_odoo_{module}_{entity}`   | Modify data before push to Odoo   |
 | `wp4odoo_map_from_odoo_{module}_{entity}` | Modify data during pull from Odoo |
-| `wp4odoo_ssl_verify` | Enable/disable SSL verification |
+| `wp4odoo_ssl_verify`                      | Enable/disable SSL verification   |
+
+## WP-CLI
+
+```bash
+wp wp4odoo status                    # Connection info, queue stats, modules
+wp wp4odoo test                      # Test Odoo connection
+wp wp4odoo sync run                  # Process sync queue
+wp wp4odoo queue stats               # Queue statistics
+wp wp4odoo queue list --page=1       # Paginated job list
+wp wp4odoo queue retry               # Retry all failed jobs
+wp wp4odoo queue cleanup --days=7    # Delete old completed/failed jobs
+wp wp4odoo queue cancel 42           # Cancel a pending job
+wp wp4odoo module list               # List modules with status
+wp wp4odoo module enable crm         # Enable a module
+wp wp4odoo module disable crm        # Disable a module
+```
 
 ## Development
 
@@ -123,7 +141,7 @@ php composer.phar install
 # Run PHPUnit tests (138 tests, 215 assertions)
 php vendor/bin/phpunit
 
-# Run PHPStan static analysis (level 5, 0 errors)
+# Run PHPStan static analysis (level 5, 0 errors on 40 files)
 php -d memory_limit=1G vendor/bin/phpstan analyse --memory-limit=1G
 ```
 

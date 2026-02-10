@@ -28,6 +28,8 @@
 			this.bindLogPagination();
 			this.bindLogContextExpand();
 			this.bindConnectionValidation();
+			this.bindDismissChecklist();
+			this.bindConfirmWebhooks();
 		},
 
 		/**
@@ -359,18 +361,7 @@
 					);
 				} );
 
-				// Pagination.
-				var $pag = $( '#wp4odoo-logs-pagination' );
-				$pag.empty();
-				if ( data.pages > 1 ) {
-					for ( var i = 1; i <= data.pages; i++ ) {
-						if ( i === data.page ) {
-							$pag.append( '<span class="tablenav-pages-navspan button disabled">' + i + '</span> ' );
-						} else {
-							$pag.append( '<a href="#" class="button wp4odoo-log-page" data-page="' + i + '">' + i + '</a> ' );
-						}
-					}
-				}
+				WP4Odoo.renderPagination( '#wp4odoo-logs-pagination', 'wp4odoo-log-page', data );
 			}, $btn );
 		},
 
@@ -463,18 +454,7 @@
 					);
 				} );
 
-				// Pagination.
-				var $pag = $( '#wp4odoo-queue-pagination' );
-				$pag.empty();
-				if ( data.pages > 1 ) {
-					for ( var i = 1; i <= data.pages; i++ ) {
-						if ( i === data.page ) {
-							$pag.append( '<span class="tablenav-pages-navspan button disabled">' + i + '</span> ' );
-						} else {
-							$pag.append( '<a href="#" class="button wp4odoo-queue-page" data-page="' + i + '">' + i + '</a> ' );
-						}
-					}
-				}
+				WP4Odoo.renderPagination( '#wp4odoo-queue-pagination', 'wp4odoo-queue-page', data );
 			}, null );
 		},
 
@@ -482,6 +462,77 @@
 			$( document ).on( 'click', '.wp4odoo-queue-page', function( e ) {
 				e.preventDefault();
 				WP4Odoo.fetchQueue( $( this ).data( 'page' ) );
+			} );
+		},
+
+		// ─── Shared helpers ─────────────────────────────────────
+
+		/**
+		 * Render pagination buttons into a container.
+		 *
+		 * @param {string} containerId jQuery selector for the pagination wrapper.
+		 * @param {string} pageClass   CSS class added to each page link.
+		 * @param {object} data        Response data with `pages` and `page` properties.
+		 */
+		renderPagination: function( containerId, pageClass, data ) {
+			var $pag = $( containerId );
+			$pag.empty();
+			if ( data.pages > 1 ) {
+				for ( var i = 1; i <= data.pages; i++ ) {
+					if ( i === data.page ) {
+						$pag.append( '<span class="tablenav-pages-navspan button disabled">' + i + '</span> ' );
+					} else {
+						$pag.append( '<a href="#" class="button ' + pageClass + '" data-page="' + i + '">' + i + '</a> ' );
+					}
+				}
+			}
+		},
+
+		// ─── Setup checklist ────────────────────────────────────
+
+		bindDismissChecklist: function() {
+			$( document ).on( 'click', '.wp4odoo-checklist-dismiss', function() {
+				var $checklist = $( this ).closest( '.wp4odoo-checklist' );
+				var nonce = $checklist.data( 'nonce' );
+
+				$checklist.slideUp( 200, function() { $( this ).remove(); } );
+
+				$.post( wp4odooAdmin.ajaxurl, {
+					action: 'wp4odoo_dismiss_checklist',
+					_ajax_nonce: nonce
+				} );
+			} );
+		},
+
+		bindConfirmWebhooks: function() {
+			$( document ).on( 'click', '.wp4odoo-checklist-action[data-action="wp4odoo_confirm_webhooks"]', function( e ) {
+				e.preventDefault();
+				var $link      = $( this );
+				var $checklist = $link.closest( '.wp4odoo-checklist' );
+				var nonce      = $checklist.data( 'nonce' );
+				var $li        = $link.closest( 'li' );
+
+				$.post( wp4odooAdmin.ajaxurl, {
+					action: 'wp4odoo_confirm_webhooks',
+					_ajax_nonce: nonce
+				}, function( response ) {
+					if ( response.success ) {
+						$li.addClass( 'done' ).find( '.wp4odoo-checklist-icon' ).html( '&#10003;' );
+						$link.replaceWith( $link.text() );
+
+						// Check if all steps are now done.
+						var $steps = $checklist.find( '.wp4odoo-checklist-steps li' );
+						var doneCount = $steps.filter( '.done' ).length;
+						if ( doneCount === $steps.length ) {
+							$checklist.slideUp( 200, function() { $( this ).remove(); } );
+						} else {
+							// Update progress bar and text.
+							var pct = Math.round( ( doneCount / $steps.length ) * 100 );
+							$checklist.find( '.wp4odoo-checklist-bar-fill' ).css( 'width', pct + '%' );
+							$checklist.find( '.wp4odoo-checklist-progress-text' ).text( doneCount + ' / ' + $steps.length + ' completed' );
+						}
+					}
+				} );
 			} );
 		},
 

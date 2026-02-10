@@ -254,6 +254,134 @@
 	-webkit-overflow-scrolling: touch;
 }
 
+/* --- Inline help sections --- */
+.wp4odoo-help-section {
+	margin-top: 10px;
+}
+
+.wp4odoo-help-section summary {
+	cursor: pointer;
+	color: #2271b1;
+	font-size: 13px;
+	font-weight: 500;
+}
+
+.wp4odoo-help-section summary:hover {
+	color: #135e96;
+}
+
+.wp4odoo-help-content {
+	padding: 10px 0 0 16px;
+	font-size: 13px;
+	color: #1d2327;
+}
+
+.wp4odoo-help-content h4 {
+	margin: 12px 0 6px;
+	font-size: 13px;
+}
+
+.wp4odoo-help-content ol,
+.wp4odoo-help-content ul {
+	margin: 4px 0 8px 20px;
+}
+
+.wp4odoo-help-content li {
+	margin-bottom: 4px;
+}
+
+.wp4odoo-getting-started {
+	background: #f0f6fc;
+	border: 1px solid #c3c4c7;
+	border-left-width: 4px;
+	border-left-color: #2271b1;
+	padding: 12px 16px;
+	margin-bottom: 16px;
+}
+
+.wp4odoo-code-block {
+	background: #f0f0f1;
+	border: 1px solid #c3c4c7;
+	padding: 10px 14px;
+	font-size: 12px;
+	overflow-x: auto;
+	margin-top: 6px;
+}
+
+/* --- Setup checklist --- */
+.wp4odoo-checklist {
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	border-left-width: 4px;
+	border-left-color: #2271b1;
+	padding: 16px 20px;
+	margin: 16px 0;
+}
+
+.wp4odoo-checklist-header {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.wp4odoo-checklist-progress-text {
+	font-size: 13px;
+	color: #50575e;
+}
+
+.wp4odoo-checklist-dismiss {
+	margin-left: auto;
+	background: none;
+	border: none;
+	cursor: pointer;
+	font-size: 18px;
+	color: #50575e;
+	padding: 0 4px;
+	line-height: 1;
+}
+
+.wp4odoo-checklist-dismiss:hover {
+	color: #d63638;
+}
+
+.wp4odoo-checklist-bar {
+	height: 6px;
+	background: #e0e0e0;
+	border-radius: 3px;
+	margin: 12px 0;
+	overflow: hidden;
+}
+
+.wp4odoo-checklist-bar-fill {
+	height: 100%;
+	background: #00a32a;
+	border-radius: 3px;
+	transition: width 0.3s ease;
+}
+
+.wp4odoo-checklist-steps {
+	margin: 0;
+	padding-left: 0;
+	list-style: none;
+}
+
+.wp4odoo-checklist-steps li {
+	padding: 4px 0;
+	font-size: 13px;
+	color: #50575e;
+}
+
+.wp4odoo-checklist-steps li.done {
+	color: #00a32a;
+}
+
+.wp4odoo-checklist-icon {
+	display: inline-block;
+	width: 18px;
+	text-align: center;
+	margin-right: 6px;
+}
+
 /* --- Responsive --- */
 @media (max-width: 782px) {
 	.wp4odoo-stats-grid {

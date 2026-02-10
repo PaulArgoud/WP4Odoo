@@ -6,7 +6,7 @@
  * @package WP4Odoo
  */
 
-define( 'WP4ODOO_VERSION', '1.8.0' );
+define( 'WP4ODOO_VERSION', '1.9.0' );
 define( 'WP4ODOO_PLUGIN_FILE', __DIR__ . '/wp4odoo.php' );
 define( 'WP4ODOO_PLUGIN_DIR', __DIR__ . '/' );
 define( 'WP4ODOO_PLUGIN_URL', 'https://example.com/wp-content/plugins/wp4odoo/' );
@@ -152,3 +152,23 @@ if ( ! class_exists( 'WC_DateTime' ) ) {
 	class WC_DateTime extends \DateTime {
 	}
 }
+
+// ─── WP-CLI stubs ───────────────────────────────────────
+
+if ( ! defined( 'WP_CLI' ) ) {
+	define( 'WP_CLI', false );
+}
+
+if ( ! class_exists( 'WP_CLI' ) ) {
+	class WP_CLI {
+		/** @param string $command */
+		public static function add_command( string $command, string $class ): void {}
+		public static function line( string $message = '' ): void {}
+		public static function success( string $message ): void {}
+		public static function warning( string $message ): void {}
+		public static function error( string $message ): void {}
+	}
+}
+
+// WP_CLI\Utils namespace stub loaded from separate file (PHP namespace rules).
+require_once __DIR__ . '/phpstan-wp-cli-stubs.php';

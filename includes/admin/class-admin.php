@@ -39,6 +39,9 @@ class Admin {
 		add_action( 'admin_menu', [ $this, 'register_menu' ] );
 		add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_assets' ] );
 		add_filter( 'plugin_action_links_' . WP4ODOO_PLUGIN_BASENAME, [ $this, 'add_settings_link' ] );
+
+		add_action( 'admin_init', [ $this, 'maybe_redirect_after_activation' ] );
+		add_action( 'admin_notices', [ $this, 'maybe_show_setup_notice' ] );
 	}
 
 	/**
@@ -109,6 +112,83 @@ class Admin {
 				'statusFailed'      => __( 'Failed', 'wp4odoo' ),
 			],
 		] );
+	}
+
+	/**
+	 * Redirect to settings page after first activation.
+	 *
+	 * Consumes the transient set by activate(). Skips bulk activations,
+	 * AJAX requests and WP-CLI context.
+	 *
+	 * @return void
+	 */
+	public function maybe_redirect_after_activation(): void {
+		if ( ! get_transient( 'wp4odoo_activated' ) ) {
+			return;
+		}
+
+		delete_transient( 'wp4odoo_activated' );
+
+		// Skip when activating multiple plugins at once.
+		if ( isset( $_GET['activate-multi'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+			return;
+		}
+
+		// Skip AJAX and CLI contexts.
+		if ( wp_doing_ajax() || ( defined( 'WP_CLI' ) && WP_CLI ) ) {
+			return;
+		}
+
+		wp_safe_redirect( admin_url( 'admin.php?page=wp4odoo' ) );
+		exit;
+	}
+
+	/**
+	 * Show a setup notice when the connection is not yet configured.
+	 *
+	 * Displayed on all admin pages until dismissed or configured.
+	 *
+	 * @return void
+	 */
+	public function maybe_show_setup_notice(): void {
+		if ( get_option( 'wp4odoo_onboarding_dismissed' ) ) {
+			return;
+		}
+
+		$connection = get_option( 'wp4odoo_connection', [] );
+		if ( ! empty( $connection['url'] ) ) {
+			return;
+		}
+
+		$settings_url = esc_url( admin_url( 'admin.php?page=wp4odoo' ) );
+
+		printf(
+			'<div class="notice notice-info is-dismissible wp4odoo-setup-notice" data-nonce="%s">'
+			. '<p><strong>%s</strong> %s <a href="%s">%s</a></p>'
+			. '</div>',
+			esc_attr( wp_create_nonce( 'wp4odoo_admin' ) ),
+			esc_html__( 'WordPress For Odoo', 'wp4odoo' ),
+			esc_html__( 'is almost ready! Configure your Odoo connection to get started.', 'wp4odoo' ),
+			$settings_url,
+			esc_html__( 'Go to settings', 'wp4odoo' )
+		);
+
+		// Inline dismiss script — lightweight, no need to enqueue admin.js everywhere.
+		?>
+		<script>
+		(function(){
+			document.addEventListener('click', function(e) {
+				var notice = e.target.closest('.wp4odoo-setup-notice');
+				if ( notice && e.target.closest('.notice-dismiss') ) {
+					var xhr = new XMLHttpRequest();
+					xhr.open('POST', '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>');
+					xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+					xhr.send('action=wp4odoo_dismiss_onboarding&_ajax_nonce=' + notice.dataset.nonce);
+				}
+			});
+		})();
+		</script>
+		<?php
 	}
 
 	/**
