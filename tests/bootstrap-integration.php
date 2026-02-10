@@ -21,20 +21,22 @@ if ( ! file_exists( $_tests_dir . '/includes/functions.php' ) ) {
 require_once $_tests_dir . '/includes/functions.php';
 
 /**
- * Load the plugin and create tables before WordPress finishes booting.
+ * Force-load the plugin as a must-use plugin during the test run.
  */
 tests_add_filter(
 	'muplugins_loaded',
 	function () {
 		require dirname( __DIR__ ) . '/wp4odoo.php';
-
-		// dbDelta() lives in upgrade.php — must be loaded before create_tables().
-		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
-		\WP4Odoo\Database_Migration::create_tables();
 	}
 );
 
 require $_tests_dir . '/includes/bootstrap.php';
+
+// Create plugin tables AFTER WordPress is fully installed and booted.
+// dbDelta() is not reliably available during muplugins_loaded in the
+// wp-env test framework — calling it here ensures $wpdb and upgrade.php
+// are both ready.
+\WP4Odoo\Database_Migration::create_tables();
 
 // Load the PHPUnit 10+ compatibility base class (WP core Trac #62004 workaround).
 require_once __DIR__ . '/Integration/WP4Odoo_TestCase.php';
