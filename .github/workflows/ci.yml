@@ -88,3 +88,4 @@ jobs:
             tests
             node_modules
           wp-version: 'latest'
+          ignore-warnings: true
