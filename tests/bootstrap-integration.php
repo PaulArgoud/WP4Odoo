@@ -32,3 +32,6 @@ tests_add_filter(
 );
 
 require $_tests_dir . '/includes/bootstrap.php';
+
+// Load the PHPUnit 10+ compatibility base class (WP core Trac #62004 workaround).
+require_once __DIR__ . '/Integration/WP4Odoo_TestCase.php';

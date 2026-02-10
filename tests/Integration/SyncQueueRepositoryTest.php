@@ -4,7 +4,6 @@ declare( strict_types=1 );
 namespace WP4Odoo\Tests\Integration;
 
 use WP4Odoo\Sync_Queue_Repository;
-use WP_UnitTestCase;
 
 /**
  * Integration tests for Sync_Queue_Repository.
@@ -14,7 +13,7 @@ use WP_UnitTestCase;
  *
  * @package WP4Odoo\Tests\Integration
  */
-class SyncQueueRepositoryTest extends WP_UnitTestCase {
+class SyncQueueRepositoryTest extends WP4Odoo_TestCase {
 
 	// ─── enqueue ───────────────────────────────────────────
 

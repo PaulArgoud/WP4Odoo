@@ -4,7 +4,6 @@ declare( strict_types=1 );
 namespace WP4Odoo\Tests\Integration;
 
 use WP4Odoo\Database_Migration;
-use WP_UnitTestCase;
 
 /**
  * Integration tests for Database_Migration.
@@ -14,7 +13,7 @@ use WP_UnitTestCase;
  *
  * @package WP4Odoo\Tests\Integration
  */
-class DatabaseMigrationTest extends WP_UnitTestCase {
+class DatabaseMigrationTest extends WP4Odoo_TestCase {
 
 	// ─── Table creation ────────────────────────────────────
 

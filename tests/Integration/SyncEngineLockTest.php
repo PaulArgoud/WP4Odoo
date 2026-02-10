@@ -4,7 +4,6 @@ declare( strict_types=1 );
 namespace WP4Odoo\Tests\Integration;
 
 use WP4Odoo\Sync_Engine;
-use WP_UnitTestCase;
 
 /**
  * Integration tests for Sync_Engine advisory locking.
@@ -14,7 +13,7 @@ use WP_UnitTestCase;
  *
  * @package WP4Odoo\Tests\Integration
  */
-class SyncEngineLockTest extends WP_UnitTestCase {
+class SyncEngineLockTest extends WP4Odoo_TestCase {
 
 	public function test_process_queue_returns_zero_when_queue_empty(): void {
 		$engine = new Sync_Engine();

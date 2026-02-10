@@ -4,7 +4,6 @@ declare( strict_types=1 );
 namespace WP4Odoo\Tests\Integration;
 
 use WP4Odoo\Entity_Map_Repository;
-use WP_UnitTestCase;
 
 /**
  * Integration tests for Entity_Map_Repository.
@@ -14,7 +13,7 @@ use WP_UnitTestCase;
  *
  * @package WP4Odoo\Tests\Integration
  */
-class EntityMapRepositoryTest extends WP_UnitTestCase {
+class EntityMapRepositoryTest extends WP4Odoo_TestCase {
 
 	protected function setUp(): void {
 		parent::setUp();
