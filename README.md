@@ -2,11 +2,11 @@
 
 [![CI](https://github.com/PaulArgoud/wordpress-for-odoo/actions/workflows/ci.yml/badge.svg)](https://github.com/PaulArgoud/wordpress-for-odoo/actions/workflows/ci.yml)
 
-Modular WordPress plugin providing comprehensive, bidirectional integration between WordPress/WooCommerce and Odoo ERP (v14+). Covers CRM, Sales & Invoicing, and WooCommerce synchronization through a clean, extensible architecture.
+Modular WordPress plugin providing comprehensive, bidirectional integration between WordPress/WooCommerce and Odoo ERP (v14+). Covers CRM, Sales & Invoicing, and WooCommerce synchronization through a clean, extensible architecture. Ships in **3 languages** (English, French, Spanish) and is fully translation-ready.
 
 **Target users:** WordPress agencies and businesses running Odoo as their ERP who need seamless data flow between their website and back-office.
 
-![WordPress For Odoo (WP4Odoo)](assets/images/logo.avif)
+![WordPress For Odoo (WP4Odoo)](assets/images/logo-v2.avif)
 
 ## Features
 
@@ -21,7 +21,7 @@ Modular WordPress plugin providing comprehensive, bidirectional integration betw
 - **Onboarding** — Post-activation redirect, setup notice, 3-step checklist with progress bar, inline Odoo documentation (API keys, webhooks)
 - **WP-CLI** — Full command suite: `wp wp4odoo status|test|sync|queue|module` for headless management
 - **Extensible** — Register custom modules via `wp4odoo_register_modules` action hook; filter data with `wp4odoo_map_to_odoo_*` / `wp4odoo_map_from_odoo_*`
-- **Internationalized** — English source strings, French translation included (249 strings)
+- **Multilingual (3 languages)** — Fully internationalized with WordPress standard Gettext i18n. Ships with English (source), French, and Spanish translations (252 strings). Translation-ready for additional languages via `.po`/`.mo` files
 
 ## Requirements
 
@@ -154,14 +154,17 @@ After adding or changing user-facing strings:
 ```bash
 # Extract strings
 xgettext --language=PHP --keyword=__ --keyword=_e --keyword=esc_html__ \
-    --keyword=esc_html_e --from-code=UTF-8 -o languages/wp4odoo.pot \
+    --keyword=esc_html_e --keyword=esc_attr__ --keyword=esc_attr_e \
+    --from-code=UTF-8 -o languages/wp4odoo.pot \
     wp4odoo.php includes/**/*.php admin/views/*.php templates/*.php
 
-# Update French translation
+# Update translations
 msgmerge --update languages/wp4odoo-fr_FR.po languages/wp4odoo.pot
+msgmerge --update languages/wp4odoo-es_ES.po languages/wp4odoo.pot
 
 # Compile
 msgfmt -o languages/wp4odoo-fr_FR.mo languages/wp4odoo-fr_FR.po
+msgfmt -o languages/wp4odoo-es_ES.mo languages/wp4odoo-es_ES.po
 ```
 
 ## License

@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.9.5] - 2026-02-10
+
+### Added
+
+#### Translations — Spanish (es_ES)
+- New `wp4odoo-es_ES.po` / `.mo` — complete Spanish translation (252 strings, 0 fuzzy, 0 untranslated)
+
+### Fixed
+
+#### Consistency
+- `tests/bootstrap.php` — fixed stale `WP4ODOO_VERSION` constant (was 1.9.2, now matches plugin version)
+- `README.md` — fixed i18n string count (was 249, now 252 matching actual `.po` count since 1.9.3)
+- `ARCHITECTURE.md` — fixed `logo.avif` → `logo-v2.avif` to match actual file; corrected individual test counts for 10 files; added missing `WebhookHandlerTest` (16 tests) entry; added Spanish language files to directory tree; removed stale internal tooling reference from directory tree
+
+### Changed
+
+#### Documentation
+- `README.md` — multilingual support now prominently highlighted: intro paragraph mentions "Ships in **3 languages**", feature bullet renamed from "Internationalized" to "Multilingual (3 languages)" with Gettext mention and translation-ready note
+- `ARCHITECTURE.md` — removed internal tooling reference from directory tree
+
+- Plugin version bumped from 1.9.4 to 1.9.5
+- PHPUnit: 416 tests, 811 assertions — all green
+- PHPStan: 0 errors on 41 files
+- Translations: 252 strings × 2 languages (FR, ES), 0 fuzzy, 0 untranslated
+
 ## [1.9.4] - 2026-02-10
 
 ### Added
@@ -31,16 +56,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Webhook_Handler` — added `args` schema (module, entity_type, odoo_id, action) to `/webhook` POST route for REST API validation
 
 #### Assets
-- Added `assets/images/logo.avif` — plugin logo displayed in README
+- Added `assets/images/logo-v2.avif` — plugin logo displayed in README
+
+#### Translations
+- Added Spanish translation (`wp4odoo-es_ES.po` / `.mo`) — 252 strings, 0 fuzzy, 0 untranslated
+- Updated i18n string count in README.md from 249 to 252
+
+#### Consistency Fixes
+- `tests/bootstrap.php` — fixed stale `WP4ODOO_VERSION` constant (was 1.9.2, now 1.9.4)
+- `ARCHITECTURE.md` — corrected individual test counts for 10 files (FieldMapper 49, Logger 33, SettingsPage 20, ContactRefiner 19, WebhookHandler 16, SyncEngine 15, QueryService 15, CLI 15, OdooAuth 14, OdooClient 14, SyncQueueRepository 31); added missing `WebhookHandlerTest` entry; fixed `logo.avif` → `logo-v2.avif`; added Spanish language files to directory tree
 
 #### Documentation
-- `ARCHITECTURE.md` — added AdminAjaxTest (33 tests) to directory tree, updated test counts for SyncQueueRepository (30), EntityMapRepository (19), BulkSync (17), total (416/811); added `assets/images/` listing (architecture.svg, logo.avif)
-- `README.md` — updated test counts (416/811), added plugin logo image
+- `ARCHITECTURE.md` — added AdminAjaxTest (33 tests) to directory tree, updated total (416/811); added `assets/images/` listing (architecture.svg, logo-v2.avif)
+- `README.md` — updated test counts (416/811), added plugin logo image, updated i18n count (252 strings, FR + ES)
 
 #### Verification
 - PHPUnit: 416 tests, 811 assertions — all green (was 356/704)
 - PHPStan: 0 errors on 41 files
-- Translations: 252 strings, 0 fuzzy, 0 untranslated (unchanged)
+- Translations: 252 strings × 2 languages (FR, ES), 0 fuzzy, 0 untranslated
 - Plugin version bumped from 1.9.3 to 1.9.4
 
 ## [1.9.3] - 2026-02-10

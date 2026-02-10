@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: WP4Odoo 1.9.4\n"
+"Project-Id-Version: WP4Odoo 1.9.5\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-02-10 16:21+0100\n"
+"POT-Creation-Date: 2026-02-10 16:45+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -23,6 +23,66 @@ msgstr ""
 
 #: wp4odoo.php:232
 msgid "Every 15 Minutes"
+msgstr ""
+
+#: includes/admin/class-admin-ajax.php:62
+#: includes/modules/class-portal-manager.php:134
+msgid "Permission denied."
+msgstr ""
+
+#: includes/admin/class-admin-ajax.php:135
+#, php-format
+msgid "%d job(s) retried."
+msgstr ""
+
+#: includes/admin/class-admin-ajax.php:156
+#, php-format
+msgid "%d job(s) deleted."
+msgstr ""
+
+#: includes/admin/class-admin-ajax.php:175
+msgid "Job cancelled."
+msgstr ""
+
+#: includes/admin/class-admin-ajax.php:179
+msgid "Unable to cancel this job."
+msgstr ""
+
+#: includes/admin/class-admin-ajax.php:199
+#, php-format
+msgid "%d log entry(ies) deleted."
+msgstr ""
+
+#: includes/admin/class-admin-ajax.php:309
+#: includes/admin/class-admin-ajax.php:345
+msgid "Missing module identifier."
+msgstr ""
+
+#: includes/admin/class-admin-ajax.php:321
+#, php-format
+msgid "Module \"%s\" enabled."
+msgstr ""
+
+#: includes/admin/class-admin-ajax.php:326
+#, php-format
+msgid "Module \"%s\" disabled."
+msgstr ""
+
+#: includes/admin/class-admin-ajax.php:353
+msgid "Unknown module."
+msgstr ""
+
+#: includes/admin/class-admin-ajax.php:391 includes/admin/class-admin.php:102
+msgid "Settings saved."
+msgstr ""
+
+#: includes/admin/class-admin-ajax.php:434
+msgid "Webhooks marked as configured."
+msgstr ""
+
+#: includes/admin/class-admin-ajax.php:451
+#: includes/admin/class-admin-ajax.php:470
+msgid "WooCommerce module is not registered."
 msgstr ""
 
 #: includes/admin/class-admin.php:54 includes/admin/class-admin.php:55
@@ -59,10 +119,6 @@ msgstr ""
 
 #: includes/admin/class-admin.php:101
 msgid "No results."
-msgstr ""
-
-#: includes/admin/class-admin.php:102 includes/admin/class-admin-ajax.php:391
-msgid "Settings saved."
 msgstr ""
 
 #: includes/admin/class-admin.php:103
@@ -131,60 +187,22 @@ msgstr ""
 msgid "Settings"
 msgstr ""
 
-#: includes/admin/class-admin-ajax.php:62
-#: includes/modules/class-portal-manager.php:134
-msgid "Permission denied."
+#: includes/admin/class-bulk-handler.php:81
+msgid "No products found in Odoo."
 msgstr ""
 
-#: includes/admin/class-admin-ajax.php:135
+#: includes/admin/class-bulk-handler.php:89
 #, php-format
-msgid "%d job(s) retried."
+msgid "%d product(s) enqueued for import."
 msgstr ""
 
-#: includes/admin/class-admin-ajax.php:156
+#: includes/admin/class-bulk-handler.php:135
+msgid "No WooCommerce products found."
+msgstr ""
+
+#: includes/admin/class-bulk-handler.php:143
 #, php-format
-msgid "%d job(s) deleted."
-msgstr ""
-
-#: includes/admin/class-admin-ajax.php:175
-msgid "Job cancelled."
-msgstr ""
-
-#: includes/admin/class-admin-ajax.php:179
-msgid "Unable to cancel this job."
-msgstr ""
-
-#: includes/admin/class-admin-ajax.php:199
-#, php-format
-msgid "%d log entry(ies) deleted."
-msgstr ""
-
-#: includes/admin/class-admin-ajax.php:309
-#: includes/admin/class-admin-ajax.php:345
-msgid "Missing module identifier."
-msgstr ""
-
-#: includes/admin/class-admin-ajax.php:321
-#, php-format
-msgid "Module \"%s\" enabled."
-msgstr ""
-
-#: includes/admin/class-admin-ajax.php:326
-#, php-format
-msgid "Module \"%s\" disabled."
-msgstr ""
-
-#: includes/admin/class-admin-ajax.php:353
-msgid "Unknown module."
-msgstr ""
-
-#: includes/admin/class-admin-ajax.php:434
-msgid "Webhooks marked as configured."
-msgstr ""
-
-#: includes/admin/class-admin-ajax.php:451
-#: includes/admin/class-admin-ajax.php:470
-msgid "WooCommerce module is not registered."
+msgid "%d product(s) enqueued for export."
 msgstr ""
 
 #: includes/admin/class-settings-page.php:36
@@ -219,24 +237,6 @@ msgstr ""
 msgid "Configure webhooks in Odoo"
 msgstr ""
 
-#: includes/admin/class-bulk-handler.php:81
-msgid "No products found in Odoo."
-msgstr ""
-
-#: includes/admin/class-bulk-handler.php:89
-#, php-format
-msgid "%d product(s) enqueued for import."
-msgstr ""
-
-#: includes/admin/class-bulk-handler.php:135
-msgid "No WooCommerce products found."
-msgstr ""
-
-#: includes/admin/class-bulk-handler.php:143
-#, php-format
-msgid "%d product(s) enqueued for export."
-msgstr ""
-
 #: includes/api/class-odoo-auth.php:174
 msgid "Missing connection credentials."
 msgstr ""
@@ -251,11 +251,6 @@ msgstr ""
 
 #: includes/api/class-odoo-client.php:73
 msgid "Odoo credentials not configured."
-msgstr ""
-
-#: includes/api/trait-retryable-http.php:61
-#, php-format
-msgid "HTTP error: %s"
 msgstr ""
 
 #: includes/api/class-odoo-jsonrpc.php:105
@@ -293,6 +288,102 @@ msgstr ""
 #: includes/api/class-odoo-xmlrpc.php:220
 #, php-format
 msgid "Odoo XML-RPC error: %s"
+msgstr ""
+
+#: includes/api/trait-retryable-http.php:61
+#, php-format
+msgid "HTTP error: %s"
+msgstr ""
+
+#: includes/class-module-base.php:457
+#, php-format
+msgid "Entity type \"%1$s\" is not registered in module \"%2$s\"."
+msgstr ""
+
+#: includes/class-sync-engine.php:183
+#, php-format
+msgid "Module \"%s\" not found or not registered."
+msgstr ""
+
+#: includes/class-webhook-handler.php:138
+msgid "Missing required fields: module, entity_type, odoo_id."
+msgstr ""
+
+#: includes/class-webhook-handler.php:201
+#, php-format
+msgid "Module \"%s\" not found."
+msgstr ""
+
+#: includes/class-webhook-handler.php:221
+msgid "Provide either wp_id (for push) or odoo_id (for pull)."
+msgstr ""
+
+#: includes/class-webhook-handler.php:266
+msgid "Webhook token not configured."
+msgstr ""
+
+#: includes/class-webhook-handler.php:278
+msgid "Invalid webhook token."
+msgstr ""
+
+#: includes/class-webhook-handler.php:299
+msgid "You do not have permission to perform this action."
+msgstr ""
+
+#: includes/class-webhook-handler.php:339
+msgid "Too many requests. Please try again later."
+msgstr ""
+
+#: includes/modules/class-crm-module.php:146
+msgid "Sync users as contacts"
+msgstr ""
+
+#: includes/modules/class-crm-module.php:148
+msgid "Push WordPress users to Odoo res.partner."
+msgstr ""
+
+#: includes/modules/class-crm-module.php:151
+msgid "Archive on delete"
+msgstr ""
+
+#: includes/modules/class-crm-module.php:153
+msgid "Set active=false in Odoo instead of deleting the record."
+msgstr ""
+
+#: includes/modules/class-crm-module.php:156
+msgid "Sync role"
+msgstr ""
+
+#: includes/modules/class-crm-module.php:158
+msgid "All roles"
+msgstr ""
+
+#: includes/modules/class-crm-module.php:159
+msgid "Only sync users with this role. Leave empty to sync all."
+msgstr ""
+
+#: includes/modules/class-crm-module.php:162
+msgid "Create users on pull"
+msgstr ""
+
+#: includes/modules/class-crm-module.php:164
+msgid "Create new WordPress users when pulling contacts from Odoo."
+msgstr ""
+
+#: includes/modules/class-crm-module.php:167
+msgid "Default user role"
+msgstr ""
+
+#: includes/modules/class-crm-module.php:170
+msgid "Role assigned to users created by Odoo pull."
+msgstr ""
+
+#: includes/modules/class-crm-module.php:173
+msgid "Enable lead form"
+msgstr ""
+
+#: includes/modules/class-crm-module.php:175
+msgid "Enable the [wp4odoo_lead_form] shortcode."
 msgstr ""
 
 #: includes/modules/class-lead-manager.php:58
@@ -378,56 +469,19 @@ msgstr ""
 msgid "Failed to save lead."
 msgstr ""
 
-#: includes/modules/class-crm-module.php:146
-msgid "Sync users as contacts"
+#: includes/modules/class-portal-manager.php:76
+#, php-format
+msgid "Please <a href=\"%s\">log in</a> to access your customer portal."
 msgstr ""
 
-#: includes/modules/class-crm-module.php:148
-msgid "Push WordPress users to Odoo res.partner."
+#: includes/modules/class-portal-manager.php:86
+msgid ""
+"Your account is not yet linked to an Odoo partner. Please contact the "
+"administrator."
 msgstr ""
 
-#: includes/modules/class-crm-module.php:151
-msgid "Archive on delete"
-msgstr ""
-
-#: includes/modules/class-crm-module.php:153
-msgid "Set active=false in Odoo instead of deleting the record."
-msgstr ""
-
-#: includes/modules/class-crm-module.php:156
-msgid "Sync role"
-msgstr ""
-
-#: includes/modules/class-crm-module.php:158
-msgid "All roles"
-msgstr ""
-
-#: includes/modules/class-crm-module.php:159
-msgid "Only sync users with this role. Leave empty to sync all."
-msgstr ""
-
-#: includes/modules/class-crm-module.php:162
-msgid "Create users on pull"
-msgstr ""
-
-#: includes/modules/class-crm-module.php:164
-msgid "Create new WordPress users when pulling contacts from Odoo."
-msgstr ""
-
-#: includes/modules/class-crm-module.php:167
-msgid "Default user role"
-msgstr ""
-
-#: includes/modules/class-crm-module.php:170
-msgid "Role assigned to users created by Odoo pull."
-msgstr ""
-
-#: includes/modules/class-crm-module.php:173
-msgid "Enable lead form"
-msgstr ""
-
-#: includes/modules/class-crm-module.php:175
-msgid "Enable the [wp4odoo_lead_form] shortcode."
+#: includes/modules/class-portal-manager.php:124
+msgid "Not authenticated."
 msgstr ""
 
 #: includes/modules/class-sales-module.php:130
@@ -531,21 +585,6 @@ msgstr ""
 msgid "No invoices found in Trash."
 msgstr ""
 
-#: includes/modules/class-portal-manager.php:76
-#, php-format
-msgid "Please <a href=\"%s\">log in</a> to access your customer portal."
-msgstr ""
-
-#: includes/modules/class-portal-manager.php:86
-msgid ""
-"Your account is not yet linked to an Odoo partner. Please contact the "
-"administrator."
-msgstr ""
-
-#: includes/modules/class-portal-manager.php:124
-msgid "Not authenticated."
-msgstr ""
-
 #: includes/modules/class-woocommerce-module.php:203
 msgid "Sync products"
 msgstr ""
@@ -584,264 +623,6 @@ msgstr ""
 
 #: includes/modules/class-woocommerce-module.php:225
 msgid "Automatically confirm orders in Odoo when created from WooCommerce."
-msgstr ""
-
-#: includes/class-sync-engine.php:183
-#, php-format
-msgid "Module \"%s\" not found or not registered."
-msgstr ""
-
-#: includes/class-module-base.php:457
-#, php-format
-msgid "Entity type \"%1$s\" is not registered in module \"%2$s\"."
-msgstr ""
-
-#: includes/class-webhook-handler.php:138
-msgid "Missing required fields: module, entity_type, odoo_id."
-msgstr ""
-
-#: includes/class-webhook-handler.php:201
-#, php-format
-msgid "Module \"%s\" not found."
-msgstr ""
-
-#: includes/class-webhook-handler.php:221
-msgid "Provide either wp_id (for push) or odoo_id (for pull)."
-msgstr ""
-
-#: includes/class-webhook-handler.php:266
-msgid "Webhook token not configured."
-msgstr ""
-
-#: includes/class-webhook-handler.php:278
-msgid "Invalid webhook token."
-msgstr ""
-
-#: includes/class-webhook-handler.php:299
-msgid "You do not have permission to perform this action."
-msgstr ""
-
-#: includes/class-webhook-handler.php:339
-msgid "Too many requests. Please try again later."
-msgstr ""
-
-#: admin/views/tab-modules.php:16
-msgid "Enable or disable synchronization modules."
-msgstr ""
-
-#: admin/views/tab-modules.php:44
-msgid "WooCommerce must be installed and activated to use this module."
-msgstr ""
-
-#: admin/views/tab-modules.php:48
-msgid ""
-"Enabling the WooCommerce module replaces the Sales module. Both cannot be "
-"active simultaneously."
-msgstr ""
-
-#: admin/views/tab-modules.php:155
-msgid "Save settings"
-msgstr ""
-
-#: admin/views/tab-modules.php:165
-msgid "No modules registered."
-msgstr ""
-
-#: admin/views/tab-logs.php:22
-msgid "All levels"
-msgstr ""
-
-#: admin/views/tab-logs.php:31
-msgid "All modules"
-msgstr ""
-
-#: admin/views/tab-logs.php:43
-msgid "From"
-msgstr ""
-
-#: admin/views/tab-logs.php:44
-msgid "To"
-msgstr ""
-
-#: admin/views/tab-logs.php:47
-msgid "Filter"
-msgstr ""
-
-#: admin/views/tab-logs.php:52
-msgid "Purge logs"
-msgstr ""
-
-#: admin/views/tab-logs.php:62
-msgid "Level"
-msgstr ""
-
-#: admin/views/tab-logs.php:63 admin/views/tab-queue.php:82
-msgid "Module"
-msgstr ""
-
-#: admin/views/tab-logs.php:65
-msgid "Context"
-msgstr ""
-
-#: admin/views/tab-logs.php:66 templates/customer-portal.php:39
-#: templates/customer-portal.php:84
-msgid "Date"
-msgstr ""
-
-#: admin/views/tab-logs.php:72
-msgid "No log entries."
-msgstr ""
-
-#: admin/views/tab-sync.php:23 admin/views/tab-queue.php:84
-msgid "Direction"
-msgstr ""
-
-#: admin/views/tab-sync.php:28
-msgid "Bidirectional"
-msgstr ""
-
-#: admin/views/tab-sync.php:31
-msgid "WordPress → Odoo"
-msgstr ""
-
-#: admin/views/tab-sync.php:34
-msgid "Odoo → WordPress"
-msgstr ""
-
-#: admin/views/tab-sync.php:41
-msgid "Conflict rule"
-msgstr ""
-
-#: admin/views/tab-sync.php:46
-msgid "Newest wins"
-msgstr ""
-
-#: admin/views/tab-sync.php:49
-msgid "Odoo priority"
-msgstr ""
-
-#: admin/views/tab-sync.php:52
-msgid "WordPress priority"
-msgstr ""
-
-#: admin/views/tab-sync.php:59
-msgid "Batch size"
-msgstr ""
-
-#: admin/views/tab-sync.php:66
-msgid "Number of jobs processed per cron run."
-msgstr ""
-
-#: admin/views/tab-sync.php:72
-msgid "Interval"
-msgstr ""
-
-#: admin/views/tab-sync.php:77
-msgid "Every 5 minutes"
-msgstr ""
-
-#: admin/views/tab-sync.php:80
-msgid "Every 15 minutes"
-msgstr ""
-
-#: admin/views/tab-sync.php:87
-msgid "Auto sync"
-msgstr ""
-
-#: admin/views/tab-sync.php:93
-msgid "Enable automatic sync via cron"
-msgstr ""
-
-#: admin/views/tab-sync.php:99
-msgid "Logging"
-msgstr ""
-
-#: admin/views/tab-sync.php:104
-msgid "Enable logging"
-msgstr ""
-
-#: admin/views/tab-sync.php:110
-msgid "Log events to the database"
-msgstr ""
-
-#: admin/views/tab-sync.php:113
-msgid "Critical messages are always logged."
-msgstr ""
-
-#: admin/views/tab-sync.php:119
-msgid "Minimum level"
-msgstr ""
-
-#: admin/views/tab-sync.php:133
-msgid "Retention (days)"
-msgstr ""
-
-#: admin/views/tab-sync.php:143 admin/views/tab-connection.php:149
-msgid "Save"
-msgstr ""
-
-#: admin/views/tab-sync.php:148
-msgid "Bulk Operations"
-msgstr ""
-
-#: admin/views/tab-sync.php:150
-msgid ""
-"Import or export all products at once via the queue. Jobs are processed in "
-"the background by the sync engine."
-msgstr ""
-
-#: admin/views/tab-sync.php:154
-msgid "Import all products from Odoo"
-msgstr ""
-
-#: admin/views/tab-sync.php:157
-msgid "Export all products to Odoo"
-msgstr ""
-
-#: admin/views/tab-queue.php:54
-msgid "Retry failed"
-msgstr ""
-
-#: admin/views/tab-queue.php:57
-msgid "Clean up (> 7 days)"
-msgstr ""
-
-#: admin/views/tab-queue.php:60
-msgid "Refresh"
-msgstr ""
-
-#: admin/views/tab-queue.php:83
-msgid "Type"
-msgstr ""
-
-#: admin/views/tab-queue.php:85
-msgid "Action"
-msgstr ""
-
-#: admin/views/tab-queue.php:86 templates/customer-portal.php:41
-#: templates/customer-portal.php:86
-msgid "Status"
-msgstr ""
-
-#: admin/views/tab-queue.php:87
-msgid "Attempts"
-msgstr ""
-
-#: admin/views/tab-queue.php:88
-msgid "Created at"
-msgstr ""
-
-#: admin/views/tab-queue.php:89
-msgid "Actions"
-msgstr ""
-
-#: admin/views/tab-queue.php:95
-msgid "No jobs in the queue."
-msgstr ""
-
-#: admin/views/tab-queue.php:149
-#, php-format
-msgid "%s item(s)"
 msgstr ""
 
 #: admin/views/partial-checklist.php:22
@@ -1007,6 +788,10 @@ msgstr ""
 msgid "Test connection"
 msgstr ""
 
+#: admin/views/tab-connection.php:149 admin/views/tab-sync.php:143
+msgid "Save"
+msgstr ""
+
 #: admin/views/tab-connection.php:154
 msgid "Webhook"
 msgstr ""
@@ -1082,6 +867,221 @@ msgstr ""
 
 #: admin/views/tab-connection.php:216
 msgid "Use the following Python code template:"
+msgstr ""
+
+#: admin/views/tab-logs.php:22
+msgid "All levels"
+msgstr ""
+
+#: admin/views/tab-logs.php:31
+msgid "All modules"
+msgstr ""
+
+#: admin/views/tab-logs.php:43
+msgid "From"
+msgstr ""
+
+#: admin/views/tab-logs.php:44
+msgid "To"
+msgstr ""
+
+#: admin/views/tab-logs.php:47
+msgid "Filter"
+msgstr ""
+
+#: admin/views/tab-logs.php:52
+msgid "Purge logs"
+msgstr ""
+
+#: admin/views/tab-logs.php:62
+msgid "Level"
+msgstr ""
+
+#: admin/views/tab-logs.php:63 admin/views/tab-queue.php:82
+msgid "Module"
+msgstr ""
+
+#: admin/views/tab-logs.php:65
+msgid "Context"
+msgstr ""
+
+#: admin/views/tab-logs.php:66 templates/customer-portal.php:39
+#: templates/customer-portal.php:84
+msgid "Date"
+msgstr ""
+
+#: admin/views/tab-logs.php:72
+msgid "No log entries."
+msgstr ""
+
+#: admin/views/tab-modules.php:16
+msgid "Enable or disable synchronization modules."
+msgstr ""
+
+#: admin/views/tab-modules.php:44
+msgid "WooCommerce must be installed and activated to use this module."
+msgstr ""
+
+#: admin/views/tab-modules.php:48
+msgid ""
+"Enabling the WooCommerce module replaces the Sales module. Both cannot be "
+"active simultaneously."
+msgstr ""
+
+#: admin/views/tab-modules.php:155
+msgid "Save settings"
+msgstr ""
+
+#: admin/views/tab-modules.php:165
+msgid "No modules registered."
+msgstr ""
+
+#: admin/views/tab-queue.php:54
+msgid "Retry failed"
+msgstr ""
+
+#: admin/views/tab-queue.php:57
+msgid "Clean up (> 7 days)"
+msgstr ""
+
+#: admin/views/tab-queue.php:60
+msgid "Refresh"
+msgstr ""
+
+#: admin/views/tab-queue.php:83
+msgid "Type"
+msgstr ""
+
+#: admin/views/tab-queue.php:84 admin/views/tab-sync.php:23
+msgid "Direction"
+msgstr ""
+
+#: admin/views/tab-queue.php:85
+msgid "Action"
+msgstr ""
+
+#: admin/views/tab-queue.php:86 templates/customer-portal.php:41
+#: templates/customer-portal.php:86
+msgid "Status"
+msgstr ""
+
+#: admin/views/tab-queue.php:87
+msgid "Attempts"
+msgstr ""
+
+#: admin/views/tab-queue.php:88
+msgid "Created at"
+msgstr ""
+
+#: admin/views/tab-queue.php:89
+msgid "Actions"
+msgstr ""
+
+#: admin/views/tab-queue.php:95
+msgid "No jobs in the queue."
+msgstr ""
+
+#: admin/views/tab-queue.php:149
+#, php-format
+msgid "%s item(s)"
+msgstr ""
+
+#: admin/views/tab-sync.php:28
+msgid "Bidirectional"
+msgstr ""
+
+#: admin/views/tab-sync.php:31
+msgid "WordPress → Odoo"
+msgstr ""
+
+#: admin/views/tab-sync.php:34
+msgid "Odoo → WordPress"
+msgstr ""
+
+#: admin/views/tab-sync.php:41
+msgid "Conflict rule"
+msgstr ""
+
+#: admin/views/tab-sync.php:46
+msgid "Newest wins"
+msgstr ""
+
+#: admin/views/tab-sync.php:49
+msgid "Odoo priority"
+msgstr ""
+
+#: admin/views/tab-sync.php:52
+msgid "WordPress priority"
+msgstr ""
+
+#: admin/views/tab-sync.php:59
+msgid "Batch size"
+msgstr ""
+
+#: admin/views/tab-sync.php:66
+msgid "Number of jobs processed per cron run."
+msgstr ""
+
+#: admin/views/tab-sync.php:72
+msgid "Interval"
+msgstr ""
+
+#: admin/views/tab-sync.php:77
+msgid "Every 5 minutes"
+msgstr ""
+
+#: admin/views/tab-sync.php:80
+msgid "Every 15 minutes"
+msgstr ""
+
+#: admin/views/tab-sync.php:87
+msgid "Auto sync"
+msgstr ""
+
+#: admin/views/tab-sync.php:93
+msgid "Enable automatic sync via cron"
+msgstr ""
+
+#: admin/views/tab-sync.php:99
+msgid "Logging"
+msgstr ""
+
+#: admin/views/tab-sync.php:104
+msgid "Enable logging"
+msgstr ""
+
+#: admin/views/tab-sync.php:110
+msgid "Log events to the database"
+msgstr ""
+
+#: admin/views/tab-sync.php:113
+msgid "Critical messages are always logged."
+msgstr ""
+
+#: admin/views/tab-sync.php:119
+msgid "Minimum level"
+msgstr ""
+
+#: admin/views/tab-sync.php:133
+msgid "Retention (days)"
+msgstr ""
+
+#: admin/views/tab-sync.php:148
+msgid "Bulk Operations"
+msgstr ""
+
+#: admin/views/tab-sync.php:150
+msgid ""
+"Import or export all products at once via the queue. Jobs are processed in "
+"the background by the sync engine."
+msgstr ""
+
+#: admin/views/tab-sync.php:154
+msgid "Import all products from Odoo"
+msgstr ""
+
+#: admin/views/tab-sync.php:157
+msgid "Export all products to Odoo"
 msgstr ""
 
 #: templates/customer-portal.php:38 templates/customer-portal.php:83
