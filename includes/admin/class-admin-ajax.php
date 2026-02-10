@@ -3,12 +3,6 @@ declare( strict_types=1 );
 
 namespace WP4Odoo\Admin;
 
-use WP4Odoo\API\Odoo_Auth;
-use WP4Odoo\Logger;
-use WP4Odoo\Query_Service;
-use WP4Odoo\Queue_Manager;
-use WP4Odoo\Sync_Engine;
-
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -16,10 +10,19 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * AJAX handlers for admin operations.
  *
+ * Handler methods are organized in domain-specific traits:
+ * - Ajax_Monitor_Handlers — queue management and log viewing
+ * - Ajax_Module_Handlers  — module settings and bulk operations
+ * - Ajax_Setup_Handlers   — connection testing and onboarding
+ *
  * @package WP4Odoo
  * @since   1.0.0
  */
 class Admin_Ajax {
+
+	use Ajax_Monitor_Handlers;
+	use Ajax_Module_Handlers;
+	use Ajax_Setup_Handlers;
 
 	/**
 	 * Constructor — registers all AJAX hooks.
@@ -54,7 +57,7 @@ class Admin_Ajax {
 	 *
 	 * @return void
 	 */
-	private function verify_request(): void {
+	protected function verify_request(): void {
 		check_ajax_referer( 'wp4odoo_admin' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
@@ -71,7 +74,7 @@ class Admin_Ajax {
 	 * @param string $type Sanitization type: 'text', 'url', 'key', 'int', 'bool'.
 	 * @return string|int|bool Sanitized value.
 	 */
-	private function get_post_field( string $key, string $type = 'text' ): string|int|bool {
+	protected function get_post_field( string $key, string $type = 'text' ): string|int|bool {
 		if ( ! isset( $_POST[ $key ] ) ) {
 			return match ( $type ) {
 				'int'  => 0,
@@ -89,389 +92,5 @@ class Admin_Ajax {
 			'bool' => ! empty( $value ),
 			default => sanitize_text_field( $value ),
 		};
-	}
-
-	// ─── Handlers ───────────────────────────────────────────
-
-	/**
-	 * Test Odoo connection with provided credentials.
-	 *
-	 * @return void
-	 */
-	public function test_connection(): void {
-		$this->verify_request();
-
-		$url      = $this->get_post_field( 'url', 'url' ) ?: null;
-		$database = $this->get_post_field( 'database' ) ?: null;
-		$username = $this->get_post_field( 'username' ) ?: null;
-		$api_key  = $this->get_post_field( 'api_key' ) ?: null;
-		$protocol = $this->get_post_field( 'protocol' ) ?: 'jsonrpc';
-
-		// If api_key is empty, use the stored one.
-		if ( empty( $api_key ) ) {
-			$stored  = Odoo_Auth::get_credentials();
-			$api_key = $stored['api_key'] ?: null;
-		}
-
-		$result = Odoo_Auth::test_connection( $url, $database, $username, $api_key, $protocol );
-
-		wp_send_json_success( $result );
-	}
-
-	/**
-	 * Retry all failed queue jobs.
-	 *
-	 * @return void
-	 */
-	public function retry_failed(): void {
-		$this->verify_request();
-
-		$count = Sync_Engine::retry_failed();
-
-		wp_send_json_success( [
-			'count'   => $count,
-			'message' => sprintf(
-				/* translators: %d: number of jobs */
-				__( '%d job(s) retried.', 'wp4odoo' ),
-				$count
-			),
-		] );
-	}
-
-	/**
-	 * Clean up old completed/failed queue jobs.
-	 *
-	 * @return void
-	 */
-	public function cleanup_queue(): void {
-		$this->verify_request();
-
-		$days    = $this->get_post_field( 'days', 'int' ) ?: 7;
-		$deleted = Sync_Engine::cleanup( $days );
-
-		wp_send_json_success( [
-			'deleted' => $deleted,
-			'message' => sprintf(
-				/* translators: %d: number of deleted jobs */
-				__( '%d job(s) deleted.', 'wp4odoo' ),
-				$deleted
-			),
-		] );
-	}
-
-	/**
-	 * Cancel a single pending queue job.
-	 *
-	 * @return void
-	 */
-	public function cancel_job(): void {
-		$this->verify_request();
-
-		$job_id  = $this->get_post_field( 'job_id', 'int' );
-		$success = Queue_Manager::cancel( $job_id );
-
-		if ( $success ) {
-			wp_send_json_success( [
-				'message' => __( 'Job cancelled.', 'wp4odoo' ),
-			] );
-		} else {
-			wp_send_json_error( [
-				'message' => __( 'Unable to cancel this job.', 'wp4odoo' ),
-			] );
-		}
-	}
-
-	/**
-	 * Purge old log entries.
-	 *
-	 * @return void
-	 */
-	public function purge_logs(): void {
-		$this->verify_request();
-
-		$logger  = new Logger();
-		$deleted = $logger->cleanup();
-
-		wp_send_json_success( [
-			'deleted' => $deleted,
-			'message' => sprintf(
-				/* translators: %d: number of deleted log entries */
-				__( '%d log entry(ies) deleted.', 'wp4odoo' ),
-				$deleted
-			),
-		] );
-	}
-
-	/**
-	 * Fetch log entries (for AJAX filtering/pagination).
-	 *
-	 * @return void
-	 */
-	public function fetch_logs(): void {
-		$this->verify_request();
-
-		$filters = [
-			'level'     => $this->get_post_field( 'level' ),
-			'module'    => $this->get_post_field( 'module' ),
-			'date_from' => $this->get_post_field( 'date_from' ),
-			'date_to'   => $this->get_post_field( 'date_to' ),
-		];
-
-		$page     = max( 1, $this->get_post_field( 'page', 'int' ) ) ?: 1;
-		$per_page = $this->get_post_field( 'per_page', 'int' );
-		$per_page = ( $per_page > 0 ) ? min( 100, $per_page ) : 50;
-
-		$data = Query_Service::get_log_entries( $filters, $page, $per_page );
-
-		// Serialize items for JSON transport.
-		$items = [];
-		foreach ( $data['items'] as $row ) {
-			$items[] = [
-				'id'         => (int) $row->id,
-				'level'      => $row->level,
-				'module'     => $row->module,
-				'message'    => $row->message,
-				'context'    => $row->context ?? '',
-				'created_at' => $row->created_at,
-			];
-		}
-
-		wp_send_json_success( [
-			'items' => $items,
-			'total' => $data['total'],
-			'page'  => $data['page'],
-			'pages' => $data['pages'],
-		] );
-	}
-
-	/**
-	 * Fetch queue jobs (for AJAX pagination).
-	 *
-	 * @return void
-	 */
-	public function fetch_queue(): void {
-		$this->verify_request();
-
-		$page     = max( 1, $this->get_post_field( 'page', 'int' ) ) ?: 1;
-		$per_page = $this->get_post_field( 'per_page', 'int' );
-		$per_page = ( $per_page > 0 ) ? min( 100, $per_page ) : 30;
-
-		$data = Query_Service::get_queue_jobs( $page, $per_page );
-
-		$items = [];
-		foreach ( $data['items'] as $job ) {
-			$items[] = [
-				'id'            => (int) $job->id,
-				'module'        => $job->module,
-				'entity_type'   => $job->entity_type,
-				'direction'     => $job->direction,
-				'action'        => $job->action,
-				'status'        => $job->status,
-				'attempts'      => $job->attempts,
-				'max_attempts'  => $job->max_attempts,
-				'error_message' => $job->error_message ?? '',
-				'created_at'    => $job->created_at,
-			];
-		}
-
-		wp_send_json_success( [
-			'items' => $items,
-			'total' => $data['total'],
-			'pages' => $data['pages'],
-			'page'  => $page,
-		] );
-	}
-
-	/**
-	 * Fetch queue statistics.
-	 *
-	 * @return void
-	 */
-	public function queue_stats(): void {
-		$this->verify_request();
-
-		wp_send_json_success( Sync_Engine::get_stats() );
-	}
-
-	/**
-	 * Toggle a module's enabled state.
-	 *
-	 * @return void
-	 */
-	public function toggle_module(): void {
-		$this->verify_request();
-
-		$module_id = $this->get_post_field( 'module_id', 'key' );
-		$enabled   = $this->get_post_field( 'enabled', 'bool' );
-
-		if ( empty( $module_id ) ) {
-			wp_send_json_error( [
-				'message' => __( 'Missing module identifier.', 'wp4odoo' ),
-			] );
-		}
-
-		update_option( 'wp4odoo_module_' . $module_id . '_enabled', $enabled );
-
-		wp_send_json_success( [
-			'module_id' => $module_id,
-			'enabled'   => $enabled,
-			'message'   => $enabled
-				? sprintf(
-					/* translators: %s: module identifier */
-					__( 'Module "%s" enabled.', 'wp4odoo' ),
-					$module_id
-				)
-				: sprintf(
-					/* translators: %s: module identifier */
-					__( 'Module "%s" disabled.', 'wp4odoo' ),
-					$module_id
-				),
-		] );
-	}
-
-	/**
-	 * Save a module's settings.
-	 *
-	 * @return void
-	 */
-	public function save_module_settings(): void {
-		$this->verify_request();
-
-		$module_id = $this->get_post_field( 'module_id', 'key' );
-		$settings  = isset( $_POST['settings'] ) && is_array( $_POST['settings'] ) ? wp_unslash( $_POST['settings'] ) : [];
-
-		if ( empty( $module_id ) ) {
-			wp_send_json_error( [
-				'message' => __( 'Missing module identifier.', 'wp4odoo' ),
-			] );
-		}
-
-		// Validate module exists.
-		$modules = \WP4Odoo_Plugin::instance()->get_modules();
-		if ( ! isset( $modules[ $module_id ] ) ) {
-			wp_send_json_error( [
-				'message' => __( 'Unknown module.', 'wp4odoo' ),
-			] );
-		}
-
-		$module   = $modules[ $module_id ];
-		$fields   = $module->get_settings_fields();
-		$defaults = $module->get_default_settings();
-		$clean    = [];
-
-		foreach ( $fields as $key => $field ) {
-			if ( isset( $settings[ $key ] ) ) {
-				switch ( $field['type'] ) {
-					case 'checkbox':
-						$clean[ $key ] = ! empty( $settings[ $key ] );
-						break;
-					case 'number':
-						$clean[ $key ] = absint( $settings[ $key ] );
-						break;
-					case 'select':
-						$allowed = array_keys( $field['options'] ?? [] );
-						$val     = sanitize_text_field( $settings[ $key ] );
-						$clean[ $key ] = in_array( $val, $allowed, true ) ? $val : ( $defaults[ $key ] ?? '' );
-						break;
-					default:
-						$clean[ $key ] = sanitize_text_field( $settings[ $key ] );
-						break;
-				}
-			} else {
-				// Checkbox not sent = unchecked.
-				if ( 'checkbox' === $field['type'] ) {
-					$clean[ $key ] = false;
-				}
-			}
-		}
-
-		update_option( 'wp4odoo_module_' . $module_id . '_settings', $clean );
-
-		wp_send_json_success( [
-			'message' => __( 'Settings saved.', 'wp4odoo' ),
-		] );
-	}
-
-	// ─── Onboarding ────────────────────────────────────────
-
-	/**
-	 * Dismiss the onboarding setup notice.
-	 *
-	 * @return void
-	 */
-	public function dismiss_onboarding(): void {
-		$this->verify_request();
-
-		update_option( 'wp4odoo_onboarding_dismissed', true );
-
-		wp_send_json_success();
-	}
-
-	/**
-	 * Dismiss the setup checklist.
-	 *
-	 * @return void
-	 */
-	public function dismiss_checklist(): void {
-		$this->verify_request();
-
-		update_option( 'wp4odoo_checklist_dismissed', true );
-
-		wp_send_json_success();
-	}
-
-	/**
-	 * Confirm that webhooks have been configured in Odoo.
-	 *
-	 * @return void
-	 */
-	public function confirm_webhooks(): void {
-		$this->verify_request();
-
-		update_option( 'wp4odoo_checklist_webhooks_confirmed', true );
-
-		wp_send_json_success( [
-			'message' => __( 'Webhooks marked as configured.', 'wp4odoo' ),
-		] );
-	}
-
-	// ─── Bulk Operations ────────────────────────────────────
-
-	/**
-	 * Bulk import all products from Odoo into WooCommerce.
-	 *
-	 * @return void
-	 */
-	public function bulk_import_products(): void {
-		$this->verify_request();
-
-		$plugin = \WP4Odoo_Plugin::instance();
-		if ( null === $plugin->get_module( 'woocommerce' ) ) {
-			wp_send_json_error( [
-				'message' => __( 'WooCommerce module is not registered.', 'wp4odoo' ),
-			] );
-		}
-
-		$handler = new Bulk_Handler( $plugin->client() );
-		wp_send_json_success( $handler->import_products() );
-	}
-
-	/**
-	 * Bulk export all WooCommerce products to Odoo.
-	 *
-	 * @return void
-	 */
-	public function bulk_export_products(): void {
-		$this->verify_request();
-
-		$plugin = \WP4Odoo_Plugin::instance();
-		if ( null === $plugin->get_module( 'woocommerce' ) ) {
-			wp_send_json_error( [
-				'message' => __( 'WooCommerce module is not registered.', 'wp4odoo' ),
-			] );
-		}
-
-		$handler = new Bulk_Handler( $plugin->client() );
-		wp_send_json_success( $handler->export_products() );
 	}
 }

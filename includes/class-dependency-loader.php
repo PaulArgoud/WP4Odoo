@@ -65,6 +65,9 @@ final class Dependency_Loader {
 		if ( is_admin() ) {
 			require_once WP4ODOO_PLUGIN_DIR . 'includes/admin/class-admin.php';
 			require_once WP4ODOO_PLUGIN_DIR . 'includes/admin/class-bulk-handler.php';
+			require_once WP4ODOO_PLUGIN_DIR . 'includes/admin/trait-ajax-monitor-handlers.php';
+			require_once WP4ODOO_PLUGIN_DIR . 'includes/admin/trait-ajax-module-handlers.php';
+			require_once WP4ODOO_PLUGIN_DIR . 'includes/admin/trait-ajax-setup-handlers.php';
 			require_once WP4ODOO_PLUGIN_DIR . 'includes/admin/class-admin-ajax.php';
 			require_once WP4ODOO_PLUGIN_DIR . 'includes/admin/class-settings-page.php';
 		}

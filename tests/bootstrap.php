@@ -23,7 +23,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 define( 'WP4ODOO_PLUGIN_DIR', dirname( __DIR__ ) . '/' );
-define( 'WP4ODOO_VERSION', '1.9.5' );
+define( 'WP4ODOO_VERSION', '1.9.6' );
 
 if ( ! defined( 'DAY_IN_SECONDS' ) ) {
 	define( 'DAY_IN_SECONDS', 86400 );
@@ -100,6 +100,9 @@ require_once WP4ODOO_PLUGIN_DIR . 'includes/class-webhook-handler.php';
 
 // Admin layer.
 require_once WP4ODOO_PLUGIN_DIR . 'includes/admin/class-settings-page.php';
+require_once WP4ODOO_PLUGIN_DIR . 'includes/admin/trait-ajax-monitor-handlers.php';
+require_once WP4ODOO_PLUGIN_DIR . 'includes/admin/trait-ajax-module-handlers.php';
+require_once WP4ODOO_PLUGIN_DIR . 'includes/admin/trait-ajax-setup-handlers.php';
 require_once WP4ODOO_PLUGIN_DIR . 'includes/admin/class-admin-ajax.php';
 
 // CLI (conditional in production, always loaded in tests).

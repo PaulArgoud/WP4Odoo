@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.9.6] - 2026-02-10
+
+### Changed
+
+#### Refactoring — Admin_Ajax
+- `Admin_Ajax` refactored from monolithic class (477 lines, 15 handlers) into coordinator + 3 domain traits:
+  - `Ajax_Monitor_Handlers` — queue management + log viewing (7 handlers)
+  - `Ajax_Module_Handlers` — module settings + bulk operations (4 handlers)
+  - `Ajax_Setup_Handlers` — connection testing + onboarding (4 handlers)
+- `Admin_Ajax` now ~95 lines (coordinator, hook registration, `verify_request()`, `get_post_field()`)
+- `verify_request()` and `get_post_field()` visibility changed from `private` to `protected` (trait access)
+
+#### Consistency
+- `wp4odoo-fr_FR.po` — fixed stale `Project-Id-Version` (was 1.0.2, now 1.9.6)
+- `wp4odoo-es_ES.po` — fixed stale `Project-Id-Version` (was 1.9.4, now 1.9.6)
+
+- Plugin version bumped from 1.9.5 to 1.9.6
+- PHPUnit: 416 tests, 811 assertions — all green (zero test changes needed)
+- PHPStan: 0 errors on 44 files (was 41)
+
 ## [1.9.5] - 2026-02-10
 
 ### Added

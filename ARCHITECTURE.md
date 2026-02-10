@@ -77,7 +77,10 @@ WordPress For Odoo/
 │   ├── admin/
 │   │   ├── class-admin.php            # Admin menu, assets, activation redirect, setup notice
 │   │   ├── class-bulk-handler.php     # Bulk product import/export (paginated, batch lookups)
-│   │   ├── class-admin-ajax.php       # 15 AJAX handlers (test, retry, cleanup, logs, module settings, bulk, onboarding, checklist)
+│   │   ├── trait-ajax-monitor-handlers.php  # AJAX: queue management + log viewing (7 handlers)
+│   │   ├── trait-ajax-module-handlers.php   # AJAX: module settings + bulk operations (4 handlers)
+│   │   ├── trait-ajax-setup-handlers.php    # AJAX: connection testing + onboarding (4 handlers)
+│   │   ├── class-admin-ajax.php       # AJAX coordinator: hook registration, request verification (uses 3 traits)
 │   │   └── class-settings-page.php    # Settings API, 5-tab rendering, setup checklist, sanitize callbacks
 │   │
 │   ├── class-dependency-loader.php    # Loads all plugin class files (require_once)
