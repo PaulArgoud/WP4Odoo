@@ -37,14 +37,32 @@ class Variant_Handler {
 	private \Closure $client_fn;
 
 	/**
+	 * Exchange rate service for currency conversion.
+	 *
+	 * @var Exchange_Rate_Service|null
+	 */
+	private ?Exchange_Rate_Service $rate_service;
+
+	/**
+	 * Whether currency conversion is enabled.
+	 *
+	 * @var bool
+	 */
+	private bool $convert_currency;
+
+	/**
 	 * Constructor.
 	 *
-	 * @param Logger   $logger    Logger instance.
-	 * @param \Closure $client_fn Closure returning \WP4Odoo\API\Odoo_Client.
+	 * @param Logger                     $logger           Logger instance.
+	 * @param \Closure                   $client_fn        Closure returning \WP4Odoo\API\Odoo_Client.
+	 * @param Exchange_Rate_Service|null $rate_service     Exchange rate service (null to disable conversion).
+	 * @param bool                       $convert_currency Whether to convert prices on currency mismatch.
 	 */
-	public function __construct( Logger $logger, \Closure $client_fn ) {
-		$this->logger    = $logger;
-		$this->client_fn = $client_fn;
+	public function __construct( Logger $logger, \Closure $client_fn, ?Exchange_Rate_Service $rate_service = null, bool $convert_currency = false ) {
+		$this->logger           = $logger;
+		$this->client_fn        = $client_fn;
+		$this->rate_service     = $rate_service;
+		$this->convert_currency = $convert_currency;
 	}
 
 	/**
@@ -119,9 +137,32 @@ class Variant_Handler {
 			// Check existing mapping.
 			$existing_wp_id = Entity_Map_Repository::get_wp_id( 'woocommerce', 'variant', $variant_odoo_id );
 
-			// Currency guard: skip price if Odoo currency ≠ WC shop currency.
+			// Currency guard: skip or convert price if Odoo currency ≠ WC shop currency.
 			$guard      = Currency_Guard::check( $variant['currency_id'] ?? false );
 			$skip_price = $guard['mismatch'];
+
+			if ( $skip_price && $this->convert_currency && null !== $this->rate_service ) {
+				$raw_price = (float) ( $variant['lst_price'] ?? 0 );
+				if ( $raw_price > 0.0 ) {
+					$converted = $this->rate_service->convert( $raw_price, $guard['odoo_currency'], $guard['wc_currency'] );
+
+					if ( null !== $converted ) {
+						$variant['lst_price'] = $converted;
+						$skip_price           = false;
+
+						$this->logger->info(
+							'Variant price converted.',
+							[
+								'variant_odoo_id' => $variant_odoo_id,
+								'from'            => $guard['odoo_currency'],
+								'to'              => $guard['wc_currency'],
+								'original'        => $raw_price,
+								'converted'       => $converted,
+							]
+						);
+					}
+				}
+			}
 
 			if ( $skip_price ) {
 				$this->logger->warning(

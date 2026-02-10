@@ -29,6 +29,10 @@ if ( ! defined( 'DAY_IN_SECONDS' ) ) {
 	define( 'DAY_IN_SECONDS', 86400 );
 }
 
+if ( ! defined( 'HOUR_IN_SECONDS' ) ) {
+	define( 'HOUR_IN_SECONDS', 3600 );
+}
+
 if ( ! defined( 'AUTH_KEY' ) ) {
 	define( 'AUTH_KEY', 'test-auth-key-for-phpunit-only' );
 }
@@ -93,6 +97,7 @@ require_once WP4ODOO_PLUGIN_DIR . 'includes/modules/trait-crm-user-hooks.php';
 require_once WP4ODOO_PLUGIN_DIR . 'includes/modules/trait-woocommerce-hooks.php';
 require_once WP4ODOO_PLUGIN_DIR . 'includes/modules/class-contact-refiner.php';
 require_once WP4ODOO_PLUGIN_DIR . 'includes/modules/class-currency-guard.php';
+require_once WP4ODOO_PLUGIN_DIR . 'includes/modules/class-exchange-rate-service.php';
 require_once WP4ODOO_PLUGIN_DIR . 'includes/modules/class-variant-handler.php';
 require_once WP4ODOO_PLUGIN_DIR . 'includes/modules/class-image-handler.php';
 require_once WP4ODOO_PLUGIN_DIR . 'includes/modules/class-product-handler.php';

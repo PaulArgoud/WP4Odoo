@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-02-10 23:30+0100\n"
+"POT-Creation-Date: 2026-02-11 00:05+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -23,6 +23,59 @@ msgstr ""
 
 #: wp4odoo.php:234
 msgid "Every 15 Minutes"
+msgstr ""
+
+#: includes/class-failure-notifier.php:104
+#, php-format
+msgid "[WP4Odoo] %d consecutive sync failures"
+msgstr ""
+
+#: includes/class-failure-notifier.php:110
+#, php-format
+msgid ""
+"The WordPress For Odoo sync queue has encountered %1$d consecutive "
+"failures.\n"
+"\n"
+"Please check the sync queue at %2$s"
+msgstr ""
+
+#: includes/class-module-base.php:492
+#, php-format
+msgid "Entity type \"%1$s\" is not registered in module \"%2$s\"."
+msgstr ""
+
+#: includes/class-sync-engine.php:243
+#, php-format
+msgid "Module \"%s\" not found or not registered."
+msgstr ""
+
+#: includes/class-webhook-handler.php:146
+msgid "Missing required fields: module, entity_type, odoo_id."
+msgstr ""
+
+#: includes/class-webhook-handler.php:237
+#, php-format
+msgid "Module \"%s\" not found."
+msgstr ""
+
+#: includes/class-webhook-handler.php:257
+msgid "Provide either wp_id (for push) or odoo_id (for pull)."
+msgstr ""
+
+#: includes/class-webhook-handler.php:303
+msgid "Webhook token not configured."
+msgstr ""
+
+#: includes/class-webhook-handler.php:318
+msgid "Invalid webhook token."
+msgstr ""
+
+#: includes/class-webhook-handler.php:339
+msgid "You do not have permission to perform this action."
+msgstr ""
+
+#: includes/class-webhook-handler.php:408
+msgid "Too many requests. Please try again later."
 msgstr ""
 
 #: includes/admin/class-admin-ajax.php:81
@@ -307,59 +360,6 @@ msgstr ""
 #: includes/api/trait-retryable-http.php:64
 #, php-format
 msgid "HTTP error: %s"
-msgstr ""
-
-#: includes/class-failure-notifier.php:104
-#, php-format
-msgid "[WP4Odoo] %d consecutive sync failures"
-msgstr ""
-
-#: includes/class-failure-notifier.php:110
-#, php-format
-msgid ""
-"The WordPress For Odoo sync queue has encountered %1$d consecutive "
-"failures.\n"
-"\n"
-"Please check the sync queue at %2$s"
-msgstr ""
-
-#: includes/class-module-base.php:492
-#, php-format
-msgid "Entity type \"%1$s\" is not registered in module \"%2$s\"."
-msgstr ""
-
-#: includes/class-sync-engine.php:243
-#, php-format
-msgid "Module \"%s\" not found or not registered."
-msgstr ""
-
-#: includes/class-webhook-handler.php:146
-msgid "Missing required fields: module, entity_type, odoo_id."
-msgstr ""
-
-#: includes/class-webhook-handler.php:237
-#, php-format
-msgid "Module \"%s\" not found."
-msgstr ""
-
-#: includes/class-webhook-handler.php:257
-msgid "Provide either wp_id (for push) or odoo_id (for pull)."
-msgstr ""
-
-#: includes/class-webhook-handler.php:303
-msgid "Webhook token not configured."
-msgstr ""
-
-#: includes/class-webhook-handler.php:318
-msgid "Invalid webhook token."
-msgstr ""
-
-#: includes/class-webhook-handler.php:339
-msgid "You do not have permission to perform this action."
-msgstr ""
-
-#: includes/class-webhook-handler.php:408
-msgid "Too many requests. Please try again later."
 msgstr ""
 
 #: includes/modules/class-crm-module.php:148
@@ -673,51 +673,61 @@ msgstr ""
 msgid "No orders found in Trash."
 msgstr ""
 
-#: includes/modules/class-woocommerce-module.php:192
+#: includes/modules/class-woocommerce-module.php:196
 msgid "Sync products"
 msgstr ""
 
-#: includes/modules/class-woocommerce-module.php:194
+#: includes/modules/class-woocommerce-module.php:198
 msgid "Synchronize WooCommerce products with Odoo."
 msgstr ""
 
-#: includes/modules/class-woocommerce-module.php:197
+#: includes/modules/class-woocommerce-module.php:201
 msgid "Sync orders"
 msgstr ""
 
-#: includes/modules/class-woocommerce-module.php:199
+#: includes/modules/class-woocommerce-module.php:203
 msgid "Synchronize WooCommerce orders with Odoo."
 msgstr ""
 
-#: includes/modules/class-woocommerce-module.php:202
+#: includes/modules/class-woocommerce-module.php:206
 msgid "Sync stock"
 msgstr ""
 
-#: includes/modules/class-woocommerce-module.php:204
+#: includes/modules/class-woocommerce-module.php:208
 msgid "Pull stock levels from Odoo into WooCommerce products."
 msgstr ""
 
-#: includes/modules/class-woocommerce-module.php:207
+#: includes/modules/class-woocommerce-module.php:211
 msgid "Sync product images"
 msgstr ""
 
-#: includes/modules/class-woocommerce-module.php:209
+#: includes/modules/class-woocommerce-module.php:213
 msgid "Pull product featured images from Odoo."
 msgstr ""
 
-#: includes/modules/class-woocommerce-module.php:212
+#: includes/modules/class-woocommerce-module.php:216
 msgid "Auto-confirm orders"
 msgstr ""
 
-#: includes/modules/class-woocommerce-module.php:214
+#: includes/modules/class-woocommerce-module.php:218
 msgid "Automatically confirm orders in Odoo when created from WooCommerce."
 msgstr ""
 
-#: includes/modules/class-woocommerce-module.php:231
+#: includes/modules/class-woocommerce-module.php:221
+msgid "Convert currency"
+msgstr ""
+
+#: includes/modules/class-woocommerce-module.php:223
+msgid ""
+"Convert prices using Odoo exchange rates when the product currency differs "
+"from the shop currency."
+msgstr ""
+
+#: includes/modules/class-woocommerce-module.php:240
 msgid "WooCommerce must be installed and activated to use this module."
 msgstr ""
 
-#: includes/modules/class-woocommerce-module.php:242
+#: includes/modules/class-woocommerce-module.php:251
 msgid ""
 "Enabling the WooCommerce module replaces the Sales module. Both cannot be "
 "active simultaneously."

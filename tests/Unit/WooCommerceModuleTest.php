@@ -86,14 +86,15 @@ class WooCommerceModuleTest extends TestCase {
 
 	// ─── Settings Fields ───────────────────────────────────
 
-	public function test_settings_fields_exposes_five_fields(): void {
+	public function test_settings_fields_exposes_six_fields(): void {
 		$fields = $this->module->get_settings_fields();
-		$this->assertCount( 5, $fields );
+		$this->assertCount( 6, $fields );
 		$this->assertArrayHasKey( 'sync_products', $fields );
 		$this->assertArrayHasKey( 'sync_orders', $fields );
 		$this->assertArrayHasKey( 'sync_stock', $fields );
 		$this->assertArrayHasKey( 'sync_product_images', $fields );
 		$this->assertArrayHasKey( 'auto_confirm_orders', $fields );
+		$this->assertArrayHasKey( 'convert_currency', $fields );
 	}
 
 	// ─── Field Mappings ────────────────────────────────────

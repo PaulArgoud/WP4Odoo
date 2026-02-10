@@ -29,12 +29,30 @@ class Product_Handler {
 	private Logger $logger;
 
 	/**
+	 * Exchange rate service for currency conversion.
+	 *
+	 * @var Exchange_Rate_Service|null
+	 */
+	private ?Exchange_Rate_Service $rate_service;
+
+	/**
+	 * Whether currency conversion is enabled.
+	 *
+	 * @var bool
+	 */
+	private bool $convert_currency;
+
+	/**
 	 * Constructor.
 	 *
-	 * @param Logger $logger Logger instance.
+	 * @param Logger                     $logger           Logger instance.
+	 * @param Exchange_Rate_Service|null $rate_service     Exchange rate service (null to disable conversion).
+	 * @param bool                       $convert_currency Whether to convert prices on currency mismatch.
 	 */
-	public function __construct( Logger $logger ) {
-		$this->logger = $logger;
+	public function __construct( Logger $logger, ?Exchange_Rate_Service $rate_service = null, bool $convert_currency = false ) {
+		$this->logger           = $logger;
+		$this->rate_service     = $rate_service;
+		$this->convert_currency = $convert_currency;
 	}
 
 	// ─── Load ────────────────────────────────────────────────
@@ -103,10 +121,31 @@ class Product_Handler {
 			return 0;
 		}
 
-		// Currency guard: skip price if Odoo currency ≠ WC shop currency.
+		// Currency guard: skip or convert price if Odoo currency ≠ WC shop currency.
 		$guard             = Currency_Guard::check( $data['_wp4odoo_currency'] ?? null );
 		$currency_mismatch = $guard['mismatch'];
 		$odoo_currency     = $guard['odoo_currency'];
+
+		if ( $currency_mismatch && $this->convert_currency && null !== $this->rate_service && isset( $data['regular_price'] ) ) {
+			$original  = (float) $data['regular_price'];
+			$converted = $this->rate_service->convert( $original, $guard['odoo_currency'], $guard['wc_currency'] );
+
+			if ( null !== $converted ) {
+				$data['regular_price'] = $converted;
+				$currency_mismatch     = false;
+
+				$this->logger->info(
+					'Product price converted.',
+					[
+						'wp_product_id' => $wp_id,
+						'from'          => $guard['odoo_currency'],
+						'to'            => $guard['wc_currency'],
+						'original'      => $original,
+						'converted'     => $converted,
+					]
+				);
+			}
+		}
 
 		if ( $currency_mismatch ) {
 			$this->logger->warning(
@@ -166,8 +205,22 @@ class Product_Handler {
 				return 0;
 			}
 
-			// Currency guard: skip price if Odoo currency ≠ WC shop currency.
-			$currency_mismatch = Currency_Guard::check( $data['_wp4odoo_currency'] ?? null )['mismatch'];
+			// Currency guard: skip or convert price if Odoo currency ≠ WC shop currency.
+			$guard             = Currency_Guard::check( $data['_wp4odoo_currency'] ?? null );
+			$currency_mismatch = $guard['mismatch'];
+
+			if ( $currency_mismatch && $this->convert_currency && null !== $this->rate_service && isset( $data['regular_price'] ) ) {
+				$converted = $this->rate_service->convert(
+					(float) $data['regular_price'],
+					$guard['odoo_currency'],
+					$guard['wc_currency']
+				);
+
+				if ( null !== $converted ) {
+					$data['regular_price'] = $converted;
+					$currency_mismatch     = false;
+				}
+			}
 
 			if ( isset( $data['sku'] ) && '' !== $data['sku'] ) {
 				$variation->set_sku( $data['sku'] );

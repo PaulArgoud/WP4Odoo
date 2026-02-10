@@ -12,7 +12,7 @@ Modular WordPress plugin providing comprehensive, bidirectional integration betw
 
 - **CRM Module** — Bidirectional contact sync (WP users <-> `res.partner`), lead capture form with shortcode, email deduplication, archive-on-delete, role-based filtering, country/state resolution
 - **Sales Module** — Order and invoice sync from Odoo, custom post types for local storage, customer portal with tabbed UI and currency display (`[wp4odoo_customer_portal]`)
-- **WooCommerce Module** — WC-native product, order, and stock sync with Odoo status mapping, HPOS compatible, product variant import from Odoo, product image pull, multi-currency guard (skips price if currency mismatch), bulk product import/export (mutually exclusive with Sales module)
+- **WooCommerce Module** — WC-native product, order, and stock sync with Odoo status mapping, HPOS compatible, product variant import from Odoo, product image pull, multi-currency with optional exchange rate conversion (prices auto-converted using Odoo rates, or skipped on mismatch), bulk product import/export (mutually exclusive with Sales module)
 - **Memberships Module** — Push WooCommerce Memberships (plans + user memberships) to Odoo's native `membership` module, with status mapping and automatic plan sync
 - **Forms Module** — Automatic lead creation in Odoo from Gravity Forms and WPForms submissions, with field auto-detection (name, email, phone, company, message), multilingual label matching, and filterable via `wp4odoo_form_lead_data`
 - **Async Queue** — No API calls during user requests; all sync jobs go through a persistent database queue with exponential backoff, deduplication, and configurable batch size
@@ -23,8 +23,8 @@ Modular WordPress plugin providing comprehensive, bidirectional integration betw
 - **Onboarding** — Post-activation redirect, setup notice, 3-step checklist with progress bar, inline Odoo documentation (API keys, webhooks)
 - **WP-CLI** — Full command suite: `wp wp4odoo status|test|sync|queue|module` for headless management
 - **Extensible** — Register custom modules via `wp4odoo_register_modules` action hook; filter data with `wp4odoo_map_to_odoo_*` / `wp4odoo_map_from_odoo_*`
-- **Multilingual (3 languages)** — Fully internationalized with WordPress standard Gettext i18n. Ships with English (source), French, and Spanish translations (274 strings). Translation-ready for additional languages via `.po`/`.mo` files
-- **Code Quality** — WordPress Coding Standards (PHPCS), PHPStan level 5 static analysis, 587 unit tests + 26 integration tests, CI/CD with GitHub Actions
+- **Multilingual (3 languages)** — Fully internationalized with WordPress standard Gettext i18n. Ships with English (source), French, and Spanish translations (276 strings). Translation-ready for additional languages via `.po`/`.mo` files
+- **Code Quality** — WordPress Coding Standards (PHPCS), PHPStan level 5 static analysis, 601 unit tests + 26 integration tests, CI/CD with GitHub Actions
 
 ## Requirements
 
@@ -79,7 +79,7 @@ Each Odoo domain is encapsulated in an independent module extending `Module_Base
 |--------------------|:----:|---------------------------------------|:-----:|--------------------------------------------------------------------------------|
 | **CRM**            |  ↔   | Contacts, CRM                         |  ⚠️   | Contact sync, lead form shortcode, email dedup, archive-on-delete              |
 | **Sales**          |  ←   | Contacts, Sales, Invoicing            |  ❌   | Order/invoice CPTs, customer portal shortcode, currency display                |
-| **WooCommerce**    |  ↔   | Contacts, Sales, Inventory, Invoicing |  ❌   | WC-native product/order/stock sync, variants, image pull, bulk import/export   |
+| **WooCommerce**    |  ↔   | Contacts, Sales, Inventory, Invoicing |  ❌   | Product/order/stock sync, variants, image pull, exchange rates, bulk ops       |
 | **WC Memberships** |  →   | Contacts, Members                     |  ❌   | Plan auto-sync, status mapping, filterable via `wp4odoo_membership_status_map` |
 | **Forms**          |  →   | Contacts, CRM                         |  ⚠️   | GF + WPForms lead creation, field auto-detection, multilingual label matching  |
 

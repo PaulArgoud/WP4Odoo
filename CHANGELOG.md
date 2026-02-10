@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+#### Exchange Rate Conversion — Multi-Currency Price Conversion
+- New class: `Exchange_Rate_Service` (`includes/modules/class-exchange-rate-service.php`) — fetches active exchange rates from Odoo's `res.currency` model, caches them in a WordPress transient (1-hour TTL), and converts prices between currencies
+- `convert(float, string, string): ?float` — converts an amount from one currency to another using Odoo rates; returns `null` on failure (missing rate, zero rate, connection error) for graceful fallback
+- `Product_Handler` and `Variant_Handler` — when `convert_currency` is enabled and currencies differ, prices are now converted instead of skipped; falls back to skip behavior if conversion fails
+- `WooCommerce_Module` — new `convert_currency` setting (checkbox, default: off); wires `Exchange_Rate_Service` into product and variant handlers
+- `ExchangeRateServiceTest` — 14 tests: same currency, EUR↔USD, cross-currency, rounding, empty rates, missing currencies, zero rate, transient cache, Odoo connection failure, invalid records
+
 #### Memberships Module — WC Memberships → Odoo Push Sync
 - New module: `Memberships_Module` (`includes/modules/class-memberships-module.php`) — push-only sync from WooCommerce Memberships to Odoo's native `membership` module
 - `Membership_Handler` (`includes/modules/class-membership-handler.php`) — loads plan and membership data from WC, maps 8 WC membership statuses to Odoo `membership.membership_line` states (active→paid, free_trial→free, complimentary→free, delayed→waiting, pending-cancel→paid, paused→waiting, cancelled→cancelled, expired→none)
@@ -57,9 +64,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Plugin version bumped from 1.9.8 to 1.9.9
-- PHPUnit: 587 unit tests, 1041 assertions — all green (was 436/855)
-- PHPStan: 0 errors on 53 files (was 47 — added 3 module files + 2 forms files)
-- `Dependency_Loader` — added 2 `require_once` for forms module files
+- PHPUnit: 601 unit tests, 1060 assertions — all green (was 436/855)
+- PHPStan: 0 errors on 54 files (was 47 — added 3 module files + 2 forms files + 1 exchange rate file)
+- `Dependency_Loader` — added 3 `require_once` (2 forms module files + 1 exchange rate service)
 - `Module_Registry` — registers `Forms_Module` when Gravity Forms or WPForms is active
 - `tests/bootstrap.php` — added forms stubs and 2 new source file requires
 - `phpstan-bootstrap.php` — added GFAPI, GF_Field, and wpforms() stubs

@@ -2,7 +2,7 @@
 /**
  * Plugin Name: WordPress For Odoo
  * Plugin URI: https://github.com/PaulArgoud/wordpress-for-odoo
- * Description: Bidirectional WordPress/WooCommerce sync with Odoo ERP (v14+). CRM contacts & leads, sales orders & invoices with customer portal, WooCommerce products, variants, images & stock. Async queue, webhooks, WP-CLI, encrypted credentials.
+ * Description: Modular WordPress/WooCommerce sync with Odoo ERP (v14+). 5 modules — CRM, Sales, WooCommerce, Memberships, Forms (GF/WPForms) — covering contacts, leads, orders, invoices, products with variants & stock. Async queue, webhooks, customer portal, WP-CLI, encrypted credentials.
  * Version: 1.9.9
  * Requires at least: 6.0
  * Requires PHP: 8.2

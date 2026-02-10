@@ -59,6 +59,7 @@ final class Dependency_Loader {
 		require_once WP4ODOO_PLUGIN_DIR . 'includes/modules/class-portal-manager.php';
 		require_once WP4ODOO_PLUGIN_DIR . 'includes/modules/class-sales-module.php';
 		require_once WP4ODOO_PLUGIN_DIR . 'includes/modules/class-currency-guard.php';
+		require_once WP4ODOO_PLUGIN_DIR . 'includes/modules/class-exchange-rate-service.php';
 		require_once WP4ODOO_PLUGIN_DIR . 'includes/modules/class-variant-handler.php';
 		require_once WP4ODOO_PLUGIN_DIR . 'includes/modules/class-image-handler.php';
 		require_once WP4ODOO_PLUGIN_DIR . 'includes/modules/class-product-handler.php';
