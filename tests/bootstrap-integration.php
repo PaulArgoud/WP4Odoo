@@ -27,6 +27,9 @@ tests_add_filter(
 	'muplugins_loaded',
 	function () {
 		require dirname( __DIR__ ) . '/wp4odoo.php';
+
+		// dbDelta() lives in upgrade.php — must be loaded before create_tables().
+		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 		\WP4Odoo\Database_Migration::create_tables();
 	}
 );
