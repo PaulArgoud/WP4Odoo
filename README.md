@@ -21,7 +21,8 @@ Modular WordPress plugin providing comprehensive, bidirectional integration betw
 - **Onboarding** — Post-activation redirect, setup notice, 3-step checklist with progress bar, inline Odoo documentation (API keys, webhooks)
 - **WP-CLI** — Full command suite: `wp wp4odoo status|test|sync|queue|module` for headless management
 - **Extensible** — Register custom modules via `wp4odoo_register_modules` action hook; filter data with `wp4odoo_map_to_odoo_*` / `wp4odoo_map_from_odoo_*`
-- **Multilingual (3 languages)** — Fully internationalized with WordPress standard Gettext i18n. Ships with English (source), French, and Spanish translations (254 strings). Translation-ready for additional languages via `.po`/`.mo` files
+- **Multilingual (3 languages)** — Fully internationalized with WordPress standard Gettext i18n. Ships with English (source), French, and Spanish translations (256 strings). Translation-ready for additional languages via `.po`/`.mo` files
+- **Code Quality** — WordPress Coding Standards (PHPCS), PHPStan level 5 static analysis, 436 unit tests + 26 integration tests, CI/CD with GitHub Actions
 
 ## Requirements
 
@@ -170,18 +171,36 @@ wp wp4odoo module disable crm        # Disable a module
 
 ## Development
 
+For detailed architecture, class diagrams, and data flows, see [ARCHITECTURE.md](ARCHITECTURE.md). For version history, see [CHANGELOG.md](CHANGELOG.md).
+
 ### Testing
 
 ```bash
 # Install dependencies
-php composer.phar install
+composer install
 
-# Run PHPUnit tests (436 tests, 855 assertions)
+# Unit tests (PHPUnit)
 php vendor/bin/phpunit
 
-# Run PHPStan static analysis (level 5, 0 errors on 44 files)
+# Static analysis (PHPStan level 5)
 php -d memory_limit=1G vendor/bin/phpstan analyse --memory-limit=1G
+
+# Coding standards (PHPCS — WordPress-Extra)
+php vendor/bin/phpcs
+
+# Integration tests (requires Docker)
+npm install
+npx wp-env start
+npm run test:integration
+npx wp-env stop
 ```
+
+### Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/my-feature`)
+3. Ensure all checks pass: `php vendor/bin/phpunit && php vendor/bin/phpstan analyse --memory-limit=1G && php vendor/bin/phpcs`
+4. Commit and open a Pull Request
 
 ### Translations
 

@@ -1,0 +1,1159 @@
+# French translation for WordPress For Odoo.
+# Copyright (C) 2026 WordPress For Odoo
+# This file is distributed under the same license as the WordPress For Odoo package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: WordPress For Odoo 1.9.7\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-02-10 17:35+0100\n"
+"PO-Revision-Date: 2026-02-09 22:31+0100\n"
+"Last-Translator: \n"
+"Language-Team: French\n"
+"Language: fr_FR\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+#: admin/views/page-settings.php:16 includes/admin/class-admin.php:170
+msgid "WordPress For Odoo"
+msgstr "WordPress For Odoo"
+
+#: admin/views/partial-checklist.php:22
+msgid "Setup Checklist"
+msgstr "Liste de vérification"
+
+#: admin/views/partial-checklist.php:27
+#, php-format
+msgid "%1$d / %2$d completed"
+msgstr "%1$d / %2$d terminé(s)"
+
+#: admin/views/partial-checklist.php:33
+msgid "Dismiss checklist"
+msgstr "Masquer la liste"
+
+#: admin/views/tab-connection.php:19
+msgid "Getting Started"
+msgstr "Pour commencer"
+
+#: admin/views/tab-connection.php:21
+msgid "Prerequisites"
+msgstr "Prérequis"
+
+#: admin/views/tab-connection.php:23
+msgid "An Odoo instance (version 14 or later) with API access enabled."
+msgstr "Une instance Odoo (version 14 ou ultérieure) avec l'accès API activé."
+
+#: admin/views/tab-connection.php:24
+msgid ""
+"An Odoo user with administrator privileges (or at least access to the "
+"modules you want to sync)."
+msgstr ""
+"Un utilisateur Odoo avec les droits d'administrateur (ou au moins l'accès "
+"aux modules à synchroniser)."
+
+#: admin/views/tab-connection.php:25
+msgid ""
+"An API key generated from your Odoo user profile (see instructions below)."
+msgstr ""
+"Une clé API générée depuis votre profil utilisateur Odoo (voir les "
+"instructions ci-dessous)."
+
+#: admin/views/tab-connection.php:27
+msgid "Required Odoo Modules"
+msgstr "Modules Odoo requis"
+
+#: admin/views/tab-connection.php:29
+msgid "CRM:"
+msgstr "CRM :"
+
+#: admin/views/tab-connection.php:29
+msgid "Contacts (base) + CRM (crm) for leads"
+msgstr "Contacts (base) + CRM (crm) pour les pistes"
+
+#: admin/views/tab-connection.php:30
+msgid "Sales:"
+msgstr "Ventes :"
+
+#: admin/views/tab-connection.php:30
+msgid "Sales (sale_management) + Invoicing (account)"
+msgstr "Ventes (sale_management) + Facturation (account)"
+
+#: admin/views/tab-connection.php:31
+msgid "WooCommerce:"
+msgstr "WooCommerce :"
+
+#: admin/views/tab-connection.php:31
+msgid "Inventory (stock) + Sales (sale_management) + Invoicing (account)"
+msgstr "Inventaire (stock) + Ventes (sale_management) + Facturation (account)"
+
+#: admin/views/tab-connection.php:41
+msgid "Odoo Connection"
+msgstr "Connexion Odoo"
+
+#: admin/views/tab-connection.php:46
+msgid "Odoo URL"
+msgstr "URL Odoo"
+
+#: admin/views/tab-connection.php:56
+msgid "Database"
+msgstr "Base de données"
+
+#: admin/views/tab-connection.php:66
+msgid "Username"
+msgstr "Nom d'utilisateur"
+
+#: admin/views/tab-connection.php:76
+msgid "API Key"
+msgstr "Clé API"
+
+#: admin/views/tab-connection.php:81
+msgid "Leave empty to keep the current key"
+msgstr "Laisser vide pour conserver la clé actuelle"
+
+#: admin/views/tab-connection.php:86
+msgid "An API key is already configured. Leave empty to keep it."
+msgstr "Une clé API est déjà configurée. Laissez vide pour la conserver."
+
+#: admin/views/tab-connection.php:88
+msgid "Enter your Odoo API key."
+msgstr "Saisissez votre clé API Odoo."
+
+#: admin/views/tab-connection.php:94
+msgid "How to generate an API key in Odoo"
+msgstr "Comment générer une clé API dans Odoo"
+
+#: admin/views/tab-connection.php:96
+msgid "Odoo 17+ (recommended)"
+msgstr "Odoo 17+ (recommandé)"
+
+#: admin/views/tab-connection.php:98
+msgid "Go to Settings > Users & Companies > Users."
+msgstr "Allez dans Paramètres > Utilisateurs & Sociétés > Utilisateurs."
+
+#: admin/views/tab-connection.php:99
+msgid "Select your user, then click the \"Preferences\" tab."
+msgstr ""
+"Sélectionnez votre utilisateur, puis cliquez sur l'onglet « Préférences »."
+
+#: admin/views/tab-connection.php:100
+msgid "Scroll to \"Account Security\" and click \"New API Key\"."
+msgstr ""
+"Faites défiler jusqu'à « Sécurité du compte » et cliquez sur « Nouvelle clé "
+"API »."
+
+#: admin/views/tab-connection.php:101
+msgid ""
+"Enter a description (e.g. \"WordPress For Odoo\") and copy the generated key."
+msgstr ""
+"Entrez une description (par ex. « WordPress For Odoo ») et copiez la clé "
+"générée."
+
+#: admin/views/tab-connection.php:103
+msgid "Odoo 14-16"
+msgstr "Odoo 14-16"
+
+#: admin/views/tab-connection.php:105
+msgid ""
+"Go to Settings > Activate the developer mode (from the General settings "
+"page)."
+msgstr ""
+"Allez dans Paramètres > Activez le mode développeur (depuis la page des "
+"paramètres généraux)."
+
+#: admin/views/tab-connection.php:106
+msgid "Click your user avatar (top right) > My Profile > \"Preferences\" tab."
+msgstr ""
+"Cliquez sur votre avatar (en haut à droite) > Mon profil > onglet "
+"« Préférences »."
+
+#: admin/views/tab-connection.php:107
+msgid "Under \"Account Security\", click \"New API Key\"."
+msgstr "Sous « Sécurité du compte », cliquez sur « Nouvelle clé API »."
+
+#: admin/views/tab-connection.php:108
+msgid "Copy the key immediately — it will not be shown again."
+msgstr "Copiez la clé immédiatement — elle ne sera plus affichée."
+
+#: admin/views/tab-connection.php:117
+msgid "Protocol"
+msgstr "Protocole"
+
+#: admin/views/tab-connection.php:122
+msgid "JSON-RPC (Odoo 17+)"
+msgstr "JSON-RPC (Odoo 17+)"
+
+#: admin/views/tab-connection.php:125
+msgid "XML-RPC (Odoo 14+)"
+msgstr "XML-RPC (Odoo 14+)"
+
+#: admin/views/tab-connection.php:132
+msgid "Timeout (seconds)"
+msgstr "Timeout (secondes)"
+
+#: admin/views/tab-connection.php:144
+msgid "Test connection"
+msgstr "Tester la connexion"
+
+#: admin/views/tab-connection.php:149 admin/views/tab-sync.php:143
+msgid "Save"
+msgstr "Enregistrer"
+
+#: admin/views/tab-connection.php:154
+msgid "Webhook"
+msgstr "Webhook"
+
+#: admin/views/tab-connection.php:157
+msgid "Token"
+msgstr "Token"
+
+#: admin/views/tab-connection.php:161
+msgid "Copy"
+msgstr "Copier"
+
+#: admin/views/tab-connection.php:167
+#, php-format
+msgid "Configure this token in Odoo as the %s header."
+msgstr "Configurez ce token dans Odoo comme en-tête %s."
+
+#: admin/views/tab-connection.php:175
+msgid "Webhook URL"
+msgstr "URL du webhook"
+
+#: admin/views/tab-connection.php:184
+msgid "How to configure webhooks in Odoo"
+msgstr "Comment configurer les webhooks dans Odoo"
+
+#: admin/views/tab-connection.php:186
+msgid "Odoo 17+ (native webhooks)"
+msgstr "Odoo 17+ (webhooks natifs)"
+
+#: admin/views/tab-connection.php:188
+msgid "Go to Settings > Technical > Automation > Webhooks."
+msgstr "Allez dans Paramètres > Technique > Automatisation > Webhooks."
+
+#: admin/views/tab-connection.php:189
+msgid ""
+"Create a new webhook for each model you want to sync (e.g. res.partner, "
+"sale.order)."
+msgstr ""
+"Créez un nouveau webhook pour chaque modèle à synchroniser (par ex. "
+"res.partner, sale.order)."
+
+#: admin/views/tab-connection.php:194
+#, php-format
+msgid "Set the URL to: %s"
+msgstr "Définissez l'URL : %s"
+
+#: admin/views/tab-connection.php:203
+#, php-format
+msgid "Add a custom header %s with the token shown above."
+msgstr "Ajoutez un en-tête personnalisé %s avec le jeton ci-dessus."
+
+#: admin/views/tab-connection.php:208
+msgid "Select the events: Create, Update, Delete (as needed)."
+msgstr ""
+"Sélectionnez les événements : Création, Modification, Suppression (selon les "
+"besoins)."
+
+#: admin/views/tab-connection.php:210
+msgid "Odoo 14-16 (Automated Actions)"
+msgstr "Odoo 14-16 (Actions automatisées)"
+
+#: admin/views/tab-connection.php:212
+msgid ""
+"Activate the developer mode, then go to Settings > Technical > Automation > "
+"Automated Actions."
+msgstr ""
+"Activez le mode développeur, puis allez dans Paramètres > Technique > "
+"Automatisation > Actions automatisées."
+
+#: admin/views/tab-connection.php:213
+msgid "Create an action for each model (e.g. res.partner)."
+msgstr "Créez une action pour chaque modèle (par ex. res.partner)."
+
+#: admin/views/tab-connection.php:214
+msgid ""
+"Set trigger to \"On Creation & Update\" and action type to \"Execute Python "
+"Code\"."
+msgstr ""
+"Définissez le déclencheur sur « Lors de la création et de la mise à jour » "
+"et le type d'action sur « Exécuter du code Python »."
+
+#: admin/views/tab-connection.php:216
+msgid "Use the following Python code template:"
+msgstr "Utilisez le modèle de code Python suivant :"
+
+#: admin/views/tab-logs.php:16 includes/admin/class-settings-page.php:40
+msgid "Logs"
+msgstr "Journaux"
+
+#: admin/views/tab-logs.php:22
+msgid "All levels"
+msgstr "Tous les niveaux"
+
+#: admin/views/tab-logs.php:31
+msgid "All modules"
+msgstr "Tous les modules"
+
+#: admin/views/tab-logs.php:43
+msgid "From"
+msgstr "Du"
+
+#: admin/views/tab-logs.php:44
+msgid "To"
+msgstr "Au"
+
+#: admin/views/tab-logs.php:47
+msgid "Filter"
+msgstr "Filtrer"
+
+#: admin/views/tab-logs.php:52
+msgid "Purge logs"
+msgstr "Purger les journaux"
+
+#: admin/views/tab-logs.php:62
+msgid "Level"
+msgstr "Niveau"
+
+#: admin/views/tab-logs.php:63 admin/views/tab-queue.php:82
+msgid "Module"
+msgstr "Module"
+
+#: admin/views/tab-logs.php:64 includes/modules/class-lead-manager.php:122
+msgid "Message"
+msgstr "Message"
+
+#: admin/views/tab-logs.php:65
+msgid "Context"
+msgstr "Contexte"
+
+#: admin/views/tab-logs.php:66 templates/customer-portal.php:39
+#: templates/customer-portal.php:84
+msgid "Date"
+msgstr "Date"
+
+#: admin/views/tab-logs.php:72
+msgid "No log entries."
+msgstr "Aucun journal."
+
+#: admin/views/tab-modules.php:14 includes/admin/class-settings-page.php:38
+msgid "Modules"
+msgstr "Modules"
+
+#: admin/views/tab-modules.php:16
+msgid "Enable or disable synchronization modules."
+msgstr "Activez ou désactivez les modules de synchronisation."
+
+#: admin/views/tab-modules.php:44
+msgid "WooCommerce must be installed and activated to use this module."
+msgstr "WooCommerce doit être installé et activé pour utiliser ce module."
+
+#: admin/views/tab-modules.php:48
+msgid ""
+"Enabling the WooCommerce module replaces the Sales module. Both cannot be "
+"active simultaneously."
+msgstr ""
+"L'activation du module WooCommerce remplace le module Sales. Les deux ne "
+"peuvent pas être actifs simultanément."
+
+#: admin/views/tab-modules.php:155
+msgid "Save settings"
+msgstr "Enregistrer les paramètres"
+
+#: admin/views/tab-modules.php:165
+msgid "No modules registered."
+msgstr "Aucun module enregistré."
+
+#: admin/views/tab-queue.php:23 admin/views/tab-queue.php:35
+#: includes/admin/class-admin.php:109
+msgid "Pending"
+msgstr "En attente"
+
+#: admin/views/tab-queue.php:24 admin/views/tab-queue.php:39
+#: includes/admin/class-admin.php:110
+msgid "Processing"
+msgstr "En cours"
+
+#: admin/views/tab-queue.php:25 admin/views/tab-queue.php:43
+#: includes/admin/class-admin.php:111
+msgid "Completed"
+msgstr "Terminé"
+
+#: admin/views/tab-queue.php:26 admin/views/tab-queue.php:47
+#: includes/admin/class-admin.php:112
+msgid "Failed"
+msgstr "Échoué"
+
+#: admin/views/tab-queue.php:29 includes/admin/class-settings-page.php:39
+msgid "Queue"
+msgstr "File d'attente"
+
+#: admin/views/tab-queue.php:54
+msgid "Retry failed"
+msgstr "Relancer les échoués"
+
+#: admin/views/tab-queue.php:57
+msgid "Clean up (> 7 days)"
+msgstr "Nettoyer (> 7 jours)"
+
+#: admin/views/tab-queue.php:60
+msgid "Refresh"
+msgstr "Actualiser"
+
+#: admin/views/tab-queue.php:68 includes/admin/class-admin.php:107
+#, php-format
+msgid "Last sync: %s"
+msgstr "Dernière synchro : %s"
+
+#: admin/views/tab-queue.php:83
+msgid "Type"
+msgstr "Type"
+
+#: admin/views/tab-queue.php:84 admin/views/tab-sync.php:23
+msgid "Direction"
+msgstr "Direction"
+
+#: admin/views/tab-queue.php:85
+msgid "Action"
+msgstr "Action"
+
+#: admin/views/tab-queue.php:86 templates/customer-portal.php:41
+#: templates/customer-portal.php:86
+msgid "Status"
+msgstr "Statut"
+
+#: admin/views/tab-queue.php:87
+msgid "Attempts"
+msgstr "Tentatives"
+
+#: admin/views/tab-queue.php:88
+msgid "Created at"
+msgstr "Créé le"
+
+#: admin/views/tab-queue.php:89
+msgid "Actions"
+msgstr "Actions"
+
+#: admin/views/tab-queue.php:95
+msgid "No jobs in the queue."
+msgstr "Aucun job dans la file."
+
+#: admin/views/tab-queue.php:128 includes/admin/class-admin.php:108
+msgid "Cancel"
+msgstr "Annuler"
+
+#: admin/views/tab-queue.php:149
+#, php-format
+msgid "%s item(s)"
+msgstr "%s élément(s)"
+
+#: admin/views/tab-sync.php:18 includes/admin/class-settings-page.php:37
+msgid "Synchronization"
+msgstr "Synchronisation"
+
+#: admin/views/tab-sync.php:28
+msgid "Bidirectional"
+msgstr "Bidirectionnelle"
+
+#: admin/views/tab-sync.php:31
+msgid "WordPress → Odoo"
+msgstr "WordPress → Odoo"
+
+#: admin/views/tab-sync.php:34
+msgid "Odoo → WordPress"
+msgstr "Odoo → WordPress"
+
+#: admin/views/tab-sync.php:41
+msgid "Conflict rule"
+msgstr "Règle de conflit"
+
+#: admin/views/tab-sync.php:46
+msgid "Newest wins"
+msgstr "Le plus récent gagne"
+
+#: admin/views/tab-sync.php:49
+msgid "Odoo priority"
+msgstr "Odoo prioritaire"
+
+#: admin/views/tab-sync.php:52
+msgid "WordPress priority"
+msgstr "WordPress prioritaire"
+
+#: admin/views/tab-sync.php:59
+msgid "Batch size"
+msgstr "Taille du lot"
+
+#: admin/views/tab-sync.php:66
+msgid "Number of jobs processed per cron run."
+msgstr "Nombre de jobs traités par exécution du cron."
+
+#: admin/views/tab-sync.php:72
+msgid "Interval"
+msgstr "Intervalle"
+
+#: admin/views/tab-sync.php:77
+msgid "Every 5 minutes"
+msgstr "Toutes les 5 minutes"
+
+#: admin/views/tab-sync.php:80
+msgid "Every 15 minutes"
+msgstr "Toutes les 15 minutes"
+
+#: admin/views/tab-sync.php:87
+msgid "Auto sync"
+msgstr "Synchronisation automatique"
+
+#: admin/views/tab-sync.php:93
+msgid "Enable automatic sync via cron"
+msgstr "Activer la synchronisation automatique via cron"
+
+#: admin/views/tab-sync.php:99
+msgid "Logging"
+msgstr "Journalisation"
+
+#: admin/views/tab-sync.php:104
+msgid "Enable logging"
+msgstr "Activer les logs"
+
+#: admin/views/tab-sync.php:110
+msgid "Log events to the database"
+msgstr "Enregistrer les événements dans la base de données"
+
+#: admin/views/tab-sync.php:113
+msgid "Critical messages are always logged."
+msgstr "Les messages critiques sont toujours enregistrés."
+
+#: admin/views/tab-sync.php:119
+msgid "Minimum level"
+msgstr "Niveau minimum"
+
+#: admin/views/tab-sync.php:133
+msgid "Retention (days)"
+msgstr "Rétention (jours)"
+
+#: admin/views/tab-sync.php:148
+msgid "Bulk Operations"
+msgstr "Opérations en masse"
+
+#: admin/views/tab-sync.php:150
+msgid ""
+"Import or export all products at once via the queue. Jobs are processed in "
+"the background by the sync engine."
+msgstr ""
+"Importez ou exportez tous les produits en une fois via la file d'attente. "
+"Les jobs sont traités en arrière-plan par le moteur de synchronisation."
+
+#: admin/views/tab-sync.php:154
+msgid "Import all products from Odoo"
+msgstr "Importer tous les produits depuis Odoo"
+
+#: admin/views/tab-sync.php:157
+msgid "Export all products to Odoo"
+msgstr "Exporter tous les produits vers Odoo"
+
+#: includes/admin/class-admin-ajax.php:80
+#: includes/modules/class-portal-manager.php:134
+msgid "Permission denied."
+msgstr "Permission refusée."
+
+#: includes/admin/class-admin-ajax.php:105
+#, php-format
+msgid ""
+"Required Odoo models are not available: %s. Install the corresponding Odoo "
+"modules to use these features."
+msgstr ""
+"Les modèles Odoo requis ne sont pas disponibles : %s. Installez les modules "
+"Odoo correspondants pour utiliser ces fonctionnalités."
+
+#: includes/admin/class-admin-ajax.php:110
+msgid ""
+"Some Odoo modules required by the enabled features are not installed on your "
+"Odoo instance. Enable WP_DEBUG for technical details."
+msgstr ""
+"Certains modules Odoo requis par les fonctionnalités activées ne sont pas "
+"installés sur votre instance Odoo. Activez WP_DEBUG pour les détails "
+"techniques."
+
+#: includes/admin/class-admin.php:54 includes/admin/class-admin.php:55
+msgid "Odoo Connector"
+msgstr "Connecteur Odoo"
+
+#: includes/admin/class-admin.php:94
+msgid "Testing..."
+msgstr "Test en cours…"
+
+#: includes/admin/class-admin.php:95
+msgid "Connection successful!"
+msgstr "Connexion réussie !"
+
+#: includes/admin/class-admin.php:96
+msgid "Connection failed."
+msgstr "Échec de la connexion."
+
+#: includes/admin/class-admin.php:97
+msgid "Copied!"
+msgstr "Copié !"
+
+#: includes/admin/class-admin.php:98
+msgid "Delete all old log entries?"
+msgstr "Supprimer tous les journaux anciens ?"
+
+#: includes/admin/class-admin.php:99
+msgid "Delete completed/failed jobs older than 7 days?"
+msgstr "Supprimer les jobs terminés/échoués de plus de 7 jours ?"
+
+#: includes/admin/class-admin.php:100
+msgid "Cancel this job?"
+msgstr "Annuler ce job ?"
+
+#: includes/admin/class-admin.php:101
+msgid "No results."
+msgstr "Aucun résultat."
+
+#: includes/admin/class-admin.php:102
+#: includes/admin/trait-ajax-module-handlers.php:149
+msgid "Settings saved."
+msgstr "Paramètres enregistrés."
+
+#: includes/admin/class-admin.php:103
+msgid "Failed to save settings."
+msgstr "Échec de l'enregistrement des paramètres."
+
+#: includes/admin/class-admin.php:104
+msgid ""
+"Import all products from Odoo? This will enqueue sync jobs for all Odoo "
+"products."
+msgstr ""
+"Importer tous les produits depuis Odoo ? Cela ajoutera des jobs de "
+"synchronisation pour tous les produits Odoo."
+
+#: includes/admin/class-admin.php:105
+msgid ""
+"Export all products to Odoo? This will enqueue sync jobs for all WooCommerce "
+"products."
+msgstr ""
+"Exporter tous les produits vers Odoo ? Cela ajoutera des jobs de "
+"synchronisation pour tous les produits WooCommerce."
+
+#: includes/admin/class-admin.php:106
+#: includes/modules/class-portal-manager.php:103
+msgid "Loading..."
+msgstr "Chargement…"
+
+#: includes/admin/class-admin.php:171
+msgid "is almost ready! Configure your Odoo connection to get started."
+msgstr "est presque prêt ! Configurez votre connexion Odoo pour commencer."
+
+#: includes/admin/class-admin.php:173
+msgid "Go to settings"
+msgstr "Aller aux paramètres"
+
+#: includes/admin/class-admin.php:204
+msgid "Settings"
+msgstr "Réglages"
+
+#: includes/admin/class-bulk-handler.php:81
+msgid "No products found in Odoo."
+msgstr "Aucun produit trouvé dans Odoo."
+
+#: includes/admin/class-bulk-handler.php:89
+#, php-format
+msgid "%d product(s) enqueued for import."
+msgstr "%d produit(s) mis en file d'attente pour l'import."
+
+#: includes/admin/class-bulk-handler.php:135
+msgid "No WooCommerce products found."
+msgstr "Aucun produit WooCommerce trouvé."
+
+#: includes/admin/class-bulk-handler.php:143
+#, php-format
+msgid "%d product(s) enqueued for export."
+msgstr "%d produit(s) mis en file d'attente pour l'export."
+
+#: includes/admin/class-settings-page.php:36
+msgid "Connection"
+msgstr "Connexion"
+
+#: includes/admin/class-settings-page.php:118
+msgid "Connect to Odoo"
+msgstr "Connecter Odoo"
+
+#: includes/admin/class-settings-page.php:124
+msgid "Enable a module"
+msgstr "Activer un module"
+
+#: includes/admin/class-settings-page.php:130
+msgid "Configure webhooks in Odoo"
+msgstr "Configurer les webhooks dans Odoo"
+
+#: includes/admin/trait-ajax-module-handlers.php:37
+#: includes/admin/trait-ajax-module-handlers.php:103
+msgid "Missing module identifier."
+msgstr "Identifiant de module manquant."
+
+#: includes/admin/trait-ajax-module-handlers.php:49
+#, php-format
+msgid "Module \"%s\" enabled."
+msgstr "Module « %s » activé."
+
+#: includes/admin/trait-ajax-module-handlers.php:54
+#, php-format
+msgid "Module \"%s\" disabled."
+msgstr "Module « %s » désactivé."
+
+#: includes/admin/trait-ajax-module-handlers.php:111
+msgid "Unknown module."
+msgstr "Module inconnu."
+
+#: includes/admin/trait-ajax-module-handlers.php:164
+#: includes/admin/trait-ajax-module-handlers.php:183
+msgid "WooCommerce module is not registered."
+msgstr "Le module WooCommerce n'est pas enregistré."
+
+#: includes/admin/trait-ajax-monitor-handlers.php:39
+#, php-format
+msgid "%d job(s) retried."
+msgstr "%d job(s) relancé(s)."
+
+#: includes/admin/trait-ajax-monitor-handlers.php:60
+#, php-format
+msgid "%d job(s) deleted."
+msgstr "%d job(s) supprimé(s)."
+
+#: includes/admin/trait-ajax-monitor-handlers.php:79
+msgid "Job cancelled."
+msgstr "Job annulé."
+
+#: includes/admin/trait-ajax-monitor-handlers.php:83
+msgid "Unable to cancel this job."
+msgstr "Impossible d'annuler ce job."
+
+#: includes/admin/trait-ajax-monitor-handlers.php:103
+#, php-format
+msgid "%d log entry(ies) deleted."
+msgstr "%d entrée(s) de journal supprimée(s)."
+
+#: includes/admin/trait-ajax-setup-handlers.php:113
+msgid "Webhooks marked as configured."
+msgstr "Webhooks marqués comme configurés."
+
+#: includes/api/class-odoo-auth.php:179
+msgid "Missing connection credentials."
+msgstr "Identifiants de connexion manquants."
+
+#: includes/api/class-odoo-auth.php:196
+msgid "Connection successful."
+msgstr "Connexion réussie."
+
+#: includes/api/class-odoo-client.php:67
+msgid "Odoo connection not configured."
+msgstr "Connexion Odoo non configurée."
+
+#: includes/api/class-odoo-client.php:73
+msgid "Odoo credentials not configured."
+msgstr "Identifiants Odoo non configurés."
+
+#: includes/api/class-odoo-jsonrpc.php:105
+#: includes/api/class-odoo-xmlrpc.php:100
+msgid "Authentication failed: invalid credentials."
+msgstr "Échec de l'authentification : identifiants invalides."
+
+#: includes/api/class-odoo-jsonrpc.php:132
+#: includes/api/class-odoo-xmlrpc.php:129
+msgid "Not authenticated. Call authenticate() first."
+msgstr "Non authentifié. Appelez authenticate() d'abord."
+
+#: includes/api/class-odoo-jsonrpc.php:197
+#, php-format
+msgid "Invalid JSON response from Odoo (HTTP %d)."
+msgstr "Réponse JSON invalide depuis Odoo (HTTP %d)."
+
+#: includes/api/class-odoo-jsonrpc.php:205
+msgid "Unknown RPC error"
+msgstr "Erreur RPC inconnue"
+
+#: includes/api/class-odoo-jsonrpc.php:225
+#, php-format
+msgid "Odoo RPC error: %s"
+msgstr "Erreur RPC Odoo : %s"
+
+#: includes/api/class-odoo-xmlrpc.php:197
+msgid "Failed to parse XML-RPC response from Odoo."
+msgstr "Échec de l'analyse de la réponse XML-RPC d'Odoo."
+
+#: includes/api/class-odoo-xmlrpc.php:202
+msgid "Unknown XML-RPC fault"
+msgstr "Erreur XML-RPC inconnue"
+
+#: includes/api/class-odoo-xmlrpc.php:220
+#, php-format
+msgid "Odoo XML-RPC error: %s"
+msgstr "Erreur XML-RPC Odoo : %s"
+
+#: includes/api/trait-retryable-http.php:61
+#, php-format
+msgid "HTTP error: %s"
+msgstr "Erreur HTTP : %s"
+
+#: includes/class-module-base.php:457
+#, php-format
+msgid "Entity type \"%1$s\" is not registered in module \"%2$s\"."
+msgstr ""
+"Le type d'entité « %1$s » n'est pas enregistré dans le module « %2$s »."
+
+#: includes/class-sync-engine.php:183
+#, php-format
+msgid "Module \"%s\" not found or not registered."
+msgstr "Module « %s » introuvable ou non enregistré."
+
+#: includes/class-webhook-handler.php:138
+msgid "Missing required fields: module, entity_type, odoo_id."
+msgstr "Champs requis manquants : module, entity_type, odoo_id."
+
+#: includes/class-webhook-handler.php:201
+#, php-format
+msgid "Module \"%s\" not found."
+msgstr "Module « %s » introuvable."
+
+#: includes/class-webhook-handler.php:221
+msgid "Provide either wp_id (for push) or odoo_id (for pull)."
+msgstr "Fournissez wp_id (pour pousser) ou odoo_id (pour tirer)."
+
+#: includes/class-webhook-handler.php:266
+msgid "Webhook token not configured."
+msgstr "Token de webhook non configuré."
+
+#: includes/class-webhook-handler.php:278
+msgid "Invalid webhook token."
+msgstr "Token de webhook invalide."
+
+#: includes/class-webhook-handler.php:299
+msgid "You do not have permission to perform this action."
+msgstr "Vous n'avez pas la permission d'effectuer cette action."
+
+#: includes/class-webhook-handler.php:339
+msgid "Too many requests. Please try again later."
+msgstr "Trop de requêtes. Veuillez réessayer plus tard."
+
+#: includes/modules/class-crm-module.php:146
+msgid "Sync users as contacts"
+msgstr "Synchroniser les utilisateurs comme contacts"
+
+#: includes/modules/class-crm-module.php:148
+msgid "Push WordPress users to Odoo res.partner."
+msgstr "Pousser les utilisateurs WordPress vers Odoo res.partner."
+
+#: includes/modules/class-crm-module.php:151
+msgid "Archive on delete"
+msgstr "Archiver à la suppression"
+
+#: includes/modules/class-crm-module.php:153
+msgid "Set active=false in Odoo instead of deleting the record."
+msgstr "Définir active=false dans Odoo au lieu de supprimer l'enregistrement."
+
+#: includes/modules/class-crm-module.php:156
+msgid "Sync role"
+msgstr "Rôle synchronisé"
+
+#: includes/modules/class-crm-module.php:158
+msgid "All roles"
+msgstr "Tous les rôles"
+
+#: includes/modules/class-crm-module.php:159
+msgid "Only sync users with this role. Leave empty to sync all."
+msgstr ""
+"Ne synchroniser que les utilisateurs avec ce rôle. Laisser vide pour tout "
+"synchroniser."
+
+#: includes/modules/class-crm-module.php:162
+msgid "Create users on pull"
+msgstr "Créer les utilisateurs lors du pull"
+
+#: includes/modules/class-crm-module.php:164
+msgid "Create new WordPress users when pulling contacts from Odoo."
+msgstr ""
+"Créer de nouveaux utilisateurs WordPress lors de l'import des contacts "
+"depuis Odoo."
+
+#: includes/modules/class-crm-module.php:167
+msgid "Default user role"
+msgstr "Rôle utilisateur par défaut"
+
+#: includes/modules/class-crm-module.php:170
+msgid "Role assigned to users created by Odoo pull."
+msgstr "Rôle attribué aux utilisateurs créés par l'import Odoo."
+
+#: includes/modules/class-crm-module.php:173
+msgid "Enable lead form"
+msgstr "Activer le formulaire de leads"
+
+#: includes/modules/class-crm-module.php:175
+msgid "Enable the [wp4odoo_lead_form] shortcode."
+msgstr "Activer le shortcode [wp4odoo_lead_form]."
+
+#: includes/modules/class-lead-manager.php:58
+msgid "Leads"
+msgstr "Leads"
+
+#: includes/modules/class-lead-manager.php:59
+#: includes/modules/class-lead-manager.php:218
+msgid "Lead"
+msgstr "Lead"
+
+#: includes/modules/class-lead-manager.php:60
+msgid "Add New Lead"
+msgstr "Ajouter un lead"
+
+#: includes/modules/class-lead-manager.php:61
+msgid "Edit Lead"
+msgstr "Modifier le lead"
+
+#: includes/modules/class-lead-manager.php:62
+msgid "View Lead"
+msgstr "Voir le lead"
+
+#: includes/modules/class-lead-manager.php:63
+msgid "Search Leads"
+msgstr "Rechercher des leads"
+
+#: includes/modules/class-lead-manager.php:64
+msgid "No leads found."
+msgstr "Aucun lead trouvé."
+
+#: includes/modules/class-lead-manager.php:65
+msgid "No leads found in Trash."
+msgstr "Aucun lead trouvé dans la corbeille."
+
+#: includes/modules/class-lead-manager.php:94
+msgid "Sending..."
+msgstr "Envoi en cours…"
+
+#: includes/modules/class-lead-manager.php:95
+#: includes/modules/class-lead-manager.php:181
+msgid "Your message has been sent successfully."
+msgstr "Votre message a été envoyé avec succès."
+
+#: includes/modules/class-lead-manager.php:96
+#: includes/modules/class-portal-manager.php:104
+msgid "An error occurred. Please try again."
+msgstr "Une erreur est survenue. Veuillez réessayer."
+
+#: includes/modules/class-lead-manager.php:106
+msgid "Name"
+msgstr "Nom"
+
+#: includes/modules/class-lead-manager.php:110
+msgid "Email"
+msgstr "E-mail"
+
+#: includes/modules/class-lead-manager.php:114
+msgid "Phone"
+msgstr "Téléphone"
+
+#: includes/modules/class-lead-manager.php:118
+msgid "Company"
+msgstr "Société"
+
+#: includes/modules/class-lead-manager.php:126
+msgid "Send"
+msgstr "Envoyer"
+
+#: includes/modules/class-lead-manager.php:152
+msgid "Name and email are required."
+msgstr "Le nom et l'e-mail sont requis."
+
+#: includes/modules/class-lead-manager.php:156
+msgid "Invalid email address."
+msgstr "Adresse e-mail invalide."
+
+#: includes/modules/class-lead-manager.php:165
+msgid "Failed to save lead."
+msgstr "Échec de l'enregistrement du lead."
+
+#: includes/modules/class-portal-manager.php:76
+#, php-format
+msgid "Please <a href=\"%s\">log in</a> to access your customer portal."
+msgstr ""
+"Veuillez <a href=\"%s\">vous connecter</a> pour accéder à votre portail "
+"client."
+
+#: includes/modules/class-portal-manager.php:86
+msgid ""
+"Your account is not yet linked to an Odoo partner. Please contact the "
+"administrator."
+msgstr ""
+"Votre compte n'est pas encore lié à un partenaire Odoo. Veuillez contacter "
+"l'administrateur."
+
+#: includes/modules/class-portal-manager.php:124
+msgid "Not authenticated."
+msgstr "Non authentifié."
+
+#: includes/modules/class-sales-module.php:130
+msgid "Import products"
+msgstr "Importer les produits"
+
+#: includes/modules/class-sales-module.php:132
+msgid "Pull product data from Odoo."
+msgstr "Récupérer les données produits depuis Odoo."
+
+#: includes/modules/class-sales-module.php:135
+msgid "Enable customer portal"
+msgstr "Activer le portail client"
+
+#: includes/modules/class-sales-module.php:137
+msgid "Enable the [wp4odoo_customer_portal] shortcode for logged-in users."
+msgstr ""
+"Activer le shortcode [wp4odoo_customer_portal] pour les utilisateurs "
+"connectés."
+
+#: includes/modules/class-sales-module.php:140
+msgid "Orders per page"
+msgstr "Commandes par page"
+
+#: includes/modules/class-sales-module.php:142
+msgid "Number of orders/invoices shown per page in the customer portal."
+msgstr ""
+"Nombre de commandes/factures affichées par page dans le portail client."
+
+#: includes/modules/class-sales-module.php:156 templates/customer-portal.php:21
+msgid "Orders"
+msgstr "Commandes"
+
+#: includes/modules/class-sales-module.php:157
+#: includes/modules/class-sales-module.php:256
+msgid "Order"
+msgstr "Commande"
+
+#: includes/modules/class-sales-module.php:158
+msgid "Add New Order"
+msgstr "Ajouter une commande"
+
+#: includes/modules/class-sales-module.php:159
+msgid "Edit Order"
+msgstr "Modifier la commande"
+
+#: includes/modules/class-sales-module.php:160
+msgid "View Order"
+msgstr "Voir la commande"
+
+#: includes/modules/class-sales-module.php:161
+msgid "Search Orders"
+msgstr "Rechercher des commandes"
+
+#: includes/modules/class-sales-module.php:162 templates/customer-portal.php:33
+msgid "No orders found."
+msgstr "Aucune commande trouvée."
+
+#: includes/modules/class-sales-module.php:163
+msgid "No orders found in Trash."
+msgstr "Aucune commande trouvée dans la corbeille."
+
+#: includes/modules/class-sales-module.php:174
+#: includes/modules/class-woocommerce-module.php:469
+#: templates/customer-portal.php:25
+msgid "Invoices"
+msgstr "Factures"
+
+#: includes/modules/class-sales-module.php:175
+#: includes/modules/class-sales-module.php:271
+#: includes/modules/class-woocommerce-module.php:470
+#: includes/modules/class-woocommerce-module.php:582
+msgid "Invoice"
+msgstr "Facture"
+
+#: includes/modules/class-sales-module.php:176
+#: includes/modules/class-woocommerce-module.php:471
+msgid "Add New Invoice"
+msgstr "Ajouter une facture"
+
+#: includes/modules/class-sales-module.php:177
+#: includes/modules/class-woocommerce-module.php:472
+msgid "Edit Invoice"
+msgstr "Modifier la facture"
+
+#: includes/modules/class-sales-module.php:178
+#: includes/modules/class-woocommerce-module.php:473
+msgid "View Invoice"
+msgstr "Voir la facture"
+
+#: includes/modules/class-sales-module.php:179
+#: includes/modules/class-woocommerce-module.php:474
+msgid "Search Invoices"
+msgstr "Rechercher des factures"
+
+#: includes/modules/class-sales-module.php:180
+#: includes/modules/class-woocommerce-module.php:475
+#: templates/customer-portal.php:78
+msgid "No invoices found."
+msgstr "Aucune facture trouvée."
+
+#: includes/modules/class-sales-module.php:181
+#: includes/modules/class-woocommerce-module.php:476
+msgid "No invoices found in Trash."
+msgstr "Aucune facture trouvée dans la corbeille."
+
+#: includes/modules/class-woocommerce-module.php:203
+msgid "Sync products"
+msgstr "Synchroniser les produits"
+
+#: includes/modules/class-woocommerce-module.php:205
+msgid "Synchronize WooCommerce products with Odoo."
+msgstr "Synchroniser les produits WooCommerce avec Odoo."
+
+#: includes/modules/class-woocommerce-module.php:208
+msgid "Sync orders"
+msgstr "Synchroniser les commandes"
+
+#: includes/modules/class-woocommerce-module.php:210
+msgid "Synchronize WooCommerce orders with Odoo."
+msgstr "Synchroniser les commandes WooCommerce avec Odoo."
+
+#: includes/modules/class-woocommerce-module.php:213
+msgid "Sync stock"
+msgstr "Synchroniser le stock"
+
+#: includes/modules/class-woocommerce-module.php:215
+msgid "Pull stock levels from Odoo into WooCommerce products."
+msgstr ""
+"Récupérer les niveaux de stock depuis Odoo vers les produits WooCommerce."
+
+#: includes/modules/class-woocommerce-module.php:218
+msgid "Sync product images"
+msgstr "Synchroniser les images produit"
+
+#: includes/modules/class-woocommerce-module.php:220
+msgid "Pull product featured images from Odoo."
+msgstr "Importer les images mises en avant des produits depuis Odoo."
+
+#: includes/modules/class-woocommerce-module.php:223
+msgid "Auto-confirm orders"
+msgstr "Confirmer automatiquement les commandes"
+
+#: includes/modules/class-woocommerce-module.php:225
+msgid "Automatically confirm orders in Odoo when created from WooCommerce."
+msgstr ""
+"Confirmer automatiquement les commandes dans Odoo lors de leur création "
+"depuis WooCommerce."
+
+#: templates/customer-portal.php:38 templates/customer-portal.php:83
+msgid "Reference"
+msgstr "Référence"
+
+#: templates/customer-portal.php:40 templates/customer-portal.php:85
+msgid "Total"
+msgstr "Total"
+
+#: templates/customer-portal.php:87
+msgid "Payment"
+msgstr "Paiement"
+
+#: wp4odoo.php:228
+msgid "Every 5 Minutes"
+msgstr "Toutes les 5 minutes"
+
+#: wp4odoo.php:232
+msgid "Every 15 Minutes"
+msgstr "Toutes les 15 minutes"
