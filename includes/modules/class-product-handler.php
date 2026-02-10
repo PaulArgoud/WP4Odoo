@@ -109,11 +109,14 @@ class Product_Handler {
 		$odoo_currency     = $guard['odoo_currency'];
 
 		if ( $currency_mismatch ) {
-			$this->logger->warning( 'Product currency mismatch, skipping price update.', [
-				'wp_product_id' => $wp_id,
-				'odoo_currency' => $guard['odoo_currency'],
-				'wc_currency'   => $guard['wc_currency'],
-			] );
+			$this->logger->warning(
+				'Product currency mismatch, skipping price update.',
+				[
+					'wp_product_id' => $wp_id,
+					'odoo_currency' => $guard['odoo_currency'],
+					'wc_currency'   => $guard['wc_currency'],
+				]
+			);
 		}
 
 		if ( isset( $data['name'] ) ) {

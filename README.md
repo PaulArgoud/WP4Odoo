@@ -34,16 +34,15 @@ Modular WordPress plugin providing comprehensive, bidirectional integration betw
 
 ### By Odoo version and hosting type
 
-| Odoo version | On-Premise    | Odoo.sh       | Odoo Online | One App Free |
-|:-------------|:-------------:|:-------------:|:-----------:|:------------:|
-| 17 – 19      | ✅ Full ³     | ✅ Full ³     | ✅ Full     | ⚠️ Partial ² |
-| 14 – 16      | ✅ Full ³     | ✅ Full ³     | N/A ¹       | N/A ¹        |
-| < 14          | ❌            | ❌            | N/A ¹       | N/A ¹        |
+| Odoo    | Odoo.      | Odoo.sh  | Odoo    | Odoo Online  |
+| version | On-Premise |          | Online  | One App Free |
+|:--------|:----------:|:---------:|:------:|:------------:|
+| 17 – 19 | ✅ Full³   | ✅ Full³ | ✅ Full | ⚠️ Partial² |
+| 14 – 16 | ✅ Full³   | ✅ Full³ | N/A¹    | N/A¹        |
+| < 14    | ❌         | ❌       | N/A¹    | N/A¹        |
 
 > ¹ Odoo Online always runs the latest stable version (currently 17+), so older versions do not apply.
->
 > ² **[One App Free](https://www.odoo.com/pricing)** is Odoo's free plan (one app, unlimited users). WP4Odoo modules require multiple Odoo apps (see table below), so only a subset of features will work. Upgrade to the Standard plan for full compatibility.
->
 > ³ Works with both Odoo **Community** (free) and **Enterprise** editions — all required apps are included in Community.
 
 - **Odoo 17+** — uses JSON-RPC 2.0 (default, recommended)
@@ -58,7 +57,7 @@ The plugin automatically detects missing Odoo apps at connection test and module
 
 | WP4Odoo Module  | Required Odoo Apps                    | One App Free |
 |:----------------|:--------------------------------------|:------------:|
-| **CRM**         | Contacts, CRM                         | ⚠️ ⁴        |
+| **CRM**         | Contacts, CRM                         | ⚠️⁴          |
 | **Sales**       | Contacts, Sales, Invoicing            | ❌           |
 | **WooCommerce** | Contacts, Sales, Inventory, Invoicing | ❌           |
 
@@ -156,6 +155,7 @@ Namespace: `wp-json/wp4odoo/v1/`
 wp wp4odoo status                    # Connection info, queue stats, modules
 wp wp4odoo test                      # Test Odoo connection
 wp wp4odoo sync run                  # Process sync queue
+wp wp4odoo sync run --dry-run        # Preview sync without changes
 wp wp4odoo queue stats               # Queue statistics
 wp wp4odoo queue list --page=1       # Paginated job list
 wp wp4odoo queue retry               # Retry all failed jobs
@@ -174,7 +174,7 @@ wp wp4odoo module disable crm        # Disable a module
 # Install dependencies
 php composer.phar install
 
-# Run PHPUnit tests (425 tests, 833 assertions)
+# Run PHPUnit tests (436 tests, 855 assertions)
 php vendor/bin/phpunit
 
 # Run PHPStan static analysis (level 5, 0 errors on 44 files)

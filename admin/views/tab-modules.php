@@ -17,22 +17,22 @@ if ( ! defined( 'ABSPATH' ) ) {
 </p>
 
 <div class="wp4odoo-modules-grid">
-	<?php foreach ( $modules as $id => $module ) : ?>
+	<?php foreach ( $modules as $module_id => $module ) : ?>
 		<?php
-		$enabled         = get_option( 'wp4odoo_module_' . $id . '_enabled', false );
+		$enabled         = get_option( 'wp4odoo_module_' . $module_id . '_enabled', false );
 		$odoo_models     = $module->get_odoo_models();
 		$settings_fields = $module->get_settings_fields();
 		$settings        = $module->get_settings();
-		$is_woo          = ( 'woocommerce' === $id );
+		$is_woo          = ( 'woocommerce' === $module_id );
 		$woo_active      = class_exists( 'WooCommerce' );
 		?>
-		<div class="wp4odoo-module-card" data-module="<?php echo esc_attr( $id ); ?>">
+		<div class="wp4odoo-module-card" data-module="<?php echo esc_attr( $module_id ); ?>">
 			<div class="wp4odoo-module-header">
 				<h3><?php echo esc_html( $module->get_name() ); ?></h3>
 				<label class="wp4odoo-toggle">
 					<input type="checkbox"
 						class="wp4odoo-module-toggle"
-						data-module="<?php echo esc_attr( $id ); ?>"
+						data-module="<?php echo esc_attr( $module_id ); ?>"
 						<?php checked( $enabled ); ?>
 						<?php disabled( $is_woo && ! $woo_active ); ?> />
 					<span class="wp4odoo-toggle-slider"></span>
@@ -53,13 +53,16 @@ if ( ! defined( 'ABSPATH' ) ) {
 				<p class="wp4odoo-module-models">
 					<?php
 					echo esc_html(
-						implode( ', ', array_map(
-							function ( string $type, string $model ): string {
-								return $type . ' → ' . $model;
-							},
-							array_keys( $odoo_models ),
-							array_values( $odoo_models )
-						) )
+						implode(
+							', ',
+							array_map(
+								function ( string $type, string $model ): string {
+									return $type . ' → ' . $model;
+								},
+								array_keys( $odoo_models ),
+								array_values( $odoo_models )
+							)
+						)
 					);
 					?>
 				</p>
@@ -72,14 +75,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 						<?php foreach ( $settings_fields as $field_key => $field ) : ?>
 							<tr>
 								<th scope="row">
-									<label for="wp4odoo-<?php echo esc_attr( $id . '-' . $field_key ); ?>">
+									<label for="wp4odoo-<?php echo esc_attr( $module_id . '-' . $field_key ); ?>">
 										<?php echo esc_html( $field['label'] ); ?>
 									</label>
 								</th>
 								<td>
 									<?php
-									$value = $settings[ $field_key ] ?? '';
-									$input_id = 'wp4odoo-' . $id . '-' . $field_key;
+									$value    = $settings[ $field_key ] ?? '';
+									$input_id = 'wp4odoo-' . $module_id . '-' . $field_key;
 
 									switch ( $field['type'] ) {
 										case 'checkbox':
@@ -88,7 +91,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 												<input type="checkbox"
 													id="<?php echo esc_attr( $input_id ); ?>"
 													class="wp4odoo-module-setting"
-													data-module="<?php echo esc_attr( $id ); ?>"
+													data-module="<?php echo esc_attr( $module_id ); ?>"
 													data-key="<?php echo esc_attr( $field_key ); ?>"
 													<?php checked( $value ); ?> />
 												<?php if ( ! empty( $field['description'] ) ) : ?>
@@ -103,7 +106,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 											<select
 												id="<?php echo esc_attr( $input_id ); ?>"
 												class="wp4odoo-module-setting"
-												data-module="<?php echo esc_attr( $id ); ?>"
+												data-module="<?php echo esc_attr( $module_id ); ?>"
 												data-key="<?php echo esc_attr( $field_key ); ?>">
 												<?php foreach ( $field['options'] as $opt_val => $opt_label ) : ?>
 													<option value="<?php echo esc_attr( $opt_val ); ?>" <?php selected( $value, $opt_val ); ?>>
@@ -122,7 +125,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 											<input type="number"
 												id="<?php echo esc_attr( $input_id ); ?>"
 												class="wp4odoo-module-setting small-text"
-												data-module="<?php echo esc_attr( $id ); ?>"
+												data-module="<?php echo esc_attr( $module_id ); ?>"
 												data-key="<?php echo esc_attr( $field_key ); ?>"
 												value="<?php echo esc_attr( $value ); ?>" />
 											<?php if ( ! empty( $field['description'] ) ) : ?>
@@ -136,7 +139,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 											<input type="text"
 												id="<?php echo esc_attr( $input_id ); ?>"
 												class="wp4odoo-module-setting regular-text"
-												data-module="<?php echo esc_attr( $id ); ?>"
+												data-module="<?php echo esc_attr( $module_id ); ?>"
 												data-key="<?php echo esc_attr( $field_key ); ?>"
 												value="<?php echo esc_attr( $value ); ?>" />
 											<?php if ( ! empty( $field['description'] ) ) : ?>
@@ -151,7 +154,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 						<?php endforeach; ?>
 					</table>
 					<p>
-						<button type="button" class="button button-primary wp4odoo-save-module-settings" data-module="<?php echo esc_attr( $id ); ?>">
+						<button type="button" class="button button-primary wp4odoo-save-module-settings" data-module="<?php echo esc_attr( $module_id ); ?>">
 							<?php esc_html_e( 'Save settings', 'wp4odoo' ); ?>
 						</button>
 						<span class="wp4odoo-module-save-feedback"></span>

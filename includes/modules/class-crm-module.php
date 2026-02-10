@@ -47,7 +47,7 @@ class CRM_Module extends Module_Base {
 			'billing_state'     => 'state_id',
 			'user_url'          => 'website',
 		],
-		'lead' => [
+		'lead'    => [
 			'name'        => 'name',
 			'email'       => 'email_from',
 			'phone'       => 'phone',
@@ -147,29 +147,29 @@ class CRM_Module extends Module_Base {
 				'type'        => 'checkbox',
 				'description' => __( 'Push WordPress users to Odoo res.partner.', 'wp4odoo' ),
 			],
-			'archive_on_delete' => [
+			'archive_on_delete'      => [
 				'label'       => __( 'Archive on delete', 'wp4odoo' ),
 				'type'        => 'checkbox',
 				'description' => __( 'Set active=false in Odoo instead of deleting the record.', 'wp4odoo' ),
 			],
-			'sync_role' => [
+			'sync_role'              => [
 				'label'       => __( 'Sync role', 'wp4odoo' ),
 				'type'        => 'select',
 				'options'     => array_merge( [ '' => __( 'All roles', 'wp4odoo' ) ], $roles ),
 				'description' => __( 'Only sync users with this role. Leave empty to sync all.', 'wp4odoo' ),
 			],
-			'create_users_on_pull' => [
+			'create_users_on_pull'   => [
 				'label'       => __( 'Create users on pull', 'wp4odoo' ),
 				'type'        => 'checkbox',
 				'description' => __( 'Create new WordPress users when pulling contacts from Odoo.', 'wp4odoo' ),
 			],
-			'default_user_role' => [
+			'default_user_role'      => [
 				'label'       => __( 'Default user role', 'wp4odoo' ),
 				'type'        => 'select',
 				'options'     => $roles,
 				'description' => __( 'Role assigned to users created by Odoo pull.', 'wp4odoo' ),
 			],
-			'lead_form_enabled' => [
+			'lead_form_enabled'      => [
 				'label'       => __( 'Enable lead form', 'wp4odoo' ),
 				'type'        => 'checkbox',
 				'description' => __( 'Enable the [wp4odoo_lead_form] shortcode.', 'wp4odoo' ),
@@ -245,10 +245,22 @@ class CRM_Module extends Module_Base {
 
 		if ( ! empty( $settings['archive_on_delete'] ) ) {
 			Queue_Manager::push( 'crm', 'contact', 'update', $user_id, $odoo_id, [ '_archive' => true ] );
-			$this->logger->info( 'Enqueued contact archive.', [ 'wp_id' => $user_id, 'odoo_id' => $odoo_id ] );
+			$this->logger->info(
+				'Enqueued contact archive.',
+				[
+					'wp_id'   => $user_id,
+					'odoo_id' => $odoo_id,
+				]
+			);
 		} else {
 			Queue_Manager::push( 'crm', 'contact', 'delete', $user_id, $odoo_id );
-			$this->logger->info( 'Enqueued contact delete.', [ 'wp_id' => $user_id, 'odoo_id' => $odoo_id ] );
+			$this->logger->info(
+				'Enqueued contact delete.',
+				[
+					'wp_id'   => $user_id,
+					'odoo_id' => $odoo_id,
+				]
+			);
 		}
 	}
 
@@ -285,8 +297,8 @@ class CRM_Module extends Module_Base {
 			$email   = $wp_data['user_email'] ?? '';
 
 			if ( ! empty( $email ) ) {
-				$model     = $this->get_odoo_model( $entity_type );
-				$existing  = $this->client()->search( $model, [ [ 'email', '=', $email ] ], 0, 1 );
+				$model    = $this->get_odoo_model( $entity_type );
+				$existing = $this->client()->search( $model, [ [ 'email', '=', $email ] ], 0, 1 );
 
 				if ( ! empty( $existing ) ) {
 					$odoo_id = (int) $existing[0];
@@ -354,5 +366,4 @@ class CRM_Module extends Module_Base {
 
 		return false;
 	}
-
 }

@@ -129,7 +129,7 @@ class Sync_Queue_Repository {
 		global $wpdb;
 
 		$table = self::table();
-		$rows  = $wpdb->get_results( "SELECT status, COUNT(*) as count FROM {$table} GROUP BY status" );
+		$rows  = $wpdb->get_results( "SELECT status, COUNT(*) as count FROM {$table} GROUP BY status" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is from $wpdb->prefix, safe.
 
 		$stats = [
 			'pending'    => 0,
@@ -148,7 +148,7 @@ class Sync_Queue_Repository {
 
 		// Last completed sync timestamp.
 		$stats['last_completed_at'] = $wpdb->get_var(
-			"SELECT MAX(processed_at) FROM {$table} WHERE status = 'completed'"
+			"SELECT MAX(processed_at) FROM {$table} WHERE status = 'completed'" // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is from $wpdb->prefix, safe.
 		) ?? '';
 
 		return $stats;
@@ -168,7 +168,7 @@ class Sync_Queue_Repository {
 
 		return (int) $wpdb->query(
 			$wpdb->prepare(
-				"DELETE FROM {$table} WHERE status IN ('completed', 'failed') AND created_at < %s",
+				"DELETE FROM {$table} WHERE status IN ('completed', 'failed') AND created_at < %s", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is from $wpdb->prefix, safe.
 				$cutoff
 			)
 		);
@@ -185,7 +185,7 @@ class Sync_Queue_Repository {
 		$table = self::table();
 
 		return (int) $wpdb->query(
-			"UPDATE {$table} SET status = 'pending', attempts = 0, error_message = NULL, scheduled_at = NULL WHERE status = 'failed'"
+			"UPDATE {$table} SET status = 'pending', attempts = 0, error_message = NULL, scheduled_at = NULL WHERE status = 'failed'" // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is from $wpdb->prefix, safe.
 		);
 	}
 
@@ -227,7 +227,7 @@ class Sync_Queue_Repository {
 		if ( null !== $entity_type ) {
 			return $wpdb->get_results(
 				$wpdb->prepare(
-					"SELECT * FROM {$table} WHERE module = %s AND entity_type = %s AND status = 'pending' ORDER BY priority ASC, created_at ASC",
+					"SELECT * FROM {$table} WHERE module = %s AND entity_type = %s AND status = 'pending' ORDER BY priority ASC, created_at ASC", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is from $wpdb->prefix, safe.
 					$module,
 					$entity_type
 				)
@@ -236,7 +236,7 @@ class Sync_Queue_Repository {
 
 		return $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT * FROM {$table} WHERE module = %s AND status = 'pending' ORDER BY priority ASC, created_at ASC",
+				"SELECT * FROM {$table} WHERE module = %s AND status = 'pending' ORDER BY priority ASC, created_at ASC", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is from $wpdb->prefix, safe.
 				$module
 			)
 		);
@@ -254,17 +254,15 @@ class Sync_Queue_Repository {
 
 		$table = self::table();
 
-		return $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT * FROM {$table}
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is from $wpdb->prefix, safe.
+		$sql = "SELECT * FROM {$table}
 				 WHERE status = 'pending'
 				   AND ( scheduled_at IS NULL OR scheduled_at <= %s )
 				 ORDER BY priority ASC, created_at ASC
-				 LIMIT %d",
-				$now,
-				$batch_size
-			)
-		);
+				 LIMIT %d";
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- $sql built above from safe $wpdb->prefix.
+		return $wpdb->get_results( $wpdb->prepare( $sql, $now, $batch_size ) );
 	}
 
 	/**
@@ -278,7 +276,7 @@ class Sync_Queue_Repository {
 	public static function update_status( int $job_id, string $status, array $extra = [] ): void {
 		global $wpdb;
 
-		$data         = $extra;
+		$data           = $extra;
 		$data['status'] = $status;
 
 		$wpdb->update( self::table(), $data, [ 'id' => $job_id ] );

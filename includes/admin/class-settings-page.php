@@ -328,5 +328,4 @@ class Settings_Page {
 
 		include WP4ODOO_PLUGIN_DIR . 'admin/views/tab-logs.php';
 	}
-
 }

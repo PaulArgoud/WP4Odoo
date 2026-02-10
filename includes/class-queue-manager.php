@@ -38,16 +38,18 @@ class Queue_Manager {
 		array $payload = [],
 		int $priority = 5
 	): int|false {
-		return Sync_Engine::enqueue( [
-			'module'      => $module,
-			'direction'   => 'wp_to_odoo',
-			'entity_type' => $entity_type,
-			'action'      => $action,
-			'wp_id'       => $wp_id,
-			'odoo_id'     => $odoo_id,
-			'payload'     => $payload,
-			'priority'    => $priority,
-		] );
+		return Sync_Engine::enqueue(
+			[
+				'module'      => $module,
+				'direction'   => 'wp_to_odoo',
+				'entity_type' => $entity_type,
+				'action'      => $action,
+				'wp_id'       => $wp_id,
+				'odoo_id'     => $odoo_id,
+				'payload'     => $payload,
+				'priority'    => $priority,
+			]
+		);
 	}
 
 	/**
@@ -71,16 +73,18 @@ class Queue_Manager {
 		array $payload = [],
 		int $priority = 5
 	): int|false {
-		return Sync_Engine::enqueue( [
-			'module'      => $module,
-			'direction'   => 'odoo_to_wp',
-			'entity_type' => $entity_type,
-			'action'      => $action,
-			'wp_id'       => $wp_id,
-			'odoo_id'     => $odoo_id,
-			'payload'     => $payload,
-			'priority'    => $priority,
-		] );
+		return Sync_Engine::enqueue(
+			[
+				'module'      => $module,
+				'direction'   => 'odoo_to_wp',
+				'entity_type' => $entity_type,
+				'action'      => $action,
+				'wp_id'       => $wp_id,
+				'odoo_id'     => $odoo_id,
+				'payload'     => $payload,
+				'priority'    => $priority,
+			]
+		);
 	}
 
 	/**

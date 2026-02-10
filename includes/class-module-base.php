@@ -451,6 +451,7 @@ abstract class Module_Base {
 	 */
 	protected function get_odoo_model( string $entity_type ): string {
 		if ( ! isset( $this->odoo_models[ $entity_type ] ) ) {
+
 			throw new \InvalidArgumentException(
 				sprintf(
 					/* translators: 1: entity type, 2: module identifier */

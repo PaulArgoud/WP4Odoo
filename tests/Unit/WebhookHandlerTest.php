@@ -20,7 +20,8 @@ class WebhookHandlerTest extends TestCase {
 		global $wpdb;
 		$this->wpdb = new \WP_DB_Stub();
 		$wpdb       = $this->wpdb;
-		$GLOBALS['_wp_options'] = [];
+		$GLOBALS['_wp_options']    = [];
+		$GLOBALS['_wp_transients'] = [];
 		$GLOBALS['_wp_options']['wp4odoo_log_settings'] = [ 'enabled' => true, 'level' => 'debug' ];
 
 		// Set a webhook token so ensure_webhook_token() uses it.
@@ -239,5 +240,34 @@ class WebhookHandlerTest extends TestCase {
 		new Webhook_Handler();
 
 		$this->assertSame( 'existing-token', $GLOBALS['_wp_options']['wp4odoo_webhook_token'] );
+	}
+
+	// ─── Deduplication ─────────────────────────────────────
+
+	public function test_handle_webhook_deduplicates_identical_payload(): void {
+		$this->wpdb->insert_id = 99;
+
+		$payload = [
+			'module'      => 'crm',
+			'entity_type' => 'contact',
+			'odoo_id'     => 42,
+			'action'      => 'update',
+		];
+
+		$request1 = new \WP_REST_Request( 'POST', '/wp4odoo/v1/webhook' );
+		$request1->set_json_params( $payload );
+
+		$response1 = $this->handler->handle_webhook( $request1 );
+		$this->assertSame( 202, $response1->get_status() );
+
+		$request2 = new \WP_REST_Request( 'POST', '/wp4odoo/v1/webhook' );
+		$request2->set_json_params( $payload );
+
+		$response2 = $this->handler->handle_webhook( $request2 );
+		$this->assertSame( 200, $response2->get_status() );
+
+		$data = $response2->get_data();
+		$this->assertTrue( $data['success'] );
+		$this->assertTrue( $data['deduplicated'] );
 	}
 }

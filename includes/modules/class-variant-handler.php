@@ -69,9 +69,12 @@ class Variant_Handler {
 		);
 
 		if ( empty( $variants ) ) {
-			$this->logger->info( 'No variants found for template.', [
-				'template_odoo_id' => $template_odoo_id,
-			] );
+			$this->logger->info(
+				'No variants found for template.',
+				[
+					'template_odoo_id' => $template_odoo_id,
+				]
+			);
 			return true;
 		}
 
@@ -79,9 +82,12 @@ class Variant_Handler {
 		if ( 1 === count( $variants ) ) {
 			$attr_ids = $variants[0]['product_template_attribute_value_ids'] ?? [];
 			if ( empty( $attr_ids ) ) {
-				$this->logger->info( 'Single variant without attributes, skipping (simple product).', [
-					'template_odoo_id' => $template_odoo_id,
-				] );
+				$this->logger->info(
+					'Single variant without attributes, skipping (simple product).',
+					[
+						'template_odoo_id' => $template_odoo_id,
+					]
+				);
 				return true;
 			}
 		}
@@ -89,9 +95,12 @@ class Variant_Handler {
 		// Convert WC product to variable if needed.
 		$parent = $this->ensure_variable_product( $wp_parent_id );
 		if ( ! $parent ) {
-			$this->logger->error( 'Failed to ensure variable product.', [
-				'wp_parent_id' => $wp_parent_id,
-			] );
+			$this->logger->error(
+				'Failed to ensure variable product.',
+				[
+					'wp_parent_id' => $wp_parent_id,
+				]
+			);
 			return false;
 		}
 
@@ -115,11 +124,14 @@ class Variant_Handler {
 			$skip_price = $guard['mismatch'];
 
 			if ( $skip_price ) {
-				$this->logger->warning( 'Variant currency mismatch, skipping price.', [
-					'variant_odoo_id' => $variant_odoo_id,
-					'odoo_currency'   => $guard['odoo_currency'],
-					'wc_currency'     => $guard['wc_currency'],
-				] );
+				$this->logger->warning(
+					'Variant currency mismatch, skipping price.',
+					[
+						'variant_odoo_id' => $variant_odoo_id,
+						'odoo_currency'   => $guard['odoo_currency'],
+						'wc_currency'     => $guard['wc_currency'],
+					]
+				);
 			}
 
 			$variation_data = [
@@ -138,8 +150,8 @@ class Variant_Handler {
 			if ( ! empty( $attr_value_ids ) && ! empty( $all_attributes['_resolved'] ) ) {
 				foreach ( $attr_value_ids as $val_id ) {
 					if ( isset( $all_attributes['_resolved'][ $val_id ] ) ) {
-						$pair = $all_attributes['_resolved'][ $val_id ];
-						$slug = 'pa_' . sanitize_title( $pair['attribute'] );
+						$pair                = $all_attributes['_resolved'][ $val_id ];
+						$slug                = 'pa_' . sanitize_title( $pair['attribute'] );
 						$attributes[ $slug ] = $pair['value'];
 					}
 				}
@@ -161,11 +173,14 @@ class Variant_Handler {
 					'product.product'
 				);
 
-				$this->logger->info( 'Variant synced.', [
-					'variant_odoo_id' => $variant_odoo_id,
-					'variation_wp_id' => $variation_id,
-					'parent_wp_id'    => $wp_parent_id,
-				] );
+				$this->logger->info(
+					'Variant synced.',
+					[
+						'variant_odoo_id' => $variant_odoo_id,
+						'variation_wp_id' => $variation_id,
+						'parent_wp_id'    => $wp_parent_id,
+					]
+				);
 			}
 		}
 
@@ -280,11 +295,11 @@ class Variant_Handler {
 			return [];
 		}
 
-		$resolved   = [];
-		$by_attr    = []; // attribute_name => [value1, value2, ...]
+		$resolved = [];
+		$by_attr  = []; // attribute_name => [value1, value2, ...]
 
 		foreach ( $records as $record ) {
-			$attr_name = is_array( $record['attribute_id'] ?? null )
+			$attr_name  = is_array( $record['attribute_id'] ?? null )
 				? (string) $record['attribute_id'][1]
 				: (string) ( $record['attribute_id'] ?? '' );
 			$value_name = (string) ( $record['name'] ?? '' );

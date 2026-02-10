@@ -1,0 +1,103 @@
+<?xml version="1.0"?>
+<ruleset name="WP4Odoo">
+	<description>WordPress Coding Standards for WP4Odoo plugin.</description>
+
+	<!-- Scan these paths -->
+	<file>wp4odoo.php</file>
+	<file>includes/</file>
+	<file>admin/views/</file>
+	<file>templates/</file>
+	<file>uninstall.php</file>
+
+	<!-- Only PHP files -->
+	<arg name="extensions" value="php"/>
+
+	<!-- Show colours, progress, sniff codes -->
+	<arg value="sp"/>
+	<arg name="colors"/>
+
+	<!-- Base standard -->
+	<rule ref="WordPress-Extra">
+		<!-- Allow short array syntax [] — modern PHP, widely accepted -->
+		<exclude name="Universal.Arrays.DisallowShortArraySyntax"/>
+
+		<!-- Allow short ternary ?:  — clear and concise -->
+		<exclude name="Universal.Operators.DisallowShortTernary"/>
+
+		<!-- We use declare(strict_types=1), not tracked by WPCS -->
+		<exclude name="Universal.Files.SeparateFunctionsFromOO"/>
+
+		<!-- Base class methods define signatures for subclass overrides — unused params expected -->
+		<exclude name="Generic.CodeAnalysis.UnusedFunctionParameter"/>
+	</rule>
+
+	<!-- Main plugin file is wp4odoo.php, not class-wp4odoo-plugin.php -->
+	<rule ref="WordPress.Files.FileName.InvalidClassFileName">
+		<exclude-pattern>wp4odoo.php</exclude-pattern>
+	</rule>
+
+	<!-- 5-minute cron is intentional for near-real-time sync -->
+	<rule ref="WordPress.WP.CronInterval">
+		<severity>0</severity>
+	</rule>
+
+	<!-- Allow reserved keyword parameter names when semantically appropriate -->
+	<rule ref="Universal.NamingConventions.NoReservedKeywordParameterNames">
+		<severity>0</severity>
+	</rule>
+
+	<!-- Allow "commented out code" — often example patterns in comments -->
+	<rule ref="Squiz.PHP.CommentedOutCode">
+		<severity>0</severity>
+	</rule>
+
+	<!-- Allow empty catch blocks with explanatory comments (intentional no-op) -->
+	<rule ref="Generic.CodeAnalysis.EmptyStatement.DetectedCatch">
+		<severity>0</severity>
+	</rule>
+
+	<!-- Verify all strings use the correct text domain -->
+	<rule ref="WordPress.WP.I18n">
+		<properties>
+			<property name="text_domain" type="array">
+				<element value="wp4odoo"/>
+			</property>
+		</properties>
+	</rule>
+
+	<!-- Set minimum WP version for deprecated function checks -->
+	<rule ref="WordPress.WP.DeprecatedFunctions">
+		<properties>
+			<property name="minimum_wp_version" value="6.0"/>
+		</properties>
+	</rule>
+
+	<!-- Treat these as custom sanitization/escaping functions -->
+	<rule ref="WordPress.Security.EscapeOutput">
+		<properties>
+			<property name="customAutoEscapedFunctions" type="array">
+				<element value="wp_json_encode"/>
+			</property>
+		</properties>
+	</rule>
+
+	<!-- Exception messages are not HTML output — escaping is irrelevant -->
+	<rule ref="WordPress.Security.EscapeOutput.ExceptionNotEscaped">
+		<severity>0</severity>
+	</rule>
+
+	<!-- Allow base64 for Odoo image handling (not obfuscation) -->
+	<rule ref="WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode">
+		<severity>0</severity>
+	</rule>
+	<rule ref="WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode">
+		<severity>0</severity>
+	</rule>
+
+	<!-- Exclude vendor, tests, node_modules, assets -->
+	<exclude-pattern>vendor/*</exclude-pattern>
+	<exclude-pattern>tests/*</exclude-pattern>
+	<exclude-pattern>node_modules/*</exclude-pattern>
+	<exclude-pattern>assets/*</exclude-pattern>
+	<exclude-pattern>languages/*</exclude-pattern>
+</ruleset>

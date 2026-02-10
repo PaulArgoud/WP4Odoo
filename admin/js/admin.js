@@ -314,9 +314,14 @@
 				if ( ! confirm( wp4odooAdmin.i18n[ confirmKey ] ) ) {
 					return;
 				}
+				var $btn      = $( this );
+				var $feedback = $( '#wp4odoo-bulk-feedback' );
+				$feedback.text( wp4odooAdmin.i18n.loading || 'Processing...' );
+
 				WP4Odoo.ajax( action, {}, function( data ) {
 					WP4Odoo.showNotice( 'success', data.message );
-				}, $( this ) );
+					$feedback.text( data.message );
+				}, $btn );
 			} );
 		},
 

@@ -65,10 +65,13 @@ class Image_Handler {
 		}
 
 		if ( ! is_string( $image_data ) ) {
-			$this->logger->warning( 'Unexpected image_1920 type.', [
-				'wp_product_id' => $wp_product_id,
-				'type'          => gettype( $image_data ),
-			] );
+			$this->logger->warning(
+				'Unexpected image_1920 type.',
+				[
+					'wp_product_id' => $wp_product_id,
+					'type'          => gettype( $image_data ),
+				]
+			);
 			return false;
 		}
 
@@ -83,9 +86,12 @@ class Image_Handler {
 		// Decode base64.
 		$decoded = base64_decode( $image_data, true );
 		if ( false === $decoded || '' === $decoded ) {
-			$this->logger->error( 'Failed to decode base64 image data.', [
-				'wp_product_id' => $wp_product_id,
-			] );
+			$this->logger->error(
+				'Failed to decode base64 image data.',
+				[
+					'wp_product_id' => $wp_product_id,
+				]
+			);
 			return false;
 		}
 
@@ -112,10 +118,13 @@ class Image_Handler {
 		// Store the hash for future comparisons.
 		update_post_meta( $wp_product_id, self::IMAGE_HASH_META, $new_hash );
 
-		$this->logger->info( 'Product image imported from Odoo.', [
-			'wp_product_id' => $wp_product_id,
-			'attachment_id' => $attachment_id,
-		] );
+		$this->logger->info(
+			'Product image imported from Odoo.',
+			[
+				'wp_product_id' => $wp_product_id,
+				'attachment_id' => $attachment_id,
+			]
+		);
 
 		return true;
 	}
@@ -140,9 +149,12 @@ class Image_Handler {
 		delete_post_thumbnail( $wp_product_id );
 		delete_post_meta( $wp_product_id, self::IMAGE_HASH_META );
 
-		$this->logger->info( 'Cleared product thumbnail (Odoo image removed).', [
-			'wp_product_id' => $wp_product_id,
-		] );
+		$this->logger->info(
+			'Cleared product thumbnail (Odoo image removed).',
+			[
+				'wp_product_id' => $wp_product_id,
+			]
+		);
 
 		return true;
 	}
@@ -233,20 +245,27 @@ class Image_Handler {
 		$upload_dir = wp_upload_dir();
 
 		if ( ! empty( $upload_dir['error'] ) ) {
-			$this->logger->error( 'Upload directory not available.', [
-				'error' => $upload_dir['error'],
-			] );
+			$this->logger->error(
+				'Upload directory not available.',
+				[
+					'error' => $upload_dir['error'],
+				]
+			);
 			return 0;
 		}
 
 		$file_path = trailingslashit( $upload_dir['path'] ) . $filename;
 
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Writing to a temporary file, WP_Filesystem not available during cron.
 		$bytes_written = file_put_contents( $file_path, $data );
 
 		if ( false === $bytes_written ) {
-			$this->logger->error( 'Failed to write image file.', [
-				'file_path' => $file_path,
-			] );
+			$this->logger->error(
+				'Failed to write image file.',
+				[
+					'file_path' => $file_path,
+				]
+			);
 			return 0;
 		}
 
@@ -262,10 +281,13 @@ class Image_Handler {
 		$attachment_id = wp_insert_attachment( $attachment, $file_path, $wp_product_id );
 
 		if ( is_wp_error( $attachment_id ) || 0 === $attachment_id ) {
-			$this->logger->error( 'Failed to create attachment.', [
-				'filename' => $filename,
-			] );
-			@unlink( $file_path );
+			$this->logger->error(
+				'Failed to create attachment.',
+				[
+					'filename' => $filename,
+				]
+			);
+			wp_delete_file( $file_path );
 			return 0;
 		}
 

@@ -38,11 +38,14 @@ class CLI {
 
 		// Connection.
 		if ( $connected ) {
-			\WP_CLI::success( sprintf( 'Connected to %s (db: %s, protocol: %s)',
-				$credentials['url'],
-				$credentials['database'],
-				$credentials['protocol']
-			) );
+			\WP_CLI::success(
+				sprintf(
+					'Connected to %s (db: %s, protocol: %s)',
+					$credentials['url'],
+					$credentials['database'],
+					$credentials['protocol']
+				)
+			);
 		} else {
 			\WP_CLI::warning( 'Not configured — no Odoo URL set.' );
 		}
@@ -51,14 +54,18 @@ class CLI {
 		$stats = Sync_Engine::get_stats();
 		\WP_CLI::line( '' );
 		\WP_CLI::line( 'Queue:' );
-		\WP_CLI\Utils\format_items( 'table', [
+		\WP_CLI\Utils\format_items(
+			'table',
 			[
-				'pending'    => $stats['pending'],
-				'processing' => $stats['processing'],
-				'completed'  => $stats['completed'],
-				'failed'     => $stats['failed'],
+				[
+					'pending'    => $stats['pending'],
+					'processing' => $stats['processing'],
+					'completed'  => $stats['completed'],
+					'failed'     => $stats['failed'],
+				],
 			],
-		], [ 'pending', 'processing', 'completed', 'failed' ] );
+			[ 'pending', 'processing', 'completed', 'failed' ]
+		);
 
 		if ( '' !== $stats['last_completed_at'] ) {
 			\WP_CLI::line( 'Last completed: ' . $stats['last_completed_at'] );
@@ -72,8 +79,8 @@ class CLI {
 		foreach ( $modules as $id => $module ) {
 			$enabled = get_option( 'wp4odoo_module_' . $id . '_enabled' );
 			$rows[]  = [
-				'id'      => $id,
-				'status'  => $enabled ? 'enabled' : 'disabled',
+				'id'     => $id,
+				'status' => $enabled ? 'enabled' : 'disabled',
 			];
 		}
 		\WP_CLI\Utils\format_items( 'table', $rows, [ 'id', 'status' ] );
@@ -115,26 +122,47 @@ class CLI {
 	/**
 	 * Run sync queue processing.
 	 *
+	 * ## OPTIONS
+	 *
+	 * [--dry-run]
+	 * : Preview what would be synced without making any changes.
+	 *
 	 * ## EXAMPLES
 	 *
 	 *     wp wp4odoo sync run
+	 *     wp wp4odoo sync run --dry-run
 	 *
 	 * @subcommand sync
 	 * @when after_wp_load
 	 */
-	public function sync( array $args ): void {
+	public function sync( array $args, array $assoc_args = [] ): void {
 		$sub = $args[0] ?? 'run';
 
 		if ( 'run' !== $sub ) {
 			\WP_CLI::error( sprintf( 'Unknown subcommand: %s. Usage: wp wp4odoo sync run', $sub ) );
 		}
 
-		\WP_CLI::line( 'Processing sync queue...' );
+		$dry_run = isset( $assoc_args['dry-run'] );
 
-		$engine    = new Sync_Engine();
+		if ( $dry_run ) {
+			\WP_CLI::line( 'Processing sync queue (dry-run mode)...' );
+		} else {
+			\WP_CLI::line( 'Processing sync queue...' );
+		}
+
+		$engine = new Sync_Engine();
+
+		if ( $dry_run ) {
+			$engine->set_dry_run( true );
+		}
+
 		$processed = $engine->process_queue();
 
-		\WP_CLI::success( sprintf( '%d job(s) processed.', $processed ) );
+		if ( $dry_run ) {
+			\WP_CLI::success( sprintf( '%d job(s) would be processed (dry-run).', $processed ) );
+		} else {
+			\WP_CLI::success( sprintf( '%d job(s) processed.', $processed ) );
+		}
 	}
 
 	/**
@@ -219,15 +247,19 @@ class CLI {
 		$stats  = Sync_Engine::get_stats();
 		$format = $assoc_args['format'] ?? 'table';
 
-		\WP_CLI\Utils\format_items( $format, [
+		\WP_CLI\Utils\format_items(
+			$format,
 			[
-				'pending'           => $stats['pending'],
-				'processing'        => $stats['processing'],
-				'completed'         => $stats['completed'],
-				'failed'            => $stats['failed'],
-				'last_completed_at' => $stats['last_completed_at'] ?: '—',
+				[
+					'pending'           => $stats['pending'],
+					'processing'        => $stats['processing'],
+					'completed'         => $stats['completed'],
+					'failed'            => $stats['failed'],
+					'last_completed_at' => $stats['last_completed_at'] ?: '—',
+				],
 			],
-		], [ 'pending', 'processing', 'completed', 'failed', 'last_completed_at' ] );
+			[ 'pending', 'processing', 'completed', 'failed', 'last_completed_at' ]
+		);
 	}
 
 	/**
@@ -250,20 +282,31 @@ class CLI {
 		$rows = [];
 		foreach ( $data['items'] as $job ) {
 			$rows[] = [
-				'id'            => $job->id,
-				'module'        => $job->module,
-				'entity_type'   => $job->entity_type,
-				'direction'     => $job->direction,
-				'action'        => $job->action,
-				'status'        => $job->status,
-				'attempts'      => $job->attempts . '/' . $job->max_attempts,
-				'created_at'    => $job->created_at,
+				'id'          => $job->id,
+				'module'      => $job->module,
+				'entity_type' => $job->entity_type,
+				'direction'   => $job->direction,
+				'action'      => $job->action,
+				'status'      => $job->status,
+				'attempts'    => $job->attempts . '/' . $job->max_attempts,
+				'created_at'  => $job->created_at,
 			];
 		}
 
-		\WP_CLI\Utils\format_items( $format, $rows, [
-			'id', 'module', 'entity_type', 'direction', 'action', 'status', 'attempts', 'created_at',
-		] );
+		\WP_CLI\Utils\format_items(
+			$format,
+			$rows,
+			[
+				'id',
+				'module',
+				'entity_type',
+				'direction',
+				'action',
+				'status',
+				'attempts',
+				'created_at',
+			]
+		);
 
 		\WP_CLI::line( sprintf( 'Page %d/%d (%d total)', $page, $data['pages'], $data['total'] ) );
 	}
@@ -321,9 +364,9 @@ class CLI {
 		foreach ( $modules as $id => $module ) {
 			$enabled = get_option( 'wp4odoo_module_' . $id . '_enabled' );
 			$rows[]  = [
-				'id'      => $id,
-				'name'    => $module->get_name(),
-				'status'  => $enabled ? 'enabled' : 'disabled',
+				'id'     => $id,
+				'name'   => $module->get_name(),
+				'status' => $enabled ? 'enabled' : 'disabled',
 			];
 		}
 

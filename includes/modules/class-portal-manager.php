@@ -94,16 +94,20 @@ class Portal_Manager {
 		// Enqueue portal assets.
 		wp_enqueue_style( 'wp4odoo-portal', WP4ODOO_PLUGIN_URL . 'assets/css/portal.css', [], WP4ODOO_VERSION );
 		wp_enqueue_script( 'wp4odoo-portal', WP4ODOO_PLUGIN_URL . 'assets/js/portal.js', [], WP4ODOO_VERSION, true );
-		wp_localize_script( 'wp4odoo-portal', 'wp4odooPortal', [
-			'ajaxUrl'    => admin_url( 'admin-ajax.php' ),
-			'nonce'      => wp_create_nonce( 'wp4odoo_portal' ),
-			'perPage'    => $per_page,
-			'partnerId'  => $partner_id,
-			'i18n'       => [
-				'loading' => __( 'Loading...', 'wp4odoo' ),
-				'error'   => __( 'An error occurred. Please try again.', 'wp4odoo' ),
-			],
-		] );
+		wp_localize_script(
+			'wp4odoo-portal',
+			'wp4odooPortal',
+			[
+				'ajaxUrl'   => admin_url( 'admin-ajax.php' ),
+				'nonce'     => wp_create_nonce( 'wp4odoo_portal' ),
+				'perPage'   => $per_page,
+				'partnerId' => $partner_id,
+				'i18n'      => [
+					'loading' => __( 'Loading...', 'wp4odoo' ),
+					'error'   => __( 'An error occurred. Please try again.', 'wp4odoo' ),
+				],
+			]
+		);
 
 		ob_start();
 		include WP4ODOO_PLUGIN_DIR . 'templates/customer-portal.php';
@@ -165,12 +169,18 @@ class Portal_Manager {
 	 * @return array{items: array, total: int, page: int, pages: int}
 	 */
 	public function get_orders( int $partner_id, int $page = 1, int $per_page = 10 ): array {
-		return $this->query_cpt( 'wp4odoo_order', $partner_id, $page, $per_page, [
-			'_order_total'    => '_order_total',
-			'_order_date'     => '_order_date',
-			'_order_state'    => '_order_state',
-			'_order_currency' => '_order_currency',
-		] );
+		return $this->query_cpt(
+			'wp4odoo_order',
+			$partner_id,
+			$page,
+			$per_page,
+			[
+				'_order_total'    => '_order_total',
+				'_order_date'     => '_order_date',
+				'_order_state'    => '_order_state',
+				'_order_currency' => '_order_currency',
+			]
+		);
 	}
 
 	/**
@@ -182,13 +192,19 @@ class Portal_Manager {
 	 * @return array{items: array, total: int, page: int, pages: int}
 	 */
 	public function get_invoices( int $partner_id, int $page = 1, int $per_page = 10 ): array {
-		return $this->query_cpt( 'wp4odoo_invoice', $partner_id, $page, $per_page, [
-			'_invoice_total'    => '_invoice_total',
-			'_invoice_date'     => '_invoice_date',
-			'_invoice_state'    => '_invoice_state',
-			'_payment_state'    => '_payment_state',
-			'_invoice_currency' => '_invoice_currency',
-		] );
+		return $this->query_cpt(
+			'wp4odoo_invoice',
+			$partner_id,
+			$page,
+			$per_page,
+			[
+				'_invoice_total'    => '_invoice_total',
+				'_invoice_date'     => '_invoice_date',
+				'_invoice_state'    => '_invoice_state',
+				'_payment_state'    => '_payment_state',
+				'_invoice_currency' => '_invoice_currency',
+			]
+		);
 	}
 
 	/**
@@ -202,21 +218,23 @@ class Portal_Manager {
 	 * @return array{items: array, total: int, page: int, pages: int}
 	 */
 	private function query_cpt( string $post_type, int $partner_id, int $page, int $per_page, array $meta_keys ): array {
-		$query = new \WP_Query( [
-			'post_type'      => $post_type,
-			'post_status'    => 'publish',
-			'posts_per_page' => $per_page,
-			'paged'          => $page,
-			'meta_query'     => [ // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
-				[
-					'key'   => '_wp4odoo_partner_id',
-					'value' => $partner_id,
-					'type'  => 'NUMERIC',
+		$query = new \WP_Query(
+			[
+				'post_type'      => $post_type,
+				'post_status'    => 'publish',
+				'posts_per_page' => $per_page,
+				'paged'          => $page,
+				'meta_query'     => [ // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+					[
+						'key'   => '_wp4odoo_partner_id',
+						'value' => $partner_id,
+						'type'  => 'NUMERIC',
+					],
 				],
-			],
-			'orderby'        => 'date',
-			'order'          => 'DESC',
-		] );
+				'orderby'        => 'date',
+				'order'          => 'DESC',
+			]
+		);
 
 		$items = [];
 		foreach ( $query->posts as $post ) {

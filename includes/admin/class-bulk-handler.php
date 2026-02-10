@@ -48,9 +48,10 @@ final class Bulk_Handler {
 	 * Fetches Odoo product IDs in paginated chunks and uses batch
 	 * entity_map lookups to determine create vs update actions.
 	 *
-	 * @return array{enqueued: int, message: string}
+	 * @return array{enqueued: int, total: int, message: string}
 	 */
 	public function import_products(): array {
+		$total    = $this->client->search_count( 'product.template', [] );
 		$enqueued = 0;
 		$offset   = 0;
 
@@ -62,6 +63,7 @@ final class Bulk_Handler {
 			}
 
 			$odoo_ids = array_map( 'intval', $odoo_ids );
+			$fetched  = count( $odoo_ids );
 			$map      = Entity_Map_Repository::get_wp_ids_batch( 'woocommerce', 'product', $odoo_ids );
 
 			foreach ( $odoo_ids as $odoo_id ) {
@@ -73,21 +75,24 @@ final class Bulk_Handler {
 			}
 
 			$offset += self::CHUNK_SIZE;
-		} while ( count( $odoo_ids ) >= self::CHUNK_SIZE );
+		} while ( $fetched >= self::CHUNK_SIZE );
 
 		if ( 0 === $enqueued ) {
 			return [
 				'enqueued' => 0,
+				'total'    => $total,
 				'message'  => __( 'No products found in Odoo.', 'wp4odoo' ),
 			];
 		}
 
 		return [
 			'enqueued' => $enqueued,
+			'total'    => $total,
 			'message'  => sprintf(
-				/* translators: %d: number of products enqueued */
-				__( '%d product(s) enqueued for import.', 'wp4odoo' ),
-				$enqueued
+				/* translators: 1: number of products enqueued, 2: total number of products */
+				__( '%1$d product(s) enqueued for import (%2$d found in Odoo).', 'wp4odoo' ),
+				$enqueued,
+				$total
 			),
 		];
 	}
@@ -98,24 +103,27 @@ final class Bulk_Handler {
 	 * Fetches WooCommerce product IDs in paginated chunks and uses batch
 	 * entity_map lookups to determine create vs update actions.
 	 *
-	 * @return array{enqueued: int, message: string}
+	 * @return array{enqueued: int, total: int, message: string}
 	 */
 	public function export_products(): array {
 		$enqueued = 0;
 		$page     = 1;
 
 		do {
-			$product_ids = wc_get_products( [
-				'limit'  => self::CHUNK_SIZE,
-				'page'   => $page,
-				'return' => 'ids',
-			] );
+			$product_ids = wc_get_products(
+				[
+					'limit'  => self::CHUNK_SIZE,
+					'page'   => $page,
+					'return' => 'ids',
+				]
+			);
 
 			if ( empty( $product_ids ) ) {
 				break;
 			}
 
 			$product_ids = array_map( 'intval', $product_ids );
+			$fetched     = count( $product_ids );
 			$map         = Entity_Map_Repository::get_odoo_ids_batch( 'woocommerce', 'product', $product_ids );
 
 			foreach ( $product_ids as $wp_id ) {
@@ -127,17 +135,19 @@ final class Bulk_Handler {
 			}
 
 			++$page;
-		} while ( count( $product_ids ) >= self::CHUNK_SIZE );
+		} while ( $fetched >= self::CHUNK_SIZE );
 
 		if ( 0 === $enqueued ) {
 			return [
 				'enqueued' => 0,
+				'total'    => 0,
 				'message'  => __( 'No WooCommerce products found.', 'wp4odoo' ),
 			];
 		}
 
 		return [
 			'enqueued' => $enqueued,
+			'total'    => $enqueued,
 			'message'  => sprintf(
 				/* translators: %d: number of products enqueued */
 				__( '%d product(s) enqueued for export.', 'wp4odoo' ),

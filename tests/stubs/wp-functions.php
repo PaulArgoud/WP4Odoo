@@ -53,18 +53,20 @@ if ( ! function_exists( 'delete_option' ) ) {
 
 if ( ! function_exists( 'get_transient' ) ) {
 	function get_transient( $transient ) {
-		return false;
+		return $GLOBALS['_wp_transients'][ $transient ] ?? false;
 	}
 }
 
 if ( ! function_exists( 'set_transient' ) ) {
 	function set_transient( $transient, $value, $expiration = 0 ) {
+		$GLOBALS['_wp_transients'][ $transient ] = $value;
 		return true;
 	}
 }
 
 if ( ! function_exists( 'delete_transient' ) ) {
 	function delete_transient( $transient ) {
+		unset( $GLOBALS['_wp_transients'][ $transient ] );
 		return true;
 	}
 }
@@ -305,6 +307,19 @@ if ( ! function_exists( 'wp_generate_password' ) ) {
 if ( ! function_exists( 'wp_unslash' ) ) {
 	function wp_unslash( $value ) {
 		return is_string( $value ) ? stripslashes( $value ) : $value;
+	}
+}
+
+// ─── Email ──────────────────────────────────────────────
+
+if ( ! function_exists( 'wp_mail' ) ) {
+	function wp_mail( $to, $subject, $message, $headers = '', $attachments = [] ) {
+		$GLOBALS['_wp_mail_calls'][] = [
+			'to'      => $to,
+			'subject' => $subject,
+			'message' => $message,
+		];
+		return true;
 	}
 }
 

@@ -5,6 +5,53 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.9.8] - 2026-02-10
+
+### Added
+
+#### Entity_Map_Repository — Per-request cache
+- Static lookup cache for `get_odoo_id()` and `get_wp_id()` with reverse population and invalidation on `save()` / `remove()`
+- `flush_cache()` method for testing and bulk operations
+- Batch methods (`get_wp_ids_batch()`, `get_odoo_ids_batch()`) also populate the cache
+
+#### Webhook — Payload deduplication
+- SHA-256 hash deduplication in `Webhook_Handler::handle_webhook()` (5-minute transient window)
+- Duplicate payloads return HTTP 200 `{success: true, deduplicated: true}` without re-enqueuing
+
+#### Sync_Engine — Failure notification
+- Admin email notification after 5 consecutive batch failures (1-hour cooldown between emails)
+- `wp4odoo_consecutive_failures` option auto-resets on any successful job
+
+#### Sync_Engine — Dry run mode
+- `set_dry_run(bool)` method — logs job details without calling `push_to_odoo()` / `pull_from_odoo()`
+- WP-CLI: `wp wp4odoo sync run --dry-run` flag
+
+#### Bulk_Handler — Progress tracking
+- `import_products()` now returns `total` (via `search_count()`) alongside `enqueued`
+- Updated i18n messages: "%1$d product(s) enqueued for import (%2$d found in Odoo)"
+- Admin JS: `#wp4odoo-bulk-feedback` span shows "Processing..." then result message
+
+#### Tests
+- 11 new tests: 5 cache (EntityMapRepositoryTest), 1 dedup (WebhookHandlerTest), 3 notification + 1 dry-run (SyncEngineTest), 1 CLI dry-run (CLITest)
+- Transient stubs made stateful (`$GLOBALS['_wp_transients']`)
+- `wp_mail()` stub added (`$GLOBALS['_wp_mail_calls']`)
+
+#### Quality Tooling
+- **PHPCS + WordPress Coding Standards** — `wp-coding-standards/wpcs` 3.3 with `.phpcs.xml.dist` config; WordPress-Extra standard with project-specific exclusions; auto-fixed 594+ violations via PHPCBF
+- **WordPress Plugin Check** — `wordpress/plugin-check-action@v1` in CI
+- **Code Coverage** — PHPUnit with PCOV in CI, Clover XML output, Codecov upload
+
+### Changed
+
+- Plugin version bumped from 1.9.7 to 1.9.8
+- PHPUnit: 436 tests, 855 assertions — all green
+- PHPStan: 0 errors on 44 files
+- CI: 4 jobs — PHP 8.2/8.3 (PHPCS + PHPUnit + PHPStan), Code Coverage (PCOV), WordPress Plugin Check
+
+#### Documentation
+- `ARCHITECTURE.md` — new "Error Handling Convention" section (4-tier strategy), CPT_Helper vs Lead_Manager architecture note in CRM section
+- `README.md` — added `--dry-run` to WP-CLI examples
+
 ## [1.9.7] - 2026-02-10
 
 ### Added
@@ -29,7 +76,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `Odoo_Auth::test_connection()` — new `$check_models` parameter (6th, optional `array`)
 - Plugin version bumped from 1.9.6 to 1.9.7
-- PHPUnit: 425 tests, 833 assertions — all green
+- PHPUnit: 425 tests, 844 assertions — all green
 - PHPStan: 0 errors on 44 files
 
 #### Documentation

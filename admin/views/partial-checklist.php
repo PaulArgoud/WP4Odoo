@@ -25,8 +25,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 			printf(
 				/* translators: 1: completed steps, 2: total steps */
 				esc_html__( '%1$d / %2$d completed', 'wp4odoo' ),
-				$done,
-				$total
+				absint( $done ),
+				absint( $total )
 			);
 			?>
 		</span>

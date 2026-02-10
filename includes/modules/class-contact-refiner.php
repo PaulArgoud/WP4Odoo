@@ -70,14 +70,14 @@ class Contact_Refiner {
 
 		// Resolve country code to Odoo res.country ID.
 		if ( ! empty( $odoo_values['country_id'] ) && is_string( $odoo_values['country_id'] ) ) {
-			$code    = strtoupper( $odoo_values['country_id'] );
-			$country = $this->client()->search( 'res.country', [ [ 'code', '=', $code ] ], 0, 1 );
+			$code                      = strtoupper( $odoo_values['country_id'] );
+			$country                   = $this->client()->search( 'res.country', [ [ 'code', '=', $code ] ], 0, 1 );
 			$odoo_values['country_id'] = ! empty( $country ) ? (int) $country[0] : false;
 
 			// Resolve state within that country.
 			if ( ! empty( $odoo_values['state_id'] ) && is_string( $odoo_values['state_id'] ) && ! empty( $country ) ) {
-				$state_name = $odoo_values['state_id'];
-				$state      = $this->client()->search(
+				$state_name              = $odoo_values['state_id'];
+				$state                   = $this->client()->search(
 					'res.country.state',
 					[ [ 'country_id', '=', (int) $country[0] ], [ 'name', 'ilike', $state_name ] ],
 					0,
@@ -109,7 +109,7 @@ class Contact_Refiner {
 		// Split name into first + last.
 		$name = $wp_data['display_name'] ?? '';
 		if ( '' !== $name && empty( $wp_data['first_name'] ) ) {
-			$parts = explode( ' ', $name, 2 );
+			$parts                 = explode( ' ', $name, 2 );
 			$wp_data['first_name'] = $parts[0];
 			$wp_data['last_name']  = $parts[1] ?? '';
 		}
@@ -121,7 +121,7 @@ class Contact_Refiner {
 
 		// Resolve state_id Many2one — use display name from the tuple directly (avoids extra API call).
 		if ( isset( $odoo_data['state_id'] ) ) {
-			$state_name = Field_Mapper::many2one_to_name( $odoo_data['state_id'] );
+			$state_name               = Field_Mapper::many2one_to_name( $odoo_data['state_id'] );
 			$wp_data['billing_state'] = $state_name ?? '';
 		}
 

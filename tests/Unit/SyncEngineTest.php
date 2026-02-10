@@ -21,7 +21,9 @@ class SyncEngineTest extends TestCase {
 		$this->wpdb = new \WP_DB_Stub();
 		$wpdb       = $this->wpdb;
 
-		$GLOBALS['_wp_options'] = [];
+		$GLOBALS['_wp_options']    = [];
+		$GLOBALS['_wp_transients'] = [];
+		$GLOBALS['_wp_mail_calls'] = [];
 
 		\WP4Odoo_Plugin::reset_instance();
 	}
@@ -382,6 +384,134 @@ class SyncEngineTest extends TestCase {
 		$this->assertSame( 2, $processed );
 		$this->assertTrue( $module1->push_called );
 		$this->assertTrue( $module2->pull_called );
+	}
+
+	// ─── Dry run mode ─────────────────────────────────────
+
+	public function test_dry_run_does_not_call_push_or_pull(): void {
+		$this->wpdb->get_var_return = '1';
+
+		$module = new Mock_Module( 'test' );
+		$module->push_result = true;
+		\WP4Odoo_Plugin::instance()->register_module( 'test', $module );
+
+		$job = (object) [
+			'id'           => 200,
+			'module'       => 'test',
+			'direction'    => 'wp_to_odoo',
+			'entity_type'  => 'product',
+			'action'       => 'create',
+			'wp_id'        => 10,
+			'odoo_id'      => 0,
+			'payload'      => '{}',
+			'attempts'     => 0,
+			'max_attempts' => 3,
+		];
+
+		$this->wpdb->get_results_return = [ $job ];
+
+		$engine = new Sync_Engine();
+		$engine->set_dry_run( true );
+		$processed = $engine->process_queue();
+
+		$this->assertSame( 1, $processed );
+		$this->assertFalse( $module->push_called );
+		$this->assertFalse( $module->pull_called );
+	}
+
+	// ─── Failure notification ─────────────────────────────
+
+	public function test_failure_notification_sent_after_threshold(): void {
+		$this->wpdb->get_var_return = '1';
+		$GLOBALS['_wp_options']['admin_email'] = 'admin@test.com';
+		$GLOBALS['_wp_options']['wp4odoo_consecutive_failures'] = 4;
+
+		$module = new Mock_Module( 'test' );
+		$module->throw_on_push = new \RuntimeException( 'API down' );
+		\WP4Odoo_Plugin::instance()->register_module( 'test', $module );
+
+		$job = (object) [
+			'id'           => 100,
+			'module'       => 'test',
+			'direction'    => 'wp_to_odoo',
+			'entity_type'  => 'product',
+			'action'       => 'create',
+			'wp_id'        => 1,
+			'odoo_id'      => 0,
+			'payload'      => '{}',
+			'attempts'     => 2,
+			'max_attempts' => 3,
+		];
+
+		$this->wpdb->get_results_return = [ $job ];
+
+		$engine = new Sync_Engine();
+		$engine->process_queue();
+
+		$this->assertNotEmpty( $GLOBALS['_wp_mail_calls'] );
+		$this->assertSame( 'admin@test.com', $GLOBALS['_wp_mail_calls'][0]['to'] );
+		$this->assertStringContainsString( '5', $GLOBALS['_wp_mail_calls'][0]['subject'] );
+	}
+
+	public function test_failure_counter_resets_on_success(): void {
+		$this->wpdb->get_var_return = '1';
+		$GLOBALS['_wp_options']['wp4odoo_consecutive_failures'] = 10;
+
+		$module = new Mock_Module( 'test' );
+		$module->push_result = true;
+		\WP4Odoo_Plugin::instance()->register_module( 'test', $module );
+
+		$job = (object) [
+			'id'           => 101,
+			'module'       => 'test',
+			'direction'    => 'wp_to_odoo',
+			'entity_type'  => 'product',
+			'action'       => 'create',
+			'wp_id'        => 1,
+			'odoo_id'      => 0,
+			'payload'      => '{}',
+			'attempts'     => 0,
+			'max_attempts' => 3,
+		];
+
+		$this->wpdb->get_results_return = [ $job ];
+
+		$engine = new Sync_Engine();
+		$engine->process_queue();
+
+		$this->assertSame( 0, (int) get_option( 'wp4odoo_consecutive_failures', 0 ) );
+		$this->assertEmpty( $GLOBALS['_wp_mail_calls'] );
+	}
+
+	public function test_failure_notification_respects_cooldown(): void {
+		$this->wpdb->get_var_return = '1';
+		$GLOBALS['_wp_options']['admin_email'] = 'admin@test.com';
+		$GLOBALS['_wp_options']['wp4odoo_consecutive_failures'] = 10;
+		$GLOBALS['_wp_options']['wp4odoo_last_failure_email'] = time();
+
+		$module = new Mock_Module( 'test' );
+		$module->throw_on_push = new \RuntimeException( 'Fail' );
+		\WP4Odoo_Plugin::instance()->register_module( 'test', $module );
+
+		$job = (object) [
+			'id'           => 102,
+			'module'       => 'test',
+			'direction'    => 'wp_to_odoo',
+			'entity_type'  => 'product',
+			'action'       => 'create',
+			'wp_id'        => 1,
+			'odoo_id'      => 0,
+			'payload'      => '{}',
+			'attempts'     => 2,
+			'max_attempts' => 3,
+		];
+
+		$this->wpdb->get_results_return = [ $job ];
+
+		$engine = new Sync_Engine();
+		$engine->process_queue();
+
+		$this->assertEmpty( $GLOBALS['_wp_mail_calls'] );
 	}
 
 	// ─── Helpers ───────────────────────────────────────────

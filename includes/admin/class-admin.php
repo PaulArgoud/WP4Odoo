@@ -87,31 +87,36 @@ class Admin {
 			true
 		);
 
-		wp_localize_script( 'wp4odoo-admin', 'wp4odooAdmin', [
-			'ajaxurl' => admin_url( 'admin-ajax.php' ),
-			'nonce'   => wp_create_nonce( 'wp4odoo_admin' ),
-			'i18n'    => [
-				'testing'          => __( 'Testing...', 'wp4odoo' ),
-				'connectionOk'     => __( 'Connection successful!', 'wp4odoo' ),
-				'connectionFailed' => __( 'Connection failed.', 'wp4odoo' ),
-				'copied'           => __( 'Copied!', 'wp4odoo' ),
-				'confirmPurge'     => __( 'Delete all old log entries?', 'wp4odoo' ),
-				'confirmCleanup'   => __( 'Delete completed/failed jobs older than 7 days?', 'wp4odoo' ),
-				'confirmCancel'    => __( 'Cancel this job?', 'wp4odoo' ),
-				'noResults'        => __( 'No results.', 'wp4odoo' ),
-				'settingsSaved'    => __( 'Settings saved.', 'wp4odoo' ),
-				'settingsFailed'   => __( 'Failed to save settings.', 'wp4odoo' ),
-				'confirmBulkImport' => __( 'Import all products from Odoo? This will enqueue sync jobs for all Odoo products.', 'wp4odoo' ),
-				'confirmBulkExport' => __( 'Export all products to Odoo? This will enqueue sync jobs for all WooCommerce products.', 'wp4odoo' ),
-				'loading'           => __( 'Loading...', 'wp4odoo' ),
-				'lastSync'          => __( 'Last sync: %s', 'wp4odoo' ),
-				'cancel'            => __( 'Cancel', 'wp4odoo' ),
-				'statusPending'     => __( 'Pending', 'wp4odoo' ),
-				'statusProcessing'  => __( 'Processing', 'wp4odoo' ),
-				'statusCompleted'   => __( 'Completed', 'wp4odoo' ),
-				'statusFailed'      => __( 'Failed', 'wp4odoo' ),
-			],
-		] );
+		wp_localize_script(
+			'wp4odoo-admin',
+			'wp4odooAdmin',
+			[
+				'ajaxurl' => admin_url( 'admin-ajax.php' ),
+				'nonce'   => wp_create_nonce( 'wp4odoo_admin' ),
+				'i18n'    => [
+					'testing'           => __( 'Testing...', 'wp4odoo' ),
+					'connectionOk'      => __( 'Connection successful!', 'wp4odoo' ),
+					'connectionFailed'  => __( 'Connection failed.', 'wp4odoo' ),
+					'copied'            => __( 'Copied!', 'wp4odoo' ),
+					'confirmPurge'      => __( 'Delete all old log entries?', 'wp4odoo' ),
+					'confirmCleanup'    => __( 'Delete completed/failed jobs older than 7 days?', 'wp4odoo' ),
+					'confirmCancel'     => __( 'Cancel this job?', 'wp4odoo' ),
+					'noResults'         => __( 'No results.', 'wp4odoo' ),
+					'settingsSaved'     => __( 'Settings saved.', 'wp4odoo' ),
+					'settingsFailed'    => __( 'Failed to save settings.', 'wp4odoo' ),
+					'confirmBulkImport' => __( 'Import all products from Odoo? This will enqueue sync jobs for all Odoo products.', 'wp4odoo' ),
+					'confirmBulkExport' => __( 'Export all products to Odoo? This will enqueue sync jobs for all WooCommerce products.', 'wp4odoo' ),
+					'loading'           => __( 'Loading...', 'wp4odoo' ),
+					/* translators: %s: formatted date/time of the last synchronization */
+					'lastSync'          => __( 'Last sync: %s', 'wp4odoo' ),
+					'cancel'            => __( 'Cancel', 'wp4odoo' ),
+					'statusPending'     => __( 'Pending', 'wp4odoo' ),
+					'statusProcessing'  => __( 'Processing', 'wp4odoo' ),
+					'statusCompleted'   => __( 'Completed', 'wp4odoo' ),
+					'statusFailed'      => __( 'Failed', 'wp4odoo' ),
+				],
+			]
+		);
 	}
 
 	/**
@@ -160,7 +165,7 @@ class Admin {
 			return;
 		}
 
-		$settings_url = esc_url( admin_url( 'admin.php?page=wp4odoo' ) );
+		$settings_url = admin_url( 'admin.php?page=wp4odoo' );
 
 		printf(
 			'<div class="notice notice-info is-dismissible wp4odoo-setup-notice" data-nonce="%s">'
@@ -169,7 +174,7 @@ class Admin {
 			esc_attr( wp_create_nonce( 'wp4odoo_admin' ) ),
 			esc_html__( 'WordPress For Odoo', 'wp4odoo' ),
 			esc_html__( 'is almost ready! Configure your Odoo connection to get started.', 'wp4odoo' ),
-			$settings_url,
+			esc_url( $settings_url ),
 			esc_html__( 'Go to settings', 'wp4odoo' )
 		);
 

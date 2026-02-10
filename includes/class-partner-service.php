@@ -88,9 +88,12 @@ class Partner_Service {
 		$client = ( $this->client_getter )();
 
 		if ( ! $client->is_connected() ) {
-			$this->logger->error( 'Cannot resolve partner: Odoo client not connected.', [
-				'email' => $email,
-			] );
+			$this->logger->error(
+				'Cannot resolve partner: Odoo client not connected.',
+				[
+					'email' => $email,
+				]
+			);
 			return null;
 		}
 
@@ -99,10 +102,13 @@ class Partner_Service {
 
 		if ( ! empty( $ids ) ) {
 			$odoo_id = (int) $ids[0];
-			$this->logger->info( 'Found existing Odoo partner by email.', [
-				'email'   => $email,
-				'odoo_id' => $odoo_id,
-			] );
+			$this->logger->info(
+				'Found existing Odoo partner by email.',
+				[
+					'email'   => $email,
+					'odoo_id' => $odoo_id,
+				]
+			);
 
 			// Save mapping if we have a WP user.
 			if ( $wp_id > 0 ) {
@@ -123,10 +129,13 @@ class Partner_Service {
 		try {
 			$odoo_id = $client->create( 'res.partner', $partner_data );
 
-			$this->logger->info( 'Created new Odoo partner.', [
-				'email'   => $email,
-				'odoo_id' => $odoo_id,
-			] );
+			$this->logger->info(
+				'Created new Odoo partner.',
+				[
+					'email'   => $email,
+					'odoo_id' => $odoo_id,
+				]
+			);
 
 			// Save mapping if we have a WP user.
 			if ( $wp_id > 0 ) {
@@ -135,10 +144,13 @@ class Partner_Service {
 
 			return $odoo_id;
 		} catch ( \Exception $e ) {
-			$this->logger->error( 'Failed to create Odoo partner.', [
-				'email' => $email,
-				'error' => $e->getMessage(),
-			] );
+			$this->logger->error(
+				'Failed to create Odoo partner.',
+				[
+					'email' => $email,
+					'error' => $e->getMessage(),
+				]
+			);
 			return null;
 		}
 	}

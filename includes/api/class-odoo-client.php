@@ -63,12 +63,14 @@ class Odoo_Client {
 		$credentials = Odoo_Auth::get_credentials();
 
 		if ( empty( $credentials['url'] ) || empty( $credentials['database'] ) ) {
+
 			throw new \RuntimeException(
 				__( 'Odoo connection not configured.', 'wp4odoo' )
 			);
 		}
 
 		if ( empty( $credentials['username'] ) || empty( $credentials['api_key'] ) ) {
+
 			throw new \RuntimeException(
 				__( 'Odoo credentials not configured.', 'wp4odoo' )
 			);
@@ -301,11 +303,14 @@ class Odoo_Client {
 
 			return $result;
 		} catch ( \Throwable $e ) {
-			$this->logger->error( 'API call failed.', [
-				'model'  => $model,
-				'method' => $method,
-				'error'  => $e->getMessage(),
-			] );
+			$this->logger->error(
+				'API call failed.',
+				[
+					'model'  => $model,
+					'method' => $method,
+					'error'  => $e->getMessage(),
+				]
+			);
 
 			throw $e;
 		}

@@ -32,14 +32,16 @@ trait Ajax_Monitor_Handlers {
 
 		$count = Sync_Engine::retry_failed();
 
-		wp_send_json_success( [
-			'count'   => $count,
-			'message' => sprintf(
-				/* translators: %d: number of jobs */
-				__( '%d job(s) retried.', 'wp4odoo' ),
-				$count
-			),
-		] );
+		wp_send_json_success(
+			[
+				'count'   => $count,
+				'message' => sprintf(
+					/* translators: %d: number of jobs */
+					__( '%d job(s) retried.', 'wp4odoo' ),
+					$count
+				),
+			]
+		);
 	}
 
 	/**
@@ -53,14 +55,16 @@ trait Ajax_Monitor_Handlers {
 		$days    = $this->get_post_field( 'days', 'int' ) ?: 7;
 		$deleted = Sync_Engine::cleanup( $days );
 
-		wp_send_json_success( [
-			'deleted' => $deleted,
-			'message' => sprintf(
-				/* translators: %d: number of deleted jobs */
-				__( '%d job(s) deleted.', 'wp4odoo' ),
-				$deleted
-			),
-		] );
+		wp_send_json_success(
+			[
+				'deleted' => $deleted,
+				'message' => sprintf(
+					/* translators: %d: number of deleted jobs */
+					__( '%d job(s) deleted.', 'wp4odoo' ),
+					$deleted
+				),
+			]
+		);
 	}
 
 	/**
@@ -75,13 +79,17 @@ trait Ajax_Monitor_Handlers {
 		$success = Queue_Manager::cancel( $job_id );
 
 		if ( $success ) {
-			wp_send_json_success( [
-				'message' => __( 'Job cancelled.', 'wp4odoo' ),
-			] );
+			wp_send_json_success(
+				[
+					'message' => __( 'Job cancelled.', 'wp4odoo' ),
+				]
+			);
 		} else {
-			wp_send_json_error( [
-				'message' => __( 'Unable to cancel this job.', 'wp4odoo' ),
-			] );
+			wp_send_json_error(
+				[
+					'message' => __( 'Unable to cancel this job.', 'wp4odoo' ),
+				]
+			);
 		}
 	}
 
@@ -96,14 +104,16 @@ trait Ajax_Monitor_Handlers {
 		$logger  = new Logger();
 		$deleted = $logger->cleanup();
 
-		wp_send_json_success( [
-			'deleted' => $deleted,
-			'message' => sprintf(
-				/* translators: %d: number of deleted log entries */
-				__( '%d log entry(ies) deleted.', 'wp4odoo' ),
-				$deleted
-			),
-		] );
+		wp_send_json_success(
+			[
+				'deleted' => $deleted,
+				'message' => sprintf(
+					/* translators: %d: number of deleted log entries */
+					__( '%d log entry(ies) deleted.', 'wp4odoo' ),
+					$deleted
+				),
+			]
+		);
 	}
 
 	/**
@@ -140,12 +150,14 @@ trait Ajax_Monitor_Handlers {
 			];
 		}
 
-		wp_send_json_success( [
-			'items' => $items,
-			'total' => $data['total'],
-			'page'  => $data['page'],
-			'pages' => $data['pages'],
-		] );
+		wp_send_json_success(
+			[
+				'items' => $items,
+				'total' => $data['total'],
+				'page'  => $data['page'],
+				'pages' => $data['pages'],
+			]
+		);
 	}
 
 	/**
@@ -178,12 +190,14 @@ trait Ajax_Monitor_Handlers {
 			];
 		}
 
-		wp_send_json_success( [
-			'items' => $items,
-			'total' => $data['total'],
-			'pages' => $data['pages'],
-			'page'  => $page,
-		] );
+		wp_send_json_success(
+			[
+				'items' => $items,
+				'total' => $data['total'],
+				'pages' => $data['pages'],
+				'page'  => $page,
+			]
+		);
 	}
 
 	/**

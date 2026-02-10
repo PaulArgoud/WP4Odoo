@@ -122,7 +122,13 @@ class Contact_Manager {
 			$existing = get_user_by( 'email', $email );
 			if ( $existing ) {
 				$wp_id = $existing->ID;
-				$this->logger->info( 'Pull dedup: matched existing WP user by email.', [ 'email' => $email, 'wp_id' => $wp_id ] );
+				$this->logger->info(
+					'Pull dedup: matched existing WP user by email.',
+					[
+						'email' => $email,
+						'wp_id' => $wp_id,
+					]
+				);
 			}
 		}
 
@@ -139,12 +145,18 @@ class Contact_Manager {
 				'user_url'     => $data['user_url'] ?? '',
 			];
 
-			$userdata = array_filter( $userdata, fn( $v ) => '' !== $v );
+			$userdata       = array_filter( $userdata, fn( $v ) => '' !== $v );
 			$userdata['ID'] = $wp_id;
 
 			$result = wp_update_user( $userdata );
 			if ( is_wp_error( $result ) ) {
-				$this->logger->error( 'Failed to update WP user.', [ 'wp_id' => $wp_id, 'error' => $result->get_error_message() ] );
+				$this->logger->error(
+					'Failed to update WP user.',
+					[
+						'wp_id' => $wp_id,
+						'error' => $result->get_error_message(),
+					]
+				);
 				return 0;
 			}
 		} else {
@@ -173,7 +185,13 @@ class Contact_Manager {
 
 			$wp_id = wp_insert_user( $userdata );
 			if ( is_wp_error( $wp_id ) ) {
-				$this->logger->error( 'Failed to create WP user.', [ 'email' => $email, 'error' => $wp_id->get_error_message() ] );
+				$this->logger->error(
+					'Failed to create WP user.',
+					[
+						'email' => $email,
+						'error' => $wp_id->get_error_message(),
+					]
+				);
 				return 0;
 			}
 		}

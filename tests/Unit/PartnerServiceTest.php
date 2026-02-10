@@ -26,6 +26,8 @@ class PartnerServiceTest extends TestCase {
 		$this->wpdb = new \WP_DB_Stub();
 		$wpdb       = $this->wpdb;
 
+		\WP4Odoo\Entity_Map_Repository::flush_cache();
+
 		// Create a simple mock Odoo client.
 		$this->client = new class {
 			/** @var array Return value for search(). */

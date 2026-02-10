@@ -159,11 +159,11 @@ class Logger {
 			return 0;
 		}
 
-		$table    = $wpdb->prefix . 'wp4odoo_logs';
-		$cutoff   = gmdate( 'Y-m-d H:i:s', time() - ( $retention * DAY_IN_SECONDS ) );
+		$table  = $wpdb->prefix . 'wp4odoo_logs';
+		$cutoff = gmdate( 'Y-m-d H:i:s', time() - ( $retention * DAY_IN_SECONDS ) );
 
 		return (int) $wpdb->query(
-			$wpdb->prepare( "DELETE FROM {$table} WHERE created_at < %s", $cutoff )
+			$wpdb->prepare( "DELETE FROM {$table} WHERE created_at < %s", $cutoff ) // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is from $wpdb->prefix, safe.
 		);
 	}
 

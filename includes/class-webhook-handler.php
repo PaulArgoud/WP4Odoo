@@ -34,6 +34,14 @@ class Webhook_Handler {
 	private const RATE_LIMIT_WINDOW = 60;
 
 	/**
+	 * Deduplication window in seconds.
+	 *
+	 * Identical webhook payloads received within this window
+	 * are treated as duplicates and not re-enqueued.
+	 */
+	private const DEDUP_WINDOW = 300;
+
+	/**
 	 * Logger instance.
 	 *
 	 * @var Logger
@@ -141,15 +149,43 @@ class Webhook_Handler {
 			);
 		}
 
+		// Content-based deduplication.
+		$hash      = hash( 'sha256', wp_json_encode( $body ) );
+		$dedup_key = 'wp4odoo_wh_' . substr( $hash, 0, 32 );
+
+		if ( false !== get_transient( $dedup_key ) ) {
+			$this->logger->debug(
+				'Webhook deduplicated.',
+				[
+					'module'      => $module,
+					'entity_type' => $entity_type,
+					'odoo_id'     => $odoo_id,
+				]
+			);
+
+			return new \WP_REST_Response(
+				[
+					'success'      => true,
+					'deduplicated' => true,
+				],
+				200
+			);
+		}
+
+		set_transient( $dedup_key, 1, self::DEDUP_WINDOW );
+
 		$job_id = Queue_Manager::pull( $module, $entity_type, $action, $odoo_id, null, $body );
 
-		$this->logger->info( 'Webhook received, job enqueued.', [
-			'module'      => $module,
-			'entity_type' => $entity_type,
-			'odoo_id'     => $odoo_id,
-			'action'      => $action,
-			'job_id'      => $job_id,
-		] );
+		$this->logger->info(
+			'Webhook received, job enqueued.',
+			[
+				'module'      => $module,
+				'entity_type' => $entity_type,
+				'odoo_id'     => $odoo_id,
+				'action'      => $action,
+				'job_id'      => $job_id,
+			]
+		);
 
 		return new \WP_REST_Response(
 			[
@@ -224,12 +260,15 @@ class Webhook_Handler {
 			);
 		}
 
-		$this->logger->info( 'Manual sync triggered.', [
-			'module'      => $module_id,
-			'entity_type' => $entity_type,
-			'direction'   => $direction,
-			'job_id'      => $job_id,
-		] );
+		$this->logger->info(
+			'Manual sync triggered.',
+			[
+				'module'      => $module_id,
+				'entity_type' => $entity_type,
+				'direction'   => $direction,
+				'job_id'      => $job_id,
+			]
+		);
 
 		return new \WP_REST_Response(
 			[
@@ -269,9 +308,12 @@ class Webhook_Handler {
 		}
 
 		if ( ! hash_equals( $stored, (string) $token ) ) {
-			$this->logger->warning( 'Invalid webhook token received.', [
-				'ip' => $ip,
-			] );
+			$this->logger->warning(
+				'Invalid webhook token received.',
+				[
+					'ip' => $ip,
+				]
+			);
 
 			return new \WP_Error(
 				'wp4odoo_invalid_token',
@@ -329,10 +371,13 @@ class Webhook_Handler {
 		$count = (int) get_transient( $key );
 
 		if ( $count >= self::RATE_LIMIT_MAX ) {
-			$this->logger->warning( 'Rate limit exceeded for webhook endpoint.', [
-				'ip'    => $ip,
-				'count' => $count,
-			] );
+			$this->logger->warning(
+				'Rate limit exceeded for webhook endpoint.',
+				[
+					'ip'    => $ip,
+					'count' => $count,
+				]
+			);
 
 			return new \WP_Error(
 				'wp4odoo_rate_limited',

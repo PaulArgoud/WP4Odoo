@@ -53,24 +53,27 @@ class Lead_Manager {
 	 * @return void
 	 */
 	public function register_lead_cpt(): void {
-		register_post_type( 'wp4odoo_lead', [
-			'labels' => [
-				'name'               => __( 'Leads', 'wp4odoo' ),
-				'singular_name'      => __( 'Lead', 'wp4odoo' ),
-				'add_new_item'       => __( 'Add New Lead', 'wp4odoo' ),
-				'edit_item'          => __( 'Edit Lead', 'wp4odoo' ),
-				'view_item'          => __( 'View Lead', 'wp4odoo' ),
-				'search_items'       => __( 'Search Leads', 'wp4odoo' ),
-				'not_found'          => __( 'No leads found.', 'wp4odoo' ),
-				'not_found_in_trash' => __( 'No leads found in Trash.', 'wp4odoo' ),
-			],
-			'public'          => false,
-			'show_ui'         => true,
-			'show_in_menu'    => 'wp4odoo',
-			'supports'        => [ 'title', 'editor' ],
-			'capability_type' => 'post',
-			'map_meta_cap'    => true,
-		] );
+		register_post_type(
+			'wp4odoo_lead',
+			[
+				'labels'          => [
+					'name'               => __( 'Leads', 'wp4odoo' ),
+					'singular_name'      => __( 'Lead', 'wp4odoo' ),
+					'add_new_item'       => __( 'Add New Lead', 'wp4odoo' ),
+					'edit_item'          => __( 'Edit Lead', 'wp4odoo' ),
+					'view_item'          => __( 'View Lead', 'wp4odoo' ),
+					'search_items'       => __( 'Search Leads', 'wp4odoo' ),
+					'not_found'          => __( 'No leads found.', 'wp4odoo' ),
+					'not_found_in_trash' => __( 'No leads found in Trash.', 'wp4odoo' ),
+				],
+				'public'          => false,
+				'show_ui'         => true,
+				'show_in_menu'    => 'wp4odoo',
+				'supports'        => [ 'title', 'editor' ],
+				'capability_type' => 'post',
+				'map_meta_cap'    => true,
+			]
+		);
 	}
 
 	/**
@@ -87,15 +90,19 @@ class Lead_Manager {
 
 		wp_enqueue_style( 'wp4odoo-frontend', WP4ODOO_PLUGIN_URL . 'assets/css/frontend.css', [], WP4ODOO_VERSION );
 		wp_enqueue_script( 'wp4odoo-lead-form', WP4ODOO_PLUGIN_URL . 'assets/js/lead-form.js', [], WP4ODOO_VERSION, true );
-		wp_localize_script( 'wp4odoo-lead-form', 'wp4odooLead', [
-			'ajaxUrl' => admin_url( 'admin-ajax.php' ),
-			'nonce'   => wp_create_nonce( 'wp4odoo_lead' ),
-			'i18n'    => [
-				'sending' => __( 'Sending...', 'wp4odoo' ),
-				'success' => __( 'Your message has been sent successfully.', 'wp4odoo' ),
-				'error'   => __( 'An error occurred. Please try again.', 'wp4odoo' ),
-			],
-		] );
+		wp_localize_script(
+			'wp4odoo-lead-form',
+			'wp4odooLead',
+			[
+				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+				'nonce'   => wp_create_nonce( 'wp4odoo_lead' ),
+				'i18n'    => [
+					'sending' => __( 'Sending...', 'wp4odoo' ),
+					'success' => __( 'Your message has been sent successfully.', 'wp4odoo' ),
+					'error'   => __( 'An error occurred. Please try again.', 'wp4odoo' ),
+				],
+			]
+		);
 
 		$source = $atts['source'] ?? get_the_title();
 
@@ -156,7 +163,7 @@ class Lead_Manager {
 			wp_send_json_error( [ 'message' => __( 'Invalid email address.', 'wp4odoo' ) ] );
 		}
 
-		$lead_data = compact( 'name', 'email', 'phone', 'company', 'source' );
+		$lead_data                = compact( 'name', 'email', 'phone', 'company', 'source' );
 		$lead_data['description'] = $desc;
 
 		$wp_id = $this->save_lead_data( $lead_data );
@@ -166,7 +173,13 @@ class Lead_Manager {
 		}
 
 		Queue_Manager::push( 'crm', 'lead', 'create', $wp_id, null, $lead_data );
-		$this->logger->info( 'Lead form submitted and enqueued.', [ 'wp_id' => $wp_id, 'email' => $email ] );
+		$this->logger->info(
+			'Lead form submitted and enqueued.',
+			[
+				'wp_id' => $wp_id,
+				'email' => $email,
+			]
+		);
 
 		/**
 		 * Fires after a lead form is submitted and saved.
@@ -222,7 +235,7 @@ class Lead_Manager {
 
 		if ( $wp_id > 0 ) {
 			$post_data['ID'] = $wp_id;
-			$result = wp_update_post( $post_data, true );
+			$result          = wp_update_post( $post_data, true );
 		} else {
 			$result = wp_insert_post( $post_data, true );
 		}
@@ -234,7 +247,12 @@ class Lead_Manager {
 
 		$post_id = (int) $result;
 
-		$meta_fields = [ 'email' => '_lead_email', 'phone' => '_lead_phone', 'company' => '_lead_company', 'source' => '_lead_source' ];
+		$meta_fields = [
+			'email'   => '_lead_email',
+			'phone'   => '_lead_phone',
+			'company' => '_lead_company',
+			'source'  => '_lead_source',
+		];
 		foreach ( $meta_fields as $data_key => $meta_key ) {
 			if ( isset( $data[ $data_key ] ) ) {
 				update_post_meta( $post_id, $meta_key, $data[ $data_key ] );

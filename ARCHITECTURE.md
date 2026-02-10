@@ -330,6 +330,22 @@ Query_Service::get_log_entries( $filters, $page, $per_page );
 
 Used by both `Settings_Page` (server-side rendering) and `Admin_Ajax` (AJAX endpoints).
 
+### 7. Error Handling Convention
+
+The codebase uses a tiered error-handling strategy. Each tier is appropriate for a different level of severity:
+
+| Tier | Mechanism | When Used | Examples |
+|------|-----------|-----------|---------|
+| **1. Exceptions** | `throw \RuntimeException` | Fatal/configuration errors that prevent operation | `Odoo_Client::call()` on RPC fault, `Sync_Engine::process_job()` when module not found |
+| **2. Bool** | `return bool` | CRUD success/failure (binary outcome) | `Module_Base::push_to_odoo()`, `Entity_Map_Repository::save()`, `Entity_Map_Repository::remove()` |
+| **3. Null** | `return ?int` / `return ?string` | Missing optional data (lookup misses) | `Entity_Map_Repository::get_odoo_id()`, `Module_Base::resolve_many2one_field()`, `Partner_Service::get_or_create()` |
+| **4. Array** | `return array{success: bool, ...}` | Complex multi-part results | `Odoo_Auth::test_connection()`, `Sync_Engine::get_stats()`, `Bulk_Handler::import_products()` |
+
+**Guidelines for new code:**
+- **API layer** (`Odoo_Client`): throw on RPC faults, return empty arrays for search with no results.
+- **Modules**: return `bool` from push/pull, `null` from ID lookups, `0` from failed saves.
+- **Infrastructure**: throw for configuration errors, use typed returns for data access.
+
 ## Database
 
 ### Tables Created on Activation
@@ -456,6 +472,8 @@ All user inputs are sanitized with:
 ### CRM — COMPLETE
 
 **Files:** `class-crm-module.php` (contact sync orchestration), `class-contact-manager.php` (contact data load/save/sync-check), `class-lead-manager.php` (leads), `class-contact-refiner.php` (field refinement)
+
+> **Architecture note — CPT_Helper vs Lead_Manager:** The CRM module's `Lead_Manager` manages its own `wp4odoo_lead` CPT registration directly, unlike Sales/WooCommerce which delegate CPT operations to the shared `CPT_Helper`. This is intentional: `Lead_Manager` combines CPT registration with domain-specific behavior (shortcode rendering, AJAX form submission) that does not fit the generic "register + load + save" pattern of `CPT_Helper`.
 
 **Odoo models:** `res.partner`, `crm.lead`
 

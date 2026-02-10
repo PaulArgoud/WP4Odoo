@@ -38,12 +38,12 @@ class WooCommerce_Module extends Module_Base {
 	 * Invoice meta fields: data key => post meta key.
 	 */
 	private const INVOICE_META = [
-		'_invoice_total'       => '_invoice_total',
-		'_invoice_date'        => '_invoice_date',
-		'_invoice_state'       => '_invoice_state',
-		'_payment_state'       => '_payment_state',
-		'_wp4odoo_partner_id'  => '_wp4odoo_partner_id',
-		'_invoice_currency'    => '_invoice_currency',
+		'_invoice_total'      => '_invoice_total',
+		'_invoice_date'       => '_invoice_date',
+		'_invoice_state'      => '_invoice_state',
+		'_payment_state'      => '_payment_state',
+		'_wp4odoo_partner_id' => '_wp4odoo_partner_id',
+		'_invoice_currency'   => '_invoice_currency',
 	];
 
 	protected string $id   = 'woocommerce';
@@ -75,24 +75,24 @@ class WooCommerce_Module extends Module_Base {
 			'display_name'      => 'display_name',
 			'_wp4odoo_currency' => 'currency_id',
 		],
-		'order' => [
-			'total'      => 'amount_total',
+		'order'   => [
+			'total'        => 'amount_total',
 			'date_created' => 'date_order',
-			'status'     => 'state',
-			'partner_id' => 'partner_id',
+			'status'       => 'state',
+			'partner_id'   => 'partner_id',
 		],
-		'stock' => [
+		'stock'   => [
 			'stock_quantity' => 'quantity',
 			'product_id'     => 'product_id',
 		],
 		'invoice' => [
-			'post_title'           => 'name',
-			'_invoice_total'       => 'amount_total',
-			'_invoice_date'        => 'invoice_date',
-			'_invoice_state'       => 'state',
-			'_payment_state'       => 'payment_state',
-			'_wp4odoo_partner_id'  => 'partner_id',
-			'_invoice_currency'    => 'currency_id',
+			'post_title'          => 'name',
+			'_invoice_total'      => 'amount_total',
+			'_invoice_date'       => 'invoice_date',
+			'_invoice_state'      => 'state',
+			'_payment_state'      => 'payment_state',
+			'_wp4odoo_partner_id' => 'partner_id',
+			'_invoice_currency'   => 'currency_id',
 		],
 	];
 
@@ -149,12 +149,12 @@ class WooCommerce_Module extends Module_Base {
 			return;
 		}
 
-		$this->partner_service  = new Partner_Service( fn() => $this->client() );
-		$this->product_handler  = new Product_Handler( $this->logger );
-		$this->order_handler    = new Order_Handler( $this->logger, $this->partner_service );
-		$this->variant_handler  = new Variant_Handler( $this->logger, fn() => $this->client() );
-		$this->image_handler    = new Image_Handler( $this->logger );
-		$settings = $this->get_settings();
+		$this->partner_service = new Partner_Service( fn() => $this->client() );
+		$this->product_handler = new Product_Handler( $this->logger );
+		$this->order_handler   = new Order_Handler( $this->logger, $this->partner_service );
+		$this->variant_handler = new Variant_Handler( $this->logger, fn() => $this->client() );
+		$this->image_handler   = new Image_Handler( $this->logger );
+		$settings              = $this->get_settings();
 
 		// Capture raw Odoo data during product pull for image processing.
 		add_filter( "wp4odoo_map_from_odoo_{$this->id}_product", [ $this, 'capture_odoo_data' ], 1, 3 );
@@ -199,17 +199,17 @@ class WooCommerce_Module extends Module_Base {
 	 */
 	public function get_settings_fields(): array {
 		return [
-			'sync_products' => [
+			'sync_products'       => [
 				'label'       => __( 'Sync products', 'wp4odoo' ),
 				'type'        => 'checkbox',
 				'description' => __( 'Synchronize WooCommerce products with Odoo.', 'wp4odoo' ),
 			],
-			'sync_orders' => [
+			'sync_orders'         => [
 				'label'       => __( 'Sync orders', 'wp4odoo' ),
 				'type'        => 'checkbox',
 				'description' => __( 'Synchronize WooCommerce orders with Odoo.', 'wp4odoo' ),
 			],
-			'sync_stock' => [
+			'sync_stock'          => [
 				'label'       => __( 'Sync stock', 'wp4odoo' ),
 				'type'        => 'checkbox',
 				'description' => __( 'Pull stock levels from Odoo into WooCommerce products.', 'wp4odoo' ),
@@ -327,10 +327,13 @@ class WooCommerce_Module extends Module_Base {
 		}
 
 		if ( 0 === $parent_wp_id ) {
-			$this->logger->warning( 'Cannot pull variant: parent product not mapped.', [
-				'variant_odoo_id'  => $odoo_id,
-				'template_odoo_id' => $template_odoo_id,
-			] );
+			$this->logger->warning(
+				'Cannot pull variant: parent product not mapped.',
+				[
+					'variant_odoo_id'  => $odoo_id,
+					'template_odoo_id' => $template_odoo_id,
+				]
+			);
 			return false;
 		}
 
@@ -369,10 +372,13 @@ class WooCommerce_Module extends Module_Base {
 			);
 		}
 
-		$this->logger->info( 'Enqueued variant pulls for template.', [
-			'template_odoo_id' => $template_odoo_id,
-			'variant_count'    => count( $variant_ids ),
-		] );
+		$this->logger->info(
+			'Enqueued variant pulls for template.',
+			[
+				'template_odoo_id' => $template_odoo_id,
+				'variant_count'    => count( $variant_ids ),
+			]
+		);
 	}
 
 	// ─── WC Hook Callbacks (push) ────────────────────────────
@@ -465,16 +471,19 @@ class WooCommerce_Module extends Module_Base {
 	 * @return void
 	 */
 	public function register_invoice_cpt(): void {
-		CPT_Helper::register( 'wp4odoo_invoice', [
-			'name'               => __( 'Invoices', 'wp4odoo' ),
-			'singular_name'      => __( 'Invoice', 'wp4odoo' ),
-			'add_new_item'       => __( 'Add New Invoice', 'wp4odoo' ),
-			'edit_item'          => __( 'Edit Invoice', 'wp4odoo' ),
-			'view_item'          => __( 'View Invoice', 'wp4odoo' ),
-			'search_items'       => __( 'Search Invoices', 'wp4odoo' ),
-			'not_found'          => __( 'No invoices found.', 'wp4odoo' ),
-			'not_found_in_trash' => __( 'No invoices found in Trash.', 'wp4odoo' ),
-		] );
+		CPT_Helper::register(
+			'wp4odoo_invoice',
+			[
+				'name'               => __( 'Invoices', 'wp4odoo' ),
+				'singular_name'      => __( 'Invoice', 'wp4odoo' ),
+				'add_new_item'       => __( 'Add New Invoice', 'wp4odoo' ),
+				'edit_item'          => __( 'Edit Invoice', 'wp4odoo' ),
+				'view_item'          => __( 'View Invoice', 'wp4odoo' ),
+				'search_items'       => __( 'Search Invoices', 'wp4odoo' ),
+				'not_found'          => __( 'No invoices found.', 'wp4odoo' ),
+				'not_found_in_trash' => __( 'No invoices found in Trash.', 'wp4odoo' ),
+			]
+		);
 	}
 
 	// ─── Data Loading (delegates to handlers) ───────────────
@@ -550,19 +559,25 @@ class WooCommerce_Module extends Module_Base {
 			$wp_product_id = $this->get_wp_mapping( 'variant', $odoo_product_id );
 		}
 		if ( ! $wp_product_id ) {
-			$this->logger->warning( 'Stock update: no WC product mapped for Odoo product.', [
-				'odoo_product_id' => $odoo_product_id,
-			] );
+			$this->logger->warning(
+				'Stock update: no WC product mapped for Odoo product.',
+				[
+					'odoo_product_id' => $odoo_product_id,
+				]
+			);
 			return 0;
 		}
 
 		$quantity = (int) ( $data['stock_quantity'] ?? 0 );
 		wc_update_product_stock( $wp_product_id, $quantity );
 
-		$this->logger->info( 'Updated WC product stock.', [
-			'wp_product_id' => $wp_product_id,
-			'quantity'       => $quantity,
-		] );
+		$this->logger->info(
+			'Updated WC product stock.',
+			[
+				'wp_product_id' => $wp_product_id,
+				'quantity'      => $quantity,
+			]
+		);
 
 		return $wp_product_id;
 	}
@@ -602,9 +617,12 @@ class WooCommerce_Module extends Module_Base {
 		}
 
 		// Orders and stock are not deleted via sync.
-		$this->logger->warning( "WooCommerce: delete not supported for entity type '{$entity_type}'.", [
-			'entity_type' => $entity_type,
-		] );
+		$this->logger->warning(
+			"WooCommerce: delete not supported for entity type '{$entity_type}'.",
+			[
+				'entity_type' => $entity_type,
+			]
+		);
 		return false;
 	}
 
@@ -618,9 +636,12 @@ class WooCommerce_Module extends Module_Base {
 	 * @return array Empty array.
 	 */
 	private function unsupported_entity( string $entity_type, string $operation ): array {
-		$this->logger->warning( "WooCommerce: {$operation} not implemented for entity type '{$entity_type}'.", [
-			'entity_type' => $entity_type,
-		] );
+		$this->logger->warning(
+			"WooCommerce: {$operation} not implemented for entity type '{$entity_type}'.",
+			[
+				'entity_type' => $entity_type,
+			]
+		);
 		return [];
 	}
 
@@ -631,9 +652,12 @@ class WooCommerce_Module extends Module_Base {
 	 * @return int Always 0.
 	 */
 	private function unsupported_entity_save( string $entity_type ): int {
-		$this->logger->warning( "WooCommerce: save not implemented for entity type '{$entity_type}'.", [
-			'entity_type' => $entity_type,
-		] );
+		$this->logger->warning(
+			"WooCommerce: save not implemented for entity type '{$entity_type}'.",
+			[
+				'entity_type' => $entity_type,
+			]
+		);
 		return 0;
 	}
 }

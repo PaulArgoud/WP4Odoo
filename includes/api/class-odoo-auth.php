@@ -200,19 +200,25 @@ class Odoo_Auth {
 				$result['models'] = self::probe_models( $transport, $check_models );
 			}
 
-			$logger->info( 'Connection test successful.', [
-				'url'      => $url,
-				'database' => $database,
-				'uid'      => $uid,
-			] );
+			$logger->info(
+				'Connection test successful.',
+				[
+					'url'      => $url,
+					'database' => $database,
+					'uid'      => $uid,
+				]
+			);
 		} catch ( \Throwable $e ) {
 			$result['message'] = $e->getMessage();
 
-			$logger->error( 'Connection test failed.', [
-				'url'      => $url,
-				'database' => $database,
-				'error'    => $e->getMessage(),
-			] );
+			$logger->error(
+				'Connection test failed.',
+				[
+					'url'      => $url,
+					'database' => $database,
+					'error'    => $e->getMessage(),
+				]
+			);
 		}
 
 		return $result;
@@ -230,7 +236,10 @@ class Odoo_Auth {
 	 */
 	public static function probe_models( Transport $transport, array $models ): array {
 		if ( empty( $models ) ) {
-			return [ 'available' => [], 'missing' => [] ];
+			return [
+				'available' => [],
+				'missing'   => [],
+			];
 		}
 
 		try {
@@ -251,9 +260,12 @@ class Odoo_Auth {
 		} catch ( \Throwable $e ) {
 			// Probe failed — don't report false missing models.
 			$logger = new Logger( 'auth' );
-			$logger->warning( 'Model availability check failed.', [
-				'error' => $e->getMessage(),
-			] );
+			$logger->warning(
+				'Model availability check failed.',
+				[
+					'error' => $e->getMessage(),
+				]
+			);
 
 			return [
 				'available' => [],

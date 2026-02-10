@@ -109,8 +109,10 @@ trait Ajax_Setup_Handlers {
 
 		update_option( 'wp4odoo_checklist_webhooks_confirmed', true );
 
-		wp_send_json_success( [
-			'message' => __( 'Webhooks marked as configured.', 'wp4odoo' ),
-		] );
+		wp_send_json_success(
+			[
+				'message' => __( 'Webhooks marked as configured.', 'wp4odoo' ),
+			]
+		);
 	}
 }

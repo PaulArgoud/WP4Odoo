@@ -125,6 +125,19 @@ class CLITest extends TestCase {
 	}
 
 	/**
+	 * Test that sync run with --dry-run flag outputs dry-run message.
+	 */
+	public function test_sync_run_with_dry_run_flag(): void {
+		$this->wpdb->get_var_return = '0';
+
+		$this->cli->sync( [ 'run' ], [ 'dry-run' => true ] );
+
+		$success_calls = $this->get_cli_calls( 'success' );
+		$this->assertNotEmpty( $success_calls );
+		$this->assertStringContainsString( 'dry-run', $success_calls[0]['args'][0] );
+	}
+
+	/**
 	 * Test that queue stats works without error.
 	 */
 	public function test_queue_stats_works(): void {

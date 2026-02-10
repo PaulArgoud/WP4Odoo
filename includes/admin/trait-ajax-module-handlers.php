@@ -33,9 +33,11 @@ trait Ajax_Module_Handlers {
 		$enabled   = $this->get_post_field( 'enabled', 'bool' );
 
 		if ( empty( $module_id ) ) {
-			wp_send_json_error( [
-				'message' => __( 'Missing module identifier.', 'wp4odoo' ),
-			] );
+			wp_send_json_error(
+				[
+					'message' => __( 'Missing module identifier.', 'wp4odoo' ),
+				]
+			);
 		}
 
 		update_option( 'wp4odoo_module_' . $module_id . '_enabled', $enabled );
@@ -96,20 +98,25 @@ trait Ajax_Module_Handlers {
 		$this->verify_request();
 
 		$module_id = $this->get_post_field( 'module_id', 'key' );
-		$settings  = isset( $_POST['settings'] ) && is_array( $_POST['settings'] ) ? wp_unslash( $_POST['settings'] ) : [];
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in verify_request() above.
+		$settings = isset( $_POST['settings'] ) && is_array( $_POST['settings'] ) ? wp_unslash( $_POST['settings'] ) : [];
 
 		if ( empty( $module_id ) ) {
-			wp_send_json_error( [
-				'message' => __( 'Missing module identifier.', 'wp4odoo' ),
-			] );
+			wp_send_json_error(
+				[
+					'message' => __( 'Missing module identifier.', 'wp4odoo' ),
+				]
+			);
 		}
 
 		// Validate module exists.
 		$modules = \WP4Odoo_Plugin::instance()->get_modules();
 		if ( ! isset( $modules[ $module_id ] ) ) {
-			wp_send_json_error( [
-				'message' => __( 'Unknown module.', 'wp4odoo' ),
-			] );
+			wp_send_json_error(
+				[
+					'message' => __( 'Unknown module.', 'wp4odoo' ),
+				]
+			);
 		}
 
 		$module   = $modules[ $module_id ];
@@ -127,27 +134,27 @@ trait Ajax_Module_Handlers {
 						$clean[ $key ] = absint( $settings[ $key ] );
 						break;
 					case 'select':
-						$allowed = array_keys( $field['options'] ?? [] );
-						$val     = sanitize_text_field( $settings[ $key ] );
+						$allowed       = array_keys( $field['options'] ?? [] );
+						$val           = sanitize_text_field( $settings[ $key ] );
 						$clean[ $key ] = in_array( $val, $allowed, true ) ? $val : ( $defaults[ $key ] ?? '' );
 						break;
 					default:
 						$clean[ $key ] = sanitize_text_field( $settings[ $key ] );
 						break;
 				}
-			} else {
+			} elseif ( 'checkbox' === $field['type'] ) {
 				// Checkbox not sent = unchecked.
-				if ( 'checkbox' === $field['type'] ) {
-					$clean[ $key ] = false;
-				}
+				$clean[ $key ] = false;
 			}
 		}
 
 		update_option( 'wp4odoo_module_' . $module_id . '_settings', $clean );
 
-		wp_send_json_success( [
-			'message' => __( 'Settings saved.', 'wp4odoo' ),
-		] );
+		wp_send_json_success(
+			[
+				'message' => __( 'Settings saved.', 'wp4odoo' ),
+			]
+		);
 	}
 
 	/**
@@ -160,9 +167,11 @@ trait Ajax_Module_Handlers {
 
 		$plugin = \WP4Odoo_Plugin::instance();
 		if ( null === $plugin->get_module( 'woocommerce' ) ) {
-			wp_send_json_error( [
-				'message' => __( 'WooCommerce module is not registered.', 'wp4odoo' ),
-			] );
+			wp_send_json_error(
+				[
+					'message' => __( 'WooCommerce module is not registered.', 'wp4odoo' ),
+				]
+			);
 		}
 
 		$handler = new Bulk_Handler( $plugin->client() );
@@ -179,9 +188,11 @@ trait Ajax_Module_Handlers {
 
 		$plugin = \WP4Odoo_Plugin::instance();
 		if ( null === $plugin->get_module( 'woocommerce' ) ) {
-			wp_send_json_error( [
-				'message' => __( 'WooCommerce module is not registered.', 'wp4odoo' ),
-			] );
+			wp_send_json_error(
+				[
+					'message' => __( 'WooCommerce module is not registered.', 'wp4odoo' ),
+				]
+			);
 		}
 
 		$handler = new Bulk_Handler( $plugin->client() );

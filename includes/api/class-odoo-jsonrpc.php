@@ -94,13 +94,17 @@ class Odoo_JsonRPC implements Transport {
 	 * @throws \RuntimeException On authentication failure.
 	 */
 	public function authenticate( string $username ): int {
-		$result = $this->rpc_call( '/web/session/authenticate', [
-			'db'       => $this->database,
-			'login'    => $username,
-			'password' => $this->api_key,
-		] );
+		$result = $this->rpc_call(
+			'/web/session/authenticate',
+			[
+				'db'       => $this->database,
+				'login'    => $username,
+				'password' => $this->api_key,
+			]
+		);
 
 		if ( empty( $result['uid'] ) || false === $result['uid'] ) {
+
 			throw new \RuntimeException(
 				__( 'Authentication failed: invalid credentials.', 'wp4odoo' )
 			);
@@ -108,10 +112,13 @@ class Odoo_JsonRPC implements Transport {
 
 		$this->uid = (int) $result['uid'];
 
-		$this->logger->debug( 'Authenticated successfully.', [
-			'uid' => $this->uid,
-			'url' => $this->url,
-		] );
+		$this->logger->debug(
+			'Authenticated successfully.',
+			[
+				'uid' => $this->uid,
+				'url' => $this->url,
+			]
+		);
 
 		return $this->uid;
 	}
@@ -128,6 +135,7 @@ class Odoo_JsonRPC implements Transport {
 	 */
 	public function execute_kw( string $model, string $method, array $args = [], array $kwargs = [] ): mixed {
 		if ( null === $this->uid ) {
+
 			throw new \RuntimeException(
 				__( 'Not authenticated. Call authenticate() first.', 'wp4odoo' )
 			);
@@ -197,6 +205,7 @@ class Odoo_JsonRPC implements Transport {
 				__( 'Invalid JSON response from Odoo (HTTP %d).', 'wp4odoo' ),
 				$status_code
 			);
+
 			throw new \RuntimeException( $error_msg );
 		}
 
@@ -205,8 +214,8 @@ class Odoo_JsonRPC implements Transport {
 			$error_msg  = $error_data['message'] ?? $body['error']['message'] ?? __( 'Unknown RPC error', 'wp4odoo' );
 
 			$context = [
-				'endpoint'  => $endpoint,
-				'error'     => $error_msg,
+				'endpoint' => $endpoint,
+				'error'    => $error_msg,
 			];
 			// Include model/method context from execute_kw calls.
 			if ( isset( $params['args'][3], $params['args'][4] ) ) {

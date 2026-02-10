@@ -13,10 +13,23 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Centralizes all database operations on the entity mapping table
  * that links WordPress entities to Odoo records.
  *
+ * Includes a per-request static cache to avoid redundant DB lookups
+ * for the same entity during batch processing.
+ *
  * @package WP4Odoo
  * @since   1.2.0
  */
 class Entity_Map_Repository {
+
+	/**
+	 * Per-request lookup cache.
+	 *
+	 * Keys use the format "{module}:{entity_type}:wp:{wp_id}" or
+	 * "{module}:{entity_type}:odoo:{odoo_id}".
+	 *
+	 * @var array<string, int|null>
+	 */
+	private static array $cache = [];
 
 	/**
 	 * Get the Odoo ID mapped to a WordPress entity.
@@ -27,20 +40,34 @@ class Entity_Map_Repository {
 	 * @return int|null The Odoo ID, or null if not mapped.
 	 */
 	public static function get_odoo_id( string $module, string $entity_type, int $wp_id ): ?int {
+		$cache_key = "{$module}:{$entity_type}:wp:{$wp_id}";
+
+		if ( array_key_exists( $cache_key, self::$cache ) ) {
+			return self::$cache[ $cache_key ];
+		}
+
 		global $wpdb;
 
 		$table = $wpdb->prefix . 'wp4odoo_entity_map';
 
 		$odoo_id = $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT odoo_id FROM {$table} WHERE module = %s AND entity_type = %s AND wp_id = %d LIMIT 1",
+				"SELECT odoo_id FROM {$table} WHERE module = %s AND entity_type = %s AND wp_id = %d LIMIT 1", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is from $wpdb->prefix, safe.
 				$module,
 				$entity_type,
 				$wp_id
 			)
 		);
 
-		return null !== $odoo_id ? (int) $odoo_id : null;
+		$result = null !== $odoo_id ? (int) $odoo_id : null;
+
+		self::$cache[ $cache_key ] = $result;
+
+		if ( null !== $result ) {
+			self::$cache[ "{$module}:{$entity_type}:odoo:{$result}" ] = $wp_id;
+		}
+
+		return $result;
 	}
 
 	/**
@@ -52,20 +79,34 @@ class Entity_Map_Repository {
 	 * @return int|null The WordPress ID, or null if not mapped.
 	 */
 	public static function get_wp_id( string $module, string $entity_type, int $odoo_id ): ?int {
+		$cache_key = "{$module}:{$entity_type}:odoo:{$odoo_id}";
+
+		if ( array_key_exists( $cache_key, self::$cache ) ) {
+			return self::$cache[ $cache_key ];
+		}
+
 		global $wpdb;
 
 		$table = $wpdb->prefix . 'wp4odoo_entity_map';
 
 		$wp_id = $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT wp_id FROM {$table} WHERE module = %s AND entity_type = %s AND odoo_id = %d LIMIT 1",
+				"SELECT wp_id FROM {$table} WHERE module = %s AND entity_type = %s AND odoo_id = %d LIMIT 1", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is from $wpdb->prefix, safe.
 				$module,
 				$entity_type,
 				$odoo_id
 			)
 		);
 
-		return null !== $wp_id ? (int) $wp_id : null;
+		$result = null !== $wp_id ? (int) $wp_id : null;
+
+		self::$cache[ $cache_key ] = $result;
+
+		if ( null !== $result ) {
+			self::$cache[ "{$module}:{$entity_type}:wp:{$result}" ] = $odoo_id;
+		}
+
+		return $result;
 	}
 
 	/**
@@ -88,17 +129,24 @@ class Entity_Map_Repository {
 
 		$prepare_args = array_merge( [ $module, $entity_type ], array_map( 'intval', $odoo_ids ) );
 
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table and $placeholders are safe (prefix + array_fill).
+		$sql = "SELECT odoo_id, wp_id FROM {$table} WHERE module = %s AND entity_type = %s AND odoo_id IN ({$placeholders})";
+
 		$rows = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT odoo_id, wp_id FROM {$table} WHERE module = %s AND entity_type = %s AND odoo_id IN ({$placeholders})", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
-				$prepare_args
-			)
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber,WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- Dynamic placeholders for batch query; $sql from safe prefix + array_fill.
+			$wpdb->prepare( $sql, $prepare_args )
 		);
 
 		$map = [];
 		if ( $rows ) {
 			foreach ( $rows as $row ) {
-				$map[ (int) $row->odoo_id ] = (int) $row->wp_id;
+				$o_id = (int) $row->odoo_id;
+				$w_id = (int) $row->wp_id;
+
+				$map[ $o_id ] = $w_id;
+
+				self::$cache[ "{$module}:{$entity_type}:odoo:{$o_id}" ] = $w_id;
+				self::$cache[ "{$module}:{$entity_type}:wp:{$w_id}" ]   = $o_id;
 			}
 		}
 
@@ -125,17 +173,24 @@ class Entity_Map_Repository {
 
 		$prepare_args = array_merge( [ $module, $entity_type ], array_map( 'intval', $wp_ids ) );
 
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table and $placeholders safe (prefix + array_fill).
+		$sql = "SELECT wp_id, odoo_id FROM {$table} WHERE module = %s AND entity_type = %s AND wp_id IN ({$placeholders})";
+
 		$rows = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT wp_id, odoo_id FROM {$table} WHERE module = %s AND entity_type = %s AND wp_id IN ({$placeholders})", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
-				$prepare_args
-			)
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber,WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- Dynamic placeholders for batch query; $sql from safe prefix + array_fill.
+			$wpdb->prepare( $sql, $prepare_args )
 		);
 
 		$map = [];
 		if ( $rows ) {
 			foreach ( $rows as $row ) {
-				$map[ (int) $row->wp_id ] = (int) $row->odoo_id;
+				$w_id = (int) $row->wp_id;
+				$o_id = (int) $row->odoo_id;
+
+				$map[ $w_id ] = $o_id;
+
+				self::$cache[ "{$module}:{$entity_type}:wp:{$w_id}" ]   = $o_id;
+				self::$cache[ "{$module}:{$entity_type}:odoo:{$o_id}" ] = $w_id;
 			}
 		}
 
@@ -173,6 +228,11 @@ class Entity_Map_Repository {
 			]
 		);
 
+		if ( false !== $result ) {
+			self::$cache[ "{$module}:{$entity_type}:wp:{$wp_id}" ]     = $odoo_id;
+			self::$cache[ "{$module}:{$entity_type}:odoo:{$odoo_id}" ] = $wp_id;
+		}
+
 		return false !== $result;
 	}
 
@@ -185,6 +245,9 @@ class Entity_Map_Repository {
 	 * @return bool True if a mapping was deleted.
 	 */
 	public static function remove( string $module, string $entity_type, int $wp_id ): bool {
+		$forward_key = "{$module}:{$entity_type}:wp:{$wp_id}";
+		$odoo_id     = self::$cache[ $forward_key ] ?? null;
+
 		global $wpdb;
 
 		$table   = $wpdb->prefix . 'wp4odoo_entity_map';
@@ -198,6 +261,22 @@ class Entity_Map_Repository {
 			[ '%s', '%s', '%d' ]
 		);
 
+		unset( self::$cache[ $forward_key ] );
+		if ( null !== $odoo_id ) {
+			unset( self::$cache[ "{$module}:{$entity_type}:odoo:{$odoo_id}" ] );
+		}
+
 		return $deleted > 0;
+	}
+
+	/**
+	 * Flush the per-request lookup cache.
+	 *
+	 * Useful for testing or after bulk operations.
+	 *
+	 * @return void
+	 */
+	public static function flush_cache(): void {
+		self::$cache = [];
 	}
 }

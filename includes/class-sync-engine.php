@@ -40,6 +40,16 @@ class Sync_Engine {
 	private const BATCH_TIME_LIMIT = 55;
 
 	/**
+	 * Number of consecutive batch failures before sending a notification.
+	 */
+	private const FAILURE_NOTIFY_THRESHOLD = 5;
+
+	/**
+	 * Minimum interval between notification emails (seconds).
+	 */
+	private const FAILURE_NOTIFY_COOLDOWN = 3600;
+
+	/**
 	 * Logger instance.
 	 *
 	 * @var Logger
@@ -47,10 +57,45 @@ class Sync_Engine {
 	private Logger $logger;
 
 	/**
+	 * When true, jobs are logged but not executed.
+	 *
+	 * @var bool
+	 */
+	private bool $dry_run = false;
+
+	/**
+	 * Failure counter for the current batch run.
+	 *
+	 * @var int
+	 */
+	private int $batch_failures = 0;
+
+	/**
+	 * Success counter for the current batch run.
+	 *
+	 * @var int
+	 */
+	private int $batch_successes = 0;
+
+	/**
 	 * Constructor.
 	 */
 	public function __construct() {
 		$this->logger = new Logger( 'sync' );
+	}
+
+	/**
+	 * Enable or disable dry-run mode.
+	 *
+	 * In dry-run mode, jobs are loaded and logged but neither
+	 * push_to_odoo() nor pull_from_odoo() is called. Jobs are
+	 * marked as completed with a [dry-run] note.
+	 *
+	 * @param bool $enabled True to enable dry-run mode.
+	 * @return void
+	 */
+	public function set_dry_run( bool $enabled ): void {
+		$this->dry_run = $enabled;
 	}
 
 	/**
@@ -72,19 +117,25 @@ class Sync_Engine {
 			$settings = get_option( 'wp4odoo_sync_settings', [] );
 		}
 		$batch = (int) ( $settings['batch_size'] ?? 50 );
-		$now      = current_time( 'mysql', true );
+		$now   = current_time( 'mysql', true );
 
 		$jobs       = Sync_Queue_Repository::fetch_pending( $batch, $now );
 		$processed  = 0;
 		$start_time = microtime( true );
 
+		$this->batch_failures  = 0;
+		$this->batch_successes = 0;
+
 		foreach ( $jobs as $job ) {
 			if ( ( microtime( true ) - $start_time ) >= self::BATCH_TIME_LIMIT ) {
-				$this->logger->info( 'Batch time limit reached, deferring remaining jobs.', [
-					'elapsed'   => round( microtime( true ) - $start_time, 2 ),
-					'processed' => $processed,
-					'remaining' => count( $jobs ) - $processed,
-				] );
+				$this->logger->info(
+					'Batch time limit reached, deferring remaining jobs.',
+					[
+						'elapsed'   => round( microtime( true ) - $start_time, 2 ),
+						'processed' => $processed,
+						'remaining' => count( $jobs ) - $processed,
+					]
+				);
 				break;
 			}
 
@@ -94,23 +145,33 @@ class Sync_Engine {
 				$success = $this->process_job( $job );
 
 				if ( $success ) {
-					Sync_Queue_Repository::update_status( (int) $job->id, 'completed', [
-						'processed_at' => current_time( 'mysql', true ),
-					] );
+					Sync_Queue_Repository::update_status(
+						(int) $job->id,
+						'completed',
+						[
+							'processed_at' => current_time( 'mysql', true ),
+						]
+					);
 					++$processed;
+					++$this->batch_successes;
 				}
 			} catch ( \Throwable $e ) {
 				$this->handle_failure( $job, $e->getMessage() );
+				++$this->batch_failures;
 			}
 		}
 
+		$this->maybe_send_failure_notification();
 		$this->release_lock();
 
 		if ( $processed > 0 ) {
-			$this->logger->info( 'Queue processing completed.', [
-				'processed' => $processed,
-				'total'     => count( $jobs ),
-			] );
+			$this->logger->info(
+				'Queue processing completed.',
+				[
+					'processed' => $processed,
+					'total'     => count( $jobs ),
+				]
+			);
 		}
 
 		return $processed;
@@ -177,6 +238,7 @@ class Sync_Engine {
 		$module = $plugin->get_module( $job->module );
 
 		if ( null === $module ) {
+
 			throw new \RuntimeException(
 				sprintf(
 					/* translators: %s: module identifier */
@@ -189,6 +251,22 @@ class Sync_Engine {
 		$payload = ! empty( $job->payload ) ? json_decode( $job->payload, true ) : [];
 		$wp_id   = (int) ( $job->wp_id ?? 0 );
 		$odoo_id = (int) ( $job->odoo_id ?? 0 );
+
+		if ( $this->dry_run ) {
+			$this->logger->info(
+				'[dry-run] Would process job.',
+				[
+					'job_id'      => $job->id,
+					'module'      => $job->module,
+					'direction'   => $job->direction,
+					'entity_type' => $job->entity_type,
+					'action'      => $job->action,
+					'wp_id'       => $wp_id,
+					'odoo_id'     => $odoo_id,
+				]
+			);
+			return true;
+		}
 
 		if ( 'wp_to_odoo' === $job->direction ) {
 			return $module->push_to_odoo( $job->entity_type, $job->action, $wp_id, $odoo_id, $payload );
@@ -209,35 +287,113 @@ class Sync_Engine {
 		$error_trimmed = sanitize_text_field( mb_substr( $error_message, 0, 65535 ) );
 
 		if ( $attempts >= (int) $job->max_attempts ) {
-			Sync_Queue_Repository::update_status( (int) $job->id, 'failed', [
-				'attempts'      => $attempts,
-				'error_message' => $error_trimmed,
-				'processed_at'  => current_time( 'mysql', true ),
-			] );
+			Sync_Queue_Repository::update_status(
+				(int) $job->id,
+				'failed',
+				[
+					'attempts'      => $attempts,
+					'error_message' => $error_trimmed,
+					'processed_at'  => current_time( 'mysql', true ),
+				]
+			);
 
-			$this->logger->error( 'Sync job permanently failed.', [
-				'job_id'      => $job->id,
-				'module'      => $job->module,
-				'entity_type' => $job->entity_type,
-				'error'       => $error_message,
-			] );
+			$this->logger->error(
+				'Sync job permanently failed.',
+				[
+					'job_id'      => $job->id,
+					'module'      => $job->module,
+					'entity_type' => $job->entity_type,
+					'error'       => $error_message,
+				]
+			);
 		} else {
 			$delay     = $attempts * 60;
 			$scheduled = gmdate( 'Y-m-d H:i:s', time() + $delay );
 
-			Sync_Queue_Repository::update_status( (int) $job->id, 'pending', [
-				'attempts'      => $attempts,
-				'error_message' => $error_trimmed,
-				'scheduled_at'  => $scheduled,
-			] );
+			Sync_Queue_Repository::update_status(
+				(int) $job->id,
+				'pending',
+				[
+					'attempts'      => $attempts,
+					'error_message' => $error_trimmed,
+					'scheduled_at'  => $scheduled,
+				]
+			);
 
-			$this->logger->warning( 'Sync job failed, will retry.', [
-				'job_id'   => $job->id,
-				'attempt'  => $attempts,
-				'retry_at' => $scheduled,
-				'error'    => $error_message,
-			] );
+			$this->logger->warning(
+				'Sync job failed, will retry.',
+				[
+					'job_id'   => $job->id,
+					'attempt'  => $attempts,
+					'retry_at' => $scheduled,
+					'error'    => $error_message,
+				]
+			);
 		}
+	}
+
+	/**
+	 * Send an admin email if persistent failures exceed the threshold.
+	 *
+	 * Checks consecutive failures (tracked via wp_options) and enforces
+	 * a cooldown period between emails to avoid flooding.
+	 *
+	 * @return void
+	 */
+	private function maybe_send_failure_notification(): void {
+		$consecutive = (int) get_option( 'wp4odoo_consecutive_failures', 0 );
+
+		if ( $this->batch_successes > 0 ) {
+			if ( $consecutive > 0 ) {
+				update_option( 'wp4odoo_consecutive_failures', 0 );
+			}
+			return;
+		}
+
+		if ( 0 === $this->batch_failures ) {
+			return;
+		}
+
+		$consecutive += $this->batch_failures;
+		update_option( 'wp4odoo_consecutive_failures', $consecutive );
+
+		if ( $consecutive < self::FAILURE_NOTIFY_THRESHOLD ) {
+			return;
+		}
+
+		$last_email = (int) get_option( 'wp4odoo_last_failure_email', 0 );
+		if ( ( time() - $last_email ) < self::FAILURE_NOTIFY_COOLDOWN ) {
+			return;
+		}
+
+		$admin_email = get_option( 'admin_email' );
+		if ( empty( $admin_email ) ) {
+			return;
+		}
+
+		$subject = sprintf(
+			/* translators: %d: number of consecutive failures */
+			__( '[WP4Odoo] %d consecutive sync failures', 'wp4odoo' ),
+			$consecutive
+		);
+
+		$message = sprintf(
+			/* translators: 1: number of failures, 2: queue admin URL */
+			__( "The WordPress For Odoo sync queue has encountered %1\$d consecutive failures.\n\nPlease check the sync queue at %2\$s", 'wp4odoo' ),
+			$consecutive,
+			admin_url( 'admin.php?page=wp4odoo-settings&tab=queue' )
+		);
+
+		wp_mail( $admin_email, $subject, $message );
+		update_option( 'wp4odoo_last_failure_email', time() );
+
+		$this->logger->warning(
+			'Failure notification sent to admin.',
+			[
+				'consecutive_failures' => $consecutive,
+				'email'                => $admin_email,
+			]
+		);
 	}
 
 	/**

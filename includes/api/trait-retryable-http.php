@@ -48,11 +48,14 @@ trait Retryable_Http {
 				$delay_us = (int) ( pow( 2, $attempt ) * 500 + wp_rand( 0, 1000 ) ) * 1000;
 				usleep( $delay_us );
 
-				$this->logger->warning( 'HTTP request failed, retrying.', [
-					'endpoint' => $endpoint,
-					'attempt'  => $attempt,
-					'error'    => $response->get_error_message(),
-				] );
+				$this->logger->warning(
+					'HTTP request failed, retrying.',
+					[
+						'endpoint' => $endpoint,
+						'attempt'  => $attempt,
+						'error'    => $response->get_error_message(),
+					]
+				);
 			}
 		}
 
@@ -61,10 +64,13 @@ trait Retryable_Http {
 			__( 'HTTP error: %s', 'wp4odoo' ),
 			$response->get_error_message()
 		);
-		$this->logger->error( $error_msg, [
-			'endpoint' => $endpoint,
-			'attempts' => self::MAX_RETRIES,
-		] );
+		$this->logger->error(
+			$error_msg,
+			[
+				'endpoint' => $endpoint,
+				'attempts' => self::MAX_RETRIES,
+			]
+		);
 
 		throw new \RuntimeException( $error_msg );
 	}

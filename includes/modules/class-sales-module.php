@@ -27,23 +27,23 @@ class Sales_Module extends Module_Base {
 	 * Order meta fields: data key => post meta key.
 	 */
 	private const ORDER_META = [
-		'_order_total'         => '_order_total',
-		'_order_date'          => '_order_date',
-		'_order_state'         => '_order_state',
-		'_wp4odoo_partner_id'  => '_wp4odoo_partner_id',
-		'_order_currency'      => '_order_currency',
+		'_order_total'        => '_order_total',
+		'_order_date'         => '_order_date',
+		'_order_state'        => '_order_state',
+		'_wp4odoo_partner_id' => '_wp4odoo_partner_id',
+		'_order_currency'     => '_order_currency',
 	];
 
 	/**
 	 * Invoice meta fields: data key => post meta key.
 	 */
 	private const INVOICE_META = [
-		'_invoice_total'       => '_invoice_total',
-		'_invoice_date'        => '_invoice_date',
-		'_invoice_state'       => '_invoice_state',
-		'_payment_state'       => '_payment_state',
-		'_wp4odoo_partner_id'  => '_wp4odoo_partner_id',
-		'_invoice_currency'    => '_invoice_currency',
+		'_invoice_total'      => '_invoice_total',
+		'_invoice_date'       => '_invoice_date',
+		'_invoice_state'      => '_invoice_state',
+		'_payment_state'      => '_payment_state',
+		'_wp4odoo_partner_id' => '_wp4odoo_partner_id',
+		'_invoice_currency'   => '_invoice_currency',
 	];
 
 	protected string $id   = 'sales';
@@ -62,22 +62,22 @@ class Sales_Module extends Module_Base {
 			'_price'       => 'list_price',
 			'_sku'         => 'default_code',
 		],
-		'order' => [
-			'post_title'           => 'name',
-			'_order_total'         => 'amount_total',
-			'_order_date'          => 'date_order',
-			'_order_state'         => 'state',
-			'_wp4odoo_partner_id'  => 'partner_id',
-			'_order_currency'      => 'currency_id',
+		'order'   => [
+			'post_title'          => 'name',
+			'_order_total'        => 'amount_total',
+			'_order_date'         => 'date_order',
+			'_order_state'        => 'state',
+			'_wp4odoo_partner_id' => 'partner_id',
+			'_order_currency'     => 'currency_id',
 		],
 		'invoice' => [
-			'post_title'           => 'name',
-			'_invoice_total'       => 'amount_total',
-			'_invoice_date'        => 'invoice_date',
-			'_invoice_state'       => 'state',
-			'_payment_state'       => 'payment_state',
-			'_wp4odoo_partner_id'  => 'partner_id',
-			'_invoice_currency'    => 'currency_id',
+			'post_title'          => 'name',
+			'_invoice_total'      => 'amount_total',
+			'_invoice_date'       => 'invoice_date',
+			'_invoice_state'      => 'state',
+			'_payment_state'      => 'payment_state',
+			'_wp4odoo_partner_id' => 'partner_id',
+			'_invoice_currency'   => 'currency_id',
 		],
 	];
 
@@ -113,9 +113,9 @@ class Sales_Module extends Module_Base {
 	 */
 	public function get_default_settings(): array {
 		return [
-			'import_products'  => true,
-			'portal_enabled'   => false,
-			'orders_per_page'  => 10,
+			'import_products' => true,
+			'portal_enabled'  => false,
+			'orders_per_page' => 10,
 		];
 	}
 
@@ -131,7 +131,7 @@ class Sales_Module extends Module_Base {
 				'type'        => 'checkbox',
 				'description' => __( 'Pull product data from Odoo.', 'wp4odoo' ),
 			],
-			'portal_enabled' => [
+			'portal_enabled'  => [
 				'label'       => __( 'Enable customer portal', 'wp4odoo' ),
 				'type'        => 'checkbox',
 				'description' => __( 'Enable the [wp4odoo_customer_portal] shortcode for logged-in users.', 'wp4odoo' ),
@@ -152,16 +152,19 @@ class Sales_Module extends Module_Base {
 	 * @return void
 	 */
 	public function register_order_cpt(): void {
-		CPT_Helper::register( 'wp4odoo_order', [
-			'name'               => __( 'Orders', 'wp4odoo' ),
-			'singular_name'      => __( 'Order', 'wp4odoo' ),
-			'add_new_item'       => __( 'Add New Order', 'wp4odoo' ),
-			'edit_item'          => __( 'Edit Order', 'wp4odoo' ),
-			'view_item'          => __( 'View Order', 'wp4odoo' ),
-			'search_items'       => __( 'Search Orders', 'wp4odoo' ),
-			'not_found'          => __( 'No orders found.', 'wp4odoo' ),
-			'not_found_in_trash' => __( 'No orders found in Trash.', 'wp4odoo' ),
-		] );
+		CPT_Helper::register(
+			'wp4odoo_order',
+			[
+				'name'               => __( 'Orders', 'wp4odoo' ),
+				'singular_name'      => __( 'Order', 'wp4odoo' ),
+				'add_new_item'       => __( 'Add New Order', 'wp4odoo' ),
+				'edit_item'          => __( 'Edit Order', 'wp4odoo' ),
+				'view_item'          => __( 'View Order', 'wp4odoo' ),
+				'search_items'       => __( 'Search Orders', 'wp4odoo' ),
+				'not_found'          => __( 'No orders found.', 'wp4odoo' ),
+				'not_found_in_trash' => __( 'No orders found in Trash.', 'wp4odoo' ),
+			]
+		);
 	}
 
 	/**
@@ -170,16 +173,19 @@ class Sales_Module extends Module_Base {
 	 * @return void
 	 */
 	public function register_invoice_cpt(): void {
-		CPT_Helper::register( 'wp4odoo_invoice', [
-			'name'               => __( 'Invoices', 'wp4odoo' ),
-			'singular_name'      => __( 'Invoice', 'wp4odoo' ),
-			'add_new_item'       => __( 'Add New Invoice', 'wp4odoo' ),
-			'edit_item'          => __( 'Edit Invoice', 'wp4odoo' ),
-			'view_item'          => __( 'View Invoice', 'wp4odoo' ),
-			'search_items'       => __( 'Search Invoices', 'wp4odoo' ),
-			'not_found'          => __( 'No invoices found.', 'wp4odoo' ),
-			'not_found_in_trash' => __( 'No invoices found in Trash.', 'wp4odoo' ),
-		] );
+		CPT_Helper::register(
+			'wp4odoo_invoice',
+			[
+				'name'               => __( 'Invoices', 'wp4odoo' ),
+				'singular_name'      => __( 'Invoice', 'wp4odoo' ),
+				'add_new_item'       => __( 'Add New Invoice', 'wp4odoo' ),
+				'edit_item'          => __( 'Edit Invoice', 'wp4odoo' ),
+				'view_item'          => __( 'View Invoice', 'wp4odoo' ),
+				'search_items'       => __( 'Search Invoices', 'wp4odoo' ),
+				'not_found'          => __( 'No invoices found.', 'wp4odoo' ),
+				'not_found_in_trash' => __( 'No invoices found in Trash.', 'wp4odoo' ),
+			]
+		);
 	}
 
 	// ─── Data Loading ────────────────────────────────────────
@@ -298,9 +304,12 @@ class Sales_Module extends Module_Base {
 	 * @return array Empty array (convenience return for load_wp_data match).
 	 */
 	private function unsupported_entity( string $entity_type, string $operation ): array {
-		$this->logger->warning( "Sales: {$operation} not implemented for entity type '{$entity_type}'.", [
-			'entity_type' => $entity_type,
-		] );
+		$this->logger->warning(
+			"Sales: {$operation} not implemented for entity type '{$entity_type}'.",
+			[
+				'entity_type' => $entity_type,
+			]
+		);
 		return [];
 	}
 }

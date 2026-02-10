@@ -147,7 +147,7 @@ $status_labels = [
 				printf(
 					/* translators: %s: number of items */
 					esc_html__( '%s item(s)', 'wp4odoo' ),
-					number_format_i18n( $jobs['total'] )
+					esc_html( number_format_i18n( $jobs['total'] ) )
 				);
 				?>
 			</span>

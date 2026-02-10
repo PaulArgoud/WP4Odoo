@@ -19,6 +19,12 @@ class EntityMapRepositoryTest extends TestCase {
 		global $wpdb;
 		$this->wpdb = new \WP_DB_Stub();
 		$wpdb       = $this->wpdb;
+
+		Entity_Map_Repository::flush_cache();
+	}
+
+	protected function tearDown(): void {
+		Entity_Map_Repository::flush_cache();
 	}
 
 	// ─── get_odoo_id() ─────────────────────────────────────
@@ -199,6 +205,67 @@ class EntityMapRepositoryTest extends TestCase {
 		$prepare = $this->get_calls( 'prepare' );
 		$this->assertNotEmpty( $prepare );
 		$this->assertStringContainsString( '%d,%d', $prepare[0]['args'][0] );
+	}
+
+	// ─── Cache behavior ──────────────────────────────────
+
+	public function test_get_odoo_id_cache_hit_avoids_second_query(): void {
+		$this->wpdb->get_var_return = '42';
+
+		Entity_Map_Repository::get_odoo_id( 'crm', 'contact', 10 );
+		$first_count = count( $this->get_calls( 'get_var' ) );
+
+		$result = Entity_Map_Repository::get_odoo_id( 'crm', 'contact', 10 );
+		$second_count = count( $this->get_calls( 'get_var' ) );
+
+		$this->assertSame( 42, $result );
+		$this->assertSame( $first_count, $second_count );
+	}
+
+	public function test_get_wp_id_cache_hit_avoids_second_query(): void {
+		$this->wpdb->get_var_return = '7';
+
+		Entity_Map_Repository::get_wp_id( 'sales', 'order', 100 );
+		$first_count = count( $this->get_calls( 'get_var' ) );
+
+		$result = Entity_Map_Repository::get_wp_id( 'sales', 'order', 100 );
+		$second_count = count( $this->get_calls( 'get_var' ) );
+
+		$this->assertSame( 7, $result );
+		$this->assertSame( $first_count, $second_count );
+	}
+
+	public function test_save_populates_cache_for_subsequent_lookups(): void {
+		Entity_Map_Repository::save( 'crm', 'contact', 10, 42, 'res.partner' );
+
+		$this->wpdb->get_var_return = null;
+		$result = Entity_Map_Repository::get_odoo_id( 'crm', 'contact', 10 );
+
+		$this->assertSame( 42, $result );
+	}
+
+	public function test_remove_invalidates_cache(): void {
+		Entity_Map_Repository::save( 'crm', 'contact', 10, 42, 'res.partner' );
+
+		$this->wpdb->delete_return = 1;
+		Entity_Map_Repository::remove( 'crm', 'contact', 10 );
+
+		$this->wpdb->get_var_return = null;
+		$result = Entity_Map_Repository::get_odoo_id( 'crm', 'contact', 10 );
+
+		$this->assertNull( $result );
+	}
+
+	public function test_flush_cache_clears_all_entries(): void {
+		$this->wpdb->get_var_return = '42';
+		Entity_Map_Repository::get_odoo_id( 'crm', 'contact', 10 );
+
+		Entity_Map_Repository::flush_cache();
+
+		$this->wpdb->get_var_return = '99';
+		$result = Entity_Map_Repository::get_odoo_id( 'crm', 'contact', 10 );
+
+		$this->assertSame( 99, $result );
 	}
 
 	// ─── Helpers ───────────────────────────────────────────

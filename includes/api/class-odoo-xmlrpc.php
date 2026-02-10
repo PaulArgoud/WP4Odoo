@@ -96,6 +96,7 @@ class Odoo_XmlRPC implements Transport {
 		);
 
 		if ( empty( $result ) || false === $result ) {
+
 			throw new \RuntimeException(
 				__( 'Authentication failed: invalid credentials.', 'wp4odoo' )
 			);
@@ -103,10 +104,13 @@ class Odoo_XmlRPC implements Transport {
 
 		$this->uid = (int) $result;
 
-		$this->logger->debug( 'Authenticated successfully via XML-RPC.', [
-			'uid' => $this->uid,
-			'url' => $this->url,
-		] );
+		$this->logger->debug(
+			'Authenticated successfully via XML-RPC.',
+			[
+				'uid' => $this->uid,
+				'url' => $this->url,
+			]
+		);
 
 		return $this->uid;
 	}
@@ -125,6 +129,7 @@ class Odoo_XmlRPC implements Transport {
 	 */
 	public function execute_kw( string $model, string $method, array $args = [], array $kwargs = [] ): mixed {
 		if ( null === $this->uid ) {
+
 			throw new \RuntimeException(
 				__( 'Not authenticated. Call authenticate() first.', 'wp4odoo' )
 			);
@@ -193,16 +198,20 @@ class Odoo_XmlRPC implements Transport {
 		$message = new \IXR_Message( $body );
 
 		if ( ! $message->parse() ) {
+
 			throw new \RuntimeException(
 				__( 'Failed to parse XML-RPC response from Odoo.', 'wp4odoo' )
 			);
 		}
 
+		// phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- PHP XML-RPC response object property.
 		if ( 'fault' === $message->messageType ) {
+			// phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- PHP XML-RPC response object property.
 			$fault_string = $message->faultString ?? __( 'Unknown XML-RPC fault', 'wp4odoo' );
 
 			$context = [
 				'endpoint'    => $endpoint,
+				// phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- PHP XML-RPC response object property.
 				'faultCode'   => $message->faultCode ?? 0,
 				'faultString' => $fault_string,
 			];

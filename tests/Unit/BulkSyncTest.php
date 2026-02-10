@@ -21,6 +21,8 @@ class BulkSyncTest extends TestCase {
 		global $wpdb;
 		$this->wpdb = new \WP_DB_Stub();
 		$wpdb       = $this->wpdb;
+
+		\WP4Odoo\Entity_Map_Repository::flush_cache();
 	}
 
 	// ─── Entity Map lookups for bulk ──────────────────────

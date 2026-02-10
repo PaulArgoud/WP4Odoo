@@ -25,15 +25,18 @@ final class CPT_Helper {
 	 * @return void
 	 */
 	public static function register( string $post_type, array $labels ): void {
-		register_post_type( $post_type, [
-			'labels'          => $labels,
-			'public'          => false,
-			'show_ui'         => true,
-			'show_in_menu'    => 'wp4odoo',
-			'supports'        => [ 'title' ],
-			'capability_type' => 'post',
-			'map_meta_cap'    => true,
-		] );
+		register_post_type(
+			$post_type,
+			[
+				'labels'          => $labels,
+				'public'          => false,
+				'show_ui'         => true,
+				'show_in_menu'    => 'wp4odoo',
+				'supports'        => [ 'title' ],
+				'capability_type' => 'post',
+				'map_meta_cap'    => true,
+			]
+		);
 	}
 
 	/**
@@ -84,7 +87,7 @@ final class CPT_Helper {
 
 		if ( $wp_id > 0 ) {
 			$post_data['ID'] = $wp_id;
-			$result = wp_update_post( $post_data, true );
+			$result          = wp_update_post( $post_data, true );
 		} else {
 			$result = wp_insert_post( $post_data, true );
 		}

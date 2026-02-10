@@ -76,9 +76,12 @@ class Admin_Ajax {
 		check_ajax_referer( 'wp4odoo_admin' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( [
-				'message' => __( 'Permission denied.', 'wp4odoo' ),
-			], 403 );
+			wp_send_json_error(
+				[
+					'message' => __( 'Permission denied.', 'wp4odoo' ),
+				],
+				403
+			);
 		}
 	}
 
@@ -118,6 +121,7 @@ class Admin_Ajax {
 	 * @return string|int|bool Sanitized value.
 	 */
 	protected function get_post_field( string $key, string $type = 'text' ): string|int|bool {
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in verify_request() above.
 		if ( ! isset( $_POST[ $key ] ) ) {
 			return match ( $type ) {
 				'int'  => 0,
@@ -126,6 +130,7 @@ class Admin_Ajax {
 			};
 		}
 
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in verify_request() above.
 		$value = wp_unslash( $_POST[ $key ] );
 
 		return match ( $type ) {

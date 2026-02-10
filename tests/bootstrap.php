@@ -23,7 +23,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 define( 'WP4ODOO_PLUGIN_DIR', dirname( __DIR__ ) . '/' );
-define( 'WP4ODOO_VERSION', '1.9.7' );
+define( 'WP4ODOO_VERSION', '1.9.8' );
 
 if ( ! defined( 'DAY_IN_SECONDS' ) ) {
 	define( 'DAY_IN_SECONDS', 86400 );
@@ -46,7 +46,9 @@ if ( ! defined( 'WP4ODOO_PLUGIN_URL' ) ) {
 
 // ─── Global test stores ─────────────────────────────────
 
-$GLOBALS['_wp_options'] = [];
+$GLOBALS['_wp_options']    = [];
+$GLOBALS['_wp_transients'] = [];
+$GLOBALS['_wp_mail_calls'] = [];
 
 // ─── Load stubs ─────────────────────────────────────────
 

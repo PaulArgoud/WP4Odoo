@@ -42,19 +42,19 @@ if ( ! defined( 'ABSPATH' ) ) {
 					</tr>
 				</thead>
 				<tbody>
-					<?php foreach ( $orders['items'] as $order ) : ?>
+					<?php foreach ( $orders['items'] as $portal_order ) : ?>
 						<tr>
-							<td><?php echo esc_html( $order['title'] ); ?></td>
-							<td><?php echo esc_html( $order['_order_date'] ?? '—' ); ?></td>
+							<td><?php echo esc_html( $portal_order['title'] ); ?></td>
+							<td><?php echo esc_html( $portal_order['_order_date'] ?? '—' ); ?></td>
 							<td>
-								<?php echo esc_html( $order['_order_total'] ?? '—' ); ?>
-								<?php if ( ! empty( $order['_order_currency'] ) ) : ?>
-									<?php echo esc_html( $order['_order_currency'] ); ?>
+								<?php echo esc_html( $portal_order['_order_total'] ?? '—' ); ?>
+								<?php if ( ! empty( $portal_order['_order_currency'] ) ) : ?>
+									<?php echo esc_html( $portal_order['_order_currency'] ); ?>
 								<?php endif; ?>
 							</td>
 							<td>
-								<span class="wp4odoo-status wp4odoo-status--<?php echo esc_attr( $order['_order_state'] ?? 'draft' ); ?>">
-									<?php echo esc_html( $order['_order_state'] ?? '—' ); ?>
+								<span class="wp4odoo-status wp4odoo-status--<?php echo esc_attr( $portal_order['_order_state'] ?? 'draft' ); ?>">
+									<?php echo esc_html( $portal_order['_order_state'] ?? '—' ); ?>
 								</span>
 							</td>
 						</tr>
@@ -65,7 +65,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 			<?php if ( $orders['pages'] > 1 ) : ?>
 				<nav class="wp4odoo-pagination" data-tab="orders" data-pages="<?php echo (int) $orders['pages']; ?>">
 					<?php for ( $i = 1; $i <= $orders['pages']; $i++ ) : ?>
-						<button type="button" class="wp4odoo-page<?php echo ( 1 === $i ) ? ' active' : ''; ?>" data-page="<?php echo $i; ?>"><?php echo $i; ?></button>
+						<button type="button" class="wp4odoo-page<?php echo ( 1 === $i ) ? ' active' : ''; ?>" data-page="<?php echo absint( $i ); ?>"><?php echo absint( $i ); ?></button>
 					<?php endfor; ?>
 				</nav>
 			<?php endif; ?>
@@ -116,7 +116,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 			<?php if ( $invoices['pages'] > 1 ) : ?>
 				<nav class="wp4odoo-pagination" data-tab="invoices" data-pages="<?php echo (int) $invoices['pages']; ?>">
 					<?php for ( $i = 1; $i <= $invoices['pages']; $i++ ) : ?>
-						<button type="button" class="wp4odoo-page<?php echo ( 1 === $i ) ? ' active' : ''; ?>" data-page="<?php echo $i; ?>"><?php echo $i; ?></button>
+						<button type="button" class="wp4odoo-page<?php echo ( 1 === $i ) ? ' active' : ''; ?>" data-page="<?php echo absint( $i ); ?>"><?php echo absint( $i ); ?></button>
 					<?php endfor; ?>
 				</nav>
 			<?php endif; ?>
