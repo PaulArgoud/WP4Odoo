@@ -38,6 +38,7 @@ final class Dependency_Loader {
 		require_once WP4ODOO_PLUGIN_DIR . 'includes/class-sync-queue-repository.php';
 		require_once WP4ODOO_PLUGIN_DIR . 'includes/class-partner-service.php';
 		require_once WP4ODOO_PLUGIN_DIR . 'includes/class-module-base.php';
+		require_once WP4ODOO_PLUGIN_DIR . 'includes/class-failure-notifier.php';
 		require_once WP4ODOO_PLUGIN_DIR . 'includes/class-sync-engine.php';
 		require_once WP4ODOO_PLUGIN_DIR . 'includes/class-field-mapper.php';
 		require_once WP4ODOO_PLUGIN_DIR . 'includes/class-cpt-helper.php';
@@ -47,7 +48,9 @@ final class Dependency_Loader {
 		require_once WP4ODOO_PLUGIN_DIR . 'includes/class-database-migration.php';
 		require_once WP4ODOO_PLUGIN_DIR . 'includes/class-module-registry.php';
 
-		// Modules
+		// Modules (traits before classes)
+		require_once WP4ODOO_PLUGIN_DIR . 'includes/modules/trait-crm-user-hooks.php';
+		require_once WP4ODOO_PLUGIN_DIR . 'includes/modules/trait-woocommerce-hooks.php';
 		require_once WP4ODOO_PLUGIN_DIR . 'includes/modules/class-lead-manager.php';
 		require_once WP4ODOO_PLUGIN_DIR . 'includes/modules/class-contact-refiner.php';
 		require_once WP4ODOO_PLUGIN_DIR . 'includes/modules/class-contact-manager.php';

@@ -36,6 +36,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Transient stubs made stateful (`$GLOBALS['_wp_transients']`)
 - `wp_mail()` stub added (`$GLOBALS['_wp_mail_calls']`)
 
+#### Integration Tests (wp-env)
+- **`@wordpress/env`** Docker-based test environment with WordPress + WooCommerce + MySQL
+- `phpunit-integration.xml` + `tests/bootstrap-integration.php` — separate config/bootstrap for integration suite
+- `DatabaseMigrationTest` — 7 tests: table creation (sync_queue, entity_map, logs), column verification, unique key, idempotency, default options seeding
+- `EntityMapRepositoryTest` — 7 tests: save/get round-trips, null lookups, REPLACE INTO, remove, batch methods
+- `SyncQueueRepositoryTest` — 10 tests: enqueue, dedup, priority ordering, scheduled_at, status updates, cancel, cleanup, retry, stats
+- `SyncEngineLockTest` — 2 tests: empty queue returns 0, advisory lock release
+- `npm run test:integration` — runs inside wp-env container via `wp-env run tests-cli`
+
 #### Quality Tooling
 - **PHPCS + WordPress Coding Standards** — `wp-coding-standards/wpcs` 3.3 with `.phpcs.xml.dist` config; WordPress-Extra standard with project-specific exclusions; auto-fixed 594+ violations via PHPCBF
 - **Code Coverage** — PHPUnit with PCOV in CI, Clover XML output, Codecov upload
@@ -43,13 +52,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Plugin version bumped from 1.9.7 to 1.9.8
-- PHPUnit: 436 tests, 855 assertions — all green
-- PHPStan: 0 errors on 44 files
-- CI: 3 jobs — PHP 8.2/8.3 (PHPCS + PHPUnit + PHPStan), Code Coverage (PCOV)
+- PHPUnit: 436 unit tests, 855 assertions — all green
+- Integration: 26 tests via wp-env (WordPress + WooCommerce + MySQL)
+- PHPStan: 0 errors on 47 files (was 44 — added 3 extracted files)
+- CI: 4 jobs — PHP 8.2/8.3 (PHPCS + PHPUnit + PHPStan), Code Coverage (PCOV), wp-env Integration Tests
+
+#### Refactoring — WooCommerce_Module Hook Extraction
+- New file: `includes/modules/trait-woocommerce-hooks.php` — `WooCommerce_Hooks` trait with 4 WC hook callbacks (`on_product_save`, `on_product_delete`, `on_new_order`, `on_order_status_changed`)
+- `WooCommerce_Module` now `use WooCommerce_Hooks;` — hook methods removed from class body
+
+#### Refactoring — CRM_Module Hook Extraction
+- New file: `includes/modules/trait-crm-user-hooks.php` — `CRM_User_Hooks` trait with 3 WP user hook callbacks (`on_user_register`, `on_profile_update`, `on_delete_user`)
+- `CRM_Module` now `use CRM_User_Hooks;` — hook methods removed from class body
+
+#### Refactoring — Sync_Engine Failure Notification Extraction
+- New file: `includes/class-failure-notifier.php` — `Failure_Notifier` class encapsulating consecutive failure tracking, threshold check (5 failures), admin email notification (1-hour cooldown)
+- `Sync_Engine` now delegates failure notification to `Failure_Notifier::check()` instead of inline logic
+
+#### Refactoring — Settings_Page Tab Dispatcher
+- `Settings_Page` — new `render_tab(string $slug)` dispatcher method replaces switch/case block in `page-settings.php` template
+- `page-settings.php` reduced from 43 to 26 lines (switch → single `$this->render_tab()` call)
 
 #### Documentation
 - `ARCHITECTURE.md` — new "Error Handling Convention" section (4-tier strategy), CPT_Helper vs Lead_Manager architecture note in CRM section
 - `README.md` — added `--dry-run` to WP-CLI examples
+
+#### New Files
+- `package.json` — npm config with `@wordpress/env` for Docker-based testing
+- `.wp-env.json` — WordPress + WooCommerce test environment config
+- `phpunit-integration.xml` — PHPUnit config for integration test suite
+- `tests/bootstrap-integration.php` — WP test framework bootstrap
+- `tests/Integration/DatabaseMigrationTest.php` — 7 integration tests
+- `tests/Integration/EntityMapRepositoryTest.php` — 7 integration tests
+- `tests/Integration/SyncQueueRepositoryTest.php` — 10 integration tests
+- `tests/Integration/SyncEngineLockTest.php` — 2 integration tests
+- `tests/Integration/index.php` — directory index protection
+
+#### Git
+- Removed `vendor/` from tracking (1783 files) — installed via `composer install`
+- Updated `.gitignore` — added `node_modules/`, `package-lock.json`, `.wp-env.override.json`
 
 ## [1.9.7] - 2026-02-10
 

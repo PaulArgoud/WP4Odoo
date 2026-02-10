@@ -50,6 +50,9 @@ WordPress For Odoo/
 ├── wp4odoo.php              # Entry point, singleton, autoloader, hooks, WP-CLI registration (~280 lines)
 ├── ARCHITECTURE.md                    # This file
 ├── CHANGELOG.md                       # Version history
+├── package.json                       # npm config (@wordpress/env for integration tests)
+├── .wp-env.json                       # wp-env Docker config (WordPress + WooCommerce)
+├── phpunit-integration.xml            # PHPUnit config for integration test suite
 │
 ├── includes/
 │   ├── api/
@@ -61,7 +64,8 @@ WordPress For Odoo/
 │   │   └── class-odoo-auth.php        # Auth, API key encryption, connection testing
 │   │
 │   ├── modules/
-│   │   ├── class-crm-module.php       # CRM: contact sync orchestration (delegates to Contact_Manager)
+│   │   ├── trait-crm-user-hooks.php   # CRM: WP user hook callbacks (register, update, delete)
+│   │   ├── class-crm-module.php       # CRM: contact sync orchestration (uses CRM_User_Hooks trait)
 │   │   ├── class-contact-manager.php  # CRM: contact data load/save/sync-check
 │   │   ├── class-lead-manager.php     # CRM: lead CPT, shortcode, form, data load/save
 │   │   ├── class-contact-refiner.php  # CRM: name/country/state refinement filters
@@ -72,7 +76,8 @@ WordPress For Odoo/
 │   │   ├── class-image-handler.php      # WooCommerce: product image import (Odoo image_1920 → WC thumbnail)
 │   │   ├── class-product-handler.php    # WooCommerce: product CRUD with currency guard
 │   │   ├── class-order-handler.php      # WooCommerce: order CRUD + Odoo status mapping
-│   │   └── class-woocommerce-module.php  # WooCommerce: sync coordinator (delegates to handlers)
+│   │   ├── trait-woocommerce-hooks.php  # WooCommerce: WC hook callbacks (product save/delete, order)
+│   │   └── class-woocommerce-module.php  # WooCommerce: sync coordinator (uses WooCommerce_Hooks trait)
 │   │
 │   ├── admin/
 │   │   ├── class-admin.php            # Admin menu, assets, activation redirect, setup notice
@@ -90,6 +95,7 @@ WordPress For Odoo/
 │   ├── class-entity-map-repository.php # Static DB access for wp4odoo_entity_map (incl. batch lookups)
 │   ├── class-sync-queue-repository.php # Static DB access for wp4odoo_sync_queue
 │   ├── class-partner-service.php       # Shared res.partner lookup/creation service
+│   ├── class-failure-notifier.php     # Admin email notification on consecutive sync failures
 │   ├── class-sync-engine.php          # Queue processor, batch operations, advisory locking
 │   ├── class-queue-manager.php        # Helpers for enqueuing sync jobs
 │   ├── class-query-service.php        # Paginated queries (queue jobs, log entries)
@@ -103,7 +109,7 @@ WordPress For Odoo/
 │   ├── css/admin.css                  # Admin styles (~400 lines)
 │   ├── js/admin.js                    # Admin JS: AJAX interactions (~570 lines)
 │   └── views/                         # Admin page templates
-│       ├── page-settings.php          #   Main wrapper (h1 + checklist + nav-tabs + tab dispatch)
+│       ├── page-settings.php          #   Main wrapper (h1 + checklist + nav-tabs + render_tab() dispatch)
 │       ├── partial-checklist.php      #   Setup checklist (progress bar + 3 steps)
 │       ├── tab-connection.php         #   Odoo connection form + inline help + webhook token
 │       ├── tab-sync.php               #   Sync settings + logging settings
@@ -123,8 +129,9 @@ WordPress For Odoo/
 ├── templates/
 │   └── customer-portal.php           #   Customer portal HTML template (orders/invoices tabs)
 │
-├── tests/                             # PHPUnit tests (425 tests, 833 assertions, 44 files analysed)
-│   ├── bootstrap.php                 #   Constants, stub loading, plugin class requires
+├── tests/                             # 436 unit tests (855 assertions) + 26 integration tests (wp-env)
+│   ├── bootstrap.php                 #   Unit test bootstrap: constants, stub loading, plugin class requires
+│   ├── bootstrap-integration.php     #   Integration test bootstrap: loads WP test framework (wp-env)
 │   ├── stubs/
 │   │   ├── wp-classes.php            #   WP_Error, WP_REST_*, WP_User, WP_CLI, AJAX test helpers
 │   │   ├── wp-functions.php          #   WordPress function stubs (~60 functions)
@@ -132,6 +139,11 @@ WordPress For Odoo/
 │   │   ├── wp-db-stub.php            #   WP_DB_Stub ($wpdb mock with call recording)
 │   │   ├── plugin-stub.php           #   WP4Odoo_Plugin test singleton
 │   │   └── wp-cli-utils.php          #   WP_CLI\Utils\format_items stub
+│   ├── Integration/                       #   wp-env integration tests (real WordPress + MySQL)
+│   │   ├── DatabaseMigrationTest.php     #   7 tests for table creation, options seeding
+│   │   ├── EntityMapRepositoryTest.php   #   7 tests for entity map CRUD
+│   │   ├── SyncQueueRepositoryTest.php   #   10 tests for sync queue operations
+│   │   └── SyncEngineLockTest.php        #   2 tests for advisory locking
 │   └── Unit/
 │       ├── AdminAjaxTest.php             #   36 tests for Admin_Ajax (15 handlers)
 │       ├── EntityMapRepositoryTest.php  #   19 tests for Entity_Map_Repository
@@ -464,14 +476,14 @@ All user inputs are sanitized with:
 
 **Key classes:**
 - `Admin` — orchestrator: menu registration, asset enqueuing, plugin settings link, activation redirect, setup notice
-- `Settings_Page` — Settings API registration, tab rendering, setup checklist, sanitize callbacks
+- `Settings_Page` — Settings API registration, tab rendering (dynamic `render_tab()` dispatcher), setup checklist, sanitize callbacks
 - `Admin_Ajax` — 15 handlers: test_connection, retry_failed, cleanup_queue, cancel_job, purge_logs, fetch_logs, queue_stats, toggle_module, save_module_settings, bulk_import_products, bulk_export_products, fetch_queue, dismiss_onboarding, dismiss_checklist, confirm_webhooks
 
 ## Modules Detail
 
 ### CRM — COMPLETE
 
-**Files:** `class-crm-module.php` (contact sync orchestration), `class-contact-manager.php` (contact data load/save/sync-check), `class-lead-manager.php` (leads), `class-contact-refiner.php` (field refinement)
+**Files:** `class-crm-module.php` (contact sync orchestration, uses `CRM_User_Hooks` trait), `trait-crm-user-hooks.php` (WP user hook callbacks), `class-contact-manager.php` (contact data load/save/sync-check), `class-lead-manager.php` (leads), `class-contact-refiner.php` (field refinement)
 
 > **Architecture note — CPT_Helper vs Lead_Manager:** The CRM module's `Lead_Manager` manages its own `wp4odoo_lead` CPT registration directly, unlike Sales/WooCommerce which delegate CPT operations to the shared `CPT_Helper`. This is intentional: `Lead_Manager` combines CPT registration with domain-specific behavior (shortcode rendering, AJAX form submission) that does not fit the generic "register + load + save" pattern of `CPT_Helper`.
 
@@ -548,7 +560,7 @@ currency_id → _invoice_currency (Many2one → code string)
 
 ### WooCommerce — COMPLETE
 
-**Files:** `class-woocommerce-module.php` (sync coordinator), `class-product-handler.php` (product CRUD), `class-order-handler.php` (order CRUD + status mapping), `class-variant-handler.php` (variant import), `class-image-handler.php` (product image pull), `class-currency-guard.php` (currency mismatch detection)
+**Files:** `class-woocommerce-module.php` (sync coordinator, uses `WooCommerce_Hooks` trait), `trait-woocommerce-hooks.php` (WC hook callbacks), `class-product-handler.php` (product CRUD), `class-order-handler.php` (order CRUD + status mapping), `class-variant-handler.php` (variant import), `class-image-handler.php` (product image pull), `class-currency-guard.php` (currency mismatch detection)
 
 **Odoo models:** `product.template`, `product.product`, `sale.order`, `stock.quant`, `account.move`
 

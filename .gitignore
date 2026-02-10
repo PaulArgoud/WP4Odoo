@@ -1,9 +1,13 @@
 # Dependencies
 /vendor/
+/node_modules/
 
 # Composer
 composer.phar
 composer.lock
+
+# npm
+package-lock.json
 
 # IDE / Editor
 *.code-workspace
@@ -21,8 +25,8 @@ Thumbs.db
 # PHPStan
 /tmp/phpstan/
 
-# Compiled translations (regenerated from .po)
-*.mo
+# wp-env
+.wp-env.override.json
 
 # Environment / Secrets
 .env

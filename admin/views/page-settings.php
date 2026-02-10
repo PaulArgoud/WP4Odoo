@@ -20,24 +20,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 	<?php $this->render_tabs( $active_tab ); ?>
 
 	<div class="wp4odoo-tab-content" style="margin-top: 20px;">
-		<?php
-		switch ( $active_tab ) {
-			case 'connection':
-				$this->render_tab_connection();
-				break;
-			case 'sync':
-				$this->render_tab_sync();
-				break;
-			case 'modules':
-				$this->render_tab_modules();
-				break;
-			case 'queue':
-				$this->render_tab_queue();
-				break;
-			case 'logs':
-				$this->render_tab_logs();
-				break;
-		}
-		?>
+		<?php $this->render_tab( $active_tab ); ?>
 	</div>
 </div>

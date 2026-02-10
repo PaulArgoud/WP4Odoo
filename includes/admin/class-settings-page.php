@@ -182,6 +182,21 @@ class Settings_Page {
 		echo '</nav>';
 	}
 
+	/**
+	 * Render a tab by slug.
+	 *
+	 * Dispatches to the appropriate render_tab_{slug}() method.
+	 *
+	 * @param string $slug Tab slug (connection, sync, modules, queue, logs).
+	 * @return void
+	 */
+	public function render_tab( string $slug ): void {
+		$method = 'render_tab_' . $slug;
+		if ( in_array( $slug, self::TAB_SLUGS, true ) && method_exists( $this, $method ) ) {
+			$this->$method();
+		}
+	}
+
 	// ─── Connection tab ───────────────────────────────────────
 
 	/**

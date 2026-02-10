@@ -40,21 +40,18 @@ class Sync_Engine {
 	private const BATCH_TIME_LIMIT = 55;
 
 	/**
-	 * Number of consecutive batch failures before sending a notification.
-	 */
-	private const FAILURE_NOTIFY_THRESHOLD = 5;
-
-	/**
-	 * Minimum interval between notification emails (seconds).
-	 */
-	private const FAILURE_NOTIFY_COOLDOWN = 3600;
-
-	/**
 	 * Logger instance.
 	 *
 	 * @var Logger
 	 */
 	private Logger $logger;
+
+	/**
+	 * Failure notification delegate.
+	 *
+	 * @var Failure_Notifier
+	 */
+	private Failure_Notifier $failure_notifier;
 
 	/**
 	 * When true, jobs are logged but not executed.
@@ -81,7 +78,8 @@ class Sync_Engine {
 	 * Constructor.
 	 */
 	public function __construct() {
-		$this->logger = new Logger( 'sync' );
+		$this->logger           = new Logger( 'sync' );
+		$this->failure_notifier = new Failure_Notifier( $this->logger );
 	}
 
 	/**
@@ -161,7 +159,7 @@ class Sync_Engine {
 			}
 		}
 
-		$this->maybe_send_failure_notification();
+		$this->failure_notifier->check( $this->batch_successes, $this->batch_failures );
 		$this->release_lock();
 
 		if ( $processed > 0 ) {
@@ -330,70 +328,6 @@ class Sync_Engine {
 				]
 			);
 		}
-	}
-
-	/**
-	 * Send an admin email if persistent failures exceed the threshold.
-	 *
-	 * Checks consecutive failures (tracked via wp_options) and enforces
-	 * a cooldown period between emails to avoid flooding.
-	 *
-	 * @return void
-	 */
-	private function maybe_send_failure_notification(): void {
-		$consecutive = (int) get_option( 'wp4odoo_consecutive_failures', 0 );
-
-		if ( $this->batch_successes > 0 ) {
-			if ( $consecutive > 0 ) {
-				update_option( 'wp4odoo_consecutive_failures', 0 );
-			}
-			return;
-		}
-
-		if ( 0 === $this->batch_failures ) {
-			return;
-		}
-
-		$consecutive += $this->batch_failures;
-		update_option( 'wp4odoo_consecutive_failures', $consecutive );
-
-		if ( $consecutive < self::FAILURE_NOTIFY_THRESHOLD ) {
-			return;
-		}
-
-		$last_email = (int) get_option( 'wp4odoo_last_failure_email', 0 );
-		if ( ( time() - $last_email ) < self::FAILURE_NOTIFY_COOLDOWN ) {
-			return;
-		}
-
-		$admin_email = get_option( 'admin_email' );
-		if ( empty( $admin_email ) ) {
-			return;
-		}
-
-		$subject = sprintf(
-			/* translators: %d: number of consecutive failures */
-			__( '[WP4Odoo] %d consecutive sync failures', 'wp4odoo' ),
-			$consecutive
-		);
-
-		$message = sprintf(
-			/* translators: 1: number of failures, 2: queue admin URL */
-			__( "The WordPress For Odoo sync queue has encountered %1\$d consecutive failures.\n\nPlease check the sync queue at %2\$s", 'wp4odoo' ),
-			$consecutive,
-			admin_url( 'admin.php?page=wp4odoo-settings&tab=queue' )
-		);
-
-		wp_mail( $admin_email, $subject, $message );
-		update_option( 'wp4odoo_last_failure_email', time() );
-
-		$this->logger->warning(
-			'Failure notification sent to admin.',
-			[
-				'consecutive_failures' => $consecutive,
-				'email'                => $admin_email,
-			]
-		);
 	}
 
 	/**

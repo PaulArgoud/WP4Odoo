@@ -40,6 +40,44 @@ jobs:
       - name: Run PHPStan
         run: php vendor/bin/phpstan analyse --memory-limit=1G
 
+  integration:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, xml, json, sodium
+          tools: composer:v2
+          coverage: none
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Start wp-env
+        run: npx wp-env start
+
+      - name: Run integration tests
+        run: npm run test:integration
+
+      - name: Stop wp-env
+        if: always()
+        run: npx wp-env stop
+
   coverage:
     name: Code Coverage
     runs-on: ubuntu-latest

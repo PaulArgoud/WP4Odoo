@@ -74,6 +74,7 @@ require_once WP4ODOO_PLUGIN_DIR . 'includes/class-sync-queue-repository.php';
 require_once WP4ODOO_PLUGIN_DIR . 'includes/class-query-service.php';
 require_once WP4ODOO_PLUGIN_DIR . 'includes/class-partner-service.php';
 require_once WP4ODOO_PLUGIN_DIR . 'includes/class-module-base.php';
+require_once WP4ODOO_PLUGIN_DIR . 'includes/class-failure-notifier.php';
 require_once WP4ODOO_PLUGIN_DIR . 'includes/class-sync-engine.php';
 require_once WP4ODOO_PLUGIN_DIR . 'includes/class-queue-manager.php';
 
@@ -85,7 +86,9 @@ require_once WP4ODOO_PLUGIN_DIR . 'includes/api/class-odoo-xmlrpc.php';
 require_once WP4ODOO_PLUGIN_DIR . 'includes/api/class-odoo-auth.php';
 require_once WP4ODOO_PLUGIN_DIR . 'includes/api/class-odoo-client.php';
 
-// Modules.
+// Modules (traits before classes).
+require_once WP4ODOO_PLUGIN_DIR . 'includes/modules/trait-crm-user-hooks.php';
+require_once WP4ODOO_PLUGIN_DIR . 'includes/modules/trait-woocommerce-hooks.php';
 require_once WP4ODOO_PLUGIN_DIR . 'includes/modules/class-contact-refiner.php';
 require_once WP4ODOO_PLUGIN_DIR . 'includes/modules/class-currency-guard.php';
 require_once WP4ODOO_PLUGIN_DIR . 'includes/modules/class-variant-handler.php';
