@@ -101,6 +101,20 @@ class WooCommerce_Module extends Module_Base {
 	private Variant_Handler $variant_handler;
 
 	/**
+	 * Image handler for product featured image import from Odoo.
+	 *
+	 * @var Image_Handler
+	 */
+	private Image_Handler $image_handler;
+
+	/**
+	 * Raw Odoo data captured during pull for post-save image processing.
+	 *
+	 * @var array<string, mixed>
+	 */
+	private array $last_odoo_data = [];
+
+	/**
 	 * Boot the module: register WC hooks, invoice CPT.
 	 *
 	 * @return void
@@ -113,7 +127,11 @@ class WooCommerce_Module extends Module_Base {
 
 		$this->partner_service  = new Partner_Service( fn() => $this->client() );
 		$this->variant_handler = new Variant_Handler( $this->logger, fn() => $this->client() );
+		$this->image_handler   = new Image_Handler( $this->logger );
 		$settings = $this->get_settings();
+
+		// Capture raw Odoo data during product pull for image processing.
+		add_filter( "wp4odoo_map_from_odoo_{$this->id}_product", [ $this, 'capture_odoo_data' ], 1, 3 );
 
 		// Products.
 		if ( ! empty( $settings['sync_products'] ) ) {
@@ -143,6 +161,7 @@ class WooCommerce_Module extends Module_Base {
 			'sync_products'       => true,
 			'sync_orders'         => true,
 			'sync_stock'          => true,
+			'sync_product_images' => true,
 			'auto_confirm_orders' => true,
 		];
 	}
@@ -168,6 +187,11 @@ class WooCommerce_Module extends Module_Base {
 				'label'       => __( 'Sync stock', 'wp4odoo' ),
 				'type'        => 'checkbox',
 				'description' => __( 'Pull stock levels from Odoo into WooCommerce products.', 'wp4odoo' ),
+			],
+			'sync_product_images' => [
+				'label'       => __( 'Sync product images', 'wp4odoo' ),
+				'type'        => 'checkbox',
+				'description' => __( 'Pull product featured images from Odoo.', 'wp4odoo' ),
 			],
 			'auto_confirm_orders' => [
 				'label'       => __( 'Auto-confirm orders', 'wp4odoo' ),
@@ -201,15 +225,52 @@ class WooCommerce_Module extends Module_Base {
 		// Standard pull for all other entity types.
 		$result = parent::pull_from_odoo( $entity_type, $action, $odoo_id, $wp_id, $payload );
 
-		// After product template pull: enqueue variant pulls.
+		// After product template pull: import image + enqueue variant pulls.
 		if ( $result && 'product' === $entity_type && 'delete' !== $action ) {
 			$pulled_wp_id = $wp_id ?: ( $this->get_wp_mapping( 'product', $odoo_id ) ?? 0 );
 			if ( $pulled_wp_id > 0 ) {
+				$this->maybe_pull_product_image( $pulled_wp_id );
 				$this->enqueue_variants_for_template( $odoo_id, $pulled_wp_id );
 			}
+			$this->last_odoo_data = [];
 		}
 
 		return $result;
+	}
+
+	/**
+	 * Capture raw Odoo data during product pull for post-save image processing.
+	 *
+	 * Registered as a filter on wp4odoo_map_from_odoo_woocommerce_product
+	 * at priority 1 so it runs before any user filters.
+	 *
+	 * @param array  $wp_data     The mapped WordPress data.
+	 * @param array  $odoo_data   The raw Odoo record data.
+	 * @param string $entity_type The entity type.
+	 * @return array Unmodified WordPress data.
+	 */
+	public function capture_odoo_data( array $wp_data, array $odoo_data, string $entity_type ): array {
+		$this->last_odoo_data = $odoo_data;
+		return $wp_data;
+	}
+
+	/**
+	 * Import the featured image for a product if image sync is enabled.
+	 *
+	 * @param int $wp_product_id WC product ID.
+	 * @return void
+	 */
+	private function maybe_pull_product_image( int $wp_product_id ): void {
+		$settings = $this->get_settings();
+
+		if ( empty( $settings['sync_product_images'] ) ) {
+			return;
+		}
+
+		$image_data   = $this->last_odoo_data['image_1920'] ?? false;
+		$product_name = $this->last_odoo_data['name'] ?? '';
+
+		$this->image_handler->import_featured_image( $wp_product_id, $image_data, $product_name );
 	}
 
 	/**

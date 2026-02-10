@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.0] - 2026-02-10
+
+### Added
+
+#### WooCommerce Module — Product Image Pull from Odoo
+- `Image_Handler` (`includes/modules/class-image-handler.php`) — decodes Odoo `image_1920` base64, creates WP media attachment, sets as WC product thumbnail; SHA-256 hash stored in `_wp4odoo_image_hash` post meta to skip unchanged images; MIME detection via `finfo`; automatic cleanup of previous Odoo-sourced thumbnails
+- `sync_product_images` setting (default: enabled) in WooCommerce module — controls whether featured images are pulled from Odoo
+- Odoo data capture via `wp4odoo_map_from_odoo_woocommerce_product` filter — reuses the existing `read()` response (zero extra API calls)
+- PHPUnit tests for Image_Handler (edge cases, valid PNG/JPEG imports)
+
+### Changed
+- `WooCommerce_Module` — added `Image_Handler` integration, `capture_odoo_data()` filter, `maybe_pull_product_image()` post-pull step, new `sync_product_images` setting field
+- PHPStan: 0 errors on 36 files (was 35)
+- PHPUnit: 127 tests, 196 assertions (was 118/186)
+- Plugin version bumped from 1.5.0 to 1.6.0
+
 ## [1.5.0] - 2026-02-10
 
 ### Added

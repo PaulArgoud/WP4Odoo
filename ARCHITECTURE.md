@@ -68,7 +68,8 @@ WordPress For Odoo/
 │   │   ├── class-sales-module.php     # Sales: orders, invoices (delegates CPT ops to CPT_Helper)
 │   │   ├── class-portal-manager.php   # Sales: customer portal shortcode, AJAX, queries
 │   │   ├── class-variant-handler.php    # WooCommerce: variant import (product.product → WC variations)
-│   │   └── class-woocommerce-module.php  # WooCommerce: products/orders/stock/variants sync
+│   │   ├── class-image-handler.php      # WooCommerce: product image import (Odoo image_1920 → WC thumbnail)
+│   │   └── class-woocommerce-module.php  # WooCommerce: products/orders/stock/variants/images sync
 │   │
 │   ├── admin/
 │   │   ├── class-admin.php            # Admin menu, asset enqueuing, plugin action link
@@ -111,7 +112,7 @@ WordPress For Odoo/
 ├── templates/
 │   └── customer-portal.php           #   Customer portal HTML template (orders/invoices tabs)
 │
-├── tests/                             # PHPUnit tests (118 tests, 186 assertions, 35 files analysed)
+├── tests/                             # PHPUnit tests (127 tests, 196 assertions, 36 files analysed)
 │   ├── bootstrap.php                 #   WP function stubs + class loading
 │   └── Unit/
 │       ├── EntityMapRepositoryTest.php  #   10 tests for Entity_Map_Repository
@@ -122,7 +123,8 @@ WordPress For Odoo/
 │       ├── SyncQueueRepositoryTest.php  #   16 tests for Sync_Queue_Repository
 │       ├── WooCommerceModuleTest.php    #   21 tests for WooCommerce_Module
 │       ├── VariantHandlerTest.php       #   7 tests for Variant_Handler
-│       └── BulkSyncTest.php             #   10 tests for bulk import/export
+│       ├── BulkSyncTest.php             #   10 tests for bulk import/export
+│       └── ImageHandlerTest.php         #   9 tests for Image_Handler
 │
 ├── uninstall.php                      # Cleanup on plugin uninstall
 │
@@ -481,7 +483,7 @@ state → _invoice_state, payment_state → _payment_state, partner_id → _wp4o
 
 ### WooCommerce — COMPLETE
 
-**Files:** `class-woocommerce-module.php` (product/order/stock/variant/invoice sync), `class-variant-handler.php` (variant import)
+**Files:** `class-woocommerce-module.php` (product/order/stock/variant/invoice sync), `class-variant-handler.php` (variant import), `class-image-handler.php` (product image pull from Odoo)
 
 **Odoo models:** `product.template`, `product.product`, `sale.order`, `stock.quant`, `account.move`
 
@@ -525,7 +527,7 @@ add_filter('wp4odoo_order_status_map', function($map) { /* ... */ });
 
 **Anti-loop protection:** The `WP4ODOO_IMPORTING` constant is defined during pull operations to prevent WooCommerce hooks from re-enqueuing a sync.
 
-**Settings:** `sync_products`, `sync_orders`, `sync_stock`, `auto_confirm_orders`
+**Settings:** `sync_products`, `sync_orders`, `sync_stock`, `sync_product_images`, `auto_confirm_orders`
 
 ### Partner Service
 

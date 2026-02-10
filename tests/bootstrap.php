@@ -116,6 +116,94 @@ namespace {
 		}
 	}
 
+	// ─── WordPress post meta / media stubs ──────────────────
+
+	if ( ! function_exists( 'get_post_meta' ) ) {
+		function get_post_meta( $post_id, $key = '', $single = false ) {
+			return $single ? '' : [];
+		}
+	}
+
+	if ( ! function_exists( 'update_post_meta' ) ) {
+		function update_post_meta( $post_id, $meta_key, $meta_value, $prev_value = '' ) {
+			return true;
+		}
+	}
+
+	if ( ! function_exists( 'delete_post_meta' ) ) {
+		function delete_post_meta( $post_id, $meta_key, $meta_value = '' ) {
+			return true;
+		}
+	}
+
+	if ( ! function_exists( 'get_post_thumbnail_id' ) ) {
+		function get_post_thumbnail_id( $post = null ) {
+			return 0;
+		}
+	}
+
+	if ( ! function_exists( 'set_post_thumbnail' ) ) {
+		function set_post_thumbnail( $post, $thumbnail_id ) {
+			return true;
+		}
+	}
+
+	if ( ! function_exists( 'delete_post_thumbnail' ) ) {
+		function delete_post_thumbnail( $post ) {
+			return true;
+		}
+	}
+
+	if ( ! function_exists( 'wp_delete_attachment' ) ) {
+		function wp_delete_attachment( $post_id, $force_delete = false ) {
+			return true;
+		}
+	}
+
+	if ( ! function_exists( 'wp_upload_dir' ) ) {
+		function wp_upload_dir( $time = null, $create_dir = true, $refresh_cache = false ) {
+			return [
+				'path'    => sys_get_temp_dir(),
+				'url'     => 'http://example.com/wp-content/uploads',
+				'subdir'  => '',
+				'basedir' => sys_get_temp_dir(),
+				'baseurl' => 'http://example.com/wp-content/uploads',
+				'error'   => false,
+			];
+		}
+	}
+
+	if ( ! function_exists( 'trailingslashit' ) ) {
+		function trailingslashit( $value ) {
+			return rtrim( $value, '/\\' ) . '/';
+		}
+	}
+
+	if ( ! function_exists( 'wp_insert_attachment' ) ) {
+		function wp_insert_attachment( $args, $file = false, $parent_post_id = 0 ) {
+			static $id = 1000;
+			return ++$id;
+		}
+	}
+
+	if ( ! function_exists( 'wp_generate_attachment_metadata' ) ) {
+		function wp_generate_attachment_metadata( $attachment_id, $file ) {
+			return [];
+		}
+	}
+
+	if ( ! function_exists( 'wp_update_attachment_metadata' ) ) {
+		function wp_update_attachment_metadata( $attachment_id, $data ) {
+			return true;
+		}
+	}
+
+	if ( ! function_exists( 'is_wp_error' ) ) {
+		function is_wp_error( $thing ) {
+			return false;
+		}
+	}
+
 	// ─── WooCommerce class stubs ────────────────────────────
 
 	if ( ! class_exists( 'WC_Product' ) ) {
@@ -287,6 +375,7 @@ namespace {
 	require_once WP4ODOO_PLUGIN_DIR . 'includes/class-sync-engine.php';
 	require_once WP4ODOO_PLUGIN_DIR . 'includes/class-queue-manager.php';
 	require_once WP4ODOO_PLUGIN_DIR . 'includes/modules/class-variant-handler.php';
+	require_once WP4ODOO_PLUGIN_DIR . 'includes/modules/class-image-handler.php';
 	require_once WP4ODOO_PLUGIN_DIR . 'includes/modules/class-woocommerce-module.php';
 
 }

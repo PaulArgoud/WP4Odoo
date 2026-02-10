@@ -1,14 +1,14 @@
 # SOME DESCRIPTIVE TITLE.
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
-# This file is distributed under the same license as the WP4Odoo package.
+# This file is distributed under the same license as the PACKAGE package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: WP4Odoo 1.3.0\n"
+"Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-02-10 01:56+0100\n"
+"POT-Creation-Date: 2026-02-10 04:56+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,63 +17,68 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: wp4odoo.php:285
+#: wp4odoo.php:225
 msgid "Every 5 Minutes"
 msgstr ""
 
-#: wp4odoo.php:289
+#: wp4odoo.php:229
 msgid "Every 15 Minutes"
 msgstr ""
 
-#: includes/admin/class-admin-ajax.php:56
+#: includes/admin/class-admin-ajax.php:58
 #: includes/modules/class-portal-manager.php:134
 msgid "Permission denied."
 msgstr ""
 
-#: includes/admin/class-admin-ajax.php:129
+#: includes/admin/class-admin-ajax.php:131
 #, php-format
 msgid "%d job(s) retried."
 msgstr ""
 
-#: includes/admin/class-admin-ajax.php:150
+#: includes/admin/class-admin-ajax.php:152
 #, php-format
 msgid "%d job(s) deleted."
 msgstr ""
 
-#: includes/admin/class-admin-ajax.php:169
+#: includes/admin/class-admin-ajax.php:171
 msgid "Job cancelled."
 msgstr ""
 
-#: includes/admin/class-admin-ajax.php:173
+#: includes/admin/class-admin-ajax.php:175
 msgid "Unable to cancel this job."
 msgstr ""
 
-#: includes/admin/class-admin-ajax.php:193
+#: includes/admin/class-admin-ajax.php:195
 #, php-format
 msgid "%d log entry(ies) deleted."
 msgstr ""
 
-#: includes/admin/class-admin-ajax.php:265
-#: includes/admin/class-admin-ajax.php:301
+#: includes/admin/class-admin-ajax.php:267
+#: includes/admin/class-admin-ajax.php:303
 msgid "Missing module identifier."
 msgstr ""
 
-#: includes/admin/class-admin-ajax.php:277
+#: includes/admin/class-admin-ajax.php:279
 #, php-format
 msgid "Module \"%s\" enabled."
 msgstr ""
 
-#: includes/admin/class-admin-ajax.php:282
+#: includes/admin/class-admin-ajax.php:284
 #, php-format
 msgid "Module \"%s\" disabled."
 msgstr ""
 
-#: includes/admin/class-admin-ajax.php:309
+#: includes/admin/class-admin-ajax.php:311
 msgid "Unknown module."
 msgstr ""
 
-#: includes/admin/class-admin-ajax.php:347 includes/admin/class-admin.php:99
+#: includes/admin/class-admin-ajax.php:349 includes/admin/class-admin.php:99
 msgid "Settings saved."
+msgstr ""
+
+#: includes/admin/class-admin-ajax.php:366
+#: includes/admin/class-admin-ajax.php:385
+msgid "WooCommerce module is not registered."
 msgstr ""
 
 #: includes/admin/class-admin.php:51 includes/admin/class-admin.php:52
@@ -116,8 +121,38 @@ msgstr ""
 msgid "Failed to save settings."
 msgstr ""
 
-#: includes/admin/class-admin.php:115
+#: includes/admin/class-admin.php:101
+msgid ""
+"Import all products from Odoo? This will enqueue sync jobs for all Odoo "
+"products."
+msgstr ""
+
+#: includes/admin/class-admin.php:102
+msgid ""
+"Export all products to Odoo? This will enqueue sync jobs for all WooCommerce "
+"products."
+msgstr ""
+
+#: includes/admin/class-admin.php:117
 msgid "Settings"
+msgstr ""
+
+#: includes/admin/class-bulk-handler.php:51
+msgid "No products found in Odoo."
+msgstr ""
+
+#: includes/admin/class-bulk-handler.php:69
+#, php-format
+msgid "%d product(s) enqueued for import."
+msgstr ""
+
+#: includes/admin/class-bulk-handler.php:86
+msgid "No WooCommerce products found."
+msgstr ""
+
+#: includes/admin/class-bulk-handler.php:104
+#, php-format
+msgid "%d product(s) enqueued for export."
 msgstr ""
 
 #: includes/api/class-odoo-auth.php:174
@@ -184,85 +219,89 @@ msgstr ""
 msgid "Entity type \"%1$s\" is not registered in module \"%2$s\"."
 msgstr ""
 
-#: includes/class-sync-engine.php:159
+#: includes/class-sync-engine.php:162
 #, php-format
 msgid "Module \"%s\" not found or not registered."
 msgstr ""
 
-#: includes/class-webhook-handler.php:106
+#: includes/class-webhook-handler.php:116
 msgid "Missing required fields: module, entity_type, odoo_id."
 msgstr ""
 
-#: includes/class-webhook-handler.php:169
+#: includes/class-webhook-handler.php:179
 #, php-format
 msgid "Module \"%s\" not found."
 msgstr ""
 
-#: includes/class-webhook-handler.php:189
+#: includes/class-webhook-handler.php:199
 msgid "Provide either wp_id (for push) or odoo_id (for pull)."
 msgstr ""
 
-#: includes/class-webhook-handler.php:224
+#: includes/class-webhook-handler.php:244
 msgid "Webhook token not configured."
 msgstr ""
 
-#: includes/class-webhook-handler.php:236
+#: includes/class-webhook-handler.php:256
 msgid "Invalid webhook token."
 msgstr ""
 
-#: includes/class-webhook-handler.php:257
+#: includes/class-webhook-handler.php:277
 msgid "You do not have permission to perform this action."
 msgstr ""
 
-#: includes/modules/class-crm-module.php:145
+#: includes/class-webhook-handler.php:317
+msgid "Too many requests. Please try again later."
+msgstr ""
+
+#: includes/modules/class-crm-module.php:146
 msgid "Sync users as contacts"
 msgstr ""
 
-#: includes/modules/class-crm-module.php:147
+#: includes/modules/class-crm-module.php:148
 msgid "Push WordPress users to Odoo res.partner."
 msgstr ""
 
-#: includes/modules/class-crm-module.php:150
+#: includes/modules/class-crm-module.php:151
 msgid "Archive on delete"
 msgstr ""
 
-#: includes/modules/class-crm-module.php:152
+#: includes/modules/class-crm-module.php:153
 msgid "Set active=false in Odoo instead of deleting the record."
 msgstr ""
 
-#: includes/modules/class-crm-module.php:155
+#: includes/modules/class-crm-module.php:156
 msgid "Sync role"
 msgstr ""
 
-#: includes/modules/class-crm-module.php:157
+#: includes/modules/class-crm-module.php:158
 msgid "All roles"
 msgstr ""
 
-#: includes/modules/class-crm-module.php:158
+#: includes/modules/class-crm-module.php:159
 msgid "Only sync users with this role. Leave empty to sync all."
 msgstr ""
 
-#: includes/modules/class-crm-module.php:161
+#: includes/modules/class-crm-module.php:162
 msgid "Create users on pull"
 msgstr ""
 
-#: includes/modules/class-crm-module.php:163
+#: includes/modules/class-crm-module.php:164
 msgid "Create new WordPress users when pulling contacts from Odoo."
 msgstr ""
 
-#: includes/modules/class-crm-module.php:166
+#: includes/modules/class-crm-module.php:167
 msgid "Default user role"
 msgstr ""
 
-#: includes/modules/class-crm-module.php:169
+#: includes/modules/class-crm-module.php:170
 msgid "Role assigned to users created by Odoo pull."
 msgstr ""
 
-#: includes/modules/class-crm-module.php:172
+#: includes/modules/class-crm-module.php:173
 msgid "Enable lead form"
 msgstr ""
 
-#: includes/modules/class-crm-module.php:174
+#: includes/modules/class-crm-module.php:175
 msgid "Enable the [wp4odoo_lead_form] shortcode."
 msgstr ""
 
@@ -397,7 +436,7 @@ msgid "Orders"
 msgstr ""
 
 #: includes/modules/class-sales-module.php:152
-#: includes/modules/class-sales-module.php:289
+#: includes/modules/class-sales-module.php:247
 msgid "Order"
 msgstr ""
 
@@ -426,78 +465,86 @@ msgid "No orders found in Trash."
 msgstr ""
 
 #: includes/modules/class-sales-module.php:169
-#: includes/modules/class-woocommerce-module.php:254
+#: includes/modules/class-woocommerce-module.php:452
 #: templates/customer-portal.php:25
 msgid "Invoices"
 msgstr ""
 
 #: includes/modules/class-sales-module.php:170
-#: includes/modules/class-sales-module.php:300
-#: includes/modules/class-woocommerce-module.php:255
-#: includes/modules/class-woocommerce-module.php:510
+#: includes/modules/class-sales-module.php:258
+#: includes/modules/class-woocommerce-module.php:453
+#: includes/modules/class-woocommerce-module.php:751
 msgid "Invoice"
 msgstr ""
 
 #: includes/modules/class-sales-module.php:171
-#: includes/modules/class-woocommerce-module.php:256
+#: includes/modules/class-woocommerce-module.php:454
 msgid "Add New Invoice"
 msgstr ""
 
 #: includes/modules/class-sales-module.php:172
-#: includes/modules/class-woocommerce-module.php:257
+#: includes/modules/class-woocommerce-module.php:455
 msgid "Edit Invoice"
 msgstr ""
 
 #: includes/modules/class-sales-module.php:173
-#: includes/modules/class-woocommerce-module.php:258
+#: includes/modules/class-woocommerce-module.php:456
 msgid "View Invoice"
 msgstr ""
 
 #: includes/modules/class-sales-module.php:174
-#: includes/modules/class-woocommerce-module.php:259
+#: includes/modules/class-woocommerce-module.php:457
 msgid "Search Invoices"
 msgstr ""
 
 #: includes/modules/class-sales-module.php:175
-#: includes/modules/class-woocommerce-module.php:260
+#: includes/modules/class-woocommerce-module.php:458
 #: templates/customer-portal.php:73
 msgid "No invoices found."
 msgstr ""
 
 #: includes/modules/class-sales-module.php:176
-#: includes/modules/class-woocommerce-module.php:261
+#: includes/modules/class-woocommerce-module.php:459
 msgid "No invoices found in Trash."
 msgstr ""
 
-#: includes/modules/class-woocommerce-module.php:140
+#: includes/modules/class-woocommerce-module.php:177
 msgid "Sync products"
 msgstr ""
 
-#: includes/modules/class-woocommerce-module.php:142
+#: includes/modules/class-woocommerce-module.php:179
 msgid "Synchronize WooCommerce products with Odoo."
 msgstr ""
 
-#: includes/modules/class-woocommerce-module.php:145
+#: includes/modules/class-woocommerce-module.php:182
 msgid "Sync orders"
 msgstr ""
 
-#: includes/modules/class-woocommerce-module.php:147
+#: includes/modules/class-woocommerce-module.php:184
 msgid "Synchronize WooCommerce orders with Odoo."
 msgstr ""
 
-#: includes/modules/class-woocommerce-module.php:150
+#: includes/modules/class-woocommerce-module.php:187
 msgid "Sync stock"
 msgstr ""
 
-#: includes/modules/class-woocommerce-module.php:152
+#: includes/modules/class-woocommerce-module.php:189
 msgid "Pull stock levels from Odoo into WooCommerce products."
 msgstr ""
 
-#: includes/modules/class-woocommerce-module.php:155
+#: includes/modules/class-woocommerce-module.php:192
+msgid "Sync product images"
+msgstr ""
+
+#: includes/modules/class-woocommerce-module.php:194
+msgid "Pull product featured images from Odoo."
+msgstr ""
+
+#: includes/modules/class-woocommerce-module.php:197
 msgid "Auto-confirm orders"
 msgstr ""
 
-#: includes/modules/class-woocommerce-module.php:157
+#: includes/modules/class-woocommerce-module.php:199
 msgid "Automatically confirm orders in Odoo when created from WooCommerce."
 msgstr ""
 
@@ -523,10 +570,6 @@ msgstr ""
 
 #: admin/views/tab-connection.php:54
 msgid "API Key"
-msgstr ""
-
-#: admin/views/tab-connection.php:59
-msgid "Leave empty to keep the current key"
 msgstr ""
 
 #: admin/views/tab-connection.php:64
@@ -584,14 +627,6 @@ msgstr ""
 
 #: admin/views/tab-logs.php:31
 msgid "All modules"
-msgstr ""
-
-#: admin/views/tab-logs.php:43
-msgid "From"
-msgstr ""
-
-#: admin/views/tab-logs.php:44
-msgid "To"
 msgstr ""
 
 #: admin/views/tab-logs.php:47
@@ -805,6 +840,24 @@ msgstr ""
 
 #: admin/views/tab-sync.php:133
 msgid "Retention (days)"
+msgstr ""
+
+#: admin/views/tab-sync.php:148
+msgid "Bulk Operations"
+msgstr ""
+
+#: admin/views/tab-sync.php:150
+msgid ""
+"Import or export all products at once via the queue. Jobs are processed in "
+"the background by the sync engine."
+msgstr ""
+
+#: admin/views/tab-sync.php:154
+msgid "Import all products from Odoo"
+msgstr ""
+
+#: admin/views/tab-sync.php:157
+msgid "Export all products to Odoo"
 msgstr ""
 
 #: templates/customer-portal.php:38 templates/customer-portal.php:78

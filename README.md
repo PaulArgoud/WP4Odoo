@@ -81,8 +81,8 @@ Each Odoo domain is encapsulated in an independent module extending `Module_Base
 | Module | Odoo Models | Key Features |
 |--------|-------------|--------------|
 | **CRM** | `res.partner`, `crm.lead` | Contact sync, lead form shortcode, email dedup, archive-on-delete |
-| **Sales** | `sale.order`, `account.move` | Order/invoice CPTs, customer portal shortcode |
-| **WooCommerce** | `product.template`, `product.product`, `sale.order`, `stock.quant` | WC-native product/order/stock sync, product variants, bulk import/export, status mapping |
+| **Sales** | `product.template`, `sale.order`, `account.move` | Order/invoice CPTs, customer portal shortcode |
+| **WooCommerce** | `product.template`, `product.product`, `sale.order`, `stock.quant`, `account.move` | WC-native product/order/stock sync, product variants, bulk import/export, status mapping |
 
 Third-party modules can be registered:
 
@@ -137,6 +137,7 @@ Namespace: `wp-json/wp4odoo/v1/`
 | `wp4odoo_loaded` | All plugins loaded |
 | `wp4odoo_register_modules` | Register custom modules |
 | `wp4odoo_lead_created` | Lead form submitted |
+| `wp4odoo_api_call` | Every Odoo API call (model, method, args, result) |
 
 ### Filters
 
@@ -146,6 +147,7 @@ Namespace: `wp-json/wp4odoo/v1/`
 | `wp4odoo_map_from_odoo_{module}_{entity}` | Modify data during pull from Odoo |
 | `wp4odoo_order_status_map` | Customize WooCommerce order status mapping |
 | `wp4odoo_ssl_verify` | Enable/disable SSL verification |
+| `wp4odoo_woo_product_to_odoo` | Modify product data before push to Odoo |
 
 ## Development
 
