@@ -3,6 +3,7 @@ declare( strict_types=1 );
 
 namespace WP4Odoo\Modules;
 
+use WP4Odoo\Entity_Map_Repository;
 use WP4Odoo\Field_Mapper;
 use WP4Odoo\Module_Base;
 use WP4Odoo\Partner_Service;
@@ -42,6 +43,7 @@ class WooCommerce_Module extends Module_Base {
 
 	protected array $odoo_models = [
 		'product' => 'product.template',
+		'variant' => 'product.product',
 		'order'   => 'sale.order',
 		'stock'   => 'stock.quant',
 		'invoice' => 'account.move',
@@ -55,6 +57,13 @@ class WooCommerce_Module extends Module_Base {
 			'stock_quantity' => 'qty_available',
 			'weight'        => 'weight',
 			'description'   => 'description_sale',
+		],
+		'variant' => [
+			'sku'            => 'default_code',
+			'regular_price'  => 'lst_price',
+			'stock_quantity' => 'qty_available',
+			'weight'         => 'weight',
+			'display_name'   => 'display_name',
 		],
 		'order' => [
 			'total'      => 'amount_total',
@@ -84,6 +93,13 @@ class WooCommerce_Module extends Module_Base {
 	private Partner_Service $partner_service;
 
 	/**
+	 * Variant handler for product.product → WC variation import.
+	 *
+	 * @var Variant_Handler
+	 */
+	private Variant_Handler $variant_handler;
+
+	/**
 	 * Boot the module: register WC hooks, invoice CPT.
 	 *
 	 * @return void
@@ -94,7 +110,8 @@ class WooCommerce_Module extends Module_Base {
 			return;
 		}
 
-		$this->partner_service = new Partner_Service( fn() => $this->client() );
+		$this->partner_service  = new Partner_Service( fn() => $this->client() );
+		$this->variant_handler = new Variant_Handler( $this->logger, fn() => $this->client() );
 		$settings = $this->get_settings();
 
 		// Products.
@@ -157,6 +174,126 @@ class WooCommerce_Module extends Module_Base {
 				'description' => __( 'Automatically confirm orders in Odoo when created from WooCommerce.', 'wp4odoo' ),
 			],
 		];
+	}
+
+	// ─── Pull Override (variants) ────────────────────────────
+
+	/**
+	 * Pull an Odoo entity into WordPress.
+	 *
+	 * Extends the base pull to handle variant entities and auto-enqueue
+	 * variant pulls after a product template is successfully pulled.
+	 *
+	 * @param string $entity_type The entity type.
+	 * @param string $action      'create', 'update', or 'delete'.
+	 * @param int    $odoo_id     Odoo entity ID.
+	 * @param int    $wp_id       WordPress ID (0 if creating).
+	 * @param array  $payload     Additional data from the queue.
+	 * @return bool True on success.
+	 */
+	public function pull_from_odoo( string $entity_type, string $action, int $odoo_id, int $wp_id = 0, array $payload = [] ): bool {
+		// Variants: delegate directly to Variant_Handler.
+		if ( 'variant' === $entity_type ) {
+			return $this->pull_variant( $odoo_id, $wp_id, $payload );
+		}
+
+		// Standard pull for all other entity types.
+		$result = parent::pull_from_odoo( $entity_type, $action, $odoo_id, $wp_id, $payload );
+
+		// After product template pull: enqueue variant pulls.
+		if ( $result && 'product' === $entity_type && 'delete' !== $action ) {
+			$pulled_wp_id = $wp_id ?: ( $this->get_wp_mapping( 'product', $odoo_id ) ?? 0 );
+			if ( $pulled_wp_id > 0 ) {
+				$this->enqueue_variants_for_template( $odoo_id, $pulled_wp_id );
+			}
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Pull a single product.product variant from Odoo.
+	 *
+	 * Reads variant data, finds the parent WC product via the template
+	 * mapping, and delegates to Variant_Handler.
+	 *
+	 * @param int   $odoo_id Odoo product.product ID.
+	 * @param int   $wp_id   Existing WC variation ID (0 if unknown).
+	 * @param array $payload Queue payload (may contain parent_wp_id, template_odoo_id).
+	 * @return bool True on success.
+	 */
+	private function pull_variant( int $odoo_id, int $wp_id, array $payload ): bool {
+		if ( ! defined( 'WP4ODOO_IMPORTING' ) ) {
+			define( 'WP4ODOO_IMPORTING', true );
+		}
+
+		$parent_wp_id     = (int) ( $payload['parent_wp_id'] ?? 0 );
+		$template_odoo_id = (int) ( $payload['template_odoo_id'] ?? 0 );
+
+		// If parent not in payload, read the variant to find the template, then look up mapping.
+		if ( 0 === $parent_wp_id && 0 === $template_odoo_id ) {
+			$records = $this->client()->read( 'product.product', [ $odoo_id ], [ 'product_tmpl_id' ] );
+			if ( ! empty( $records[0]['product_tmpl_id'] ) ) {
+				$template_odoo_id = is_array( $records[0]['product_tmpl_id'] )
+					? (int) $records[0]['product_tmpl_id'][0]
+					: (int) $records[0]['product_tmpl_id'];
+			}
+		}
+
+		if ( 0 === $parent_wp_id && $template_odoo_id > 0 ) {
+			$parent_wp_id = $this->get_wp_mapping( 'product', $template_odoo_id ) ?? 0;
+		}
+
+		if ( 0 === $parent_wp_id ) {
+			$this->logger->warning( 'Cannot pull variant: parent product not mapped.', [
+				'variant_odoo_id'  => $odoo_id,
+				'template_odoo_id' => $template_odoo_id,
+			] );
+			return false;
+		}
+
+		return $this->variant_handler->pull_variants( $template_odoo_id, $parent_wp_id );
+	}
+
+	/**
+	 * Enqueue variant pulls for a product template.
+	 *
+	 * Searches for product.product records linked to the template.
+	 * If more than one variant exists, queues a pull for each.
+	 *
+	 * @param int $template_odoo_id Odoo product.template ID.
+	 * @param int $wp_parent_id     WC parent product ID.
+	 * @return void
+	 */
+	private function enqueue_variants_for_template( int $template_odoo_id, int $wp_parent_id ): void {
+		$variant_ids = $this->client()->search(
+			'product.product',
+			[ [ 'product_tmpl_id', '=', $template_odoo_id ] ]
+		);
+
+		// Single variant or none: simple product, nothing to enqueue.
+		if ( count( $variant_ids ) <= 1 ) {
+			return;
+		}
+
+		foreach ( $variant_ids as $variant_odoo_id ) {
+			Queue_Manager::pull(
+				'woocommerce',
+				'variant',
+				'update',
+				(int) $variant_odoo_id,
+				0,
+				[
+					'parent_wp_id'     => $wp_parent_id,
+					'template_odoo_id' => $template_odoo_id,
+				]
+			);
+		}
+
+		$this->logger->info( 'Enqueued variant pulls for template.', [
+			'template_odoo_id' => $template_odoo_id,
+			'variant_count'    => count( $variant_ids ),
+		] );
 	}
 
 	// ─── WC Hook Callbacks (push) ────────────────────────────
@@ -281,6 +418,7 @@ class WooCommerce_Module extends Module_Base {
 	protected function load_wp_data( string $entity_type, int $wp_id ): array {
 		return match ( $entity_type ) {
 			'product' => $this->load_product_data( $wp_id ),
+			'variant' => $this->load_variant_data( $wp_id ),
 			'order'   => $this->load_order_data( $wp_id ),
 			'invoice' => $this->load_invoice_data( $wp_id ),
 			default   => $this->unsupported_entity( $entity_type, 'load' ),
@@ -306,6 +444,27 @@ class WooCommerce_Module extends Module_Base {
 			'stock_quantity' => $product->get_stock_quantity(),
 			'weight'         => $product->get_weight(),
 			'description'    => $product->get_description(),
+		];
+	}
+
+	/**
+	 * Load WooCommerce variation data.
+	 *
+	 * @param int $wp_id Variation ID.
+	 * @return array
+	 */
+	private function load_variant_data( int $wp_id ): array {
+		$product = wc_get_product( $wp_id );
+		if ( ! $product ) {
+			return [];
+		}
+
+		return [
+			'sku'            => $product->get_sku(),
+			'regular_price'  => $product->get_regular_price(),
+			'stock_quantity' => $product->get_stock_quantity(),
+			'weight'         => $product->get_weight(),
+			'display_name'   => $product->get_name(),
 		];
 	}
 
@@ -375,6 +534,7 @@ class WooCommerce_Module extends Module_Base {
 	protected function save_wp_data( string $entity_type, array $data, int $wp_id = 0 ): int {
 		return match ( $entity_type ) {
 			'product' => $this->save_product_data( $data, $wp_id ),
+			'variant' => $this->save_variant_data( $data, $wp_id ),
 			'order'   => $this->save_order_data( $data, $wp_id ),
 			'stock'   => $this->save_stock_data( $data ),
 			'invoice' => $this->save_invoice_data( $data, $wp_id ),
@@ -427,6 +587,47 @@ class WooCommerce_Module extends Module_Base {
 	}
 
 	/**
+	 * Save variant (variation) data to WooCommerce.
+	 *
+	 * Delegates to the Variant_Handler for creating/updating variations.
+	 *
+	 * @param array $data  Mapped variant data.
+	 * @param int   $wp_id Existing variation ID (0 to create).
+	 * @return int Variation ID or 0 on failure.
+	 */
+	private function save_variant_data( array $data, int $wp_id = 0 ): int {
+		// Variant saving is handled by pull_variant() → Variant_Handler.
+		// This method covers the base class save_wp_data path.
+		if ( $wp_id > 0 ) {
+			$variation = wc_get_product( $wp_id );
+			if ( ! $variation ) {
+				return 0;
+			}
+
+			if ( isset( $data['sku'] ) && '' !== $data['sku'] ) {
+				$variation->set_sku( $data['sku'] );
+			}
+			if ( isset( $data['regular_price'] ) ) {
+				$variation->set_regular_price( (string) $data['regular_price'] );
+			}
+			if ( isset( $data['stock_quantity'] ) ) {
+				$variation->set_manage_stock( true );
+				$variation->set_stock_quantity( (int) $data['stock_quantity'] );
+			}
+			if ( isset( $data['weight'] ) && $data['weight'] ) {
+				$variation->set_weight( (string) $data['weight'] );
+			}
+
+			$saved_id = $variation->save();
+			return $saved_id > 0 ? $saved_id : 0;
+		}
+
+		// Cannot create variation without parent context; handled by Variant_Handler.
+		$this->logger->warning( 'Variant creation without parent context is not supported via save_wp_data.' );
+		return 0;
+	}
+
+	/**
 	 * Save order data to WooCommerce.
 	 *
 	 * Primarily used for status updates from Odoo.
@@ -474,6 +675,10 @@ class WooCommerce_Module extends Module_Base {
 		}
 
 		$wp_product_id = $this->get_wp_mapping( 'product', $odoo_product_id );
+		if ( ! $wp_product_id ) {
+			// stock.quant references product.product (variant), not product.template.
+			$wp_product_id = $this->get_wp_mapping( 'variant', $odoo_product_id );
+		}
 		if ( ! $wp_product_id ) {
 			$this->logger->warning( 'Stock update: no WC product mapped for Odoo product.', [
 				'odoo_product_id' => $odoo_product_id,
@@ -544,7 +749,7 @@ class WooCommerce_Module extends Module_Base {
 	 * @return bool
 	 */
 	protected function delete_wp_data( string $entity_type, int $wp_id ): bool {
-		if ( 'product' === $entity_type ) {
+		if ( 'product' === $entity_type || 'variant' === $entity_type ) {
 			$product = wc_get_product( $wp_id );
 			if ( $product ) {
 				$product->delete( true );

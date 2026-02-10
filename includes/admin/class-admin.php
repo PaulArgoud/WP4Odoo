@@ -98,6 +98,8 @@ class Admin {
 				'noResults'        => __( 'No results.', 'wp4odoo' ),
 				'settingsSaved'    => __( 'Settings saved.', 'wp4odoo' ),
 				'settingsFailed'   => __( 'Failed to save settings.', 'wp4odoo' ),
+				'confirmBulkImport' => __( 'Import all products from Odoo? This will enqueue sync jobs for all Odoo products.', 'wp4odoo' ),
+				'confirmBulkExport' => __( 'Export all products to Odoo? This will enqueue sync jobs for all WooCommerce products.', 'wp4odoo' ),
 			],
 		] );
 	}

@@ -10,7 +10,7 @@ Modular WordPress plugin providing comprehensive, bidirectional integration betw
 
 - **CRM Module** — Bidirectional contact sync (WP users <-> `res.partner`), lead capture form with shortcode, email deduplication, archive-on-delete, role-based filtering, country/state resolution
 - **Sales Module** — Order and invoice sync from Odoo, custom post types for local storage, customer portal with tabbed UI (`[wp4odoo_customer_portal]`)
-- **WooCommerce Module** — WC-native product, order, and stock sync with Odoo status mapping, HPOS compatible (mutually exclusive with Sales module)
+- **WooCommerce Module** — WC-native product, order, and stock sync with Odoo status mapping, HPOS compatible, product variant import from Odoo, bulk product import/export (mutually exclusive with Sales module)
 - **Async Queue** — No API calls during user requests; all sync jobs go through a persistent database queue with exponential backoff, deduplication, and configurable batch size
 - **Dual Transport** — JSON-RPC 2.0 (default for Odoo 17+) and XML-RPC (legacy), swappable via settings
 - **Webhooks** — REST API endpoints for real-time notifications from Odoo, with per-IP rate limiting
@@ -82,7 +82,7 @@ Each Odoo domain is encapsulated in an independent module extending `Module_Base
 |--------|-------------|--------------|
 | **CRM** | `res.partner`, `crm.lead` | Contact sync, lead form shortcode, email dedup, archive-on-delete |
 | **Sales** | `sale.order`, `account.move` | Order/invoice CPTs, customer portal shortcode |
-| **WooCommerce** | `product.template`, `sale.order`, `stock.quant` | WC-native product/order/stock sync, status mapping |
+| **WooCommerce** | `product.template`, `product.product`, `sale.order`, `stock.quant` | WC-native product/order/stock sync, product variants, bulk import/export, status mapping |
 
 Third-party modules can be registered:
 
@@ -155,7 +155,7 @@ Namespace: `wp-json/wp4odoo/v1/`
 # Install dependencies
 php composer.phar install
 
-# Run PHPUnit tests (95 tests, 154 assertions)
+# Run PHPUnit tests (118 tests, 186 assertions)
 php vendor/bin/phpunit
 
 # Run PHPStan static analysis (level 5, 0 errors)

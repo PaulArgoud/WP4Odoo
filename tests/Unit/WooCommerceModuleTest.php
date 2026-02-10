@@ -52,6 +52,11 @@ class WooCommerceModuleTest extends TestCase {
 		$this->assertSame( 'stock.quant', $models['stock'] );
 	}
 
+	public function test_declares_variant_model(): void {
+		$models = $this->module->get_odoo_models();
+		$this->assertSame( 'product.product', $models['variant'] );
+	}
+
 	public function test_declares_invoice_model(): void {
 		$models = $this->module->get_odoo_models();
 		$this->assertSame( 'account.move', $models['invoice'] );
@@ -110,6 +115,33 @@ class WooCommerceModuleTest extends TestCase {
 	public function test_invoice_mapping_includes_state(): void {
 		$mapping = $this->module->map_to_odoo( 'invoice', [ '_invoice_state' => 'posted' ] );
 		$this->assertSame( 'posted', $mapping['state'] );
+	}
+
+	public function test_variant_mapping_includes_sku(): void {
+		$mapping = $this->module->map_to_odoo( 'variant', [ 'sku' => 'VAR-01' ] );
+		$this->assertSame( 'VAR-01', $mapping['default_code'] );
+	}
+
+	public function test_variant_mapping_includes_price(): void {
+		$mapping = $this->module->map_to_odoo( 'variant', [ 'regular_price' => '39.99' ] );
+		$this->assertSame( '39.99', $mapping['lst_price'] );
+	}
+
+	public function test_map_from_odoo_variant(): void {
+		$odoo_data = [
+			'default_code'  => 'VAR-02',
+			'lst_price'     => 25.0,
+			'qty_available' => 10,
+			'weight'        => 0.5,
+			'display_name'  => 'Widget [Red, M]',
+		];
+		$wp_data = $this->module->map_from_odoo( 'variant', $odoo_data );
+
+		$this->assertSame( 'VAR-02', $wp_data['sku'] );
+		$this->assertSame( 25.0, $wp_data['regular_price'] );
+		$this->assertSame( 10, $wp_data['stock_quantity'] );
+		$this->assertSame( 0.5, $wp_data['weight'] );
+		$this->assertSame( 'Widget [Red, M]', $wp_data['display_name'] );
 	}
 
 	// ─── Reverse Mapping ───────────────────────────────────

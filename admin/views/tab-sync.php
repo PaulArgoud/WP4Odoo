@@ -142,3 +142,19 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 	<?php submit_button( __( 'Save', 'wp4odoo' ) ); ?>
 </form>
+
+<hr />
+
+<h2><?php esc_html_e( 'Bulk Operations', 'wp4odoo' ); ?></h2>
+<p class="description">
+	<?php esc_html_e( 'Import or export all products at once via the queue. Jobs are processed in the background by the sync engine.', 'wp4odoo' ); ?>
+</p>
+<p>
+	<button type="button" id="wp4odoo-bulk-import" class="button">
+		<?php esc_html_e( 'Import all products from Odoo', 'wp4odoo' ); ?>
+	</button>
+	<button type="button" id="wp4odoo-bulk-export" class="button">
+		<?php esc_html_e( 'Export all products to Odoo', 'wp4odoo' ); ?>
+	</button>
+	<span id="wp4odoo-bulk-feedback"></span>
+</p>

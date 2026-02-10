@@ -4,6 +4,7 @@ declare( strict_types=1 );
 namespace WP4Odoo\Admin;
 
 use WP4Odoo\API\Odoo_Auth;
+use WP4Odoo\Entity_Map_Repository;
 use WP4Odoo\Logger;
 use WP4Odoo\Query_Service;
 use WP4Odoo\Queue_Manager;
@@ -35,6 +36,8 @@ class Admin_Ajax {
 			'wp4odoo_queue_stats',
 			'wp4odoo_toggle_module',
 			'wp4odoo_save_module_settings',
+			'wp4odoo_bulk_import_products',
+			'wp4odoo_bulk_export_products',
 		];
 
 		foreach ( $actions as $action ) {
@@ -345,6 +348,107 @@ class Admin_Ajax {
 
 		wp_send_json_success( [
 			'message' => __( 'Settings saved.', 'wp4odoo' ),
+		] );
+	}
+
+	// ─── Bulk Operations ────────────────────────────────────
+
+	/**
+	 * Bulk import all products from Odoo into WooCommerce.
+	 *
+	 * Searches all Odoo product.template IDs and enqueues pull jobs
+	 * through the queue system (no synchronous API calls).
+	 *
+	 * @return void
+	 */
+	public function bulk_import_products(): void {
+		$this->verify_request();
+
+		$plugin = \WP4Odoo_Plugin::instance();
+		$module = $plugin->get_module( 'woocommerce' );
+
+		if ( null === $module ) {
+			wp_send_json_error( [
+				'message' => __( 'WooCommerce module is not registered.', 'wp4odoo' ),
+			] );
+		}
+
+		$client = $plugin->client();
+		$odoo_ids = $client->search( 'product.template', [] );
+
+		if ( empty( $odoo_ids ) ) {
+			wp_send_json_success( [
+				'enqueued' => 0,
+				'message'  => __( 'No products found in Odoo.', 'wp4odoo' ),
+			] );
+		}
+
+		$enqueued = 0;
+		foreach ( $odoo_ids as $odoo_id ) {
+			$odoo_id = (int) $odoo_id;
+			$wp_id   = Entity_Map_Repository::get_wp_id( 'woocommerce', 'product', $odoo_id );
+			$action  = $wp_id ? 'update' : 'create';
+
+			Queue_Manager::pull( 'woocommerce', 'product', $action, $odoo_id, $wp_id, [], 5 );
+			++$enqueued;
+		}
+
+		wp_send_json_success( [
+			'enqueued' => $enqueued,
+			'message'  => sprintf(
+				/* translators: %d: number of products enqueued */
+				__( '%d product(s) enqueued for import.', 'wp4odoo' ),
+				$enqueued
+			),
+		] );
+	}
+
+	/**
+	 * Bulk export all WooCommerce products to Odoo.
+	 *
+	 * Iterates all WC product IDs and enqueues push jobs
+	 * through the queue system.
+	 *
+	 * @return void
+	 */
+	public function bulk_export_products(): void {
+		$this->verify_request();
+
+		$plugin = \WP4Odoo_Plugin::instance();
+		$module = $plugin->get_module( 'woocommerce' );
+
+		if ( null === $module ) {
+			wp_send_json_error( [
+				'message' => __( 'WooCommerce module is not registered.', 'wp4odoo' ),
+			] );
+		}
+
+		$product_ids = wc_get_products( [ 'limit' => -1, 'return' => 'ids' ] );
+
+		if ( empty( $product_ids ) ) {
+			wp_send_json_success( [
+				'enqueued' => 0,
+				'message'  => __( 'No WooCommerce products found.', 'wp4odoo' ),
+			] );
+		}
+
+		$enqueued = 0;
+		foreach ( $product_ids as $wp_id ) {
+			$wp_id   = (int) $wp_id;
+			$odoo_id = Entity_Map_Repository::get_odoo_id( 'woocommerce', 'product', $wp_id );
+			$action  = $odoo_id ? 'update' : 'create';
+
+			Queue_Manager::push( 'woocommerce', 'product', $action, $wp_id, $odoo_id ?? 0 );
+			++$enqueued;
+		}
+
+		wp_send_json_success( [
+			'enqueued' => $enqueued,
+			'message'  => sprintf(
+				/* translators: %d: number of products enqueued */
+				__( '%d product(s) enqueued for export.', 'wp4odoo' ),
+				$enqueued
+			),
 		] );
 	}
 }

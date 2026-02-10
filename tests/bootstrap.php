@@ -86,6 +86,93 @@ namespace {
 		}
 	}
 
+	if ( ! function_exists( 'sanitize_title' ) ) {
+		function sanitize_title( $title ) {
+			return strtolower( preg_replace( '/[^a-zA-Z0-9_-]/', '-', trim( (string) $title ) ) );
+		}
+	}
+
+	if ( ! function_exists( 'wp_set_object_terms' ) ) {
+		function wp_set_object_terms( $object_id, $terms, $taxonomy, $append = false ) {
+			return [ 1 ];
+		}
+	}
+
+	if ( ! function_exists( 'wc_get_product' ) ) {
+		function wc_get_product( $product_id = 0 ) {
+			return false;
+		}
+	}
+
+	if ( ! function_exists( 'wc_get_products' ) ) {
+		function wc_get_products( $args = [] ) {
+			return [];
+		}
+	}
+
+	if ( ! function_exists( 'wc_update_product_stock' ) ) {
+		function wc_update_product_stock( $product_id, $stock_quantity = null ) {
+			return true;
+		}
+	}
+
+	// ─── WooCommerce class stubs ────────────────────────────
+
+	if ( ! class_exists( 'WC_Product' ) ) {
+		class WC_Product {
+			protected int $id = 0;
+			protected array $data = [];
+			public function get_name(): string { return $this->data['name'] ?? ''; }
+			public function set_name( string $name ): void { $this->data['name'] = $name; }
+			public function get_sku(): string { return $this->data['sku'] ?? ''; }
+			public function set_sku( string $sku ): void { $this->data['sku'] = $sku; }
+			public function get_regular_price(): string { return $this->data['regular_price'] ?? ''; }
+			public function set_regular_price( string $price ): void { $this->data['regular_price'] = $price; }
+			public function get_stock_quantity(): ?int { return $this->data['stock_quantity'] ?? null; }
+			public function set_stock_quantity( ?int $quantity ): void { $this->data['stock_quantity'] = $quantity; }
+			public function set_manage_stock( bool $manage ): void {}
+			public function get_weight(): string { return $this->data['weight'] ?? ''; }
+			public function set_weight( string $weight ): void { $this->data['weight'] = $weight; }
+			public function get_description(): string { return $this->data['description'] ?? ''; }
+			public function set_description( string $description ): void { $this->data['description'] = $description; }
+			public function save(): int { return $this->id ?: 1; }
+			public function delete( bool $force = false ): bool { return true; }
+		}
+	}
+
+	if ( ! class_exists( 'WC_Product_Variable' ) ) {
+		class WC_Product_Variable extends WC_Product {
+			public function __construct( int $id = 0 ) { $this->id = $id; }
+			public function set_attributes( $attributes ): void {}
+		}
+	}
+
+	if ( ! class_exists( 'WC_Product_Variation' ) ) {
+		class WC_Product_Variation extends WC_Product {
+			protected int $parent_id = 0;
+			protected array $attrs = [];
+			public function set_parent_id( int $parent_id ): void { $this->parent_id = $parent_id; }
+			public function set_attributes( $attributes ): void { $this->attrs = is_array( $attributes ) ? $attributes : []; }
+		}
+	}
+
+	if ( ! class_exists( 'WC_Product_Attribute' ) ) {
+		class WC_Product_Attribute {
+			private string $name = '';
+			private array $options = [];
+			private bool $visible = true;
+			private bool $variation = false;
+			private int $position = 0;
+			public function set_name( string $name ): void { $this->name = $name; }
+			public function set_options( array $options ): void { $this->options = $options; }
+			public function set_visible( bool $visible ): void { $this->visible = $visible; }
+			public function set_variation( bool $variation ): void { $this->variation = $variation; }
+			public function set_position( int $position ): void { $this->position = $position; }
+			public function get_name(): string { return $this->name; }
+			public function get_options(): array { return $this->options; }
+		}
+	}
+
 	// ─── wpdb stub ──────────────────────────────────────────
 
 	/**
@@ -198,6 +285,7 @@ namespace {
 	require_once WP4ODOO_PLUGIN_DIR . 'includes/class-module-base.php';
 	require_once WP4ODOO_PLUGIN_DIR . 'includes/class-sync-engine.php';
 	require_once WP4ODOO_PLUGIN_DIR . 'includes/class-queue-manager.php';
+	require_once WP4ODOO_PLUGIN_DIR . 'includes/modules/class-variant-handler.php';
 	require_once WP4ODOO_PLUGIN_DIR . 'includes/modules/class-woocommerce-module.php';
 
 }

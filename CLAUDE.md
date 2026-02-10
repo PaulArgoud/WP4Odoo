@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-WordPress plugin providing bidirectional sync between WordPress/WooCommerce and Odoo ERP (v17+). **Version 1.3.1** — core infrastructure, admin UI, API layer, CRM module, Sales module with customer portal, WooCommerce module (HPOS compatible), PHPUnit tests, CI/CD, and full i18n (FR) are complete.
+WordPress plugin providing bidirectional sync between WordPress/WooCommerce and Odoo ERP (v17+). **Version 1.4.0** — core infrastructure, admin UI, API layer, CRM module, Sales module with customer portal, WooCommerce module with bulk import/export and product variants (HPOS compatible), PHPUnit tests, CI/CD, and full i18n (FR) are complete.
 
 For detailed architecture, diagrams, and data flows, see [ARCHITECTURE.md](ARCHITECTURE.md).
 
@@ -24,7 +24,7 @@ For detailed architecture, diagrams, and data flows, see [ARCHITECTURE.md](ARCHI
 - `tests/bootstrap.php` stubs ABSPATH, WP functions (`sanitize_text_field`, `absint`, `current_time`, etc.), `WP_DB_Stub` for $wpdb mocking, and `WP4Odoo\Logger`
 - Uses multiple `namespace {}` blocks (PHP requires consistent brace style when mixing namespaces)
 - Plugin classes loaded via `require_once` (WordPress filenames, not PSR-4)
-- Run: `php vendor/bin/phpunit` — 95 tests, 154 assertions
+- Run: `php vendor/bin/phpunit` — 118 tests, 186 assertions
 
 **PHPStan** — static analysis at level 5:
 - `phpstan.neon` config with `szepeviktor/phpstan-wordpress` stubs
@@ -111,7 +111,8 @@ For detailed architecture, diagrams, and data flows, see [ARCHITECTURE.md](ARCHI
 
 | Class | Role |
 |-------|------|
-| `WooCommerce_Module` | WC-native product/order sync, stock pull, invoice CPT. Mutually exclusive with Sales_Module. Uses `Partner_Service` for customer resolution |
+| `WooCommerce_Module` | WC-native product/order/variant sync, stock pull, invoice CPT, bulk import/export. Mutually exclusive with Sales_Module. Uses `Partner_Service` for customer resolution |
+| `Variant_Handler` | Product variant import: `product.product` → WC variations, attribute resolution, variable product conversion |
 
 ### Admin (`includes/admin/`)
 
@@ -119,20 +120,20 @@ For detailed architecture, diagrams, and data flows, see [ARCHITECTURE.md](ARCHI
 |-------|------|
 | `Admin` | Menu registration, asset enqueuing, plugin action link |
 | `Settings_Page` | 5-tab settings page, Settings API, sanitize callbacks |
-| `Admin_Ajax` | 9 AJAX handlers with nonce + capability verification |
+| `Admin_Ajax` | 11 AJAX handlers with nonce + capability verification (incl. bulk import/export) |
 
 ## Implementation Status
 
-### Complete (v1.3.1)
+### Complete (v1.4.0)
 
 - **Core API** — Transport interface, JSON-RPC/XML-RPC transports, Odoo_Client, Odoo_Auth
 - **Core Infrastructure** — Sync_Engine, Queue_Manager, Field_Mapper, Query_Service, Webhook_Handler, Logger, Entity_Map_Repository, Sync_Queue_Repository, Partner_Service
 - **CRM Module** — bidirectional contact sync, lead form + CPT, email dedup, archive-on-delete, role filtering, country/state resolution
 - **Sales Module** — order/invoice CPTs, field mappings, Many2one resolution, customer portal with tabbed UI
-- **WooCommerce Module** — WC-native product/order sync, stock pull from Odoo, invoice CPT, Odoo status mapping, mutually exclusive with Sales Module
-- **Admin UI** — 5-tab settings page, 9 AJAX handlers, module settings panels, mutual exclusion warning
-- **PHPUnit** — 95 tests, 154 assertions
-- **PHPStan** — level 5, 0 errors on 28 files
+- **WooCommerce Module** — WC-native product/order sync, stock pull from Odoo, invoice CPT, Odoo status mapping, mutually exclusive with Sales Module, **bulk product import/export**, **product variants** (pull from Odoo), Variant_Handler
+- **Admin UI** — 5-tab settings page, 11 AJAX handlers, module settings panels, mutual exclusion warning, bulk operations UI
+- **PHPUnit** — 118 tests, 186 assertions
+- **PHPStan** — level 5, 0 errors on 29 files
 - **i18n** — translated strings (EN source, FR translation)
 - **Security** — encrypted API keys, nonce verification, webhook rate limiting, index.php in all dirs, uninstall.php
 - **CI/CD** — GitHub Actions (PHP 8.2 + 8.3, PHPUnit, PHPStan)
@@ -140,4 +141,4 @@ For detailed architecture, diagrams, and data flows, see [ARCHITECTURE.md](ARCHI
 
 ### TODO
 
-- **Future** — bulk import/export, product images, WooCommerce tax/shipping mapping, product variants, multi-currency
+- **Future** — product images, WooCommerce tax/shipping mapping, multi-currency

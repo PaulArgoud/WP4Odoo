@@ -6,7 +6,7 @@
  * @package WP4Odoo
  */
 
-define( 'WP4ODOO_VERSION', '1.3.0' );
+define( 'WP4ODOO_VERSION', '1.4.0' );
 define( 'WP4ODOO_PLUGIN_FILE', __DIR__ . '/wp4odoo.php' );
 define( 'WP4ODOO_PLUGIN_DIR', __DIR__ . '/' );
 define( 'WP4ODOO_PLUGIN_URL', 'https://example.com/wp-content/plugins/wp4odoo/' );
@@ -108,6 +108,43 @@ if ( ! class_exists( 'WC_Order' ) ) {
 		public function get_formatted_billing_full_name(): string { return ''; }
 		public function get_customer_id(): int { return 0; }
 		public function save(): int { return 0; }
+	}
+}
+
+if ( ! class_exists( 'WC_Product_Variable' ) ) {
+	class WC_Product_Variable extends WC_Product {
+		public function __construct( int $id = 0 ) {}
+		/** @param WC_Product_Attribute[] $attributes */
+		public function set_attributes( array $attributes ): void {}
+	}
+}
+
+if ( ! class_exists( 'WC_Product_Variation' ) ) {
+	class WC_Product_Variation extends WC_Product {
+		public function set_parent_id( int $parent_id ): void {}
+		/** @param array<string, string> $attributes */
+		public function set_attributes( $attributes ): void {}
+	}
+}
+
+if ( ! class_exists( 'WC_Product_Attribute' ) ) {
+	class WC_Product_Attribute {
+		public function set_name( string $name ): void {}
+		/** @param string[] $options */
+		public function set_options( array $options ): void {}
+		public function set_visible( bool $visible ): void {}
+		public function set_variation( bool $variation ): void {}
+		public function set_position( int $position ): void {}
+	}
+}
+
+if ( ! function_exists( 'wc_get_products' ) ) {
+	/**
+	 * @param array $args
+	 * @return array
+	 */
+	function wc_get_products( $args = [] ) {
+		return [];
 	}
 }
 

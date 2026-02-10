@@ -66,11 +66,12 @@ WordPress For Odoo/
 │   │   ├── class-contact-refiner.php  # CRM: name/country/state refinement filters
 │   │   ├── class-sales-module.php     # Sales: orders, invoices, products (~350 lines, 12 methods)
 │   │   ├── class-portal-manager.php   # Sales: customer portal shortcode, AJAX, queries
-│   │   └── class-woocommerce-module.php  # WooCommerce: products/orders/stock sync
+│   │   ├── class-variant-handler.php    # WooCommerce: variant import (product.product → WC variations)
+│   │   └── class-woocommerce-module.php  # WooCommerce: products/orders/stock/variants sync
 │   │
 │   ├── admin/
 │   │   ├── class-admin.php            # Admin menu, asset enqueuing, plugin action link
-│   │   ├── class-admin-ajax.php       # 9 AJAX handlers (test, retry, cleanup, logs, module settings, etc.)
+│   │   ├── class-admin-ajax.php       # 11 AJAX handlers (test, retry, cleanup, logs, module settings, bulk import/export, etc.)
 │   │   └── class-settings-page.php    # Settings API, 5-tab rendering, sanitize callbacks
 │   │
 │   ├── class-module-base.php          # Abstract base class for modules
@@ -104,7 +105,7 @@ WordPress For Odoo/
 ├── templates/
 │   └── customer-portal.php           #   Customer portal HTML template (orders/invoices tabs)
 │
-├── tests/                             # PHPUnit tests (95 tests, 154 assertions)
+├── tests/                             # PHPUnit tests (118 tests, 186 assertions)
 │   ├── bootstrap.php                 #   WP function stubs + class loading
 │   └── Unit/
 │       ├── EntityMapRepositoryTest.php  #   10 tests for Entity_Map_Repository
@@ -113,7 +114,9 @@ WordPress For Odoo/
 │       ├── PartnerServiceTest.php       #   11 tests for Partner_Service
 │       ├── QueueManagerTest.php         #   7 tests for Queue_Manager
 │       ├── SyncQueueRepositoryTest.php  #   16 tests for Sync_Queue_Repository
-│       └── WooCommerceModuleTest.php    #   18 tests for WooCommerce_Module
+│       ├── WooCommerceModuleTest.php    #   21 tests for WooCommerce_Module
+│       ├── VariantHandlerTest.php       #   7 tests for Variant_Handler
+│       └── BulkSyncTest.php             #   10 tests for bulk import/export
 │
 ├── uninstall.php                      # Cleanup on plugin uninstall
 │
@@ -393,7 +396,7 @@ All user inputs are sanitized with:
 **Key classes:**
 - `Admin` — orchestrator: menu registration, asset enqueuing, plugin settings link
 - `Settings_Page` — Settings API registration, tab rendering, sanitize callbacks
-- `Admin_Ajax` — 9 handlers: test_connection, retry_failed, cleanup_queue, cancel_job, purge_logs, fetch_logs, queue_stats, toggle_module, save_module_settings
+- `Admin_Ajax` — 11 handlers: test_connection, retry_failed, cleanup_queue, cancel_job, purge_logs, fetch_logs, queue_stats, toggle_module, save_module_settings, bulk_import_products, bulk_export_products
 
 ## Modules Detail
 
@@ -472,9 +475,9 @@ state → _invoice_state, payment_state → _payment_state, partner_id → _wp4o
 
 ### WooCommerce — COMPLETE
 
-**Files:** `class-woocommerce-module.php` (product/order/stock/invoice sync)
+**Files:** `class-woocommerce-module.php` (product/order/stock/variant/invoice sync), `class-variant-handler.php` (variant import)
 
-**Odoo models:** `product.template`, `sale.order`, `stock.quant`, `account.move`
+**Odoo models:** `product.template`, `product.product`, `sale.order`, `stock.quant`, `account.move`
 
 | Direction | Source | Destination | Matching |
 |-----------|--------|-------------|----------|
@@ -485,6 +488,9 @@ state → _invoice_state, payment_state → _payment_state, partner_id → _wp4o
 | Odoo → WP | Webhook `sale.order` | WC order status update | Mapping |
 | Odoo → WP | Webhook `stock.quant` | `wc_update_product_stock()` | SKU |
 | Odoo → WP | Webhook `account.move` | `wp4odoo_invoice` CPT | Mapping |
+| Odoo → WP | Product pull `product.product` | WC variations (auto-enqueued after template pull) | Template mapping |
+| WP → Odoo | Bulk export (all products) | `product.template` create/update (via queue) | Entity map |
+| Odoo → WP | Bulk import (all products) | WC product create/update + variants (via queue) | Entity map |
 
 **Key features:**
 - Mutually exclusive with Sales_Module (same Odoo models)
@@ -492,6 +498,9 @@ state → _invoice_state, payment_state → _payment_state, partner_id → _wp4o
 - WC-native APIs: `wc_get_product()`, `wc_get_order()`, `wc_update_product_stock()`
 - HPOS compatible (High-Performance Order Storage)
 - `wp4odoo_invoice` CPT for invoices (WC has no native invoice type)
+- **Product variants**: auto-imports `product.product` variants as WC variations after a `product.template` pull; skips single-variant (simple) products; resolves attributes via `product.template.attribute.value`
+- **Bulk operations**: queue-based import/export of all products via admin UI (Sync tab), no synchronous API calls during requests
+- `stock.quant` resolution: checks both `product` and `variant` entity mappings (since stock.quant references `product.product`)
 
 **Order status mapping (Odoo → WC):**
 

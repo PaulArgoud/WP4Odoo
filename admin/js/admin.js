@@ -20,6 +20,8 @@
 			this.bindCleanupQueue();
 			this.bindRefreshStats();
 			this.bindCancelJob();
+			this.bindBulkImport();
+			this.bindBulkExport();
 			this.bindFilterLogs();
 			this.bindPurgeLogs();
 			this.bindLogPagination();
@@ -243,6 +245,30 @@
 					$row.fadeOut( 200, function() { $( this ).remove(); } );
 					WP4Odoo.refreshStats();
 				}, null );
+			} );
+		},
+
+		// ─── Bulk Operations ──────────────────────────────────────
+
+		bindBulkImport: function() {
+			$( '#wp4odoo-bulk-import' ).on( 'click', function() {
+				if ( ! confirm( wp4odooAdmin.i18n.confirmBulkImport ) ) {
+					return;
+				}
+				WP4Odoo.ajax( 'wp4odoo_bulk_import_products', {}, function( data ) {
+					WP4Odoo.showNotice( 'success', data.message );
+				}, $( this ) );
+			} );
+		},
+
+		bindBulkExport: function() {
+			$( '#wp4odoo-bulk-export' ).on( 'click', function() {
+				if ( ! confirm( wp4odooAdmin.i18n.confirmBulkExport ) ) {
+					return;
+				}
+				WP4Odoo.ajax( 'wp4odoo_bulk_export_products', {}, function( data ) {
+					WP4Odoo.showNotice( 'success', data.message );
+				}, $( this ) );
 			} );
 		},
 

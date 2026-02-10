@@ -5,6 +5,52 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-02-10
+
+### Added
+
+#### WooCommerce Module — Bulk Product Import/Export
+- `bulk_import_products` AJAX handler: searches all Odoo `product.template` IDs, enqueues pull jobs (create or update based on existing mapping) via the queue system
+- `bulk_export_products` AJAX handler: iterates all WooCommerce product IDs, enqueues push jobs (create or update based on existing mapping) via the queue system
+- Admin UI: "Bulk Operations" section in Sync tab with "Import all products from Odoo" and "Export all products to Odoo" buttons, confirm dialogs, success notices
+- Admin JS bindings: `bindBulkImport()`, `bindBulkExport()` with `wp4odooAdmin.i18n.confirmBulkImport` / `confirmBulkExport`
+
+#### WooCommerce Module — Product Variants (Pull from Odoo)
+- `Variant_Handler` class (`includes/modules/class-variant-handler.php`, ~270 lines): dedicated handler for importing Odoo `product.product` variants into WooCommerce variable products
+  - `pull_variants()`: reads all variants for a template, converts parent to variable product, creates/updates WC variations with SKU, price, stock, weight, and attributes
+  - `ensure_variable_product()`: converts a simple WC product to variable if needed (`wp_set_object_terms` + `WC_Product_Variable`)
+  - `save_variation()`: creates or updates a `WC_Product_Variation` with field data and attributes
+  - `collect_attributes()`: batch-reads `product.template.attribute.value` from Odoo, returns structured attribute data
+  - `set_parent_attributes()`: registers `WC_Product_Attribute` objects on the variable parent
+- `variant` entity type in `WooCommerce_Module`:
+  - `$odoo_models['variant'] = 'product.product'`
+  - `$default_mappings['variant']`: sku→default_code, regular_price→lst_price, stock_quantity→qty_available, weight→weight, display_name→display_name
+  - `load_variant_data()`, `save_variant_data()`, `delete_wp_data('variant')` added to match expressions
+- `pull_from_odoo()` override in `WooCommerce_Module`:
+  - Variant entities: delegates to `pull_variant()` → `Variant_Handler`
+  - Product entities: calls parent pull, then auto-enqueues variant pulls via `enqueue_variants_for_template()` when >1 variant exists
+  - Single-variant templates (simple products) are skipped automatically
+- `save_stock_data()` updated: also checks `variant` entity mapping since `stock.quant` references `product.product` IDs, not `product.template`
+- Entity mapping for variants: `entity_type = 'variant'`, `odoo_model = 'product.product'`
+
+#### Tests
+- `VariantHandlerTest` — 7 tests: instantiation, save_variation (new, empty SKU, with attributes, zero weight), ensure_variable_product, pull_variants with empty data
+- `BulkSyncTest` — 10 tests: entity mapping lookups, queue enqueue patterns, bulk import/export create/update logic, variant mapping save
+- Updated `WooCommerceModuleTest` — 3 new tests: variant model declaration, variant mapping (forward + reverse)
+- WC class stubs in `tests/bootstrap.php`: `WC_Product`, `WC_Product_Variable`, `WC_Product_Variation`, `WC_Product_Attribute`, `wc_get_product()`, `wc_get_products()`, `wc_update_product_stock()`, `wp_set_object_terms()`, `sanitize_title()`
+- WC class stubs in `phpstan-bootstrap.php`: `WC_Product_Variable`, `WC_Product_Variation`, `WC_Product_Attribute`, `wc_get_products()`
+
+### Changed
+
+- `Admin_Ajax` now has 11 handlers (added `bulk_import_products`, `bulk_export_products`)
+- `admin.js` expanded with `bindBulkImport()` and `bindBulkExport()` methods
+- `class-admin.php`: 2 new i18n strings (`confirmBulkImport`, `confirmBulkExport`)
+- `tab-sync.php`: added "Bulk Operations" section after the settings form
+- `phpstan-bootstrap.php`: version bump + WC variant stubs
+- 118 tests, 186 assertions — all green (was 95 tests, 154 assertions)
+- PHPStan: 0 errors on 29 files (was 28)
+- Plugin version bumped from 1.3.1 to 1.4.0
+
 ## [1.3.1] - 2026-02-10
 
 ### Added
