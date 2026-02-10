@@ -114,14 +114,15 @@ class Contact_Refiner {
 			$wp_data['last_name']  = $parts[1] ?? '';
 		}
 
-		// Resolve country_id Many2one to ISO code.
+		// Resolve country_id Many2one to ISO code (requires API call — code not in tuple).
 		if ( isset( $odoo_data['country_id'] ) ) {
 			$wp_data['billing_country'] = $this->resolve_many2one_field( $odoo_data['country_id'], 'res.country', 'code' ) ?? '';
 		}
 
-		// Resolve state_id Many2one to state name.
+		// Resolve state_id Many2one — use display name from the tuple directly (avoids extra API call).
 		if ( isset( $odoo_data['state_id'] ) ) {
-			$wp_data['billing_state'] = $this->resolve_many2one_field( $odoo_data['state_id'], 'res.country.state', 'name' ) ?? '';
+			$state_name = Field_Mapper::many2one_to_name( $odoo_data['state_id'] );
+			$wp_data['billing_state'] = $state_name ?? '';
 		}
 
 		// Remove temporary mapping keys.

@@ -12,7 +12,7 @@ Modular WordPress plugin providing comprehensive, bidirectional integration betw
 - **Sales Module** — Order and invoice sync from Odoo, custom post types for local storage, customer portal with tabbed UI and currency display (`[wp4odoo_customer_portal]`)
 - **WooCommerce Module** — WC-native product, order, and stock sync with Odoo status mapping, HPOS compatible, product variant import from Odoo, product image pull, multi-currency guard (skips price if currency mismatch), bulk product import/export (mutually exclusive with Sales module)
 - **Async Queue** — No API calls during user requests; all sync jobs go through a persistent database queue with exponential backoff, deduplication, and configurable batch size
-- **Dual Transport** — JSON-RPC 2.0 (default for Odoo 17+) and XML-RPC (legacy), swappable via settings
+- **Dual Transport** — JSON-RPC 2.0 (default for Odoo 17+) and XML-RPC (legacy), swappable via settings, shared retry logic via `Retryable_Http` trait (3 attempts, exponential backoff + jitter)
 - **Webhooks** — REST API endpoints for real-time notifications from Odoo, with per-IP rate limiting
 - **Encrypted Credentials** — API keys encrypted at rest with libsodium (OpenSSL fallback)
 - **Admin Dashboard** — 5-tab settings interface: Connection, Sync, Modules, Queue, Logs
@@ -138,10 +138,10 @@ wp wp4odoo module disable crm        # Disable a module
 # Install dependencies
 php composer.phar install
 
-# Run PHPUnit tests (138 tests, 215 assertions)
+# Run PHPUnit tests (356 tests, 704 assertions)
 php vendor/bin/phpunit
 
-# Run PHPStan static analysis (level 5, 0 errors on 40 files)
+# Run PHPStan static analysis (level 5, 0 errors on 41 files)
 php -d memory_limit=1G vendor/bin/phpstan analyse --memory-limit=1G
 ```
 

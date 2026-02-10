@@ -121,13 +121,23 @@ class Order_Handler {
 	 * @return string WC status (without 'wc-' prefix).
 	 */
 	public function map_odoo_status_to_wc( string $odoo_state ): string {
-		return match ( $odoo_state ) {
+		$default_map = [
 			'draft'  => 'pending',
 			'sent'   => 'on-hold',
 			'sale'   => 'processing',
 			'done'   => 'completed',
 			'cancel' => 'cancelled',
-			default  => 'on-hold',
-		};
+		];
+
+		/**
+		 * Filters the Odoo → WooCommerce order status mapping.
+		 *
+		 * @since 1.9.1
+		 *
+		 * @param array<string, string> $map Odoo state => WC status (without wc- prefix).
+		 */
+		$map = apply_filters( 'wp4odoo_order_status_map', $default_map );
+
+		return $map[ $odoo_state ] ?? 'on-hold';
 	}
 }

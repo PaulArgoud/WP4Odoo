@@ -21,6 +21,8 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class Odoo_XmlRPC implements Transport {
 
+	use Retryable_Http;
+
 	/**
 	 * Odoo server URL (no trailing slash).
 	 *
@@ -178,27 +180,15 @@ class Odoo_XmlRPC implements Transport {
 		 */
 		$ssl_verify = apply_filters( 'wp4odoo_ssl_verify', true );
 
-		$response = wp_remote_post(
-			$this->url . $endpoint,
-			[
-				'timeout'   => $this->timeout,
-				'headers'   => [ 'Content-Type' => 'text/xml' ],
-				'body'      => $xml,
-				'sslverify' => $ssl_verify,
-			]
-		);
+		$request_args = [
+			'timeout'   => $this->timeout,
+			'headers'   => [ 'Content-Type' => 'text/xml' ],
+			'body'      => $xml,
+			'sslverify' => $ssl_verify,
+		];
 
-		if ( is_wp_error( $response ) ) {
-			$error_msg = sprintf(
-				/* translators: %s: error message from HTTP request */
-				__( 'HTTP error: %s', 'wp4odoo' ),
-				$response->get_error_message()
-			);
-			$this->logger->error( $error_msg, [ 'endpoint' => $endpoint ] );
-			throw new \RuntimeException( $error_msg );
-		}
-
-		$body = wp_remote_retrieve_body( $response );
+		$response = $this->http_post_with_retry( $this->url . $endpoint, $request_args, $endpoint );
+		$body     = wp_remote_retrieve_body( $response );
 
 		$message = new \IXR_Message( $body );
 
@@ -211,11 +201,18 @@ class Odoo_XmlRPC implements Transport {
 		if ( 'fault' === $message->messageType ) {
 			$fault_string = $message->faultString ?? __( 'Unknown XML-RPC fault', 'wp4odoo' );
 
-			$this->logger->error( 'Odoo XML-RPC fault.', [
-				'endpoint'   => $endpoint,
-				'faultCode'  => $message->faultCode ?? 0,
+			$context = [
+				'endpoint'    => $endpoint,
+				'faultCode'   => $message->faultCode ?? 0,
 				'faultString' => $fault_string,
-			] );
+			];
+			// Include model/method context from execute_kw calls.
+			if ( isset( $params[3], $params[4] ) ) {
+				$context['model']  = $params[3];
+				$context['method'] = $params[4];
+			}
+
+			$this->logger->error( 'Odoo XML-RPC fault.', $context );
 
 			throw new \RuntimeException(
 				sprintf(

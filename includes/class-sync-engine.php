@@ -32,6 +32,14 @@ class Sync_Engine {
 	private const LOCK_TIMEOUT = 1;
 
 	/**
+	 * Maximum wall-clock seconds for a single batch run.
+	 *
+	 * Prevents WP-Cron timeouts (default 60 s). We stop fetching
+	 * new jobs once this limit is reached; in-flight jobs finish.
+	 */
+	private const BATCH_TIME_LIMIT = 55;
+
+	/**
 	 * Logger instance.
 	 *
 	 * @var Logger
@@ -63,10 +71,20 @@ class Sync_Engine {
 		$batch    = (int) ( $settings['batch_size'] ?? 50 );
 		$now      = current_time( 'mysql', true );
 
-		$jobs      = Sync_Queue_Repository::fetch_pending( $batch, $now );
-		$processed = 0;
+		$jobs       = Sync_Queue_Repository::fetch_pending( $batch, $now );
+		$processed  = 0;
+		$start_time = microtime( true );
 
 		foreach ( $jobs as $job ) {
+			if ( ( microtime( true ) - $start_time ) >= self::BATCH_TIME_LIMIT ) {
+				$this->logger->info( 'Batch time limit reached, deferring remaining jobs.', [
+					'elapsed'   => round( microtime( true ) - $start_time, 2 ),
+					'processed' => $processed,
+					'remaining' => count( $jobs ) - $processed,
+				] );
+				break;
+			}
+
 			Sync_Queue_Repository::update_status( (int) $job->id, 'processing' );
 
 			try {

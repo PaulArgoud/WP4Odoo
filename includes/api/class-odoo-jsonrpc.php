@@ -19,6 +19,8 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class Odoo_JsonRPC implements Transport {
 
+	use Retryable_Http;
+
 	/**
 	 * Odoo server URL (no trailing slash).
 	 *
@@ -178,28 +180,14 @@ class Odoo_JsonRPC implements Transport {
 		/** This filter is documented in includes/api/class-odoo-xmlrpc.php */
 		$ssl_verify = apply_filters( 'wp4odoo_ssl_verify', true );
 
-		$response = wp_remote_post(
-			$this->url . $endpoint,
-			[
-				'timeout'   => $this->timeout,
-				'headers'   => [ 'Content-Type' => 'application/json' ],
-				'body'      => wp_json_encode( $payload ),
-				'sslverify' => $ssl_verify,
-			]
-		);
+		$request_args = [
+			'timeout'   => $this->timeout,
+			'headers'   => [ 'Content-Type' => 'application/json' ],
+			'body'      => wp_json_encode( $payload ),
+			'sslverify' => $ssl_verify,
+		];
 
-		if ( is_wp_error( $response ) ) {
-			$error_msg = sprintf(
-				/* translators: %s: error message from HTTP request */
-				__( 'HTTP error: %s', 'wp4odoo' ),
-				$response->get_error_message()
-			);
-			$this->logger->error( $error_msg, [
-				'endpoint' => $endpoint,
-			] );
-			throw new \RuntimeException( $error_msg );
-		}
-
+		$response    = $this->http_post_with_retry( $this->url . $endpoint, $request_args, $endpoint );
 		$status_code = wp_remote_retrieve_response_code( $response );
 		$body        = json_decode( wp_remote_retrieve_body( $response ), true );
 
@@ -216,10 +204,20 @@ class Odoo_JsonRPC implements Transport {
 			$error_data = $body['error']['data'] ?? $body['error'];
 			$error_msg  = $error_data['message'] ?? $body['error']['message'] ?? __( 'Unknown RPC error', 'wp4odoo' );
 
-			$this->logger->error( 'Odoo RPC error.', [
-				'endpoint' => $endpoint,
-				'error'    => $error_msg,
-			] );
+			$context = [
+				'endpoint'  => $endpoint,
+				'error'     => $error_msg,
+			];
+			// Include model/method context from execute_kw calls.
+			if ( isset( $params['args'][3], $params['args'][4] ) ) {
+				$context['model']  = $params['args'][3];
+				$context['method'] = $params['args'][4];
+			}
+			if ( isset( $error_data['debug'] ) ) {
+				$context['debug'] = mb_substr( (string) $error_data['debug'], 0, 500 );
+			}
+
+			$this->logger->error( 'Odoo RPC error.', $context );
 
 			throw new \RuntimeException(
 				sprintf(

@@ -26,6 +26,7 @@ final class Dependency_Loader {
 	public static function load(): void {
 		// Core API
 		require_once WP4ODOO_PLUGIN_DIR . 'includes/api/interface-transport.php';
+		require_once WP4ODOO_PLUGIN_DIR . 'includes/api/trait-retryable-http.php';
 		require_once WP4ODOO_PLUGIN_DIR . 'includes/api/class-odoo-client.php';
 		require_once WP4ODOO_PLUGIN_DIR . 'includes/api/class-odoo-jsonrpc.php';
 		require_once WP4ODOO_PLUGIN_DIR . 'includes/api/class-odoo-xmlrpc.php';

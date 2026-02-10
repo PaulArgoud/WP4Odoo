@@ -55,9 +55,10 @@ WordPress For Odoo/
 ├── includes/
 │   ├── api/
 │   │   ├── interface-transport.php    # Transport interface (authenticate, execute_kw, get_uid)
+│   │   ├── trait-retryable-http.php   # Retryable_Http trait (retry + exponential backoff + jitter)
 │   │   ├── class-odoo-client.php      # High-level client (CRUD, search, fields_get)
-│   │   ├── class-odoo-jsonrpc.php     # JSON-RPC 2.0 transport (Odoo 17+) implements Transport
-│   │   ├── class-odoo-xmlrpc.php      # XML-RPC transport (legacy) implements Transport
+│   │   ├── class-odoo-jsonrpc.php     # JSON-RPC 2.0 transport (Odoo 17+) uses Retryable_Http
+│   │   ├── class-odoo-xmlrpc.php      # XML-RPC transport (legacy) uses Retryable_Http
 │   │   └── class-odoo-auth.php        # Auth, API key encryption, connection testing
 │   │
 │   ├── modules/
@@ -117,8 +118,15 @@ WordPress For Odoo/
 ├── templates/
 │   └── customer-portal.php           #   Customer portal HTML template (orders/invoices tabs)
 │
-├── tests/                             # PHPUnit tests (138 tests, 215 assertions, 40 files analysed)
-│   ├── bootstrap.php                 #   WP function stubs + class loading
+├── tests/                             # PHPUnit tests (356 tests, 704 assertions, 41 files analysed)
+│   ├── bootstrap.php                 #   Constants, stub loading, plugin class requires
+│   ├── stubs/
+│   │   ├── wp-classes.php            #   WP_Error, WP_REST_*, WP_User, WP_CLI, AJAX test helpers
+│   │   ├── wp-functions.php          #   WordPress function stubs (~60 functions)
+│   │   ├── wc-classes.php            #   WC_Product, WC_Order, WC_Product_Variable/Variation/Attribute
+│   │   ├── wp-db-stub.php            #   WP_DB_Stub ($wpdb mock with call recording)
+│   │   ├── plugin-stub.php           #   WP4Odoo_Plugin test singleton
+│   │   └── wp-cli-utils.php          #   WP_CLI\Utils\format_items stub
 │   └── Unit/
 │       ├── EntityMapRepositoryTest.php  #   10 tests for Entity_Map_Repository
 │       ├── FieldMapperTest.php          #   30 tests for Field_Mapper
@@ -130,7 +138,19 @@ WordPress For Odoo/
 │       ├── VariantHandlerTest.php       #   7 tests for Variant_Handler
 │       ├── BulkSyncTest.php             #   12 tests for bulk import/export
 │       ├── ImageHandlerTest.php         #   9 tests for Image_Handler
-│       └── CurrencyTest.php             #   9 tests for multi-currency support
+│       ├── CurrencyTest.php             #   9 tests for multi-currency support
+│       ├── LoggerTest.php               #   9 tests for Logger
+│       ├── SyncEngineTest.php           #   8 tests for Sync_Engine
+│       ├── OdooAuthTest.php             #   8 tests for Odoo_Auth
+│       ├── OdooClientTest.php           #   9 tests for Odoo_Client
+│       ├── QueryServiceTest.php         #   6 tests for Query_Service
+│       ├── ContactRefinerTest.php       #   12 tests for Contact_Refiner
+│       ├── SettingsPageTest.php         #   8 tests for Settings_Page
+│       ├── CLITest.php                  #   16 tests for CLI
+│       ├── OrderHandlerTest.php         #   9 tests for Order_Handler
+│       ├── ProductHandlerTest.php       #   7 tests for Product_Handler
+│       ├── ContactManagerTest.php       #   12 tests for Contact_Manager
+│       └── LeadManagerTest.php          #   10 tests for Lead_Manager
 │
 ├── uninstall.php                      # Cleanup on plugin uninstall
 │
@@ -239,13 +259,17 @@ WP Event               Sync Engine (cron)           Odoo
 
 ### 4. Interchangeable Transport (Strategy Pattern)
 
-Both transports implement the `Transport` interface (`includes/api/interface-transport.php`):
+Both transports implement the `Transport` interface and share HTTP retry logic via the `Retryable_Http` trait:
 
 ```php
 interface Transport {
     public function authenticate( string $username ): int;
     public function execute_kw( string $model, string $method, array $args, array $kwargs ): mixed;
     public function get_uid(): ?int;
+}
+
+trait Retryable_Http {
+    private function http_post_with_retry( string $url, array $request_args, string $endpoint ): array;
 }
 ```
 
@@ -257,7 +281,10 @@ Odoo_Client ── uses ── Transport (interface)
 Odoo_JsonRPC            Odoo_XmlRPC
 POST /jsonrpc           POST /xmlrpc/2/common (auth)
                         POST /xmlrpc/2/object (CRUD)
+    └──── both use Retryable_Http trait ──────────┘
 ```
+
+`Retryable_Http` provides `http_post_with_retry()` — 3 attempts with exponential backoff (2^attempt × 500ms) + random jitter (0-1000ms). Extracted from duplicated retry loops in both transports.
 
 The protocol is configurable in options (`wp4odoo_connection.protocol`). JSON-RPC is the default for Odoo 17+.
 

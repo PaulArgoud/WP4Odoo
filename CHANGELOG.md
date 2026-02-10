@@ -5,6 +5,84 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.9.2] - 2026-02-10
+
+### Changed
+
+#### Refactoring — Test Bootstrap Split
+- `tests/bootstrap.php` reduced from ~988 lines to ~100 lines (slim orchestrator: constants, global stores, stub loading, plugin class requires)
+- Stub code extracted into 6 dedicated files in `tests/stubs/`:
+  - `wp-classes.php` — WP_Error, WP_REST_Request, WP_REST_Response, WP_User, WP_CLI, AJAX test exception classes
+  - `wp-functions.php` — ~60 WordPress function stubs (options, hooks, sanitization, users, posts, media, HTTP)
+  - `wc-classes.php` — WC_Product, WC_Order, WC_Product_Variable, WC_Product_Variation, WC_Product_Attribute + 5 WC function stubs
+  - `wp-db-stub.php` — WP_DB_Stub ($wpdb mock with call recording)
+  - `plugin-stub.php` — WP4Odoo_Plugin test singleton with module registration and reset
+  - `wp-cli-utils.php` — WP_CLI\Utils\format_items namespace stub
+
+#### Refactoring — Retryable_Http Trait Extraction
+- New file: `includes/api/trait-retryable-http.php` — `Retryable_Http` trait providing `http_post_with_retry()` with 3 attempts, exponential backoff (2^attempt × 500ms), and random jitter (0-1000ms)
+- `Odoo_JsonRPC` — now `use Retryable_Http`; removed inline retry loop and `MAX_RETRIES` constant from `rpc_call()`
+- `Odoo_XmlRPC` — now `use Retryable_Http`; removed inline retry loop and `MAX_RETRIES` constant from `xmlrpc_call()`
+- `Dependency_Loader` — added `require_once` for `trait-retryable-http.php` before transport classes
+
+#### Documentation
+- `ARCHITECTURE.md` — updated directory tree (6 stub files, trait file, 12 new test files), updated transport pattern section with Retryable_Http, updated test counts (356/704), PHPStan file count (41)
+- `README.md` — updated PHPStan count (41), added retry trait mention in Dual Transport feature
+
+#### Verification
+- PHPUnit: 356 tests, 704 assertions — all green (unchanged)
+- PHPStan: 0 errors on 41 files (was 40 — added trait file)
+- Plugin version bumped from 1.9.1 to 1.9.2
+
+## [1.9.1] - 2026-02-10
+
+### Added
+
+#### Tests — Wave 2 (Core Infrastructure + Admin)
+- `LoggerTest` — 9 tests for Logger (log levels, context, DB writes)
+- `SyncEngineTest` — 8 tests for Sync_Engine (locking, batch processing, backoff, timeout)
+- `OdooAuthTest` — 8 tests for Odoo_Auth (encryption, decryption, connection test)
+- `OdooClientTest` — 9 tests for Odoo_Client (CRUD methods, lazy connection, error handling)
+- `QueryServiceTest` — 6 tests for Query_Service (pagination, filters, empty results)
+- `ContactRefinerTest` — 12 tests for Contact_Refiner (name composition/splitting, country/state resolution)
+- `SettingsPageTest` — 8 tests for Settings_Page (tabs, sanitize callbacks, settings registration)
+- `CLITest` — 16 tests for CLI (all commands: status, test, sync, queue, module)
+
+#### Tests — Wave 3 (Module Handlers)
+- `OrderHandlerTest` — 9 tests for Order_Handler (load, save, status mapping, unknown status)
+- `ProductHandlerTest` — 7 tests for Product_Handler (load, save, currency guard, delete)
+- `ContactManagerTest` — 12 tests for Contact_Manager (load, save, dedup, role sync check)
+- `LeadManagerTest` — 10 tests for Lead_Manager (load, save, render, AJAX submission)
+- Extensive new stubs in `tests/bootstrap.php`: WP_User, get_userdata, get_user_by, user meta, post functions, WC_Order, wp_remote_post, and more (~40 new function/class stubs)
+
+### Changed
+
+#### Transport — HTTP Retry with Exponential Backoff
+- `Odoo_JsonRPC` — added `MAX_RETRIES = 3` constant and retry loop with exponential backoff (2^attempt × 500ms) + random jitter (0-1000ms) around `wp_remote_post()` in `rpc_call()`
+- `Odoo_XmlRPC` — same retry logic added to `xmlrpc_call()`
+- Both transports now log warnings on retry and errors after exhaustion with attempt count
+
+#### Sync_Engine — Dynamic Batch Timeout
+- Added `BATCH_TIME_LIMIT = 55` constant — queue processing breaks when elapsed time exceeds 55 seconds, deferring remaining jobs to the next cron tick (prevents WP-Cron timeout)
+
+#### Contact_Refiner — Many2one Optimization
+- `refine_from_odoo()` now extracts state name directly from Odoo's Many2one tuple `[id, "Name"]` via `Field_Mapper::many2one_to_name()` instead of making an additional API call — eliminates N+1 query pattern on contact pull
+
+#### Order_Handler — Filterable Status Mapping
+- `map_odoo_status_to_wc()` changed from match expression to array-based lookup with `apply_filters('wp4odoo_order_status_map', $default_map)` — allows themes/plugins to customize Odoo→WC status mapping
+
+#### Odoo Response Validation — Enhanced Error Context
+- `Odoo_JsonRPC` — RPC error logs now include `model` and `method` context from execute_kw calls; `debug` field truncated to 500 chars
+- `Odoo_XmlRPC` — XML-RPC fault logs now include `model` and `method` context from execute_kw calls
+
+#### Verification
+- PHPUnit: 356 tests, 704 assertions — all green (was 138/215)
+- PHPStan: 0 errors on 40 files (unchanged)
+- Plugin version bumped from 1.9.0 to 1.9.1
+
+#### Translations
+- Regenerated `.pot`, merged `.po`, recompiled `.mo`
+
 ## [1.9.0] - 2026-02-10
 
 ### Added

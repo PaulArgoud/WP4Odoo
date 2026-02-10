@@ -159,4 +159,105 @@ class FieldMapperTest extends TestCase {
 		$values = [ 'name' => 'Test', 'value' => 100 ];
 		$this->assertSame( [ [ 0, 0, $values ] ], Field_Mapper::values_to_relation_create( $values ) );
 	}
+
+	// ─── odoo_date_to_wp ────────────────────────────────────
+
+	public function test_odoo_date_to_wp_with_datetime(): void {
+		$result = Field_Mapper::odoo_date_to_wp( '2024-01-15 14:30:00', 'Y-m-d H:i:s' );
+		$this->assertSame( '2024-01-15 14:30:00', $result );
+	}
+
+	public function test_odoo_date_to_wp_with_date_only(): void {
+		$result = Field_Mapper::odoo_date_to_wp( '2024-06-01', 'Y-m-d' );
+		$this->assertSame( '2024-06-01', $result );
+	}
+
+	public function test_odoo_date_to_wp_returns_empty_for_empty_input(): void {
+		$this->assertSame( '', Field_Mapper::odoo_date_to_wp( '' ) );
+	}
+
+	public function test_odoo_date_to_wp_returns_empty_for_false_string(): void {
+		$this->assertSame( '', Field_Mapper::odoo_date_to_wp( 'false' ) );
+	}
+
+	public function test_odoo_date_to_wp_returns_empty_for_invalid_date(): void {
+		$this->assertSame( '', Field_Mapper::odoo_date_to_wp( 'not-a-date' ) );
+	}
+
+	public function test_odoo_date_to_wp_uses_default_format(): void {
+		// Default format reads date_format and time_format options (return 'Y-m-d' and 'H:i:s' defaults).
+		$result = Field_Mapper::odoo_date_to_wp( '2024-03-20 10:00:00' );
+		$this->assertNotEmpty( $result );
+		$this->assertStringContainsString( '2024', $result );
+	}
+
+	// ─── wp_date_to_odoo ────────────────────────────────────
+
+	public function test_wp_date_to_odoo_converts_date(): void {
+		$result = Field_Mapper::wp_date_to_odoo( '2024-01-15 14:30:00' );
+		$this->assertSame( '2024-01-15 14:30:00', $result );
+	}
+
+	public function test_wp_date_to_odoo_returns_empty_for_empty_input(): void {
+		$this->assertSame( '', Field_Mapper::wp_date_to_odoo( '' ) );
+	}
+
+	public function test_wp_date_to_odoo_returns_empty_for_invalid_date(): void {
+		$this->assertSame( '', Field_Mapper::wp_date_to_odoo( 'garbage' ) );
+	}
+
+	public function test_wp_date_to_odoo_formats_as_utc(): void {
+		$result = Field_Mapper::wp_date_to_odoo( '2024-12-25 00:00:00' );
+		$this->assertMatchesRegularExpression( '/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $result );
+	}
+
+	// ─── html_to_text ───────────────────────────────────────
+
+	public function test_html_to_text_strips_tags(): void {
+		$this->assertSame( 'Hello World', Field_Mapper::html_to_text( '<p>Hello <strong>World</strong></p>' ) );
+	}
+
+	public function test_html_to_text_decodes_entities(): void {
+		$this->assertSame( 'Price: 5 < 10 & done', Field_Mapper::html_to_text( 'Price: 5 &lt; 10 &amp; done' ) );
+	}
+
+	public function test_html_to_text_empty_string(): void {
+		$this->assertSame( '', Field_Mapper::html_to_text( '' ) );
+	}
+
+	// ─── text_to_html ───────────────────────────────────────
+
+	public function test_text_to_html_wraps_in_paragraph(): void {
+		$result = Field_Mapper::text_to_html( 'Hello World' );
+		$this->assertStringContainsString( '<p>', $result );
+		$this->assertStringContainsString( 'Hello World', $result );
+	}
+
+	public function test_text_to_html_escapes_html_entities(): void {
+		$result = Field_Mapper::text_to_html( '<script>alert("xss")</script>' );
+		$this->assertStringNotContainsString( '<script>', $result );
+		$this->assertStringContainsString( '&lt;script&gt;', $result );
+	}
+
+	public function test_text_to_html_empty_string(): void {
+		$this->assertSame( '', Field_Mapper::text_to_html( '' ) );
+	}
+
+	// ─── display_price ──────────────────────────────────────
+
+	public function test_display_price_without_woocommerce(): void {
+		// wc_price() is not defined, so falls back to number_format_i18n.
+		$result = Field_Mapper::display_price( 1234.56 );
+		$this->assertSame( '1,234.56', $result );
+	}
+
+	public function test_display_price_with_zero(): void {
+		$result = Field_Mapper::display_price( 0.00 );
+		$this->assertSame( '0.00', $result );
+	}
+
+	public function test_display_price_custom_decimals(): void {
+		$result = Field_Mapper::display_price( 99.999, 3 );
+		$this->assertSame( '99.999', $result );
+	}
 }

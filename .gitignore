@@ -13,7 +13,6 @@ composer.lock
 # OS
 .DS_Store
 Thumbs.db
-CLAUDE.md
 
 # PHPUnit
 .phpunit.result.cache
