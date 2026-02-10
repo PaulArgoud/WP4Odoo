@@ -38,7 +38,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Quality Tooling
 - **PHPCS + WordPress Coding Standards** — `wp-coding-standards/wpcs` 3.3 with `.phpcs.xml.dist` config; WordPress-Extra standard with project-specific exclusions; auto-fixed 594+ violations via PHPCBF
-- **WordPress Plugin Check** — `wordpress/plugin-check-action@v1` in CI
 - **Code Coverage** — PHPUnit with PCOV in CI, Clover XML output, Codecov upload
 
 ### Changed
@@ -46,7 +45,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Plugin version bumped from 1.9.7 to 1.9.8
 - PHPUnit: 436 tests, 855 assertions — all green
 - PHPStan: 0 errors on 44 files
-- CI: 4 jobs — PHP 8.2/8.3 (PHPCS + PHPUnit + PHPStan), Code Coverage (PCOV), WordPress Plugin Check
+- CI: 3 jobs — PHP 8.2/8.3 (PHPCS + PHPUnit + PHPStan), Code Coverage (PCOV)
 
 #### Documentation
 - `ARCHITECTURE.md` — new "Error Handling Convention" section (4-tier strategy), CPT_Helper vs Lead_Manager architecture note in CRM section

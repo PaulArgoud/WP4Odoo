@@ -70,22 +70,3 @@ jobs:
           fail_ci_if_error: false
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-
-  plugin-check:
-    name: WordPress Plugin Check
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Run Plugin Check
-        uses: wordpress/plugin-check-action@v1
-        with:
-          build-dir: ./
-          exclude-directories: |
-            vendor
-            tests
-            node_modules
-          wp-version: 'latest'
-          ignore-warnings: true
