@@ -82,45 +82,17 @@ final class Database_Migration {
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 		dbDelta( $sql );
 
-		update_option( 'wp4odoo_db_version', WP4ODOO_VERSION );
+		update_option( Settings_Repository::OPT_DB_VERSION, WP4ODOO_VERSION );
 	}
 
 	/**
 	 * Set default plugin options if not already present.
 	 *
+	 * Delegates to Settings_Repository::seed_defaults().
+	 *
 	 * @return void
 	 */
 	public static function set_default_options(): void {
-		$defaults = [
-			'wp4odoo_connection'                 => [
-				'url'      => '',
-				'database' => '',
-				'username' => '',
-				'api_key'  => '',
-				'protocol' => 'jsonrpc',
-				'timeout'  => 30,
-			],
-			'wp4odoo_sync_settings'              => [
-				'direction'     => 'bidirectional',
-				'conflict_rule' => 'newest_wins',
-				'batch_size'    => 50,
-				'sync_interval' => 'wp4odoo_five_minutes',
-				'auto_sync'     => false,
-			],
-			'wp4odoo_log_settings'               => [
-				'enabled'        => true,
-				'level'          => 'info',
-				'retention_days' => 30,
-			],
-			'wp4odoo_module_crm_enabled'         => false,
-			'wp4odoo_module_sales_enabled'       => false,
-			'wp4odoo_module_woocommerce_enabled' => false,
-		];
-
-		foreach ( $defaults as $key => $value ) {
-			if ( false === get_option( $key ) ) {
-				update_option( $key, $value );
-			}
-		}
+		( new Settings_Repository() )->seed_defaults();
 	}
 }

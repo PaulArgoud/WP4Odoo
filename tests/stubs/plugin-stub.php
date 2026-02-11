@@ -17,6 +17,9 @@ class WP4Odoo_Plugin {
 	/** @var \WP4Odoo\Module_Registry|null */
 	private ?\WP4Odoo\Module_Registry $module_registry = null;
 
+	/** @var \WP4Odoo\Settings_Repository|null */
+	private ?\WP4Odoo\Settings_Repository $settings = null;
+
 	public static function instance(): static {
 		if ( null === self::$instance ) {
 			self::$instance = new static();
@@ -37,9 +40,16 @@ class WP4Odoo_Plugin {
 		return $this->modules;
 	}
 
+	public function settings(): \WP4Odoo\Settings_Repository {
+		if ( null === $this->settings ) {
+			$this->settings = new \WP4Odoo\Settings_Repository();
+		}
+		return $this->settings;
+	}
+
 	public function module_registry(): \WP4Odoo\Module_Registry {
 		if ( null === $this->module_registry ) {
-			$this->module_registry = new \WP4Odoo\Module_Registry( $this );
+			$this->module_registry = new \WP4Odoo\Module_Registry( $this, $this->settings() );
 		}
 		return $this->module_registry;
 	}
@@ -52,4 +62,15 @@ class WP4Odoo_Plugin {
 	public static function reset_instance(): void {
 		self::$instance = null;
 	}
+}
+
+/**
+ * Global accessor for the plugin singleton.
+ *
+ * Mirrors the real wp4odoo() defined in wp4odoo.php.
+ *
+ * @return WP4Odoo_Plugin
+ */
+function wp4odoo(): WP4Odoo_Plugin {
+	return WP4Odoo_Plugin::instance();
 }

@@ -41,12 +41,21 @@ class Module_Registry {
 	private \WP4Odoo_Plugin $plugin;
 
 	/**
+	 * Settings repository.
+	 *
+	 * @var Settings_Repository
+	 */
+	private Settings_Repository $settings;
+
+	/**
 	 * Constructor.
 	 *
-	 * @param \WP4Odoo_Plugin $plugin Plugin instance.
+	 * @param \WP4Odoo_Plugin    $plugin   Plugin instance.
+	 * @param Settings_Repository $settings Settings repository.
 	 */
-	public function __construct( \WP4Odoo_Plugin $plugin ) {
-		$this->plugin = $plugin;
+	public function __construct( \WP4Odoo_Plugin $plugin, Settings_Repository $settings ) {
+		$this->plugin   = $plugin;
+		$this->settings = $settings;
 	}
 
 	/**
@@ -61,44 +70,45 @@ class Module_Registry {
 	public function register_all(): void {
 		$client_provider = fn() => $this->plugin->client();
 		$entity_map      = new Entity_Map_Repository();
+		$settings        = $this->settings;
 
 		// CRM — always available.
-		$this->register( 'crm', new Modules\CRM_Module( $client_provider, $entity_map ) );
+		$this->register( 'crm', new Modules\CRM_Module( $client_provider, $entity_map, $settings ) );
 
 		// Commerce group (WC > EDD > Sales).
 		if ( class_exists( 'WooCommerce' ) ) {
-			$this->register( 'woocommerce', new Modules\WooCommerce_Module( $client_provider, $entity_map ) );
+			$this->register( 'woocommerce', new Modules\WooCommerce_Module( $client_provider, $entity_map, $settings ) );
 		}
 		if ( class_exists( 'Easy_Digital_Downloads' ) ) {
-			$this->register( 'edd', new Modules\EDD_Module( $client_provider, $entity_map ) );
+			$this->register( 'edd', new Modules\EDD_Module( $client_provider, $entity_map, $settings ) );
 		}
-		$this->register( 'sales', new Modules\Sales_Module( $client_provider, $entity_map ) );
+		$this->register( 'sales', new Modules\Sales_Module( $client_provider, $entity_map, $settings ) );
 
 		// Membership group.
 		if ( class_exists( 'WooCommerce' ) ) {
-			$this->register( 'memberships', new Modules\Memberships_Module( $client_provider, $entity_map ) );
+			$this->register( 'memberships', new Modules\Memberships_Module( $client_provider, $entity_map, $settings ) );
 		}
 		if ( defined( 'MEPR_VERSION' ) ) {
-			$this->register( 'memberpress', new Modules\MemberPress_Module( $client_provider, $entity_map ) );
+			$this->register( 'memberpress', new Modules\MemberPress_Module( $client_provider, $entity_map, $settings ) );
 		}
 
 		// Independent modules.
 		if ( defined( 'GIVE_VERSION' ) ) {
-			$this->register( 'givewp', new Modules\GiveWP_Module( $client_provider, $entity_map ) );
+			$this->register( 'givewp', new Modules\GiveWP_Module( $client_provider, $entity_map, $settings ) );
 		}
 		if ( class_exists( 'Charitable' ) ) {
-			$this->register( 'charitable', new Modules\Charitable_Module( $client_provider, $entity_map ) );
+			$this->register( 'charitable', new Modules\Charitable_Module( $client_provider, $entity_map, $settings ) );
 		}
 		if ( defined( 'SIMPLE_PAY_VERSION' ) ) {
-			$this->register( 'simplepay', new Modules\SimplePay_Module( $client_provider, $entity_map ) );
+			$this->register( 'simplepay', new Modules\SimplePay_Module( $client_provider, $entity_map, $settings ) );
 		}
 		if ( defined( 'WPRM_VERSION' ) ) {
-			$this->register( 'wprm', new Modules\WPRM_Module( $client_provider, $entity_map ) );
+			$this->register( 'wprm', new Modules\WPRM_Module( $client_provider, $entity_map, $settings ) );
 		}
 		$gf_active  = class_exists( 'GFAPI' );
 		$wpf_active = function_exists( 'wpforms' );
 		if ( $gf_active || $wpf_active ) {
-			$this->register( 'forms', new Modules\Forms_Module( $client_provider, $entity_map ) );
+			$this->register( 'forms', new Modules\Forms_Module( $client_provider, $entity_map, $settings ) );
 		}
 
 		// Allow third-party modules (closures and shared entity map available as arguments).
@@ -116,8 +126,7 @@ class Module_Registry {
 	public function register( string $id, Module_Base $module ): void {
 		$this->modules[ $id ] = $module;
 
-		$enabled = get_option( 'wp4odoo_module_' . $id . '_enabled', false );
-		if ( ! $enabled ) {
+		if ( ! $this->settings->is_module_enabled( $id ) ) {
 			return;
 		}
 
@@ -191,7 +200,7 @@ class Module_Registry {
 				continue;
 			}
 			if ( $other->get_exclusive_group() === $group
-				&& get_option( 'wp4odoo_module_' . $id . '_enabled', false ) ) {
+				&& $this->settings->is_module_enabled( $id ) ) {
 				$conflicts[] = $id;
 			}
 		}

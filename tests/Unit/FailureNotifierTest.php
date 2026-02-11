@@ -23,7 +23,7 @@ class FailureNotifierTest extends TestCase {
 		// Seed admin email so wp_mail has a recipient.
 		$GLOBALS['_wp_options']['admin_email'] = 'admin@example.com';
 
-		$this->notifier = new Failure_Notifier( new Logger( 'test' ) );
+		$this->notifier = new Failure_Notifier( new Logger( 'test' ), wp4odoo_test_settings() );
 	}
 
 	// ─── Counter reset ───────────────────────────────────────

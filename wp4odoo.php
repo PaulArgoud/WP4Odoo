@@ -69,6 +69,13 @@ final class WP4Odoo_Plugin {
 	private WP4Odoo\Module_Registry $module_registry;
 
 	/**
+	 * Settings repository.
+	 *
+	 * @var WP4Odoo\Settings_Repository
+	 */
+	private WP4Odoo\Settings_Repository $settings;
+
+	/**
 	 * Get singleton instance.
 	 */
 	public static function instance(): self {
@@ -86,7 +93,8 @@ final class WP4Odoo_Plugin {
 		require_once WP4ODOO_PLUGIN_DIR . 'includes/class-dependency-loader.php';
 		WP4Odoo\Dependency_Loader::load();
 
-		$this->module_registry = new WP4Odoo\Module_Registry( $this );
+		$this->settings        = new WP4Odoo\Settings_Repository();
+		$this->module_registry = new WP4Odoo\Module_Registry( $this, $this->settings );
 		$this->register_hooks();
 	}
 
@@ -114,7 +122,7 @@ final class WP4Odoo_Plugin {
 	 */
 	public function activate(): void {
 		WP4Odoo\Database_Migration::create_tables();
-		WP4Odoo\Database_Migration::set_default_options();
+		$this->settings->seed_defaults();
 
 		if ( ! wp_next_scheduled( 'wp4odoo_scheduled_sync' ) ) {
 			wp_schedule_event( time(), 'wp4odoo_five_minutes', 'wp4odoo_scheduled_sync' );
@@ -196,6 +204,15 @@ final class WP4Odoo_Plugin {
 		return $this->module_registry;
 	}
 
+	/**
+	 * Get the settings repository.
+	 *
+	 * @return WP4Odoo\Settings_Repository
+	 */
+	public function settings(): WP4Odoo\Settings_Repository {
+		return $this->settings;
+	}
+
 	// ─── Infrastructure ─────────────────────────────────────
 
 	/**
@@ -215,7 +232,7 @@ final class WP4Odoo_Plugin {
 	 * Register REST API routes.
 	 */
 	public function register_rest_routes(): void {
-		$webhook_handler = new WP4Odoo\Webhook_Handler();
+		$webhook_handler = new WP4Odoo\Webhook_Handler( $this->settings );
 		$webhook_handler->register_routes();
 	}
 
@@ -225,7 +242,8 @@ final class WP4Odoo_Plugin {
 	public function run_scheduled_sync(): void {
 		$sync = new WP4Odoo\Sync_Engine(
 			fn( string $id ) => $this->get_module( $id ),
-			new WP4Odoo\Sync_Queue_Repository()
+			new WP4Odoo\Sync_Queue_Repository(),
+			$this->settings
 		);
 		$sync->process_queue();
 	}

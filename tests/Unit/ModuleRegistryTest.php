@@ -23,7 +23,7 @@ class ModuleRegistryTest extends TestCase {
 		// Reset all module enabled options to false.
 		$GLOBALS['_wp_options'] = [];
 
-		$this->registry = new Module_Registry( \WP4Odoo_Plugin::instance() );
+		$this->registry = new Module_Registry( \WP4Odoo_Plugin::instance(), wp4odoo_test_settings() );
 	}
 
 	protected function tearDown(): void {
@@ -33,22 +33,22 @@ class ModuleRegistryTest extends TestCase {
 
 	// Helper to create modules
 	private function make_wc(): WooCommerce_Module {
-		return new WooCommerce_Module( wp4odoo_test_client_provider(), wp4odoo_test_entity_map() );
+		return new WooCommerce_Module( wp4odoo_test_client_provider(), wp4odoo_test_entity_map(), wp4odoo_test_settings() );
 	}
 	private function make_edd(): EDD_Module {
-		return new EDD_Module( wp4odoo_test_client_provider(), wp4odoo_test_entity_map() );
+		return new EDD_Module( wp4odoo_test_client_provider(), wp4odoo_test_entity_map(), wp4odoo_test_settings() );
 	}
 	private function make_sales(): Sales_Module {
-		return new Sales_Module( wp4odoo_test_client_provider(), wp4odoo_test_entity_map() );
+		return new Sales_Module( wp4odoo_test_client_provider(), wp4odoo_test_entity_map(), wp4odoo_test_settings() );
 	}
 	private function make_crm(): CRM_Module {
-		return new CRM_Module( wp4odoo_test_client_provider(), wp4odoo_test_entity_map() );
+		return new CRM_Module( wp4odoo_test_client_provider(), wp4odoo_test_entity_map(), wp4odoo_test_settings() );
 	}
 	private function make_memberships(): Memberships_Module {
-		return new Memberships_Module( wp4odoo_test_client_provider(), wp4odoo_test_entity_map() );
+		return new Memberships_Module( wp4odoo_test_client_provider(), wp4odoo_test_entity_map(), wp4odoo_test_settings() );
 	}
 	private function make_memberpress(): MemberPress_Module {
-		return new MemberPress_Module( wp4odoo_test_client_provider(), wp4odoo_test_entity_map() );
+		return new MemberPress_Module( wp4odoo_test_client_provider(), wp4odoo_test_entity_map(), wp4odoo_test_settings() );
 	}
 
 	// ─── Registration ──────────────────────────────────────

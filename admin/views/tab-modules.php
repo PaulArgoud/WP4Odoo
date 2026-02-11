@@ -19,7 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 <div class="wp4odoo-modules-grid">
 	<?php foreach ( $modules as $module_id => $module ) : ?>
 		<?php
-		$enabled         = get_option( 'wp4odoo_module_' . $module_id . '_enabled', false );
+		$enabled         = wp4odoo()->settings()->is_module_enabled( $module_id );
 		$odoo_models     = $module->get_odoo_models();
 		$settings_fields = $module->get_settings_fields();
 		$settings        = $module->get_settings();
@@ -41,7 +41,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 			foreach ( $modules as $peer_id => $peer ) {
 				if ( $peer_id !== $module_id
 					&& $peer->get_exclusive_group() === $excl_group
-					&& get_option( 'wp4odoo_module_' . $peer_id . '_enabled', false ) ) {
+					&& wp4odoo()->settings()->is_module_enabled( $peer_id ) ) {
 					$active_peer = $peer->get_name();
 					break;
 				}

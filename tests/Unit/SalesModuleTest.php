@@ -25,7 +25,7 @@ class SalesModuleTest extends TestCase {
 		$GLOBALS['_wp_options'] = [];
 		$GLOBALS['_wp_posts']   = [];
 
-		$this->module = new Sales_Module( wp4odoo_test_client_provider(), wp4odoo_test_entity_map() );
+		$this->module = new Sales_Module( wp4odoo_test_client_provider(), wp4odoo_test_entity_map(), wp4odoo_test_settings() );
 	}
 
 	// ─── Module Identity ───────────────────────────────────

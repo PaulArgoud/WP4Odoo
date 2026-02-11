@@ -27,7 +27,7 @@ class WebhookHandlerTest extends TestCase {
 		// Set a webhook token so ensure_webhook_token() uses it.
 		$GLOBALS['_wp_options']['wp4odoo_webhook_token'] = 'test-token-abc123';
 
-		$this->handler = new Webhook_Handler();
+		$this->handler = new Webhook_Handler( wp4odoo_test_settings() );
 	}
 
 	// ─── validate_webhook_token ─────────────────────────────
@@ -227,7 +227,7 @@ class WebhookHandlerTest extends TestCase {
 	public function test_constructor_generates_token_when_none_exists(): void {
 		unset( $GLOBALS['_wp_options']['wp4odoo_webhook_token'] );
 
-		new Webhook_Handler();
+		new Webhook_Handler( wp4odoo_test_settings() );
 
 		$token = $GLOBALS['_wp_options']['wp4odoo_webhook_token'] ?? '';
 		$this->assertNotEmpty( $token );
@@ -237,7 +237,7 @@ class WebhookHandlerTest extends TestCase {
 	public function test_constructor_preserves_existing_token(): void {
 		$GLOBALS['_wp_options']['wp4odoo_webhook_token'] = 'existing-token';
 
-		new Webhook_Handler();
+		new Webhook_Handler( wp4odoo_test_settings() );
 
 		$this->assertSame( 'existing-token', $GLOBALS['_wp_options']['wp4odoo_webhook_token'] );
 	}

@@ -39,7 +39,14 @@ class Logger {
 	private ?string $module;
 
 	/**
-	 * Cached log settings (shared across all Logger instances).
+	 * Settings repository (optional, for DI consumers).
+	 *
+	 * @var Settings_Repository|null
+	 */
+	private ?Settings_Repository $settings;
+
+	/**
+	 * Cached log settings (fallback when no Settings_Repository injected).
 	 *
 	 * @var array|null
 	 */
@@ -48,10 +55,12 @@ class Logger {
 	/**
 	 * Constructor.
 	 *
-	 * @param string|null $module Optional module identifier to tag all log entries.
+	 * @param string|null              $module   Optional module identifier to tag all log entries.
+	 * @param Settings_Repository|null $settings Optional settings repository.
 	 */
-	public function __construct( ?string $module = null ) {
-		$this->module = $module;
+	public function __construct( ?string $module = null, ?Settings_Repository $settings = null ) {
+		$this->module   = $module;
+		$this->settings = $settings;
 	}
 
 	/**
@@ -152,8 +161,8 @@ class Logger {
 	public function cleanup(): int {
 		global $wpdb;
 
-		$settings  = get_option( 'wp4odoo_log_settings', [] );
-		$retention = (int) ( $settings['retention_days'] ?? 30 );
+		$log_settings = $this->get_log_settings();
+		$retention    = (int) ( $log_settings['retention_days'] ?? 30 );
 
 		if ( $retention <= 0 ) {
 			return 0;
@@ -180,13 +189,13 @@ class Logger {
 			return true;
 		}
 
-		$settings = $this->get_log_settings();
+		$log_settings = $this->get_log_settings();
 
-		if ( empty( $settings['enabled'] ) ) {
+		if ( empty( $log_settings['enabled'] ) ) {
 			return false;
 		}
 
-		$configured_level = $settings['level'] ?? 'info';
+		$configured_level = $log_settings['level'] ?? 'info';
 
 		if ( ! isset( self::LEVELS[ $configured_level ] ) ) {
 			$configured_level = 'info';
@@ -196,13 +205,17 @@ class Logger {
 	}
 
 	/**
-	 * Get log settings from cache or wp_options.
+	 * Get log settings from Settings_Repository or fallback cache.
 	 *
 	 * @return array
 	 */
 	private function get_log_settings(): array {
+		if ( null !== $this->settings ) {
+			return $this->settings->get_log_settings();
+		}
+
 		if ( null === self::$settings_cache ) {
-			self::$settings_cache = get_option( 'wp4odoo_log_settings', [] );
+			self::$settings_cache = get_option( Settings_Repository::OPT_LOG_SETTINGS, [] );
 		}
 		return self::$settings_cache;
 	}

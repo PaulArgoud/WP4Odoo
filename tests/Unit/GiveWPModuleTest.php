@@ -14,7 +14,7 @@ class GiveWPModuleTest extends TestCase {
 	private GiveWP_Module $module;
 
 	protected function setUp(): void {
-		$this->module = new GiveWP_Module( wp4odoo_test_client_provider(), wp4odoo_test_entity_map() );
+		$this->module = new GiveWP_Module( wp4odoo_test_client_provider(), wp4odoo_test_entity_map(), wp4odoo_test_settings() );
 	}
 
 	// ─── Identity ───────────────────────────────────────────

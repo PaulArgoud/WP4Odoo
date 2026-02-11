@@ -178,6 +178,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `CLI`, `Admin_Ajax`, `Settings_Page` — all `Sync_Engine::get_stats/retry_failed/cleanup` calls migrated to `Queue_Manager::`
 - Tests — added `wp4odoo_test_entity_map()` and `wp4odoo_test_queue_repo()` helpers; updated ~20 test files for instance-based repositories
 
+#### Dependency Injection — Centralized Settings Repository
+- New class: `Settings_Repository` (`includes/class-settings-repository.php`) — single source of truth for all `wp4odoo_*` option keys, default values, and typed accessors; injectable via constructor (same DI pattern as `Entity_Map_Repository` and `Sync_Queue_Repository`)
+- 10 option key constants (`OPT_CONNECTION`, `OPT_SYNC_SETTINGS`, `OPT_LOG_SETTINGS`, `OPT_WEBHOOK_TOKEN`, etc.) replace ~40 scattered string literals across the codebase
+- Typed accessors: `get_connection()`, `get_sync_settings()`, `get_log_settings()` merge stored values with defaults; `is_module_enabled()`, `set_module_enabled()`, `get_module_settings()`, `save_module_settings()`, `get_module_mappings()` for per-module options; `get_webhook_token()`, `save_webhook_token()`, failure tracking, onboarding/checklist state
+- `seed_defaults()` method replaces `Database_Migration::set_default_options()` hardcoded values
+- Static default accessors (`connection_defaults()`, `sync_defaults()`, `log_defaults()`) for use by sanitization callbacks
+- `WP4Odoo_Plugin` — new `$settings` property and `settings()` getter; distributes to `Module_Registry`, `Sync_Engine`, `Webhook_Handler`
+- `Module_Base` — 3rd constructor parameter `Settings_Repository $settings`; `get_settings()` and `get_field_mapping()` delegate to repository
+- `Logger` — optional 2nd parameter `?Settings_Repository $settings`; uses repository when available, falls back to static cache for standalone usage (e.g., `Odoo_Auth`)
+- `Sync_Engine`, `Failure_Notifier`, `Webhook_Handler` — constructor now requires `Settings_Repository`; all `get_option()`/`update_option()` replaced with typed repository calls
+- Admin layer (`Settings_Page`, AJAX traits, `Admin`) — uses `wp4odoo()->settings()` for all option access
+- `CLI` — uses `wp4odoo()->settings()` for module status and toggle
+- `Odoo_Auth` — uses `Settings_Repository::OPT_CONNECTION` constant (static class, no DI)
+- `tab-modules.php` — `get_option()` calls replaced with `wp4odoo()->settings()->is_module_enabled()`
+- 8 module constructors updated to forward `$settings` to parent
+- `SettingsRepositoryTest` — 30 unit tests: typed accessors, default merging, module helpers, seed_defaults, non-array handling, constant prefixes
+- Tests — added `wp4odoo_test_settings()` helper; updated ~20 test files; added `wp4odoo()` function stub
+- PHPStan bootstrap and plugin-stub updated with `settings()` method and `wp4odoo()` function
+
 #### Declarative Mutual Exclusivity
 - `Module_Base` — new `$exclusive_group` and `$exclusive_priority` properties with public getters; modules now self-declare their exclusivity constraints instead of relying on hardcoded logic in the registry
 - 5 modules declare exclusive groups: `WooCommerce_Module` (commerce/30), `EDD_Module` (commerce/20), `Sales_Module` (commerce/10), `Memberships_Module` (memberships/20), `MemberPress_Module` (memberships/10)
@@ -191,8 +210,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 10 existing module tests updated with `test_exclusive_group` and `test_exclusive_priority` assertions
 
 - Plugin version bumped from 1.9.8 to 2.0.0
-- PHPUnit: 915 unit tests, 1473 assertions — all green (was 436/855)
-- PHPStan: 0 errors on 75 files (was 47 — added 3 module files + 2 forms files + 1 exchange rate file + 4 EDD files + 3 MemberPress files + 3 GiveWP files + 3 Charitable files + 3 SimplePay files + 3 WPRM files + 2 shared accounting files)
+- PHPUnit: 952 unit tests, 1538 assertions — all green (was 915/1473)
+- PHPStan: 0 errors on 76 files (was 75 — added `class-settings-repository.php`)
 - Translations: 321 translated strings (FR), 0 fuzzy, 0 untranslated
 - `Dependency_Loader` — added 24 `require_once` (2 forms + 1 exchange rate + 4 EDD + 3 MemberPress + 3 GiveWP + 3 Charitable + 3 SimplePay + 3 WPRM + 2 shared accounting module files)
 - `Module_Registry` — registers `Forms_Module` when Gravity Forms or WPForms is active; extended mutual exclusivity from 2-way (WC/Sales) to 3-way (WC/EDD/Sales); registers `MemberPress_Module` when MemberPress is active (mutually exclusive with WC Memberships); registers `GiveWP_Module` when GiveWP is active; registers `Charitable_Module` when WP Charitable is active; registers `SimplePay_Module` when WP Simple Pay is active; registers `WPRM_Module` when WP Recipe Maker is active (no mutual exclusivity)

@@ -104,15 +104,24 @@ abstract class Module_Base {
 	private Entity_Map_Repository $entity_map;
 
 	/**
+	 * Settings repository (injected by Module_Registry).
+	 *
+	 * @var Settings_Repository
+	 */
+	private Settings_Repository $settings_repo;
+
+	/**
 	 * Constructor.
 	 *
 	 * @param \Closure              $client_provider Returns the shared Odoo_Client instance.
 	 * @param Entity_Map_Repository $entity_map      Shared entity map repository.
+	 * @param Settings_Repository   $settings        Settings repository.
 	 */
-	public function __construct( \Closure $client_provider, Entity_Map_Repository $entity_map ) {
+	public function __construct( \Closure $client_provider, Entity_Map_Repository $entity_map, Settings_Repository $settings ) {
 		$this->client_provider = $client_provider;
 		$this->entity_map      = $entity_map;
-		$this->logger          = new Logger( $this->id );
+		$this->settings_repo   = $settings;
+		$this->logger          = new Logger( $this->id, $settings );
 	}
 
 	/**
@@ -564,7 +573,7 @@ abstract class Module_Base {
 			return $this->mapping_cache[ $entity_type ];
 		}
 
-		$custom = get_option( "wp4odoo_module_{$this->id}_mappings", [] );
+		$custom = $this->settings_repo->get_module_mappings( $this->id );
 
 		if ( ! empty( $custom[ $entity_type ] ) && is_array( $custom[ $entity_type ] ) ) {
 			$this->mapping_cache[ $entity_type ] = $custom[ $entity_type ];
@@ -581,13 +590,10 @@ abstract class Module_Base {
 	 * @return array
 	 */
 	public function get_settings(): array {
-		$settings = get_option( "wp4odoo_module_{$this->id}_settings", [] );
-
-		if ( ! is_array( $settings ) ) {
-			$settings = [];
-		}
-
-		return array_merge( $this->get_default_settings(), $settings );
+		return array_merge(
+			$this->get_default_settings(),
+			$this->settings_repo->get_module_settings( $this->id )
+		);
 	}
 
 	/**

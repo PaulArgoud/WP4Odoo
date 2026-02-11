@@ -100,8 +100,8 @@ class GiveWP_Module extends Module_Base {
 	/**
 	 * Constructor.
 	 */
-	public function __construct( \Closure $client_provider, \WP4Odoo\Entity_Map_Repository $entity_map ) {
-		parent::__construct( $client_provider, $entity_map );
+	public function __construct( \Closure $client_provider, \WP4Odoo\Entity_Map_Repository $entity_map, \WP4Odoo\Settings_Repository $settings ) {
+		parent::__construct( $client_provider, $entity_map, $settings );
 		$this->handler = new GiveWP_Handler( $this->logger );
 	}
 

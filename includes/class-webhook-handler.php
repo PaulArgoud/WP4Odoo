@@ -49,10 +49,20 @@ class Webhook_Handler {
 	private Logger $logger;
 
 	/**
-	 * Constructor.
+	 * Settings repository.
+	 *
+	 * @var Settings_Repository
 	 */
-	public function __construct() {
-		$this->logger = new Logger( 'webhook' );
+	private Settings_Repository $settings;
+
+	/**
+	 * Constructor.
+	 *
+	 * @param Settings_Repository $settings Settings repository.
+	 */
+	public function __construct( Settings_Repository $settings ) {
+		$this->settings = $settings;
+		$this->logger   = new Logger( 'webhook', $settings );
 		$this->ensure_webhook_token();
 	}
 
@@ -295,7 +305,7 @@ class Webhook_Handler {
 		}
 
 		$token  = $request->get_header( 'X-Odoo-Token' );
-		$stored = get_option( 'wp4odoo_webhook_token', '' );
+		$stored = $this->settings->get_webhook_token();
 
 		if ( empty( $stored ) ) {
 			return new \WP_Error(
@@ -347,11 +357,11 @@ class Webhook_Handler {
 	 * @return void
 	 */
 	private function ensure_webhook_token(): void {
-		$token = get_option( 'wp4odoo_webhook_token', '' );
+		$token = $this->settings->get_webhook_token();
 
 		if ( empty( $token ) ) {
 			$token = wp_generate_password( 48, false );
-			update_option( 'wp4odoo_webhook_token', $token );
+			$this->settings->save_webhook_token( $token );
 		}
 	}
 

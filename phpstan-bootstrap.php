@@ -46,10 +46,24 @@ class WP4Odoo_Plugin {
 		return new \WP4Odoo\API\Odoo_Client();
 	}
 
+	/** @return \WP4Odoo\Settings_Repository */
+	public function settings(): \WP4Odoo\Settings_Repository {
+		return new \WP4Odoo\Settings_Repository();
+	}
+
 	/** @return \WP4Odoo\Module_Registry */
 	public function module_registry(): \WP4Odoo\Module_Registry {
-		return new \WP4Odoo\Module_Registry( $this );
+		return new \WP4Odoo\Module_Registry( $this, $this->settings() );
 	}
+}
+
+/**
+ * Global accessor for the plugin singleton.
+ *
+ * @return WP4Odoo_Plugin
+ */
+function wp4odoo(): WP4Odoo_Plugin {
+	return WP4Odoo_Plugin::instance();
 }
 
 // ─── WooCommerce stubs ──────────────────────────────────

@@ -40,7 +40,7 @@ trait Ajax_Module_Handlers {
 			);
 		}
 
-		update_option( 'wp4odoo_module_' . $module_id . '_enabled', $enabled );
+		wp4odoo()->settings()->set_module_enabled( $module_id, $enabled );
 
 		$response = [
 			'module_id' => $module_id,
@@ -72,7 +72,7 @@ trait Ajax_Module_Handlers {
 					if ( ! empty( $conflicts ) ) {
 						$disabled_names = [];
 						foreach ( $conflicts as $conflict_id ) {
-							update_option( 'wp4odoo_module_' . $conflict_id . '_enabled', false );
+							wp4odoo()->settings()->set_module_enabled( $conflict_id, false );
 							$conflict_module  = $registry->get( $conflict_id );
 							$disabled_names[] = $conflict_module ? $conflict_module->get_name() : $conflict_id;
 						}
@@ -179,7 +179,7 @@ trait Ajax_Module_Handlers {
 			}
 		}
 
-		update_option( 'wp4odoo_module_' . $module_id . '_settings', $clean );
+		wp4odoo()->settings()->save_module_settings( $module_id, $clean );
 
 		wp_send_json_success(
 			[

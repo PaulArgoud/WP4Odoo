@@ -33,6 +33,7 @@ final class Dependency_Loader {
 		require_once WP4ODOO_PLUGIN_DIR . 'includes/api/class-odoo-auth.php';
 
 		// Core classes
+		require_once WP4ODOO_PLUGIN_DIR . 'includes/class-settings-repository.php';
 		require_once WP4ODOO_PLUGIN_DIR . 'includes/class-logger.php';
 		require_once WP4ODOO_PLUGIN_DIR . 'includes/class-entity-map-repository.php';
 		require_once WP4ODOO_PLUGIN_DIR . 'includes/class-sync-queue-repository.php';

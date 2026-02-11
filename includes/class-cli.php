@@ -76,11 +76,11 @@ class CLI {
 		\WP_CLI::line( '' );
 		\WP_CLI::line( 'Modules:' );
 		$rows = [];
+		$settings = \WP4Odoo_Plugin::instance()->settings();
 		foreach ( $modules as $id => $module ) {
-			$enabled = get_option( 'wp4odoo_module_' . $id . '_enabled' );
-			$rows[]  = [
+			$rows[] = [
 				'id'     => $id,
-				'status' => $enabled ? 'enabled' : 'disabled',
+				'status' => $settings->is_module_enabled( $id ) ? 'enabled' : 'disabled',
 			];
 		}
 		\WP_CLI\Utils\format_items( 'table', $rows, [ 'id', 'status' ] );
@@ -152,7 +152,8 @@ class CLI {
 
 		$engine = new Sync_Engine(
 			fn( string $id ) => \WP4Odoo_Plugin::instance()->get_module( $id ),
-			new Sync_Queue_Repository()
+			new Sync_Queue_Repository(),
+			\WP4Odoo_Plugin::instance()->settings()
 		);
 
 		if ( $dry_run ) {
@@ -356,7 +357,9 @@ class CLI {
 	 * List all modules with their status.
 	 */
 	private function module_list(): void {
-		$modules = \WP4Odoo_Plugin::instance()->get_modules();
+		$plugin   = \WP4Odoo_Plugin::instance();
+		$modules  = $plugin->get_modules();
+		$settings = $plugin->settings();
 
 		if ( empty( $modules ) ) {
 			\WP_CLI::line( 'No modules registered.' );
@@ -365,11 +368,10 @@ class CLI {
 
 		$rows = [];
 		foreach ( $modules as $id => $module ) {
-			$enabled = get_option( 'wp4odoo_module_' . $id . '_enabled' );
-			$rows[]  = [
+			$rows[] = [
 				'id'     => $id,
 				'name'   => $module->get_name(),
-				'status' => $enabled ? 'enabled' : 'disabled',
+				'status' => $settings->is_module_enabled( $id ) ? 'enabled' : 'disabled',
 			];
 		}
 
@@ -392,7 +394,7 @@ class CLI {
 			\WP_CLI::error( sprintf( 'Unknown module: %s. Use "wp wp4odoo module list" to see available modules.', $id ) );
 		}
 
-		update_option( 'wp4odoo_module_' . $id . '_enabled', $enabled );
+		\WP4Odoo_Plugin::instance()->settings()->set_module_enabled( $id, $enabled );
 
 		if ( $enabled ) {
 			\WP_CLI::success( sprintf( 'Module "%s" enabled.', $id ) );

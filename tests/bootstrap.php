@@ -81,6 +81,7 @@ require_once WP4ODOO_PLUGIN_DIR . 'vendor/autoload.php';
 // ─── Plugin classes under test ──────────────────────────
 
 // Core infrastructure.
+require_once WP4ODOO_PLUGIN_DIR . 'includes/class-settings-repository.php';
 require_once WP4ODOO_PLUGIN_DIR . 'includes/class-logger.php';
 require_once WP4ODOO_PLUGIN_DIR . 'includes/class-field-mapper.php';
 require_once WP4ODOO_PLUGIN_DIR . 'includes/class-cpt-helper.php';
@@ -196,4 +197,13 @@ function wp4odoo_test_entity_map(): \WP4Odoo\Entity_Map_Repository {
  */
 function wp4odoo_test_queue_repo(): \WP4Odoo\Sync_Queue_Repository {
 	return new \WP4Odoo\Sync_Queue_Repository();
+}
+
+/**
+ * Returns a fresh Settings_Repository for test isolation.
+ *
+ * @return \WP4Odoo\Settings_Repository
+ */
+function wp4odoo_test_settings(): \WP4Odoo\Settings_Repository {
+	return new \WP4Odoo\Settings_Repository();
 }

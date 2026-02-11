@@ -26,7 +26,7 @@ class MembershipsModuleTest extends TestCase {
 		$GLOBALS['_wc_memberships']      = [];
 		$GLOBALS['_wc_membership_plans'] = [];
 
-		$this->module = new Memberships_Module( wp4odoo_test_client_provider(), wp4odoo_test_entity_map() );
+		$this->module = new Memberships_Module( wp4odoo_test_client_provider(), wp4odoo_test_entity_map(), wp4odoo_test_settings() );
 	}
 
 	// ─── Module Identity ───────────────────────────────────

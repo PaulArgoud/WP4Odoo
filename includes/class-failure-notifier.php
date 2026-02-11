@@ -39,12 +39,21 @@ class Failure_Notifier {
 	private Logger $logger;
 
 	/**
+	 * Settings repository.
+	 *
+	 * @var Settings_Repository
+	 */
+	private Settings_Repository $settings;
+
+	/**
 	 * Constructor.
 	 *
-	 * @param Logger $logger Logger instance.
+	 * @param Logger              $logger   Logger instance.
+	 * @param Settings_Repository $settings Settings repository.
 	 */
-	public function __construct( Logger $logger ) {
-		$this->logger = $logger;
+	public function __construct( Logger $logger, Settings_Repository $settings ) {
+		$this->logger   = $logger;
+		$this->settings = $settings;
 	}
 
 	/**
@@ -59,11 +68,11 @@ class Failure_Notifier {
 	 * @return void
 	 */
 	public function check( int $successes, int $failures ): void {
-		$consecutive = (int) get_option( 'wp4odoo_consecutive_failures', 0 );
+		$consecutive = $this->settings->get_consecutive_failures();
 
 		if ( $successes > 0 ) {
 			if ( $consecutive > 0 ) {
-				update_option( 'wp4odoo_consecutive_failures', 0 );
+				$this->settings->save_consecutive_failures( 0 );
 			}
 			return;
 		}
@@ -73,7 +82,7 @@ class Failure_Notifier {
 		}
 
 		$consecutive += $failures;
-		update_option( 'wp4odoo_consecutive_failures', $consecutive );
+		$this->settings->save_consecutive_failures( $consecutive );
 
 		if ( $consecutive < self::THRESHOLD ) {
 			return;
@@ -89,7 +98,7 @@ class Failure_Notifier {
 	 * @return void
 	 */
 	private function maybe_send( int $consecutive ): void {
-		$last_email = (int) get_option( 'wp4odoo_last_failure_email', 0 );
+		$last_email = $this->settings->get_last_failure_email();
 		if ( ( time() - $last_email ) < self::COOLDOWN ) {
 			return;
 		}
@@ -113,7 +122,7 @@ class Failure_Notifier {
 		);
 
 		wp_mail( $admin_email, $subject, $message );
-		update_option( 'wp4odoo_last_failure_email', time() );
+		$this->settings->save_last_failure_email( time() );
 
 		$this->logger->warning(
 			'Failure notification sent to admin.',

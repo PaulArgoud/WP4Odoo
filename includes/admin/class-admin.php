@@ -156,11 +156,13 @@ class Admin {
 	 * @return void
 	 */
 	public function maybe_show_setup_notice(): void {
-		if ( get_option( 'wp4odoo_onboarding_dismissed' ) ) {
+		$settings = wp4odoo()->settings();
+
+		if ( $settings->is_onboarding_dismissed() ) {
 			return;
 		}
 
-		$connection = get_option( 'wp4odoo_connection', [] );
+		$connection = $settings->get_connection();
 		if ( ! empty( $connection['url'] ) ) {
 			return;
 		}

@@ -16,7 +16,7 @@ use WP4Odoo\Sync_Engine;
 class SyncEngineLockTest extends WP4Odoo_TestCase {
 
 	public function test_process_queue_returns_zero_when_queue_empty(): void {
-		$engine = new Sync_Engine( wp4odoo_test_module_resolver(), wp4odoo_test_queue_repo() );
+		$engine = new Sync_Engine( wp4odoo_test_module_resolver(), wp4odoo_test_queue_repo(), wp4odoo_test_settings() );
 		$result = $engine->process_queue();
 
 		$this->assertSame( 0, $result );
@@ -25,7 +25,7 @@ class SyncEngineLockTest extends WP4Odoo_TestCase {
 	public function test_advisory_lock_is_released_after_processing(): void {
 		global $wpdb;
 
-		$engine = new Sync_Engine( wp4odoo_test_module_resolver(), wp4odoo_test_queue_repo() );
+		$engine = new Sync_Engine( wp4odoo_test_module_resolver(), wp4odoo_test_queue_repo(), wp4odoo_test_settings() );
 		$engine->process_queue();
 
 		$is_free = $wpdb->get_var(

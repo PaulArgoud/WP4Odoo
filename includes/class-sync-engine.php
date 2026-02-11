@@ -89,16 +89,25 @@ class Sync_Engine {
 	private Sync_Queue_Repository $queue_repo;
 
 	/**
+	 * Settings repository (injected).
+	 *
+	 * @var Settings_Repository
+	 */
+	private Settings_Repository $settings;
+
+	/**
 	 * Constructor.
 	 *
 	 * @param \Closure              $module_resolver Returns a Module_Base (or null) for a given module ID.
 	 * @param Sync_Queue_Repository $queue_repo      Sync queue repository.
+	 * @param Settings_Repository   $settings        Settings repository.
 	 */
-	public function __construct( \Closure $module_resolver, Sync_Queue_Repository $queue_repo ) {
+	public function __construct( \Closure $module_resolver, Sync_Queue_Repository $queue_repo, Settings_Repository $settings ) {
 		$this->module_resolver  = $module_resolver;
 		$this->queue_repo       = $queue_repo;
-		$this->logger           = new Logger( 'sync' );
-		$this->failure_notifier = new Failure_Notifier( $this->logger );
+		$this->settings         = $settings;
+		$this->logger           = new Logger( 'sync', $settings );
+		$this->failure_notifier = new Failure_Notifier( $this->logger, $settings );
 	}
 
 	/**
@@ -129,11 +138,8 @@ class Sync_Engine {
 			return 0;
 		}
 
-		static $settings = null;
-		if ( null === $settings ) {
-			$settings = get_option( 'wp4odoo_sync_settings', [] );
-		}
-		$batch = (int) ( $settings['batch_size'] ?? 50 );
+		$sync_settings = $this->settings->get_sync_settings();
+		$batch         = (int) $sync_settings['batch_size'];
 		$now   = current_time( 'mysql', true );
 
 		$jobs       = $this->queue_repo->fetch_pending( $batch, $now );

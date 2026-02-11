@@ -81,7 +81,7 @@ trait Ajax_Setup_Handlers {
 	public function dismiss_onboarding(): void {
 		$this->verify_request();
 
-		update_option( 'wp4odoo_onboarding_dismissed', true );
+		wp4odoo()->settings()->dismiss_onboarding();
 
 		wp_send_json_success();
 	}
@@ -94,7 +94,7 @@ trait Ajax_Setup_Handlers {
 	public function dismiss_checklist(): void {
 		$this->verify_request();
 
-		update_option( 'wp4odoo_checklist_dismissed', true );
+		wp4odoo()->settings()->dismiss_checklist();
 
 		wp_send_json_success();
 	}
@@ -107,7 +107,7 @@ trait Ajax_Setup_Handlers {
 	public function confirm_webhooks(): void {
 		$this->verify_request();
 
-		update_option( 'wp4odoo_checklist_webhooks_confirmed', true );
+		wp4odoo()->settings()->confirm_webhooks();
 
 		wp_send_json_success(
 			[

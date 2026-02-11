@@ -149,8 +149,9 @@ WordPress For Odoo/
 │   │   ├── class-admin-ajax.php       # AJAX coordinator: hook registration, request verification (uses 3 traits)
 │   │   └── class-settings-page.php    # Settings API, 5-tab rendering, setup checklist, sanitize callbacks
 │   │
-│   ├── class-dependency-loader.php    # Loads all plugin class files (69 require_once)
+│   ├── class-dependency-loader.php    # Loads all plugin class files (70 require_once)
 │   ├── class-database-migration.php   # Table creation (dbDelta) and default options
+│   ├── class-settings-repository.php  # Centralized option access: keys, defaults, typed accessors (DI)
 │   ├── class-module-registry.php      # Module registration, mutual exclusivity, lifecycle
 │   ├── class-module-base.php          # Abstract base class for modules
 │   ├── class-entity-map-repository.php # Static DB access for wp4odoo_entity_map (incl. batch lookups)
@@ -190,7 +191,7 @@ WordPress For Odoo/
 ├── templates/
 │   └── customer-portal.php           #   Customer portal HTML template (orders/invoices tabs)
 │
-├── tests/                             # 879 unit tests (1436 assertions) + 26 integration tests (wp-env)
+├── tests/                             # 952 unit tests (1538 assertions) + 26 integration tests (wp-env)
 │   ├── bootstrap.php                 #   Unit test bootstrap: constants, stub loading, plugin class requires
 │   ├── bootstrap-integration.php     #   Integration test bootstrap: loads WP test framework (wp-env)
 │   ├── stubs/
@@ -218,6 +219,7 @@ WordPress For Odoo/
 │       ├── EntityMapRepositoryTest.php  #   19 tests for Entity_Map_Repository
 │       ├── FieldMapperTest.php          #   49 tests for Field_Mapper
 │       ├── ModuleBaseHashTest.php       #   6 tests for generate_sync_hash() + dependency status
+│       ├── SettingsRepositoryTest.php  #   30 tests for Settings_Repository
 │       ├── PartnerServiceTest.php       #   10 tests for Partner_Service
 │       ├── QueueManagerTest.php         #   7 tests for Queue_Manager
 │       ├── SyncQueueRepositoryTest.php  #   31 tests for Sync_Queue_Repository
@@ -291,7 +293,7 @@ function wp4odoo(): WP4Odoo_Plugin {
 }
 ```
 
-The singleton delegates to `Dependency_Loader` (class loading), `Database_Migration` (table DDL + defaults), and `Module_Registry` (module registration/lifecycle). It keeps hooks, cron, REST, and API client access.
+The singleton delegates to `Dependency_Loader` (class loading), `Database_Migration` (table DDL + defaults), `Settings_Repository` (centralized option access), and `Module_Registry` (module registration/lifecycle). It keeps hooks, cron, REST, and API client access.
 
 ### 2. Module System
 
@@ -322,14 +324,14 @@ Module_Base (abstract)
 - Push/Pull orchestration: `push_to_odoo()`, `pull_from_odoo()`
 - Entity mapping CRUD: `get_mapping()`, `save_mapping()`, `get_wp_mapping()`, `remove_mapping()` (delegates to `Entity_Map_Repository`)
 - Data transformation: `map_to_odoo()`, `map_from_odoo()`, `generate_sync_hash()`
-- Settings: `get_settings()`, `get_settings_fields()`, `get_default_settings()`, `get_dependency_status()` (external dependency check for admin UI)
+- Settings: `get_settings()`, `get_settings_fields()`, `get_default_settings()`, `get_dependency_status()` (external dependency check for admin UI) — delegates to injected `Settings_Repository`
 - Helpers: `is_importing()` (anti-loop guard), `mark_importing()` (define guard constant), `resolve_many2one_field()` (Many2one → scalar), `delete_wp_post()` (safe post deletion), `log_unsupported_entity()` (centralized warning), `client()`
 - Subclass hooks: `boot()`, `load_wp_data()`, `save_wp_data()`, `delete_wp_data()`
 
 **Module lifecycle:**
 1. `Module_Registry::register_all()` is called on the `init` hook
 2. Modules instantiated and registered via `register($id, $module)`
-3. If `wp4odoo_module_{id}_enabled` is true → `$module->boot()` is called
+3. If module is enabled (via `Settings_Repository::is_module_enabled()`) → `$module->boot()` is called
 4. `boot()` registers module-specific WordPress hooks
 
 **Third-party extension:**
@@ -499,19 +501,23 @@ Managed via `dbDelta()` in `Database_Migration::create_tables()`:
 
 ### WordPress Options (`wp_options`)
 
-| Key | Type | Description |
-|-----|------|-------------|
-| `wp4odoo_connection` | `array` | URL, database, username, encrypted API key, protocol, timeout |
-| `wp4odoo_sync_settings` | `array` | Direction, conflict rule, batch size, interval |
-| `wp4odoo_log_settings` | `array` | Enabled, level, retention days |
-| `wp4odoo_module_{id}_enabled` | `bool` | Per-module activation |
-| `wp4odoo_module_{id}_settings` | `array` | Per-module configuration |
-| `wp4odoo_module_{id}_mappings` | `array` | Custom field mappings |
-| `wp4odoo_webhook_token` | `string` | Auto-generated webhook auth token |
-| `wp4odoo_db_version` | `string` | DB schema version |
-| `wp4odoo_onboarding_dismissed` | `bool` | Setup notice dismissed |
-| `wp4odoo_checklist_dismissed` | `bool` | Setup checklist dismissed |
-| `wp4odoo_checklist_webhooks_confirmed` | `bool` | Webhooks step marked done |
+All option keys, default values, and typed accessors are centralized in `Settings_Repository` (`includes/class-settings-repository.php`). Option key constants (e.g., `Settings_Repository::OPT_CONNECTION`) are used throughout the codebase instead of string literals.
+
+| Key | Constant | Type | Description |
+|-----|----------|------|-------------|
+| `wp4odoo_connection` | `OPT_CONNECTION` | `array` | URL, database, username, encrypted API key, protocol, timeout |
+| `wp4odoo_sync_settings` | `OPT_SYNC_SETTINGS` | `array` | Direction, conflict rule, batch size, interval |
+| `wp4odoo_log_settings` | `OPT_LOG_SETTINGS` | `array` | Enabled, level, retention days |
+| `wp4odoo_module_{id}_enabled` | — | `bool` | Per-module activation (via `is_module_enabled()`) |
+| `wp4odoo_module_{id}_settings` | — | `array` | Per-module configuration (via `get_module_settings()`) |
+| `wp4odoo_module_{id}_mappings` | — | `array` | Custom field mappings (via `get_module_mappings()`) |
+| `wp4odoo_webhook_token` | `OPT_WEBHOOK_TOKEN` | `string` | Auto-generated webhook auth token |
+| `wp4odoo_db_version` | `OPT_DB_VERSION` | `string` | DB schema version |
+| `wp4odoo_onboarding_dismissed` | `OPT_ONBOARDING_DISMISSED` | `bool` | Setup notice dismissed |
+| `wp4odoo_checklist_dismissed` | `OPT_CHECKLIST_DISMISSED` | `bool` | Setup checklist dismissed |
+| `wp4odoo_checklist_webhooks_confirmed` | `OPT_CHECKLIST_WEBHOOKS` | `bool` | Webhooks step marked done |
+| `wp4odoo_consecutive_failures` | `OPT_CONSECUTIVE_FAILURES` | `int` | Consecutive batch failure counter |
+| `wp4odoo_last_failure_email` | `OPT_LAST_FAILURE_EMAIL` | `int` | Last failure notification timestamp |
 
 ## REST API
 

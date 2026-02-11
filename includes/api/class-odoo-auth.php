@@ -4,6 +4,7 @@ declare( strict_types=1 );
 namespace WP4Odoo\API;
 
 use WP4Odoo\Logger;
+use WP4Odoo\Settings_Repository;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -89,7 +90,7 @@ class Odoo_Auth {
 	 * @return array{url: string, database: string, username: string, api_key: string, protocol: string, timeout: int}
 	 */
 	public static function get_credentials(): array {
-		$connection = get_option( 'wp4odoo_connection', [] );
+		$connection = get_option( Settings_Repository::OPT_CONNECTION, [] );
 
 		$credentials = [
 			'url'      => $connection['url'] ?? '',
@@ -132,7 +133,7 @@ class Odoo_Auth {
 			$sanitized['api_key'] = self::encrypt( $credentials['api_key'] );
 		}
 
-		return update_option( 'wp4odoo_connection', $sanitized );
+		return update_option( Settings_Repository::OPT_CONNECTION, $sanitized );
 	}
 
 	/**

@@ -106,11 +106,13 @@ class Settings_Page {
 	 * @return void
 	 */
 	public function render_setup_checklist(): void {
-		if ( get_option( 'wp4odoo_checklist_dismissed' ) ) {
+		$settings = wp4odoo()->settings();
+
+		if ( $settings->is_checklist_dismissed() ) {
 			return;
 		}
 
-		$connection = get_option( 'wp4odoo_connection', [] );
+		$connection = $settings->get_connection();
 
 		$steps = [
 			[
@@ -126,7 +128,7 @@ class Settings_Page {
 				'action' => '',
 			],
 			[
-				'done'   => (bool) get_option( 'wp4odoo_checklist_webhooks_confirmed' ),
+				'done'   => $settings->is_webhooks_confirmed(),
 				'label'  => __( 'Configure webhooks in Odoo', 'wp4odoo' ),
 				'tab'    => '',
 				'action' => 'wp4odoo_confirm_webhooks',
@@ -139,7 +141,7 @@ class Settings_Page {
 
 		// Auto-dismiss when all steps are done.
 		if ( $done === $total ) {
-			update_option( 'wp4odoo_checklist_dismissed', true );
+			$settings->dismiss_checklist();
 			return;
 		}
 
@@ -152,9 +154,10 @@ class Settings_Page {
 	 * @return bool
 	 */
 	private function has_any_module_enabled(): bool {
-		$modules = \WP4Odoo_Plugin::instance()->get_modules();
+		$settings = wp4odoo()->settings();
+		$modules  = \WP4Odoo_Plugin::instance()->get_modules();
 		foreach ( $modules as $id => $module ) {
-			if ( get_option( 'wp4odoo_module_' . $id . '_enabled' ) ) {
+			if ( $settings->is_module_enabled( $id ) ) {
 				return true;
 			}
 		}
@@ -206,7 +209,7 @@ class Settings_Page {
 	 */
 	public function render_tab_connection(): void {
 		$credentials = Odoo_Auth::get_credentials();
-		$token       = get_option( 'wp4odoo_webhook_token', '' );
+		$token       = wp4odoo()->settings()->get_webhook_token();
 		$webhook_url = rest_url( 'wp4odoo/v1/webhook' );
 
 		include WP4ODOO_PLUGIN_DIR . 'admin/views/tab-connection.php';
@@ -222,7 +225,7 @@ class Settings_Page {
 	 * @return array Sanitized values ready for storage.
 	 */
 	public function sanitize_connection( array $input ): array {
-		$existing = get_option( 'wp4odoo_connection', [] );
+		$existing = wp4odoo()->settings()->get_connection();
 
 		$sanitized = [
 			'url'      => esc_url_raw( $input['url'] ?? '' ),
@@ -252,8 +255,9 @@ class Settings_Page {
 	 * @return void
 	 */
 	public function render_tab_sync(): void {
-		$sync_settings = get_option( 'wp4odoo_sync_settings', [] );
-		$log_settings  = get_option( 'wp4odoo_log_settings', [] );
+		$settings      = wp4odoo()->settings();
+		$sync_settings = $settings->get_sync_settings();
+		$log_settings  = $settings->get_log_settings();
 
 		include WP4ODOO_PLUGIN_DIR . 'admin/views/tab-sync.php';
 	}
