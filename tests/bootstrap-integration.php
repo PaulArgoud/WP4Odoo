@@ -125,3 +125,10 @@ function wp4odoo_test_module_resolver(): \Closure {
 function wp4odoo_test_queue_repo(): \WP4Odoo\Sync_Queue_Repository {
 	return new \WP4Odoo\Sync_Queue_Repository();
 }
+
+/**
+ * Returns a fresh Settings_Repository.
+ */
+function wp4odoo_test_settings(): \WP4Odoo\Settings_Repository {
+	return new \WP4Odoo\Settings_Repository();
+}
