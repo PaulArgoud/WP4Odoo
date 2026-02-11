@@ -42,19 +42,37 @@ trait Retryable_Http {
 
 			if ( ! is_wp_error( $response ) ) {
 				$status_code = wp_remote_retrieve_response_code( $response );
-				if ( $status_code >= 500 && $attempt < self::MAX_RETRIES ) {
-					$delay_us = (int) ( pow( 2, $attempt ) * 500 + wp_rand( 0, 1000 ) ) * 1000;
-					usleep( $delay_us );
+				if ( $status_code >= 500 ) {
+					if ( $attempt < self::MAX_RETRIES ) {
+						$delay_us = (int) ( pow( 2, $attempt ) * 500 + wp_rand( 0, 1000 ) ) * 1000;
+						usleep( $delay_us );
 
-					$this->logger->warning(
-						'Server error, retrying.',
+						$this->logger->warning(
+							'Server error, retrying.',
+							[
+								'endpoint' => $endpoint,
+								'status'   => $status_code,
+								'attempt'  => $attempt,
+							]
+						);
+						continue;
+					}
+
+					$error_msg = sprintf(
+						/* translators: 1: HTTP status code, 2: endpoint, 3: number of attempts */
+						__( 'Server error HTTP %1$d on %2$s after %3$d attempts.', 'wp4odoo' ),
+						$status_code,
+						$endpoint,
+						self::MAX_RETRIES
+					);
+					$this->logger->error(
+						$error_msg,
 						[
 							'endpoint' => $endpoint,
 							'status'   => $status_code,
-							'attempt'  => $attempt,
 						]
 					);
-					continue;
+					throw new \RuntimeException( $error_msg );
 				}
 				return $response;
 			}

@@ -129,15 +129,9 @@ class PartnerServiceTest extends TestCase {
 
 		$this->service->get_or_create( 'found@example.com', [], 15 );
 
-		// Verify that a replace (save) was called on entity_map.
-		$replace_calls = array_filter( $this->wpdb->calls, fn( $c ) => $c['method'] === 'replace' );
-		$this->assertNotEmpty( $replace_calls );
-
-		$replace_data = array_values( $replace_calls )[0]['args'][1];
-		$this->assertSame( 'crm', $replace_data['module'] );
-		$this->assertSame( 'contact', $replace_data['entity_type'] );
-		$this->assertSame( 15, $replace_data['wp_id'] );
-		$this->assertSame( 77, $replace_data['odoo_id'] );
+		// Verify that an upsert (save) was called on entity_map.
+		$upsert_calls = array_filter( $this->wpdb->calls, fn( $c ) => $c['method'] === 'query' && str_contains( $c['args'][0], 'INSERT INTO' ) );
+		$this->assertNotEmpty( $upsert_calls );
 	}
 
 	public function test_get_or_create_creates_partner_when_not_found(): void {

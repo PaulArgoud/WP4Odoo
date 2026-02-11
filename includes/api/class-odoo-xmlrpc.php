@@ -87,7 +87,7 @@ class Odoo_XmlRPC extends Odoo_Transport_Base {
 				$model,
 				$method,
 				$args,
-				$kwargs,
+				(object) $kwargs,
 			]
 		);
 	}

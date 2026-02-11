@@ -199,7 +199,7 @@ class BulkSyncTest extends TestCase {
 
 		$this->assertTrue( $result );
 
-		$replaces = array_filter( $this->wpdb->calls, fn( $c ) => 'replace' === $c['method'] );
-		$this->assertNotEmpty( $replaces );
+		$queries = array_filter( $this->wpdb->calls, fn( $c ) => 'query' === $c['method'] && str_contains( $c['args'][0], 'INSERT INTO' ) );
+		$this->assertNotEmpty( $queries );
 	}
 }

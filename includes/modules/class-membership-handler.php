@@ -72,6 +72,7 @@ class Membership_Handler {
 		$data = [
 			'plan_name'  => $plan->get_name(),
 			'membership' => true,
+			'type'       => 'service',
 		];
 
 		// Resolve price from the first linked product.

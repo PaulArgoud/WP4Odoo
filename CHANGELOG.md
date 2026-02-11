@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.5.0] - 2026-02-11
+
+### Fixed
+- **CRITICAL: Sync_Engine lock leak** — `process_queue()` now wraps batch processing in `try/finally` to guarantee MySQL advisory lock release even if `Failure_Notifier::check()` throws
+- **5xx retry throws on exhaustion** — `Retryable_Http` now throws `RuntimeException` after all retries are exhausted on HTTP 5xx, instead of silently returning the error response (which could be misinterpreted as valid data)
+- **Exponential backoff in Sync_Engine** — changed retry delay from linear (`attempts × 60s`) to exponential (`2^attempts × 60s`) for proper backoff behavior
+- **Entity_Map_Repository atomic upsert** — replaced `REPLACE INTO` (DELETE + INSERT, resets AUTO_INCREMENT) with `INSERT ... ON DUPLICATE KEY UPDATE` for safe atomic upserts
+- **Entity_Map_Repository cache invalidation** — `remove()` now falls back to a DB lookup when the forward cache is empty, ensuring the reverse cache entry is also cleared
+- **XmlRPC kwargs cast** — added `(object)` cast to `$kwargs` in `execute_kw()` to match JsonRPC behavior and prevent empty-array serialization issues
+- **generate_sync_hash() defensive check** — handles `wp_json_encode()` returning `false` gracefully by falling back to `serialize()`
+- **Database index alignment** — changed `idx_odoo_lookup` from `(odoo_model, odoo_id)` to `(module, entity_type, odoo_id)` to match actual query patterns
+- **Cron reschedule on settings change** — sync cron is now cleared and rescheduled when the sync interval setting changes in admin
+
+### Added
+- **Stale job recovery** — `Sync_Queue_Repository::recover_stale_processing()` resets jobs stuck in `processing` state for more than 10 minutes, called automatically at the start of each queue run
+- **Autosave/revision guards** — added `wp_is_post_revision()` / `wp_is_post_autosave()` early returns to 5 hook traits: GiveWP, Charitable, SimplePay, WPRM, MemberPress
+- **Log filter dropdown** — added 11 missing module options (system, edd, memberships, memberpress, givewp, charitable, simplepay, wprm, forms, amelia, bookly)
+- **Memberships plan type** — membership plans now include `'type' => 'service'` to match MemberPress product type
+
+### Removed
+- **Error_Type::Config** — dead enum case merged into `Permanent` (was never used in practice)
+
 ## [2.4.0] - 2026-02-11
 
 ### Changed

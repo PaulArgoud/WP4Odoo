@@ -138,57 +138,64 @@ class Sync_Engine {
 			return 0;
 		}
 
-		$sync_settings = $this->settings->get_sync_settings();
-		$batch         = (int) $sync_settings['batch_size'];
-		$now           = current_time( 'mysql', true );
+		$processed = 0;
 
-		$jobs       = $this->queue_repo->fetch_pending( $batch, $now );
-		$processed  = 0;
-		$start_time = microtime( true );
+		try {
+			$sync_settings = $this->settings->get_sync_settings();
+			$batch         = (int) $sync_settings['batch_size'];
+			$now           = current_time( 'mysql', true );
 
-		$this->batch_failures  = 0;
-		$this->batch_successes = 0;
+			$jobs       = $this->queue_repo->fetch_pending( $batch, $now );
+			$start_time = microtime( true );
 
-		foreach ( $jobs as $job ) {
-			if ( ( microtime( true ) - $start_time ) >= self::BATCH_TIME_LIMIT ) {
-				$this->logger->info(
-					'Batch time limit reached, deferring remaining jobs.',
-					[
-						'elapsed'   => round( microtime( true ) - $start_time, 2 ),
-						'processed' => $processed,
-						'remaining' => count( $jobs ) - $processed,
-					]
-				);
-				break;
-			}
+			$this->batch_failures  = 0;
+			$this->batch_successes = 0;
 
-			$this->queue_repo->update_status( (int) $job->id, 'processing' );
+			// Recover any jobs left in 'processing' from a previous crash.
+			$this->queue_repo->recover_stale_processing();
 
-			try {
-				$result = $this->process_job( $job );
-
-				if ( $result->succeeded() ) {
-					$this->queue_repo->update_status(
-						(int) $job->id,
-						'completed',
+			foreach ( $jobs as $job ) {
+				if ( ( microtime( true ) - $start_time ) >= self::BATCH_TIME_LIMIT ) {
+					$this->logger->info(
+						'Batch time limit reached, deferring remaining jobs.',
 						[
-							'processed_at' => current_time( 'mysql', true ),
+							'elapsed'   => round( microtime( true ) - $start_time, 2 ),
+							'processed' => $processed,
+							'remaining' => count( $jobs ) - $processed,
 						]
 					);
-					++$processed;
-					++$this->batch_successes;
-				} else {
-					$this->handle_failure( $job, $result->get_message(), $result->get_error_type() );
+					break;
+				}
+
+				$this->queue_repo->update_status( (int) $job->id, 'processing' );
+
+				try {
+					$result = $this->process_job( $job );
+
+					if ( $result->succeeded() ) {
+						$this->queue_repo->update_status(
+							(int) $job->id,
+							'completed',
+							[
+								'processed_at' => current_time( 'mysql', true ),
+							]
+						);
+						++$processed;
+						++$this->batch_successes;
+					} else {
+						$this->handle_failure( $job, $result->get_message(), $result->get_error_type() );
+						++$this->batch_failures;
+					}
+				} catch ( \Throwable $e ) {
+					$this->handle_failure( $job, $e->getMessage() );
 					++$this->batch_failures;
 				}
-			} catch ( \Throwable $e ) {
-				$this->handle_failure( $job, $e->getMessage() );
-				++$this->batch_failures;
 			}
-		}
 
-		$this->failure_notifier->check( $this->batch_successes, $this->batch_failures );
-		$this->release_lock();
+			$this->failure_notifier->check( $this->batch_successes, $this->batch_failures );
+		} finally {
+			$this->release_lock();
+		}
 
 		if ( $processed > 0 ) {
 			$this->logger->info(
@@ -256,7 +263,6 @@ class Sync_Engine {
 	 * Error classification determines retry strategy:
 	 * - Transient (default): retry with exponential backoff.
 	 * - Permanent: fail immediately, no retry.
-	 * - Config: fail immediately and log as error.
 	 *
 	 * @param object          $job           The job row.
 	 * @param string          $error_message The error description.
@@ -268,11 +274,11 @@ class Sync_Engine {
 		$error_trimmed = sanitize_text_field( mb_substr( $error_message, 0, 65535 ) );
 		$error_type    = $error_type ?? Error_Type::Transient;
 
-		// Permanent and Config errors fail immediately — no point retrying.
+		// Permanent errors fail immediately — no point retrying.
 		$should_retry = Error_Type::Transient === $error_type && $attempts < (int) $job->max_attempts;
 
 		if ( $should_retry ) {
-			$delay     = $attempts * 60;
+			$delay     = (int) ( pow( 2, $attempts ) * 60 );
 			$scheduled = gmdate( 'Y-m-d H:i:s', time() + $delay );
 
 			$this->queue_repo->update_status(

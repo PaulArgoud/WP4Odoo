@@ -306,7 +306,13 @@ if ( ! function_exists( 'wp_generate_password' ) ) {
 
 if ( ! function_exists( 'wp_unslash' ) ) {
 	function wp_unslash( $value ) {
-		return is_string( $value ) ? stripslashes( $value ) : $value;
+		if ( is_string( $value ) ) {
+			return stripslashes( $value );
+		}
+		if ( is_array( $value ) ) {
+			return array_map( 'wp_unslash', $value );
+		}
+		return $value;
 	}
 }
 

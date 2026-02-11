@@ -281,14 +281,24 @@ class Settings_Page {
 		$valid_conflicts  = [ 'newest_wins', 'odoo_wins', 'wp_wins' ];
 		$valid_intervals  = [ 'wp4odoo_five_minutes', 'wp4odoo_fifteen_minutes' ];
 
+		$new_interval = in_array( $input['sync_interval'] ?? '', $valid_intervals, true )
+			? $input['sync_interval'] : 'wp4odoo_five_minutes';
+
+		// Reschedule cron if the sync interval changed.
+		$current      = get_option( \WP4Odoo\Settings_Repository::OPT_SYNC_SETTINGS, [] );
+		$old_interval = $current['sync_interval'] ?? 'wp4odoo_five_minutes';
+		if ( $new_interval !== $old_interval ) {
+			wp_clear_scheduled_hook( 'wp4odoo_scheduled_sync' );
+			wp_schedule_event( time(), $new_interval, 'wp4odoo_scheduled_sync' );
+		}
+
 		return [
 			'direction'     => in_array( $input['direction'] ?? '', $valid_directions, true )
 				? $input['direction'] : 'bidirectional',
 			'conflict_rule' => in_array( $input['conflict_rule'] ?? '', $valid_conflicts, true )
 				? $input['conflict_rule'] : 'newest_wins',
 			'batch_size'    => max( 1, min( 500, absint( $input['batch_size'] ?? 50 ) ) ),
-			'sync_interval' => in_array( $input['sync_interval'] ?? '', $valid_intervals, true )
-				? $input['sync_interval'] : 'wp4odoo_five_minutes',
+			'sync_interval' => $new_interval,
 			'auto_sync'     => ! empty( $input['auto_sync'] ),
 		];
 	}

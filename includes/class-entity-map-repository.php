@@ -200,7 +200,7 @@ class Entity_Map_Repository {
 	/**
 	 * Save a mapping between a WordPress entity and an Odoo record.
 	 *
-	 * Uses REPLACE INTO to insert or update the mapping.
+	 * Uses INSERT ON DUPLICATE KEY UPDATE to upsert the mapping.
 	 *
 	 * @param string $module      Module identifier.
 	 * @param string $entity_type Entity type.
@@ -215,17 +215,23 @@ class Entity_Map_Repository {
 
 		$table = $wpdb->prefix . 'wp4odoo_entity_map';
 
-		$result = $wpdb->replace(
-			$table,
-			[
-				'module'         => $module,
-				'entity_type'    => $entity_type,
-				'wp_id'          => $wp_id,
-				'odoo_id'        => $odoo_id,
-				'odoo_model'     => $odoo_model,
-				'sync_hash'      => $sync_hash,
-				'last_synced_at' => current_time( 'mysql', true ),
-			]
+		$now = current_time( 'mysql', true );
+
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is from $wpdb->prefix, safe.
+		$result = $wpdb->query(
+			$wpdb->prepare(
+				"INSERT INTO {$table} (module, entity_type, wp_id, odoo_id, odoo_model, sync_hash, last_synced_at)
+				VALUES (%s, %s, %d, %d, %s, %s, %s)
+				ON DUPLICATE KEY UPDATE odoo_id = VALUES(odoo_id), odoo_model = VALUES(odoo_model), sync_hash = VALUES(sync_hash), last_synced_at = VALUES(last_synced_at)",
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				$module,
+				$entity_type,
+				$wp_id,
+				$odoo_id,
+				$odoo_model,
+				$sync_hash,
+				$now
+			)
 		);
 
 		if ( false !== $result ) {
@@ -247,6 +253,12 @@ class Entity_Map_Repository {
 	public function remove( string $module, string $entity_type, int $wp_id ): bool {
 		$forward_key = "{$module}:{$entity_type}:wp:{$wp_id}";
 		$odoo_id     = $this->cache[ $forward_key ] ?? null;
+
+		// If forward cache was never populated, query DB to find the odoo_id
+		// so we can also invalidate the reverse cache entry.
+		if ( null === $odoo_id ) {
+			$odoo_id = $this->get_odoo_id( $module, $entity_type, $wp_id );
+		}
 
 		global $wpdb;
 

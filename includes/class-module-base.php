@@ -412,7 +412,8 @@ abstract class Module_Base {
 	 */
 	public function generate_sync_hash( array $data ): string {
 		ksort( $data );
-		return hash( 'sha256', wp_json_encode( $data ) );
+		$json = wp_json_encode( $data );
+		return hash( 'sha256', is_string( $json ) ? $json : serialize( $data ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_serialize -- Fallback only when wp_json_encode fails; data is hashed, never unserialized.
 	}
 
 	// -------------------------------------------------------------------------

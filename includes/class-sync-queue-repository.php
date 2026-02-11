@@ -266,6 +266,28 @@ class Sync_Queue_Repository {
 	}
 
 	/**
+	 * Recover jobs stuck in 'processing' state from a previous crash.
+	 *
+	 * Resets jobs that have been in 'processing' for more than 10 minutes
+	 * back to 'pending' so they can be retried.
+	 *
+	 * @return int Number of recovered jobs.
+	 */
+	public function recover_stale_processing(): int {
+		global $wpdb;
+
+		$table  = $this->table();
+		$cutoff = gmdate( 'Y-m-d H:i:s', time() - 600 );
+
+		return (int) $wpdb->query(
+			$wpdb->prepare(
+				"UPDATE {$table} SET status = 'pending', error_message = 'Recovered from stale processing state.' WHERE status = 'processing' AND created_at < %s", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is from $wpdb->prefix, safe.
+				$cutoff
+			)
+		);
+	}
+
+	/**
 	 * Update a job's status and optional extra fields.
 	 *
 	 * @param int    $job_id The queue job ID.

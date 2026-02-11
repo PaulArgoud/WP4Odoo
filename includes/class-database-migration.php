@@ -64,7 +64,7 @@ final class Database_Migration {
 			PRIMARY KEY (id),
 			UNIQUE KEY idx_unique_mapping (module, entity_type, wp_id, odoo_id),
 			KEY idx_wp_lookup (entity_type, wp_id),
-			KEY idx_odoo_lookup (odoo_model, odoo_id)
+			KEY idx_odoo_lookup (module, entity_type, odoo_id)
 		) $charset_collate;
 
 		CREATE TABLE IF NOT EXISTS {$wpdb->prefix}wp4odoo_logs (

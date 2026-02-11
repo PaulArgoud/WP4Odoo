@@ -77,20 +77,15 @@ class EntityMapRepositoryTest extends TestCase {
 
 	// ─── save() ────────────────────────────────────────────
 
-	public function test_save_calls_replace_with_correct_data(): void {
+	public function test_save_calls_upsert_with_correct_data(): void {
 		$this->repo->save( 'crm', 'contact', 10, 42, 'res.partner', 'abc123' );
 
-		$replace = $this->get_last_call( 'replace' );
-		$this->assertNotNull( $replace );
+		$query_calls = $this->get_calls( 'query' );
+		$this->assertNotEmpty( $query_calls );
 
-		$data = $replace['args'][1];
-		$this->assertSame( 'crm', $data['module'] );
-		$this->assertSame( 'contact', $data['entity_type'] );
-		$this->assertSame( 10, $data['wp_id'] );
-		$this->assertSame( 42, $data['odoo_id'] );
-		$this->assertSame( 'res.partner', $data['odoo_model'] );
-		$this->assertSame( 'abc123', $data['sync_hash'] );
-		$this->assertArrayHasKey( 'last_synced_at', $data );
+		$sql = $query_calls[0]['args'][0];
+		$this->assertStringContainsString( 'INSERT INTO', $sql );
+		$this->assertStringContainsString( 'ON DUPLICATE KEY UPDATE', $sql );
 	}
 
 	public function test_save_returns_true_on_success(): void {

@@ -35,9 +35,20 @@ if ( ! defined( 'ABSPATH' ) ) {
 			<option value="webhook">Webhook</option>
 			<option value="jsonrpc">JSON-RPC</option>
 			<option value="xmlrpc">XML-RPC</option>
+			<option value="system">System</option>
 			<option value="crm">CRM</option>
 			<option value="sales">Sales</option>
 			<option value="woocommerce">WooCommerce</option>
+			<option value="edd">EDD</option>
+			<option value="memberships">Memberships</option>
+			<option value="memberpress">MemberPress</option>
+			<option value="givewp">GiveWP</option>
+			<option value="charitable">Charitable</option>
+			<option value="simplepay">SimplePay</option>
+			<option value="wprm">WPRM</option>
+			<option value="forms">Forms</option>
+			<option value="amelia">Amelia</option>
+			<option value="bookly">Bookly</option>
 		</select>
 
 		<input type="date" id="wp4odoo-log-date-from" placeholder="<?php esc_attr_e( 'From', 'wp4odoo' ); ?>" />

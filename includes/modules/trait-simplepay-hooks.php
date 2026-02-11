@@ -43,6 +43,10 @@ trait SimplePay_Hooks {
 			return;
 		}
 
+		if ( wp_is_post_revision( $post_id ) || wp_is_post_autosave( $post_id ) ) {
+			return;
+		}
+
 		if ( 'simple-pay' !== get_post_type( $post_id ) ) {
 			return;
 		}
