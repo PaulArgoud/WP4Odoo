@@ -34,8 +34,8 @@ class RCP_Module extends Module_Base {
 
 	use RCP_Hooks;
 
-	protected string $exclusive_group    = 'memberships';
-	protected int    $exclusive_priority = 12;
+	protected string $exclusive_group = 'memberships';
+	protected int $exclusive_priority = 12;
 
 	/**
 	 * Sync direction: push-only (WP → Odoo).

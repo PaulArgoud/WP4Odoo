@@ -4,7 +4,7 @@
 
 Modular WordPress plugin that creates a seamless, bidirectional bridge between WordPress/WooCommerce and Odoo ERP (v14+).
 
-Built on a clean, extensible architecture, it covers a wide range of integrations: CRM, Sales & Invoicing, WooCommerce, Easy Digital Downloads, Memberships, MemberPress, GiveWP, WP Charitable, WP Simple Pay (Stripe), WP Recipe Maker, Amelia Booking, Bookly Booking, and form-based lead capture.
+Built on a clean, extensible architecture, it covers a wide range of integrations: CRM, Sales & Invoicing, WooCommerce, Easy Digital Downloads, Memberships, MemberPress, Paid Memberships Pro, Restrict Content Pro, GiveWP, WP Charitable, WP Simple Pay (Stripe), WP Recipe Maker, LearnDash, LifterLMS, Amelia Booking, Bookly Booking, and form-based lead capture.
 
 Ships in **3 languages** (English, French, Spanish) and is fully translation-ready.
 
@@ -16,7 +16,7 @@ Ships in **3 languages** (English, French, Spanish) and is fully translation-rea
 
 - **Admin Dashboard** — 5-tab settings interface: Connection, Sync, Modules, Queue, Logs
 - **Async Queue** — No API calls during user requests; all sync jobs go through a persistent database queue with exponential backoff, deduplication, and configurable batch size
-- **Code Quality** — WordPress Coding Standards (PHPCS), PHPStan level 5 static analysis, 1039 unit tests + 26 integration tests, CI/CD with GitHub Actions
+- **Code Quality** — WordPress Coding Standards (PHPCS), PHPStan level 5 static analysis, 1364 unit tests + 26 integration tests, CI/CD with GitHub Actions
 - **Dual Transport** — JSON-RPC 2.0 (default for Odoo 17+) and XML-RPC (legacy), swappable via settings, shared retry logic via `Retryable_Http` trait (3 attempts, exponential backoff + jitter)
 - **Encrypted Credentials** — API keys encrypted at rest with libsodium (OpenSSL fallback)
 - **Extensible** — Register custom modules via `wp4odoo_register_modules` action hook; filter data with `wp4odoo_map_to_odoo_*` / `wp4odoo_map_from_odoo_*`
@@ -73,16 +73,20 @@ Each Odoo domain is encapsulated in an independent module extending `Module_Base
 | **Amelia Booking**          |   ➡️   | Contacts, Calendar                    |  ⚠️  | Service/appointment sync, calendar events, customer-to-partner resolution      |
 | **Bookly Booking**          |   ➡️   | Contacts, Calendar                    |  ⚠️  | Service/booking sync via WP-Cron polling, hash-based change detection          |
 | **Easy Digital Downloads**  |   ↔️   | Contacts, Sales, Invoicing            |  ❌  | Download/order sync, status mapping, invoice pull                              |
-| **Forms (GF & WPF)**        |   ➡️   | Contacts, CRM                         |  ⚠️  | GF + WPForms lead creation, field auto-detection, multilingual label matching  |
+| **Forms (7 plugins)**       |   ➡️   | Contacts, CRM                         |  ⚠️  | GF, WPForms, CF7, Fluent, Formidable, Ninja, Forminator — lead auto-detection |
 | **GiveWP**                  |   ➡️   | Contacts, Invoicing (+ OCA Donation)  |  ⚠️  | Form/donation sync, dual-model detection, auto-validate, recurring donations   |
+| **LearnDash**               |   ➡️   | Contacts, Sales, Invoicing            |  ❌  | Course/group/transaction/enrollment sync, auto-post invoices                   |
+| **LifterLMS**               |   ➡️   | Contacts, Sales, Invoicing            |  ❌  | Course/membership/order/enrollment sync, auto-post invoices                    |
 | **MemberPress**             |   ➡️   | Contacts, Members, Invoicing          |  ❌  | Plan/txn/sub sync, auto-post invoices, status mapping                          |
+| **Paid Memberships Pro**    |   ➡️   | Contacts, Members, Invoicing          |  ❌  | Level/order/membership sync, auto-post invoices, status mapping                |
+| **Restrict Content Pro**    |   ➡️   | Contacts, Members, Invoicing          |  ❌  | Level/payment/membership sync, auto-post invoices, status mapping              |
 | **WP Charitable**           |   ➡️   | Contacts, Invoicing (+ OCA Donation)  |  ⚠️  | Campaign/donation sync, dual-model detection, auto-validate, recurring         |
 | **WP Recipe Maker**         |   ➡️   | Products                              |  ❌  | Recipe sync as service products, structured descriptions, push-only            |
 | **WP Simple Pay**           |   ➡️   | Contacts, Invoicing (+ OCA Donation)  |  ⚠️  | Stripe payment sync, webhook capture, dual-model, auto-validate, recurring     |
 | **WooCommerce**             |   ↔️   | Contacts, Sales, Inventory, Invoicing |  ❌  | Product/order/stock sync, variants, image pull, exchange rates, bulk ops       |
 | **WooCommerce Memberships** |   ➡️   | Contacts, Members                     |  ❌  | Plan auto-sync, status mapping, filterable via `wp4odoo_membership_status_map` |
 
-> ⁴ **[One App Free](https://www.odoo.com/pricing)**: with CRM as your free app, CRM and Forms modules work. With Invoicing as your free app, GiveWP, WP Charitable, and WP Simple Pay work. With Calendar as your free app, Amelia and Bookly work (partial — no Contacts). Sales, WooCommerce, Memberships, and WP Recipe Maker require 2–4 apps.
+> ⁴ **[One App Free](https://www.odoo.com/pricing)**: with CRM as your free app, CRM and Forms modules work. With Invoicing as your free app, GiveWP, WP Charitable, and WP Simple Pay work. With Calendar as your free app, Amelia and Bookly work (partial — no Contacts). Sales, WooCommerce, Memberships (MemberPress/PMPro/RCP/WC Memberships), LMS (LearnDash/LifterLMS), and WP Recipe Maker require 2–4 apps.
 
 ### Third-party modules
 
@@ -124,7 +128,15 @@ Bidirectional sync for Easy Digital Downloads: downloads (`product.template`), o
 
 ### Forms Module
 
-Automatic lead creation in Odoo from Gravity Forms and WPForms submissions, with field auto-detection (name, email, phone, company, message), multilingual label matching, and filterable via `wp4odoo_form_lead_data`
+Automatic lead creation in Odoo from **7 form plugins**: Gravity Forms, WPForms, Contact Form 7, Fluent Forms, Formidable Forms, Ninja Forms, and Forminator. Field auto-detection (name, email, phone, company, message), multilingual label matching, and filterable via `wp4odoo_form_lead_data`
+
+### [LearnDash](https://www.learndash.com) ([directory](https://wordpress.org/plugins/sfwd-lms/))
+
+Push LearnDash LMS data to Odoo: courses and groups as service products (`product.product`), transactions as invoices (`account.move` with auto-posting), enrollments as sale orders (`sale.order`), with automatic product sync before dependent entities and partner resolution
+
+### [LifterLMS](https://lifterlms.com) ([directory](https://wordpress.org/plugins/lifterlms/))
+
+Push LifterLMS data to Odoo: courses and memberships as service products (`product.product`), orders as invoices (`account.move` with auto-posting), enrollments as sale orders (`sale.order`), with automatic product sync before dependent entities and partner resolution
 
 ### [GiveWP](https://givewp.com) ([directory](https://wordpress.org/plugins/give/))
 
@@ -135,6 +147,14 @@ Forms synced as products, donations with auto-validation, guest donor support, f
 ### [MemberPress](https://memberpress.com) ([directory](https://wordpress.org/plugins/members/))
 
 Push MemberPress recurring subscriptions to Odoo: plans as membership products, transactions as invoices (`account.move` with auto-posting), subscriptions as membership lines, with status mapping and filterable hooks (`wp4odoo_mepr_txn_status_map`, `wp4odoo_mepr_sub_status_map`)
+
+### [Paid Memberships Pro](https://www.paidmembershipspro.com) ([directory](https://wordpress.org/plugins/paid-memberships-pro/))
+
+Push PMPro membership data to Odoo: levels as membership products (`product.product`), payment orders as invoices (`account.move` with auto-posting), user memberships as membership lines (`membership.membership_line`), with automatic level sync, status mapping, and partner resolution (mutually exclusive with MemberPress, RCP, and WC Memberships)
+
+### [Restrict Content Pro](https://restrictcontentpro.com)
+
+Push Restrict Content Pro membership data to Odoo: levels as membership products (`product.product`), payments as invoices (`account.move` with auto-posting), user memberships as membership lines (`membership.membership_line`), with automatic level sync, status mapping, and partner resolution (mutually exclusive with MemberPress, PMPro, and WC Memberships)
 
 ### [WooCommerce](https://woocommerce.com) ([directory](https://wordpress.org/plugins/woocommerce/))
 
