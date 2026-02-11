@@ -109,26 +109,5 @@ if ( ! $table_check ) {
 require_once __DIR__ . '/Integration/WP4Odoo_TestCase.php';
 
 // ── Test Helpers ─────────────────────────────────────────
-// Mirror the helpers from tests/bootstrap.php so integration
-// tests can construct Sync_Engine and other DI-dependent classes.
 
-/**
- * Returns a module-resolver closure for Sync_Engine.
- */
-function wp4odoo_test_module_resolver(): \Closure {
-	return fn( string $id ) => \WP4Odoo_Plugin::instance()->get_module( $id );
-}
-
-/**
- * Returns a fresh Sync_Queue_Repository.
- */
-function wp4odoo_test_queue_repo(): \WP4Odoo\Sync_Queue_Repository {
-	return new \WP4Odoo\Sync_Queue_Repository();
-}
-
-/**
- * Returns a fresh Settings_Repository.
- */
-function wp4odoo_test_settings(): \WP4Odoo\Settings_Repository {
-	return new \WP4Odoo\Settings_Repository();
-}
+require_once __DIR__ . '/helpers/test-functions.php';

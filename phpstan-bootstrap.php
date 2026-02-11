@@ -18,53 +18,8 @@ if ( ! defined( 'HOUR_IN_SECONDS' ) ) {
 	define( 'HOUR_IN_SECONDS', 3600 );
 }
 
-/**
- * Stub for the main plugin singleton.
- *
- * The real class is defined in wp4odoo.php which is outside
- * the PHPStan scan path.
- */
-class WP4Odoo_Plugin {
-
-	/** @return static */
-	public static function instance(): static {
-		return new static();
-	}
-
-	/** @return \WP4Odoo\Module_Base|null */
-	public function get_module( string $id ): ?\WP4Odoo\Module_Base {
-		return null;
-	}
-
-	/** @return array<string, \WP4Odoo\Module_Base> */
-	public function get_modules(): array {
-		return [];
-	}
-
-	/** @return \WP4Odoo\API\Odoo_Client */
-	public function client(): \WP4Odoo\API\Odoo_Client {
-		return new \WP4Odoo\API\Odoo_Client();
-	}
-
-	/** @return \WP4Odoo\Settings_Repository */
-	public function settings(): \WP4Odoo\Settings_Repository {
-		return new \WP4Odoo\Settings_Repository();
-	}
-
-	/** @return \WP4Odoo\Module_Registry */
-	public function module_registry(): \WP4Odoo\Module_Registry {
-		return new \WP4Odoo\Module_Registry( $this, $this->settings() );
-	}
-}
-
-/**
- * Global accessor for the plugin singleton.
- *
- * @return WP4Odoo_Plugin
- */
-function wp4odoo(): WP4Odoo_Plugin {
-	return WP4Odoo_Plugin::instance();
-}
+// Plugin singleton stub — shared with unit tests (single source of truth).
+require_once __DIR__ . '/tests/stubs/plugin-stub.php';
 
 // ─── WooCommerce stubs ──────────────────────────────────
 // Minimal stubs so PHPStan can analyse WooCommerce_Module

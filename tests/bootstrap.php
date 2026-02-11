@@ -163,47 +163,4 @@ require_once WP4ODOO_PLUGIN_DIR . 'includes/class-cli.php';
 
 // ─── Test helpers ──────────────────────────────────────
 
-/**
- * Returns a test client provider closure for module instantiation.
- *
- * @return \Closure Returns a fresh Odoo_Client stub.
- */
-function wp4odoo_test_client_provider(): \Closure {
-	return fn() => new \WP4Odoo\API\Odoo_Client();
-}
-
-/**
- * Returns a test module resolver closure for Sync_Engine instantiation.
- *
- * @return \Closure Returns null for any module ID.
- */
-function wp4odoo_test_module_resolver(): \Closure {
-	return fn( string $id ) => \WP4Odoo_Plugin::instance()->get_module( $id );
-}
-
-/**
- * Returns a fresh Entity_Map_Repository for test isolation.
- *
- * @return \WP4Odoo\Entity_Map_Repository
- */
-function wp4odoo_test_entity_map(): \WP4Odoo\Entity_Map_Repository {
-	return new \WP4Odoo\Entity_Map_Repository();
-}
-
-/**
- * Returns a fresh Sync_Queue_Repository for test isolation.
- *
- * @return \WP4Odoo\Sync_Queue_Repository
- */
-function wp4odoo_test_queue_repo(): \WP4Odoo\Sync_Queue_Repository {
-	return new \WP4Odoo\Sync_Queue_Repository();
-}
-
-/**
- * Returns a fresh Settings_Repository for test isolation.
- *
- * @return \WP4Odoo\Settings_Repository
- */
-function wp4odoo_test_settings(): \WP4Odoo\Settings_Repository {
-	return new \WP4Odoo\Settings_Repository();
-}
+require_once __DIR__ . '/helpers/test-functions.php';
