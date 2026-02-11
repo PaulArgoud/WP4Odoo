@@ -185,7 +185,12 @@ class Sync_Queue_Repository {
 		$table = $this->table();
 
 		return (int) $wpdb->query(
-			"UPDATE {$table} SET status = 'pending', attempts = 0, error_message = NULL, scheduled_at = NULL WHERE status = 'failed'" // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is from $wpdb->prefix, safe.
+			$wpdb->prepare(
+				"UPDATE {$table} SET status = %s, attempts = %d, error_message = NULL, scheduled_at = NULL WHERE status = %s", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is from $wpdb->prefix, safe.
+				'pending',
+				0,
+				'failed'
+			)
 		);
 	}
 

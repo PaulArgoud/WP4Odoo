@@ -27,9 +27,10 @@ class Sync_Engine {
 	 * Lock acquisition timeout in seconds.
 	 *
 	 * GET_LOCK waits up to this duration for the lock to become available.
-	 * 1 second is sufficient: if another process holds the lock, we skip.
+	 * 5 seconds allows concurrent WP-Cron runs to queue behind each other
+	 * rather than immediately skipping on high-traffic sites.
 	 */
-	private const LOCK_TIMEOUT = 1;
+	private const LOCK_TIMEOUT = 5;
 
 	/**
 	 * Maximum wall-clock seconds for a single batch run.
@@ -52,6 +53,13 @@ class Sync_Engine {
 	 * @var Failure_Notifier
 	 */
 	private Failure_Notifier $failure_notifier;
+
+	/**
+	 * Circuit breaker for Odoo connectivity.
+	 *
+	 * @var Circuit_Breaker
+	 */
+	private Circuit_Breaker $circuit_breaker;
 
 	/**
 	 * Closure that resolves a module by ID (injected, replaces singleton access).
@@ -108,6 +116,7 @@ class Sync_Engine {
 		$this->settings         = $settings;
 		$this->logger           = new Logger( 'sync', $settings );
 		$this->failure_notifier = new Failure_Notifier( $this->logger, $settings );
+		$this->circuit_breaker  = new Circuit_Breaker( $this->logger );
 	}
 
 	/**
@@ -133,6 +142,11 @@ class Sync_Engine {
 	 * @return int Number of jobs processed successfully.
 	 */
 	public function process_queue(): int {
+		if ( ! $this->circuit_breaker->is_available() ) {
+			$this->logger->info( 'Queue processing skipped: circuit breaker open (Odoo unreachable).' );
+			return 0;
+		}
+
 		if ( ! $this->acquire_lock() ) {
 			$this->logger->info( 'Queue processing skipped: another process is running.' );
 			return 0;
@@ -193,6 +207,13 @@ class Sync_Engine {
 			}
 
 			$this->failure_notifier->check( $this->batch_successes, $this->batch_failures );
+
+			// Update circuit breaker based on batch outcome.
+			if ( $this->batch_successes > 0 ) {
+				$this->circuit_breaker->record_success();
+			} elseif ( $this->batch_failures > 0 ) {
+				$this->circuit_breaker->record_failure();
+			}
 		} finally {
 			$this->release_lock();
 		}

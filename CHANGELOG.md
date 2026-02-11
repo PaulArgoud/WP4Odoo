@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **Events Calendar Module** — The Events Calendar + Event Tickets → Odoo push sync: events as Odoo events (`event.event`, auto-detected via `ir.model` probe) or calendar entries (`calendar.event` fallback), RSVP ticket types as service products (`product.product`), RSVP attendees as event registrations (`event.registration`, only with Odoo Events module). Dual-model detection with transient caching, event auto-sync before attendees, partner resolution via `Partner_Service`, independent module (coexists with all other modules). `Events_Calendar_Handler`, `Events_Calendar_Hooks` trait, 53 new unit tests
+- **Circuit breaker** — `Circuit_Breaker` class pauses queue processing when Odoo is unreachable (3 consecutive all-fail batches → open, 5-min recovery delay → half-open probe). Transient-based state, integrated into `Sync_Engine::process_queue()`
+- **Batch partner lookup** — `Partner_Service::get_or_create_batch()` resolves multiple emails in a single `search_read` RPC call, reducing N+1 to 1 when processing batches
+- **Settings validation** — Defense-in-depth validation in `Settings_Repository` getters: protocol/direction/conflict_rule/interval/log_level enum enforcement, timeout/batch_size/retention_days clamping
+- **Module_Test_Case** — Abstract test base class (`tests/helpers/Module_Test_Case.php`) with shared `setUp()` for `$wpdb` mock and global stores
 
 ### Changed
 - **Membership module refactoring** — Extracted `Membership_Module_Base` abstract class from MemberPress, PMPro, and RCP modules. Shared `push_to_odoo()` orchestration (level auto-sync, invoice auto-posting), `load_wp_data()` dispatch with partner/level/price resolution. Each module now implements abstract methods for entity type names, handler delegation, and plugin-specific data extraction. ~370 lines deduplicated
@@ -16,6 +20,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Synthetic ID helpers** — Added `Module_Base::encode_synthetic_id()` / `decode_synthetic_id()` static methods with `OverflowException` guard, replacing raw arithmetic (`user_id * 1_000_000 + course_id`) in LearnDash and LifterLMS modules
 - **Setting key alignment** — Unified `auto_post_invoice` → `auto_post_invoices` in LearnDash and LifterLMS modules for consistency with all other modules
 - **Dual_Accounting_Model inlining** — Merged `Dual_Accounting_Model` trait directly into `Dual_Accounting_Module_Base` (sole consumer), removing unnecessary indirection
+- **Sync_Engine lock timeout** — Increased MySQL advisory lock timeout from 1s to 5s to reduce false positives on busy servers
+- **Webhook X-Forwarded-For** — `get_client_ip()` now validates that the direct remote address is a private/reserved IP before trusting `X-Forwarded-For`, preventing spoofing on non-proxied setups
+
+### Fixed
+- **EDD on_download_save()** — Added missing `$settings['enabled']` guard to prevent sync attempts when the module is disabled
+- **Amelia_Hooks trait docblock** — Corrected `@return` from `array` to `void` on `on_appointment_status_change()`
+- **retry_failed() SQL injection** — Replaced string interpolation with `$wpdb->prepare()` for parameterized query
 
 ## [2.6.5] - 2026-02-11
 

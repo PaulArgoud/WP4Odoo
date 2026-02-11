@@ -21,7 +21,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * - get_mapping(): ?int            (from Module_Base)
  * - get_settings(): array          (from Module_Base)
  * - logger: Logger                 (from Module_Base)
- * - handler: Amelia_Handler        (from Amelia_Module)
+ * - $this->get_mapping(): ?int     (from Module_Base)
  *
  * @package WP4Odoo
  * @since   2.0.0

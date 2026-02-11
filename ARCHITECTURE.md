@@ -209,6 +209,7 @@ WordPress For Odoo/
 │   ├── class-sync-queue-repository.php # Static DB access for wp4odoo_sync_queue
 │   ├── class-partner-service.php       # Shared res.partner lookup/creation service
 │   ├── class-failure-notifier.php     # Admin email notification on consecutive sync failures
+│   ├── class-circuit-breaker.php     # Circuit breaker for Odoo connectivity (transient-based, 3-state)
 │   ├── class-sync-engine.php          # Queue processor, batch operations, advisory locking, smart retry (Error_Type)
 │   ├── class-queue-manager.php        # Helpers for enqueuing sync jobs
 │   ├── class-query-service.php        # Paginated queries (queue jobs, log entries) — injectable instance
@@ -242,7 +243,7 @@ WordPress For Odoo/
 ├── templates/
 │   └── customer-portal.php           #   Customer portal HTML template (orders/invoices tabs)
 │
-├── tests/                             # 1484 unit tests (2305 assertions) + 26 integration tests (wp-env)
+├── tests/                             # 1525 unit tests (2359 assertions) + 26 integration tests (wp-env)
 │   ├── bootstrap.php                 #   Unit test bootstrap: constants, stub loading, plugin class requires
 │   ├── bootstrap-integration.php     #   Integration test bootstrap: loads WP test framework (wp-env)
 │   ├── stubs/
@@ -428,6 +429,16 @@ add_action('wp4odoo_register_modules', function($plugin) {
 });
 ```
 
+### Handler Constructor Patterns
+
+Handler classes receive their dependencies via closures from their parent module. Two pragmatic patterns coexist:
+
+1. **Logger-only** (simple handlers): `Contact_Manager`, `Lead_Manager`, `Form_Handler`, `WPRM_Handler`, `Booking handlers` — receive only a `Logger` (or nothing). The parent module calls handler methods directly and passes data.
+
+2. **Multi-dependency** (complex handlers): `Product_Handler`, `Order_Handler`, `EDD_Order_Handler`, `SimplePay_Handler` — receive closures for settings, client access, entity map, and/or partner service. These handlers perform Odoo API calls directly.
+
+Both patterns are intentional. Simple handlers are pure data transformers (load WP data → return array); complex handlers encapsulate domain logic requiring API access. The choice depends on whether the handler needs to interact with Odoo directly.
+
 ### 3. Queue-Based Synchronization
 
 No Odoo API requests are made during user requests. Everything goes through a persistent database queue:
@@ -552,6 +563,8 @@ The codebase uses a tiered error-handling strategy. Each tier is appropriate for
 - **API layer** (`Odoo_Client`): throw on RPC faults, return empty arrays for search with no results.
 - **Modules**: return `Sync_Result` from push/pull, `null` from ID lookups, `0` from failed saves.
 - **Infrastructure**: throw for configuration errors, use typed returns for data access.
+
+> **Note:** `Image_Handler::pull_image()` returns `bool` (true if image was updated, false if unchanged or failed). This is the only handler that uses a boolean return — it acts as a side-effect operation (download + attach to WP media library) rather than a data transformer, so `Sync_Result` would be over-engineered. The caller (`WooCommerce_Module`) logs accordingly.
 
 ### 8. Shared Accounting Infrastructure
 
@@ -1129,6 +1142,8 @@ Auto-dismissed when all steps completed. Dismiss via × button persisted in `wp4
 | `wp4odoo_api_call` | Every Odoo API call | `$model`, `$method`, `$args`, `$kwargs`, `$result` |
 
 ### Filters
+
+**Naming convention:** Status mapping filters follow the pattern `wp4odoo_{module}_{entity}_status_map`. The sole exception is `wp4odoo_order_status_map` (WooCommerce), which predates the convention and is kept for backward compatibility. New filters must use the full `{module}_{entity}` form.
 
 | Filter | Usage |
 |--------|-------|

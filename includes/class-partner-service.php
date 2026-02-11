@@ -73,6 +73,89 @@ class Partner_Service {
 	}
 
 	/**
+	 * Resolve Odoo partner IDs for a batch of emails.
+	 *
+	 * Uses a single Odoo search for all unknown emails, reducing RPC calls
+	 * from N to 1 when processing batches of orders/donations.
+	 *
+	 * @param array<string, array{data?: array, wp_id?: int}> $entries Keyed by email.
+	 * @return array<string, int|null> Odoo partner ID per email, or null on failure.
+	 */
+	public function get_or_create_batch( array $entries ): array {
+		$results  = [];
+		$to_fetch = [];
+
+		// 1. Check entity_map for known WP user mappings.
+		foreach ( $entries as $email => $entry ) {
+			$wp_id = $entry['wp_id'] ?? 0;
+			if ( $wp_id > 0 ) {
+				$existing = $this->get_partner_id_for_user( $wp_id );
+				if ( $existing ) {
+					$results[ $email ] = $existing;
+					continue;
+				}
+			}
+			$to_fetch[ $email ] = $entry;
+		}
+
+		if ( empty( $to_fetch ) ) {
+			return $results;
+		}
+
+		$client = ( $this->client_getter )();
+
+		if ( ! $client->is_connected() ) {
+			$this->logger->error( 'Cannot resolve partners: Odoo client not connected.' );
+			foreach ( $to_fetch as $email => $entry ) {
+				$results[ $email ] = null;
+			}
+			return $results;
+		}
+
+		// 2. Single Odoo search for all unknown emails.
+		$emails_list = array_keys( $to_fetch );
+		$domain      = [ [ 'email', 'in', $emails_list ] ];
+
+		try {
+			$records = $client->search_read( 'res.partner', $domain, [ 'id', 'email' ], 0, count( $emails_list ) );
+		} catch ( \Exception $e ) {
+			$this->logger->error( 'Batch partner search failed.', [ 'error' => $e->getMessage() ] );
+			foreach ( $to_fetch as $email => $entry ) {
+				$results[ $email ] = null;
+			}
+			return $results;
+		}
+
+		// Index found partners by email.
+		$found = [];
+		foreach ( $records as $record ) {
+			$record_email = is_string( $record['email'] ?? null ) ? strtolower( $record['email'] ) : '';
+			if ( '' !== $record_email ) {
+				$found[ $record_email ] = (int) $record['id'];
+			}
+		}
+
+		// 3. Match found or create missing.
+		foreach ( $to_fetch as $email => $entry ) {
+			$email_lower = strtolower( $email );
+			$wp_id       = $entry['wp_id'] ?? 0;
+
+			if ( isset( $found[ $email_lower ] ) ) {
+				$odoo_id           = $found[ $email_lower ];
+				$results[ $email ] = $odoo_id;
+				if ( $wp_id > 0 ) {
+					$this->entity_map->save( 'crm', 'contact', $wp_id, $odoo_id, 'res.partner' );
+				}
+			} else {
+				// Fall back to individual create.
+				$results[ $email ] = $this->get_or_create( $email, $entry['data'] ?? [], $wp_id );
+			}
+		}
+
+		return $results;
+	}
+
+	/**
 	 * Find or create an Odoo partner by email.
 	 *
 	 * Lookup order:

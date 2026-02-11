@@ -339,6 +339,110 @@ class SettingsRepositoryTest extends TestCase {
 		$this->assertSame( '', $this->repo->get_cron_warning() );
 	}
 
+	// ── Defense-in-depth validation ──────────────────────
+
+	public function test_connection_clamps_timeout_to_min(): void {
+		$GLOBALS['_wp_options'][ Settings_Repository::OPT_CONNECTION ] = [
+			'timeout' => 1,
+		];
+
+		$conn = $this->repo->get_connection();
+
+		$this->assertSame( 5, $conn['timeout'] );
+	}
+
+	public function test_connection_clamps_timeout_to_max(): void {
+		$GLOBALS['_wp_options'][ Settings_Repository::OPT_CONNECTION ] = [
+			'timeout' => 999,
+		];
+
+		$conn = $this->repo->get_connection();
+
+		$this->assertSame( 120, $conn['timeout'] );
+	}
+
+	public function test_connection_resets_invalid_protocol(): void {
+		$GLOBALS['_wp_options'][ Settings_Repository::OPT_CONNECTION ] = [
+			'protocol' => 'grpc',
+		];
+
+		$conn = $this->repo->get_connection();
+
+		$this->assertSame( 'jsonrpc', $conn['protocol'] );
+	}
+
+	public function test_connection_accepts_xmlrpc_protocol(): void {
+		$GLOBALS['_wp_options'][ Settings_Repository::OPT_CONNECTION ] = [
+			'protocol' => 'xmlrpc',
+		];
+
+		$this->assertSame( 'xmlrpc', $this->repo->get_connection()['protocol'] );
+	}
+
+	public function test_sync_settings_clamps_batch_size_to_min(): void {
+		$GLOBALS['_wp_options'][ Settings_Repository::OPT_SYNC_SETTINGS ] = [
+			'batch_size' => 0,
+		];
+
+		$this->assertSame( 1, $this->repo->get_sync_settings()['batch_size'] );
+	}
+
+	public function test_sync_settings_clamps_batch_size_to_max(): void {
+		$GLOBALS['_wp_options'][ Settings_Repository::OPT_SYNC_SETTINGS ] = [
+			'batch_size' => 9999,
+		];
+
+		$this->assertSame( 500, $this->repo->get_sync_settings()['batch_size'] );
+	}
+
+	public function test_sync_settings_resets_invalid_direction(): void {
+		$GLOBALS['_wp_options'][ Settings_Repository::OPT_SYNC_SETTINGS ] = [
+			'direction' => 'invalid',
+		];
+
+		$this->assertSame( 'bidirectional', $this->repo->get_sync_settings()['direction'] );
+	}
+
+	public function test_sync_settings_resets_invalid_conflict_rule(): void {
+		$GLOBALS['_wp_options'][ Settings_Repository::OPT_SYNC_SETTINGS ] = [
+			'conflict_rule' => 'bad',
+		];
+
+		$this->assertSame( 'newest_wins', $this->repo->get_sync_settings()['conflict_rule'] );
+	}
+
+	public function test_sync_settings_resets_invalid_interval(): void {
+		$GLOBALS['_wp_options'][ Settings_Repository::OPT_SYNC_SETTINGS ] = [
+			'sync_interval' => 'every_second',
+		];
+
+		$this->assertSame( 'wp4odoo_five_minutes', $this->repo->get_sync_settings()['sync_interval'] );
+	}
+
+	public function test_log_settings_resets_invalid_level(): void {
+		$GLOBALS['_wp_options'][ Settings_Repository::OPT_LOG_SETTINGS ] = [
+			'level' => 'trace',
+		];
+
+		$this->assertSame( 'info', $this->repo->get_log_settings()['level'] );
+	}
+
+	public function test_log_settings_clamps_retention_days_to_min(): void {
+		$GLOBALS['_wp_options'][ Settings_Repository::OPT_LOG_SETTINGS ] = [
+			'retention_days' => 0,
+		];
+
+		$this->assertSame( 1, $this->repo->get_log_settings()['retention_days'] );
+	}
+
+	public function test_log_settings_clamps_retention_days_to_max(): void {
+		$GLOBALS['_wp_options'][ Settings_Repository::OPT_LOG_SETTINGS ] = [
+			'retention_days' => 1000,
+		];
+
+		$this->assertSame( 365, $this->repo->get_log_settings()['retention_days'] );
+	}
+
 	// ── Constants ─────────────────────────────────────────
 
 	public function test_option_key_constants_are_prefixed(): void {

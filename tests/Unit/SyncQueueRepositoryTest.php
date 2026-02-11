@@ -349,7 +349,7 @@ class SyncQueueRepositoryTest extends TestCase {
 		$this->assertSame( 3, $result );
 		$queries = $this->get_calls( 'query' );
 		$this->assertNotEmpty( $queries );
-		$this->assertStringContainsString( "status = 'pending'", $queries[0]['args'][0] );
+		$this->assertStringContainsString( 'status = %s', $queries[0]['args'][0] );
 	}
 
 	public function test_retry_failed_returns_zero_when_no_failed_jobs(): void {

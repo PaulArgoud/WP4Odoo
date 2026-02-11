@@ -36,6 +36,9 @@ class PartnerServiceTest extends TestCase {
 			/** @var array Return value for search(). */
 			public array $search_return = [];
 
+			/** @var array Return value for search_read(). */
+			public array $search_read_return = [];
+
 			/** @var int Return value for create(). */
 			public int $create_return = 0;
 
@@ -52,6 +55,11 @@ class PartnerServiceTest extends TestCase {
 			public function search( string $model, array $domain = [], int $offset = 0, int $limit = 0 ): array {
 				$this->calls[] = [ 'method' => 'search', 'args' => [ $model, $domain, $offset, $limit ] ];
 				return $this->search_return;
+			}
+
+			public function search_read( string $model, array $domain = [], array $fields = [], int $offset = 0, int $limit = 0 ): array {
+				$this->calls[] = [ 'method' => 'search_read', 'args' => [ $model, $domain, $fields, $offset, $limit ] ];
+				return $this->search_read_return;
 			}
 
 			public function create( string $model, array $values ): int {
@@ -170,5 +178,110 @@ class PartnerServiceTest extends TestCase {
 		// No replace call expected (wp_id = 0).
 		$replace_calls = array_filter( $this->wpdb->calls, fn( $c ) => $c['method'] === 'replace' );
 		$this->assertEmpty( $replace_calls );
+	}
+
+	public function test_get_or_create_returns_null_when_disconnected(): void {
+		$this->wpdb->get_var_return = null;
+		$this->client->connected     = false;
+
+		$result = $this->service->get_or_create( 'dc@example.com', [], 10 );
+
+		$this->assertNull( $result );
+		$this->assertEmpty( $this->client->calls );
+	}
+
+	// ─── get_or_create_batch() ────────────────────────────
+
+	public function test_batch_returns_cached_mapping_without_odoo_call(): void {
+		// Simulate existing mapping for wp_id=10 → odoo_id=42.
+		$this->wpdb->get_var_return = '42';
+
+		$entries = [
+			'alice@example.com' => [ 'data' => [ 'name' => 'Alice' ], 'wp_id' => 10 ],
+		];
+
+		$results = $this->service->get_or_create_batch( $entries );
+
+		$this->assertSame( 42, $results['alice@example.com'] );
+		$this->assertEmpty( $this->client->calls, 'No Odoo call when all entries are mapped.' );
+	}
+
+	public function test_batch_returns_null_when_disconnected(): void {
+		$this->wpdb->get_var_return = null;
+		$this->client->connected     = false;
+
+		$entries = [
+			'bob@example.com' => [ 'data' => [ 'name' => 'Bob' ], 'wp_id' => 0 ],
+		];
+
+		$results = $this->service->get_or_create_batch( $entries );
+
+		$this->assertNull( $results['bob@example.com'] );
+	}
+
+	public function test_batch_finds_existing_partner_via_search_read(): void {
+		$this->wpdb->get_var_return = null;
+		$this->client->search_read_return = [
+			[ 'id' => 77, 'email' => 'found@example.com' ],
+		];
+
+		$entries = [
+			'found@example.com' => [ 'data' => [ 'name' => 'Found' ], 'wp_id' => 0 ],
+		];
+
+		$results = $this->service->get_or_create_batch( $entries );
+
+		$this->assertSame( 77, $results['found@example.com'] );
+		$this->assertSame( 'search_read', $this->client->calls[0]['method'] );
+		$this->assertSame( 'res.partner', $this->client->calls[0]['args'][0] );
+	}
+
+	public function test_batch_creates_missing_partner(): void {
+		$this->wpdb->get_var_return = null;
+		$this->client->search_read_return = []; // No existing partner.
+		$this->client->search_return      = []; // Fallback search also empty.
+		$this->client->create_return      = 88;
+
+		$entries = [
+			'new@example.com' => [ 'data' => [ 'name' => 'New' ], 'wp_id' => 0 ],
+		];
+
+		$results = $this->service->get_or_create_batch( $entries );
+
+		$this->assertSame( 88, $results['new@example.com'] );
+	}
+
+	public function test_batch_handles_mixed_found_and_missing(): void {
+		$this->wpdb->get_var_return = null;
+		$this->client->search_read_return = [
+			[ 'id' => 10, 'email' => 'alice@example.com' ],
+		];
+		$this->client->search_return = [];
+		$this->client->create_return = 20;
+
+		$entries = [
+			'alice@example.com' => [ 'data' => [ 'name' => 'Alice' ], 'wp_id' => 0 ],
+			'bob@example.com'   => [ 'data' => [ 'name' => 'Bob' ], 'wp_id' => 0 ],
+		];
+
+		$results = $this->service->get_or_create_batch( $entries );
+
+		$this->assertSame( 10, $results['alice@example.com'] );
+		$this->assertSame( 20, $results['bob@example.com'] );
+	}
+
+	public function test_batch_email_matching_is_case_insensitive(): void {
+		$this->wpdb->get_var_return = null;
+		$this->client->search_read_return = [
+			[ 'id' => 55, 'email' => 'Alice@Example.COM' ],
+		];
+
+		$entries = [
+			'alice@example.com' => [ 'data' => [ 'name' => 'Alice' ], 'wp_id' => 0 ],
+		];
+
+		$results = $this->service->get_or_create_batch( $entries );
+
+		$this->assertSame( 55, $results['alice@example.com'] );
 	}
 }

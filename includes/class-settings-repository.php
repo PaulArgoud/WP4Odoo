@@ -70,7 +70,15 @@ class Settings_Repository {
 		if ( ! is_array( $stored ) ) {
 			$stored = [];
 		}
-		return array_merge( self::DEFAULTS_CONNECTION, $stored );
+		$merged = array_merge( self::DEFAULTS_CONNECTION, $stored );
+
+		// Defense-in-depth: clamp and validate even if data was saved unchecked.
+		if ( ! in_array( $merged['protocol'], [ 'jsonrpc', 'xmlrpc' ], true ) ) {
+			$merged['protocol'] = 'jsonrpc';
+		}
+		$merged['timeout'] = max( 5, min( 120, (int) $merged['timeout'] ) );
+
+		return $merged;
 	}
 
 	/**
@@ -95,7 +103,27 @@ class Settings_Repository {
 		if ( ! is_array( $stored ) ) {
 			$stored = [];
 		}
-		return array_merge( self::DEFAULTS_SYNC, $stored );
+		$merged = array_merge( self::DEFAULTS_SYNC, $stored );
+
+		// Defense-in-depth: validate enum values and clamp bounds.
+		$valid_directions = [ 'bidirectional', 'wp_to_odoo', 'odoo_to_wp' ];
+		if ( ! in_array( $merged['direction'], $valid_directions, true ) ) {
+			$merged['direction'] = 'bidirectional';
+		}
+
+		$valid_conflicts = [ 'newest_wins', 'odoo_wins', 'wp_wins' ];
+		if ( ! in_array( $merged['conflict_rule'], $valid_conflicts, true ) ) {
+			$merged['conflict_rule'] = 'newest_wins';
+		}
+
+		$merged['batch_size'] = max( 1, min( 500, (int) $merged['batch_size'] ) );
+
+		$valid_intervals = [ 'wp4odoo_five_minutes', 'wp4odoo_fifteen_minutes' ];
+		if ( ! in_array( $merged['sync_interval'], $valid_intervals, true ) ) {
+			$merged['sync_interval'] = 'wp4odoo_five_minutes';
+		}
+
+		return $merged;
 	}
 
 	// ── Log settings ───────────────────────────────────────
@@ -110,7 +138,16 @@ class Settings_Repository {
 		if ( ! is_array( $stored ) ) {
 			$stored = [];
 		}
-		return array_merge( self::DEFAULTS_LOG, $stored );
+		$merged = array_merge( self::DEFAULTS_LOG, $stored );
+
+		// Defense-in-depth: validate log level and clamp retention.
+		$valid_levels = [ 'debug', 'info', 'warning', 'error', 'critical' ];
+		if ( ! in_array( $merged['level'], $valid_levels, true ) ) {
+			$merged['level'] = 'info';
+		}
+		$merged['retention_days'] = max( 1, min( 365, (int) $merged['retention_days'] ) );
+
+		return $merged;
 	}
 
 	// ── Module helpers ─────────────────────────────────────

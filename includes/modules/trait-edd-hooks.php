@@ -41,6 +41,11 @@ trait EDD_Hooks {
 			return;
 		}
 
+		$settings = $this->get_settings();
+		if ( empty( $settings['sync_downloads'] ) ) {
+			return;
+		}
+
 		$odoo_id = $this->get_mapping( 'download', $post_id );
 		$action  = $odoo_id ? 'update' : 'create';
 

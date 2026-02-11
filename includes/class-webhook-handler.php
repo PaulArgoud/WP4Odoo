@@ -375,9 +375,15 @@ class Webhook_Handler {
 	 * @return string Sanitized client IP address.
 	 */
 	private function get_client_ip( \WP_REST_Request $request ): string {
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotValidated
+		$remote_addr = sanitize_text_field( $_SERVER['REMOTE_ADDR'] ?? 'unknown' );
+
+		// Only trust X-Forwarded-For when REMOTE_ADDR is a private/reserved IP
+		// (i.e. behind a known reverse proxy). Prevents rate-limit bypass via
+		// spoofed headers on direct connections.
 		$forwarded = $request->get_header( 'X-Forwarded-For' );
 
-		if ( ! empty( $forwarded ) ) {
+		if ( ! empty( $forwarded ) && filter_var( $remote_addr, FILTER_VALIDATE_IP, FILTER_FLAG_NO_RES_RANGE | FILTER_FLAG_NO_PRIV_RANGE ) === false ) {
 			// X-Forwarded-For may contain: client, proxy1, proxy2. Take the first.
 			$parts = explode( ',', $forwarded );
 			$ip    = trim( $parts[0] );
@@ -387,8 +393,7 @@ class Webhook_Handler {
 			}
 		}
 
-		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotValidated
-		return sanitize_text_field( $_SERVER['REMOTE_ADDR'] ?? 'unknown' );
+		return $remote_addr;
 	}
 
 	/**
