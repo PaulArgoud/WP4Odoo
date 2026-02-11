@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.0] - 2026-02-11
+
+### Changed
+- **Module_Base constructor**: `$id` and `$name` are now explicit constructor parameters instead of relying on property initializer ordering — impossible to forget, enforced by PHP
+- **Transport base class**: extracted `Odoo_Transport_Base` abstract class from `Odoo_JsonRPC` and `Odoo_XmlRPC` — eliminates ~40 lines of duplicated properties, constructor, `get_uid()`, and authentication guard
+- **Retryable_Http**: now retries on HTTP 5xx server errors (502, 503, etc.) in addition to WP_Error network failures — improves resilience against Odoo proxy/nginx transient errors
+- **Retryable_Http visibility**: `http_post_with_retry()` changed from `private` to `protected` (required by Transport base class inheritance)
+- **Bookly_Poller → Bookly_Cron_Hooks**: renamed trait for consistency with all other `*_Hooks` traits
+
+### Added
+- `Odoo_Transport_Base` abstract class (`includes/api/class-odoo-transport-base.php`) — shared base for JSON-RPC and XML-RPC transports
+- `Odoo_Client::reset()` — clears connection state, allowing credential changes to take effect without creating a new instance (useful in WP-CLI and tests)
+- **Automatic log cleanup** in WP-Cron: `Logger::cleanup()` runs every sync cycle (lightweight indexed DELETE based on retention settings)
+- **Bulk operation timeout**: `Bulk_Handler` now enforces a 50-second time limit on import/export loops — prevents PHP max_execution_time fatal errors on large catalogs, with resumable messaging
+- **Encryption key hint**: connection settings page now shows a note about `WP4ODOO_ENCRYPTION_KEY` constant for multi-environment and staging setups
+
 ## [2.3.0] - 2026-02-11
 
 ### Changed
@@ -172,7 +188,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### Bookly Module — Bookings → Odoo Calendar + Products (Polling)
 - New module: `Bookly_Module` (`includes/modules/class-bookly-module.php`) — push-only sync from Bookly to Odoo: services as `product.product` (type service) and customer_appointments as `calendar.event`
 - `Bookly_Handler` (`includes/modules/class-bookly-handler.php`) — data access via `$wpdb` queries on Bookly's custom tables (`bookly_services`, `bookly_appointments`, `bookly_customer_appointments`, `bookly_customers`), includes batch queries for polling
-- `Bookly_Poller` trait (`includes/modules/trait-bookly-poller.php`) — WP-Cron-based polling every 5 minutes (`wp4odoo_bookly_poll`), replaces hooks since Bookly has NO WordPress hooks for booking lifecycle events. Uses SHA-256 hash comparison against `entity_map` for change detection
+- `Bookly_Cron_Hooks` trait (`includes/modules/trait-bookly-cron-hooks.php`) — WP-Cron-based polling every 5 minutes (`wp4odoo_bookly_poll`), replaces hooks since Bookly has NO WordPress hooks for booking lifecycle events. Uses SHA-256 hash comparison against `entity_map` for change detection
 - Entity types: `service` → `product.product`, `booking` → `calendar.event`
 - `Entity_Map_Repository::get_module_entity_mappings()` — new batch method returning `[wp_id => {odoo_id, sync_hash}]` for efficient polling without N+1 queries
 - Booking data enrichment: service name + customer resolution via `Partner_Service` → Odoo `partner_ids` M2M command `[[4, id, 0]]`

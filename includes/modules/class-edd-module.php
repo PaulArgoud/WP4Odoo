@@ -31,8 +31,6 @@ class EDD_Module extends Module_Base {
 
 	use EDD_Hooks;
 
-	protected string $id   = 'edd';
-	protected string $name = 'Easy Digital Downloads';
 
 	protected string $exclusive_group = 'commerce';
 	protected int $exclusive_priority = 20;
@@ -86,6 +84,17 @@ class EDD_Module extends Module_Base {
 	 * @var EDD_Order_Handler
 	 */
 	private EDD_Order_Handler $order_handler;
+
+	/**
+	 * Constructor.
+	 *
+	 * @param \Closure                         $client_provider Returns the shared Odoo_Client instance.
+	 * @param \WP4Odoo\Entity_Map_Repository   $entity_map      Shared entity map repository.
+	 * @param \WP4Odoo\Settings_Repository     $settings        Settings repository.
+	 */
+	public function __construct( \Closure $client_provider, \WP4Odoo\Entity_Map_Repository $entity_map, \WP4Odoo\Settings_Repository $settings ) {
+		parent::__construct( 'edd', 'Easy Digital Downloads', $client_provider, $entity_map, $settings );
+	}
 
 	/**
 	 * Boot the module: register EDD hooks, invoice CPT.

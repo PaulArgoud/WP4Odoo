@@ -35,8 +35,6 @@ class WooCommerce_Module extends Module_Base {
 
 	use WooCommerce_Hooks;
 
-	protected string $id   = 'woocommerce';
-	protected string $name = 'WooCommerce';
 
 	protected string $exclusive_group = 'commerce';
 	protected int $exclusive_priority = 30;
@@ -129,6 +127,17 @@ class WooCommerce_Module extends Module_Base {
 	 * @var array<string, mixed>
 	 */
 	private array $last_odoo_data = [];
+
+	/**
+	 * Constructor.
+	 *
+	 * @param \Closure                         $client_provider Returns the shared Odoo_Client instance.
+	 * @param \WP4Odoo\Entity_Map_Repository   $entity_map      Shared entity map repository.
+	 * @param \WP4Odoo\Settings_Repository     $settings        Settings repository.
+	 */
+	public function __construct( \Closure $client_provider, \WP4Odoo\Entity_Map_Repository $entity_map, \WP4Odoo\Settings_Repository $settings ) {
+		parent::__construct( 'woocommerce', 'WooCommerce', $client_provider, $entity_map, $settings );
+	}
 
 	/**
 	 * Boot the module: register WC hooks, invoice CPT.

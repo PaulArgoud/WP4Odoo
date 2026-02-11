@@ -273,6 +273,20 @@ class Odoo_Client {
 	}
 
 	/**
+	 * Reset the connection state.
+	 *
+	 * Forces the next API call to re-read credentials and create
+	 * a fresh transport. Useful after credential changes (WP-CLI,
+	 * tests) or when reusing a singleton across requests.
+	 *
+	 * @return void
+	 */
+	public function reset(): void {
+		$this->connected = false;
+		$this->transport = null;
+	}
+
+	/**
 	 * Internal call wrapper: ensures connection, delegates to transport, fires action, handles errors.
 	 *
 	 * @param string               $model  Odoo model name.

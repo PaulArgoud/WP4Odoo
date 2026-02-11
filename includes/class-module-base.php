@@ -132,11 +132,15 @@ abstract class Module_Base {
 	/**
 	 * Constructor.
 	 *
+	 * @param string                $id              Unique module identifier (e.g. 'crm').
+	 * @param string                $name            Human-readable module name.
 	 * @param \Closure              $client_provider Returns the shared Odoo_Client instance.
 	 * @param Entity_Map_Repository $entity_map      Shared entity map repository.
 	 * @param Settings_Repository   $settings        Settings repository.
 	 */
-	public function __construct( \Closure $client_provider, Entity_Map_Repository $entity_map, Settings_Repository $settings ) {
+	public function __construct( string $id, string $name, \Closure $client_provider, Entity_Map_Repository $entity_map, Settings_Repository $settings ) {
+		$this->id              = $id;
+		$this->name            = $name;
 		$this->client_provider = $client_provider;
 		$this->entity_map      = $entity_map;
 		$this->settings_repo   = $settings;

@@ -28,7 +28,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @package WP4Odoo
  * @since   2.0.0
  */
-trait Bookly_Poller {
+trait Bookly_Cron_Hooks {
 
 	/**
 	 * Register the WP-Cron polling event.

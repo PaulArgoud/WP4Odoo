@@ -24,8 +24,6 @@ class CRM_Module extends Module_Base {
 
 	use CRM_User_Hooks;
 
-	protected string $id   = 'crm';
-	protected string $name = 'CRM';
 
 	protected array $odoo_models = [
 		'contact' => 'res.partner',
@@ -87,7 +85,7 @@ class CRM_Module extends Module_Base {
 	 * Constructor.
 	 */
 	public function __construct( \Closure $client_provider, \WP4Odoo\Entity_Map_Repository $entity_map, \WP4Odoo\Settings_Repository $settings ) {
-		parent::__construct( $client_provider, $entity_map, $settings );
+		parent::__construct( 'crm', 'CRM', $client_provider, $entity_map, $settings );
 		$this->contact_manager = new Contact_Manager( $this->logger, fn() => $this->get_settings() );
 	}
 

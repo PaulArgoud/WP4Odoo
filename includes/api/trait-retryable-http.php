@@ -34,13 +34,28 @@ trait Retryable_Http {
 	 * @return array The successful wp_remote_post() response.
 	 * @throws \RuntimeException After all retries exhausted.
 	 */
-	private function http_post_with_retry( string $url, array $request_args, string $endpoint ): array {
+	protected function http_post_with_retry( string $url, array $request_args, string $endpoint ): array {
 		$response = null;
 
 		for ( $attempt = 1; $attempt <= self::MAX_RETRIES; $attempt++ ) {
 			$response = wp_remote_post( $url, $request_args );
 
 			if ( ! is_wp_error( $response ) ) {
+				$status_code = wp_remote_retrieve_response_code( $response );
+				if ( $status_code >= 500 && $attempt < self::MAX_RETRIES ) {
+					$delay_us = (int) ( pow( 2, $attempt ) * 500 + wp_rand( 0, 1000 ) ) * 1000;
+					usleep( $delay_us );
+
+					$this->logger->warning(
+						'Server error, retrying.',
+						[
+							'endpoint' => $endpoint,
+							'status'   => $status_code,
+							'attempt'  => $attempt,
+						]
+					);
+					continue;
+				}
 				return $response;
 			}
 

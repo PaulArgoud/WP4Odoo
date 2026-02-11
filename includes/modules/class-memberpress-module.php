@@ -29,20 +29,6 @@ class MemberPress_Module extends Module_Base {
 
 	use MemberPress_Hooks;
 
-	/**
-	 * Module identifier.
-	 *
-	 * @var string
-	 */
-	protected string $id = 'memberpress';
-
-	/**
-	 * Human-readable module name.
-	 *
-	 * @var string
-	 */
-	protected string $name = 'MemberPress';
-
 	protected string $exclusive_group = 'memberships';
 	protected int $exclusive_priority = 10;
 
@@ -113,7 +99,7 @@ class MemberPress_Module extends Module_Base {
 	 * Constructor.
 	 */
 	public function __construct( \Closure $client_provider, \WP4Odoo\Entity_Map_Repository $entity_map, \WP4Odoo\Settings_Repository $settings ) {
-		parent::__construct( $client_provider, $entity_map, $settings );
+		parent::__construct( 'memberpress', 'MemberPress', $client_provider, $entity_map, $settings );
 		$this->handler = new MemberPress_Handler( $this->logger );
 	}
 

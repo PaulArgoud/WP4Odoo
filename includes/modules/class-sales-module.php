@@ -34,8 +34,6 @@ class Sales_Module extends Module_Base {
 		'_order_currency'     => '_order_currency',
 	];
 
-	protected string $id   = 'sales';
-	protected string $name = 'Sales';
 
 	protected string $exclusive_group = 'commerce';
 	protected int $exclusive_priority = 10;
@@ -87,6 +85,17 @@ class Sales_Module extends Module_Base {
 	 * @var Portal_Manager
 	 */
 	private Portal_Manager $portal_manager;
+
+	/**
+	 * Constructor.
+	 *
+	 * @param \Closure                         $client_provider Returns the shared Odoo_Client instance.
+	 * @param \WP4Odoo\Entity_Map_Repository   $entity_map      Shared entity map repository.
+	 * @param \WP4Odoo\Settings_Repository     $settings        Settings repository.
+	 */
+	public function __construct( \Closure $client_provider, \WP4Odoo\Entity_Map_Repository $entity_map, \WP4Odoo\Settings_Repository $settings ) {
+		parent::__construct( 'sales', 'Sales', $client_provider, $entity_map, $settings );
+	}
 
 	/**
 	 * Boot the module: register CPTs, shortcode, AJAX handlers.

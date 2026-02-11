@@ -109,6 +109,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 							</ol>
 						</div>
 					</details>
+					<p class="description wp4odoo-encryption-hint">
+						<?php esc_html_e( 'API keys are encrypted at rest. For multi-environment or staging setups, define WP4ODOO_ENCRYPTION_KEY in wp-config.php to ensure keys remain decryptable after salt rotation.', 'wp4odoo' ); ?>
+					</p>
 				</div>
 			</td>
 		</tr>

@@ -29,20 +29,6 @@ class Amelia_Module extends Booking_Module_Base {
 	use Amelia_Hooks;
 
 	/**
-	 * Module identifier.
-	 *
-	 * @var string
-	 */
-	protected string $id = 'amelia';
-
-	/**
-	 * Human-readable module name.
-	 *
-	 * @var string
-	 */
-	protected string $name = 'Amelia';
-
-	/**
 	 * Odoo models by entity type.
 	 *
 	 * @var array<string, string>
@@ -93,7 +79,7 @@ class Amelia_Module extends Booking_Module_Base {
 	 * @param \WP4Odoo\Settings_Repository   $settings        Settings repository.
 	 */
 	public function __construct( \Closure $client_provider, \WP4Odoo\Entity_Map_Repository $entity_map, \WP4Odoo\Settings_Repository $settings ) {
-		parent::__construct( $client_provider, $entity_map, $settings );
+		parent::__construct( 'amelia', 'Amelia', $client_provider, $entity_map, $settings );
 		$this->handler = new Amelia_Handler( $this->logger );
 	}
 

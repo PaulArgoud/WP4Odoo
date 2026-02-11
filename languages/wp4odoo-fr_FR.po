@@ -974,7 +974,7 @@ msgstr "Rendez-vous"
 msgid "%1$s — %2$s"
 msgstr "%1$s — %2$s"
 
-#: includes/modules/trait-bookly-poller.php:43
+#: includes/modules/trait-bookly-cron-hooks.php:43
 msgid "Bookly module enabled but Bookly is not active."
 msgstr "Module Bookly activé mais Bookly n'est pas actif."
 

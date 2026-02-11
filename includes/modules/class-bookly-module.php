@@ -27,21 +27,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class Bookly_Module extends Booking_Module_Base {
 
-	use Bookly_Poller;
-
-	/**
-	 * Module identifier.
-	 *
-	 * @var string
-	 */
-	protected string $id = 'bookly';
-
-	/**
-	 * Human-readable module name.
-	 *
-	 * @var string
-	 */
-	protected string $name = 'Bookly';
+	use Bookly_Cron_Hooks;
 
 	/**
 	 * Odoo models by entity type.
@@ -94,7 +80,7 @@ class Bookly_Module extends Booking_Module_Base {
 	 * @param \WP4Odoo\Settings_Repository   $settings        Settings repository.
 	 */
 	public function __construct( \Closure $client_provider, \WP4Odoo\Entity_Map_Repository $entity_map, \WP4Odoo\Settings_Repository $settings ) {
-		parent::__construct( $client_provider, $entity_map, $settings );
+		parent::__construct( 'bookly', 'Bookly', $client_provider, $entity_map, $settings );
 		$this->handler = new Bookly_Handler( $this->logger );
 	}
 

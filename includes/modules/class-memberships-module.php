@@ -25,8 +25,6 @@ class Memberships_Module extends Module_Base {
 
 	use Membership_Hooks;
 
-	protected string $id   = 'memberships';
-	protected string $name = 'Memberships';
 
 	protected string $exclusive_group = 'memberships';
 	protected int $exclusive_priority = 20;
@@ -89,7 +87,7 @@ class Memberships_Module extends Module_Base {
 	 * Constructor.
 	 */
 	public function __construct( \Closure $client_provider, \WP4Odoo\Entity_Map_Repository $entity_map, \WP4Odoo\Settings_Repository $settings ) {
-		parent::__construct( $client_provider, $entity_map, $settings );
+		parent::__construct( 'memberships', 'Memberships', $client_provider, $entity_map, $settings );
 		$this->membership_handler = new Membership_Handler( $this->logger );
 	}
 

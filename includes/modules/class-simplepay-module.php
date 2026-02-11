@@ -37,14 +37,12 @@ class SimplePay_Module extends Dual_Accounting_Module_Base {
 	 *
 	 * @var string
 	 */
-	protected string $id = 'simplepay';
 
 	/**
 	 * Human-readable module name.
 	 *
 	 * @var string
 	 */
-	protected string $name = 'WP Simple Pay';
 
 	/**
 	 * Odoo models by entity type.
@@ -96,7 +94,7 @@ class SimplePay_Module extends Dual_Accounting_Module_Base {
 	 * @param \WP4Odoo\Settings_Repository   $settings        Settings repository.
 	 */
 	public function __construct( \Closure $client_provider, \WP4Odoo\Entity_Map_Repository $entity_map, \WP4Odoo\Settings_Repository $settings ) {
-		parent::__construct( $client_provider, $entity_map, $settings );
+		parent::__construct( 'simplepay', 'WP Simple Pay', $client_provider, $entity_map, $settings );
 		$this->handler = new SimplePay_Handler( $this->logger );
 	}
 

@@ -3,8 +3,6 @@ declare( strict_types=1 );
 
 namespace WP4Odoo\API;
 
-use WP4Odoo\Logger;
-
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -17,51 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @package WP4Odoo
  * @since   1.0.0
  */
-class Odoo_JsonRPC implements Transport {
-
-	use Retryable_Http;
-
-	/**
-	 * Odoo server URL (no trailing slash).
-	 *
-	 * @var string
-	 */
-	private string $url;
-
-	/**
-	 * Odoo database name.
-	 *
-	 * @var string
-	 */
-	private string $database;
-
-	/**
-	 * Authenticated user ID.
-	 *
-	 * @var int|null
-	 */
-	private ?int $uid = null;
-
-	/**
-	 * API key or password.
-	 *
-	 * @var string
-	 */
-	private string $api_key;
-
-	/**
-	 * Request timeout in seconds.
-	 *
-	 * @var int
-	 */
-	private int $timeout;
-
-	/**
-	 * Logger instance.
-	 *
-	 * @var Logger
-	 */
-	private Logger $logger;
+class Odoo_JsonRPC extends Odoo_Transport_Base {
 
 	/**
 	 * Request counter for JSON-RPC ID.
@@ -71,19 +25,12 @@ class Odoo_JsonRPC implements Transport {
 	private int $request_id = 0;
 
 	/**
-	 * Constructor.
+	 * Return the protocol name used for logging context.
 	 *
-	 * @param string $url      Odoo server URL.
-	 * @param string $database Database name.
-	 * @param string $api_key  API key or password.
-	 * @param int    $timeout  Request timeout in seconds.
+	 * @return string
 	 */
-	public function __construct( string $url, string $database, string $api_key, int $timeout = 30 ) {
-		$this->url      = rtrim( $url, '/' );
-		$this->database = $database;
-		$this->api_key  = $api_key;
-		$this->timeout  = $timeout;
-		$this->logger   = new Logger( 'jsonrpc' );
+	protected function get_protocol_name(): string {
+		return 'jsonrpc';
 	}
 
 	/**
@@ -134,12 +81,7 @@ class Odoo_JsonRPC implements Transport {
 	 * @throws \RuntimeException On RPC error or if not authenticated.
 	 */
 	public function execute_kw( string $model, string $method, array $args = [], array $kwargs = [] ): mixed {
-		if ( null === $this->uid ) {
-
-			throw new \RuntimeException(
-				__( 'Not authenticated. Call authenticate() first.', 'wp4odoo' )
-			);
-		}
+		$this->ensure_authenticated();
 
 		$params = [
 			'service' => 'object',
@@ -156,15 +98,6 @@ class Odoo_JsonRPC implements Transport {
 		];
 
 		return $this->rpc_call( '/jsonrpc', $params );
-	}
-
-	/**
-	 * Get the authenticated user ID.
-	 *
-	 * @return int|null
-	 */
-	public function get_uid(): ?int {
-		return $this->uid;
 	}
 
 	/**

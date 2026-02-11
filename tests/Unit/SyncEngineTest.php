@@ -564,11 +564,9 @@ class Mock_Module extends \WP4Odoo\Module_Base {
 	public array $last_payload = [];
 
 	public function __construct( string $id ) {
-		$this->id          = $id;
-		$this->name        = 'Mock Module';
 		$this->push_result = \WP4Odoo\Sync_Result::success();
 		$this->pull_result = \WP4Odoo\Sync_Result::success();
-		parent::__construct( wp4odoo_test_client_provider(), wp4odoo_test_entity_map(), wp4odoo_test_settings() );
+		parent::__construct( $id, 'Mock Module', wp4odoo_test_client_provider(), wp4odoo_test_entity_map(), wp4odoo_test_settings() );
 	}
 
 	public function boot(): void {}

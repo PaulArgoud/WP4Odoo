@@ -3,8 +3,6 @@ declare( strict_types=1 );
 
 namespace WP4Odoo\API;
 
-use WP4Odoo\Logger;
-
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -19,66 +17,15 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @package WP4Odoo
  * @since   1.0.0
  */
-class Odoo_XmlRPC implements Transport {
-
-	use Retryable_Http;
+class Odoo_XmlRPC extends Odoo_Transport_Base {
 
 	/**
-	 * Odoo server URL (no trailing slash).
+	 * Return the protocol name used for logging context.
 	 *
-	 * @var string
+	 * @return string
 	 */
-	private string $url;
-
-	/**
-	 * Odoo database name.
-	 *
-	 * @var string
-	 */
-	private string $database;
-
-	/**
-	 * Authenticated user ID.
-	 *
-	 * @var int|null
-	 */
-	private ?int $uid = null;
-
-	/**
-	 * API key or password.
-	 *
-	 * @var string
-	 */
-	private string $api_key;
-
-	/**
-	 * Request timeout in seconds.
-	 *
-	 * @var int
-	 */
-	private int $timeout;
-
-	/**
-	 * Logger instance.
-	 *
-	 * @var Logger
-	 */
-	private Logger $logger;
-
-	/**
-	 * Constructor.
-	 *
-	 * @param string $url      Odoo server URL.
-	 * @param string $database Database name.
-	 * @param string $api_key  API key or password.
-	 * @param int    $timeout  Request timeout in seconds.
-	 */
-	public function __construct( string $url, string $database, string $api_key, int $timeout = 30 ) {
-		$this->url      = rtrim( $url, '/' );
-		$this->database = $database;
-		$this->api_key  = $api_key;
-		$this->timeout  = $timeout;
-		$this->logger   = new Logger( 'xmlrpc' );
+	protected function get_protocol_name(): string {
+		return 'xmlrpc';
 	}
 
 	/**
@@ -128,12 +75,7 @@ class Odoo_XmlRPC implements Transport {
 	 * @throws \RuntimeException On failure or if not authenticated.
 	 */
 	public function execute_kw( string $model, string $method, array $args = [], array $kwargs = [] ): mixed {
-		if ( null === $this->uid ) {
-
-			throw new \RuntimeException(
-				__( 'Not authenticated. Call authenticate() first.', 'wp4odoo' )
-			);
-		}
+		$this->ensure_authenticated();
 
 		return $this->xmlrpc_call(
 			'/xmlrpc/2/object',
@@ -151,20 +93,11 @@ class Odoo_XmlRPC implements Transport {
 	}
 
 	/**
-	 * Get the authenticated user ID.
-	 *
-	 * @return int|null
-	 */
-	public function get_uid(): ?int {
-		return $this->uid;
-	}
-
-	/**
 	 * Send an XML-RPC request.
 	 *
-	 * @param string               $endpoint URL path.
-	 * @param string               $method   XML-RPC method name.
-	 * @param array<int, mixed>    $params   Method parameters.
+	 * @param string            $endpoint URL path.
+	 * @param string            $method   XML-RPC method name.
+	 * @param array<int, mixed> $params   Method parameters.
 	 * @return mixed
 	 * @throws \RuntimeException On HTTP or XML-RPC error.
 	 */

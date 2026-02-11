@@ -70,12 +70,13 @@ WordPress For Odoo/
 │
 ├── includes/
 │   ├── api/
-│   │   ├── interface-transport.php    # Transport interface (authenticate, execute_kw, get_uid)
-│   │   ├── trait-retryable-http.php   # Retryable_Http trait (retry + exponential backoff + jitter)
-│   │   ├── class-odoo-client.php      # High-level client (CRUD, search, fields_get)
-│   │   ├── class-odoo-jsonrpc.php     # JSON-RPC 2.0 transport (Odoo 17+) uses Retryable_Http
-│   │   ├── class-odoo-xmlrpc.php      # XML-RPC transport (legacy) uses Retryable_Http
-│   │   └── class-odoo-auth.php        # Auth, API key encryption, connection testing
+│   │   ├── interface-transport.php         # Transport interface (authenticate, execute_kw, get_uid)
+│   │   ├── class-odoo-transport-base.php  # Abstract base: shared properties, constructor, ensure_authenticated()
+│   │   ├── trait-retryable-http.php       # Retryable_Http trait (retry + backoff + jitter, WP_Error + HTTP 5xx)
+│   │   ├── class-odoo-client.php          # High-level client (CRUD, search, fields_get, reset())
+│   │   ├── class-odoo-jsonrpc.php         # JSON-RPC 2.0 transport (Odoo 17+) extends Odoo_Transport_Base
+│   │   ├── class-odoo-xmlrpc.php          # XML-RPC transport (legacy) extends Odoo_Transport_Base
+│   │   └── class-odoo-auth.php            # Auth, API key encryption, connection testing
 │   │
 │   ├── modules/
 │   │   ├── # ─── CRM ──────────────────────────────────────────
@@ -150,9 +151,9 @@ WordPress For Odoo/
 │   │   ├── trait-amelia-hooks.php            # Amelia: hook callbacks (booking saved/canceled/rescheduled, service saved)
 │   │   ├── class-amelia-handler.php          # Amelia: $wpdb queries on amelia_* tables (no CPT)
 │   │   ├── class-amelia-module.php           # Amelia: extends Booking_Module_Base (uses Amelia_Hooks trait)
-│   │   ├── trait-bookly-poller.php           # Bookly: WP-Cron polling (no hooks available)
+│   │   ├── trait-bookly-cron-hooks.php       # Bookly: WP-Cron polling (no hooks available)
 │   │   ├── class-bookly-handler.php          # Bookly: $wpdb queries on bookly_* tables (batch + individual)
-│   │   └── class-bookly-module.php           # Bookly: extends Booking_Module_Base (uses Bookly_Poller trait)
+│   │   └── class-bookly-module.php           # Bookly: extends Booking_Module_Base (uses Bookly_Cron_Hooks trait)
 │   │
 │   ├── admin/
 │   │   ├── class-admin.php            # Admin menu, assets, activation redirect, setup notice
@@ -862,7 +863,7 @@ All user inputs are sanitized with:
 
 ### Bookly — COMPLETE
 
-**Files:** `class-bookly-module.php` (extends `Booking_Module_Base`, uses `Bookly_Poller` trait), `trait-bookly-poller.php` (WP-Cron polling), `class-bookly-handler.php` ($wpdb queries on Bookly tables)
+**Files:** `class-bookly-module.php` (extends `Booking_Module_Base`, uses `Bookly_Cron_Hooks` trait), `trait-bookly-cron-hooks.php` (WP-Cron polling), `class-bookly-handler.php` ($wpdb queries on Bookly tables)
 
 **Odoo models:** `product.product` (services), `calendar.event` (bookings)
 

@@ -34,14 +34,12 @@ class GiveWP_Module extends Dual_Accounting_Module_Base {
 	 *
 	 * @var string
 	 */
-	protected string $id = 'givewp';
 
 	/**
 	 * Human-readable module name.
 	 *
 	 * @var string
 	 */
-	protected string $name = 'GiveWP';
 
 	/**
 	 * Odoo models by entity type.
@@ -93,7 +91,7 @@ class GiveWP_Module extends Dual_Accounting_Module_Base {
 	 * @param \WP4Odoo\Settings_Repository   $settings        Settings repository.
 	 */
 	public function __construct( \Closure $client_provider, \WP4Odoo\Entity_Map_Repository $entity_map, \WP4Odoo\Settings_Repository $settings ) {
-		parent::__construct( $client_provider, $entity_map, $settings );
+		parent::__construct( 'givewp', 'GiveWP', $client_provider, $entity_map, $settings );
 		$this->handler = new GiveWP_Handler( $this->logger );
 	}
 

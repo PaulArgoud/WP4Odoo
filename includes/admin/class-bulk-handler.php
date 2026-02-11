@@ -52,6 +52,11 @@ final class Bulk_Handler {
 	private const CHUNK_SIZE = 500;
 
 	/**
+	 * Maximum execution time in seconds for a single bulk operation.
+	 */
+	private const BATCH_TIMEOUT = 50;
+
+	/**
 	 * Import all products from Odoo into WooCommerce via the queue.
 	 *
 	 * Fetches Odoo product IDs in paginated chunks and uses batch
@@ -60,11 +65,18 @@ final class Bulk_Handler {
 	 * @return array{enqueued: int, total: int, message: string}
 	 */
 	public function import_products(): array {
-		$total    = $this->client->search_count( 'product.template', [] );
-		$enqueued = 0;
-		$offset   = 0;
+		$total     = $this->client->search_count( 'product.template', [] );
+		$enqueued  = 0;
+		$offset    = 0;
+		$timed_out = false;
+		$start     = microtime( true );
 
 		do {
+			if ( microtime( true ) - $start > self::BATCH_TIMEOUT ) {
+				$timed_out = true;
+				break;
+			}
+
 			$odoo_ids = $this->client->search( 'product.template', [], $offset, self::CHUNK_SIZE );
 
 			if ( empty( $odoo_ids ) ) {
@@ -94,15 +106,24 @@ final class Bulk_Handler {
 			];
 		}
 
-		return [
-			'enqueued' => $enqueued,
-			'total'    => $total,
-			'message'  => sprintf(
+		$message = $timed_out
+			? sprintf(
+				/* translators: 1: number of products enqueued, 2: total number of products */
+				__( '%1$d product(s) enqueued for import so far (%2$d found in Odoo). Operation timed out — run again to continue.', 'wp4odoo' ),
+				$enqueued,
+				$total
+			)
+			: sprintf(
 				/* translators: 1: number of products enqueued, 2: total number of products */
 				__( '%1$d product(s) enqueued for import (%2$d found in Odoo).', 'wp4odoo' ),
 				$enqueued,
 				$total
-			),
+			);
+
+		return [
+			'enqueued' => $enqueued,
+			'total'    => $total,
+			'message'  => $message,
 		];
 	}
 
@@ -115,10 +136,17 @@ final class Bulk_Handler {
 	 * @return array{enqueued: int, total: int, message: string}
 	 */
 	public function export_products(): array {
-		$enqueued = 0;
-		$page     = 1;
+		$enqueued  = 0;
+		$page      = 1;
+		$timed_out = false;
+		$start     = microtime( true );
 
 		do {
+			if ( microtime( true ) - $start > self::BATCH_TIMEOUT ) {
+				$timed_out = true;
+				break;
+			}
+
 			$product_ids = wc_get_products(
 				[
 					'limit'  => self::CHUNK_SIZE,
@@ -154,14 +182,22 @@ final class Bulk_Handler {
 			];
 		}
 
-		return [
-			'enqueued' => $enqueued,
-			'total'    => $enqueued,
-			'message'  => sprintf(
+		$message = $timed_out
+			? sprintf(
+				/* translators: %d: number of products enqueued */
+				__( '%d product(s) enqueued for export so far. Operation timed out — run again to continue.', 'wp4odoo' ),
+				$enqueued
+			)
+			: sprintf(
 				/* translators: %d: number of products enqueued */
 				__( '%d product(s) enqueued for export.', 'wp4odoo' ),
 				$enqueued
-			),
+			);
+
+		return [
+			'enqueued' => $enqueued,
+			'total'    => $enqueued,
+			'message'  => $message,
 		];
 	}
 }
