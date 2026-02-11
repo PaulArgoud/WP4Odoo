@@ -5,7 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [2.7.0] - 2026-02-11
+
+### Added
+- **Events Calendar Module** — The Events Calendar + Event Tickets → Odoo push sync: events as Odoo events (`event.event`, auto-detected via `ir.model` probe) or calendar entries (`calendar.event` fallback), RSVP ticket types as service products (`product.product`), RSVP attendees as event registrations (`event.registration`, only with Odoo Events module). Dual-model detection with transient caching, event auto-sync before attendees, partner resolution via `Partner_Service`, independent module (coexists with all other modules). `Events_Calendar_Handler`, `Events_Calendar_Hooks` trait, 53 new unit tests
+
+### Changed
+- **Membership module refactoring** — Extracted `Membership_Module_Base` abstract class from MemberPress, PMPro, and RCP modules. Shared `push_to_odoo()` orchestration (level auto-sync, invoice auto-posting), `load_wp_data()` dispatch with partner/level/price resolution. Each module now implements abstract methods for entity type names, handler delegation, and plugin-specific data extraction. ~370 lines deduplicated
+- **Module_Base helpers** — Added `auto_post_invoice()` and `ensure_entity_synced()` protected methods to `Module_Base`, replacing 6 copies of `maybe_auto_post_invoice()` and ~8 copies of `ensure_*_synced()` across modules. Used by LearnDash, LifterLMS, WC Subscriptions, Booking_Module_Base, and Events_Calendar_Module
 
 ## [2.6.5] - 2026-02-11
 

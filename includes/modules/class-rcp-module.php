@@ -3,8 +3,6 @@ declare( strict_types=1 );
 
 namespace WP4Odoo\Modules;
 
-use WP4Odoo\Module_Base;
-
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -14,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  *
  * Syncs RCP membership levels as Odoo membership products (product.product),
  * payments as invoices (account.move), and user memberships as
- * membership lines (membership.membership_line). Push-only (WP → Odoo).
+ * membership lines (membership.membership_line). Push-only (WP -> Odoo).
  *
  * Each payment automatically creates an invoice in Odoo,
  * eliminating manual recurring accounting entries.
@@ -30,21 +28,11 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @package WP4Odoo
  * @since   2.6.5
  */
-class RCP_Module extends Module_Base {
+class RCP_Module extends Membership_Module_Base {
 
 	use RCP_Hooks;
 
-	protected string $exclusive_group = 'memberships';
 	protected int $exclusive_priority = 12;
-
-	/**
-	 * Sync direction: push-only (WP → Odoo).
-	 *
-	 * @return string
-	 */
-	public function get_sync_direction(): string {
-		return 'wp_to_odoo';
-	}
 
 	/**
 	 * Odoo models by entity type.
@@ -191,251 +179,95 @@ class RCP_Module extends Module_Base {
 		return $this->check_dependency( function_exists( 'rcp_get_membership' ), 'Restrict Content Pro' );
 	}
 
-	// ─── Push override ──────────────────────────────────────
+	// ─── Membership_Module_Base abstract implementations ───
 
 	/**
-	 * Push a WordPress entity to Odoo.
-	 *
-	 * Ensures the level is synced before payments and memberships.
-	 * Auto-posts invoices for completed payments.
-	 *
-	 * @param string $entity_type The entity type.
-	 * @param string $action      'create', 'update', or 'delete'.
-	 * @param int    $wp_id       WordPress entity ID.
-	 * @param int    $odoo_id     Odoo ID (0 if creating).
-	 * @param array  $payload     Additional data.
-	 * @return \WP4Odoo\Sync_Result
+	 * @inheritDoc
 	 */
-	public function push_to_odoo( string $entity_type, string $action, int $wp_id, int $odoo_id = 0, array $payload = [] ): \WP4Odoo\Sync_Result {
-		if ( in_array( $entity_type, [ 'payment', 'membership' ], true ) && 'delete' !== $action ) {
-			$this->ensure_level_synced( $wp_id, $entity_type );
-		}
-
-		$result = parent::push_to_odoo( $entity_type, $action, $wp_id, $odoo_id, $payload );
-
-		if ( $result->succeeded() && 'payment' === $entity_type && 'create' === $action ) {
-			$this->maybe_auto_post_invoice( $wp_id );
-		}
-
-		return $result;
-	}
-
-	// ─── Data access ────────────────────────────────────────
-
-	/**
-	 * Load WordPress data for an entity.
-	 *
-	 * @param string $entity_type Entity type.
-	 * @param int    $wp_id       WordPress ID.
-	 * @return array<string, mixed>
-	 */
-	protected function load_wp_data( string $entity_type, int $wp_id ): array {
-		return match ( $entity_type ) {
-			'level'      => $this->handler->load_level( $wp_id ),
-			'payment'    => $this->load_payment_data( $wp_id ),
-			'membership' => $this->load_membership_data( $wp_id ),
-			default      => [],
-		};
+	protected function get_level_entity_type(): string {
+		return 'level';
 	}
 
 	/**
-	 * Load and resolve a payment with Odoo references.
-	 *
-	 * Resolves user → partner and level → Odoo product ID.
-	 *
-	 * @param int $payment_id RCP payment ID.
-	 * @return array<string, mixed>
+	 * @inheritDoc
 	 */
-	private function load_payment_data( int $payment_id ): array {
+	protected function get_payment_entity_type(): string {
+		return 'payment';
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	protected function get_membership_entity_type(): string {
+		return 'membership';
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	protected function handler_load_level( int $wp_id ): array {
+		return $this->handler->load_level( $wp_id );
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	protected function handler_load_payment( int $wp_id, int $partner_id, int $level_odoo_id ): array {
+		return $this->handler->load_payment( $wp_id, $partner_id, $level_odoo_id );
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	protected function handler_load_membership( int $wp_id ): array {
+		return $this->handler->load_membership( $wp_id );
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	protected function get_payment_user_and_level( int $wp_id ): array {
 		$payments = new \RCP_Payments();
-		$payment  = $payments->get_payment( $payment_id );
+		$payment  = $payments->get_payment( $wp_id );
 		if ( ! $payment ) {
-			return [];
+			return [ 0, 0 ];
 		}
-
-		// Resolve user → partner.
-		$user_id = (int) ( $payment->user_id ?? 0 );
-		if ( $user_id <= 0 ) {
-			$this->logger->warning( 'RCP payment has no user.', [ 'payment_id' => $payment_id ] );
-			return [];
-		}
-
-		$user = get_userdata( $user_id );
-		if ( ! $user ) {
-			$this->logger->warning(
-				'Cannot find user for RCP payment.',
-				[
-					'payment_id' => $payment_id,
-					'user_id'    => $user_id,
-				]
-			);
-			return [];
-		}
-
-		$partner_id = $this->partner_service()->get_or_create(
-			$user->user_email,
-			[ 'name' => $user->display_name ],
-			$user_id
-		);
-
-		if ( ! $partner_id ) {
-			$this->logger->warning( 'Cannot resolve partner for RCP payment.', [ 'payment_id' => $payment_id ] );
-			return [];
-		}
-
-		// Resolve level → Odoo product ID.
-		$level_id      = (int) ( $payment->object_id ?? 0 );
-		$level_odoo_id = 0;
-		if ( $level_id > 0 ) {
-			$level_odoo_id = $this->get_mapping( 'level', $level_id ) ?? 0;
-		}
-
-		if ( ! $level_odoo_id ) {
-			$this->logger->warning( 'Cannot resolve Odoo product for RCP payment level.', [ 'level_id' => $level_id ] );
-			return [];
-		}
-
-		return $this->handler->load_payment( $payment_id, $partner_id, $level_odoo_id );
+		return [ (int) ( $payment->user_id ?? 0 ), (int) ( $payment->object_id ?? 0 ) ];
 	}
 
 	/**
-	 * Load and resolve a membership with Odoo references.
-	 *
-	 * @param int $membership_id RCP membership ID.
-	 * @return array<string, mixed>
+	 * @inheritDoc
 	 */
-	private function load_membership_data( int $membership_id ): array {
-		$data = $this->handler->load_membership( $membership_id );
-
-		if ( empty( $data ) ) {
-			return [];
-		}
-
-		// Resolve WP user → Odoo partner.
-		$user_id = $data['user_id'] ?? 0;
-		unset( $data['user_id'] );
-
-		if ( $user_id > 0 ) {
-			$user = get_userdata( $user_id );
-			if ( $user ) {
-				$data['partner_id'] = $this->partner_service()->get_or_create(
-					$user->user_email,
-					[ 'name' => $user->display_name ],
-					$user_id
-				);
-			}
-		}
-
-		if ( empty( $data['partner_id'] ) ) {
-			$this->logger->warning( 'Cannot resolve partner for RCP membership.', [ 'membership_id' => $membership_id ] );
-			return [];
-		}
-
-		// Resolve level → Odoo product.product ID.
-		$level_id = $data['level_id'] ?? 0;
-		unset( $data['level_id'] );
-
-		if ( $level_id > 0 ) {
-			$data['membership_id'] = $this->get_mapping( 'level', $level_id );
-		}
-
-		if ( empty( $data['membership_id'] ) ) {
-			$this->logger->warning( 'Cannot resolve Odoo product for RCP membership level.', [ 'level_id' => $level_id ] );
-			return [];
-		}
-
-		// Resolve member_price from level.
-		$level = rcp_get_membership_level( $level_id );
-		if ( $level ) {
-			$recurring = (float) ( $level->recurring_amount ?? 0 );
-			$price     = $recurring > 0 ? $recurring : (float) ( $level->initial_amount ?? 0 );
-			if ( $price > 0 ) {
-				$data['member_price'] = $price;
-			}
-		}
-
-		return $data;
-	}
-
-	// ─── Level sync ─────────────────────────────────────────
-
-	/**
-	 * Ensure the RCP level is synced to Odoo before pushing a dependent entity.
-	 *
-	 * @param int    $wp_id       Entity ID (payment or membership).
-	 * @param string $entity_type 'payment' or 'membership'.
-	 * @return void
-	 */
-	private function ensure_level_synced( int $wp_id, string $entity_type ): void {
-		$level_id = 0;
-
+	protected function get_level_id_for_entity( int $wp_id, string $entity_type ): int {
 		if ( 'payment' === $entity_type ) {
-			$level_id = $this->handler->get_level_id_for_payment( $wp_id );
-		} elseif ( 'membership' === $entity_type ) {
-			$level_id = $this->handler->get_level_id_for_membership( $wp_id );
+			return $this->handler->get_level_id_for_payment( $wp_id );
 		}
 
-		if ( $level_id <= 0 ) {
-			return;
+		if ( 'membership' === $entity_type ) {
+			return $this->handler->get_level_id_for_membership( $wp_id );
 		}
 
-		$odoo_level_id = $this->get_mapping( 'level', $level_id );
-		if ( $odoo_level_id ) {
-			return;
-		}
-
-		// Level not yet in Odoo — push it synchronously.
-		$this->logger->info( 'Auto-pushing RCP level before dependent entity.', [ 'level_id' => $level_id ] );
-		parent::push_to_odoo( 'level', 'create', $level_id );
+		return 0;
 	}
 
-	// ─── Invoice auto-posting ───────────────────────────────
+	/**
+	 * @inheritDoc
+	 */
+	protected function is_payment_complete( int $wp_id ): bool {
+		$payments = new \RCP_Payments();
+		$payment  = $payments->get_payment( $wp_id );
+		return $payment && 'complete' === ( $payment->status ?? '' );
+	}
 
 	/**
-	 * Auto-post an invoice in Odoo for completed payments.
-	 *
-	 * @param int $payment_id RCP payment ID.
-	 * @return void
+	 * @inheritDoc
 	 */
-	private function maybe_auto_post_invoice( int $payment_id ): void {
-		$settings = $this->get_settings();
-		if ( empty( $settings['auto_post_invoices'] ) ) {
-			return;
+	protected function resolve_member_price( int $level_id ): float {
+		$level = rcp_get_membership_level( $level_id );
+		if ( ! $level ) {
+			return 0.0;
 		}
-
-		$payments = new \RCP_Payments();
-		$payment  = $payments->get_payment( $payment_id );
-		if ( ! $payment || 'complete' !== ( $payment->status ?? '' ) ) {
-			return;
-		}
-
-		$odoo_id = $this->get_mapping( 'payment', $payment_id );
-		if ( ! $odoo_id ) {
-			return;
-		}
-
-		try {
-			$this->client()->execute(
-				'account.move',
-				'action_post',
-				[ [ $odoo_id ] ]
-			);
-			$this->logger->info(
-				'Auto-posted RCP invoice in Odoo.',
-				[
-					'payment_id' => $payment_id,
-					'odoo_id'    => $odoo_id,
-				]
-			);
-		} catch ( \Exception $e ) {
-			$this->logger->warning(
-				'Could not auto-post RCP invoice.',
-				[
-					'payment_id' => $payment_id,
-					'odoo_id'    => $odoo_id,
-					'error'      => $e->getMessage(),
-				]
-			);
-		}
+		$recurring = (float) ( $level->recurring_amount ?? 0 );
+		return $recurring > 0 ? $recurring : (float) ( $level->initial_amount ?? 0 );
 	}
 }

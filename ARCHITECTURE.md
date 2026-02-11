@@ -2,53 +2,58 @@
 
 ## Overview
 
-Modular WordPress plugin providing bidirectional synchronization between WordPress/WooCommerce and Odoo ERP (v14+). The plugin covers 13 modules across 8 domains: CRM, Sales & Invoicing, WooCommerce, Easy Digital Downloads, Memberships (WC Memberships + MemberPress), Donations (GiveWP + WP Charitable + WP Simple Pay), Forms (Gravity Forms + WPForms), WP Recipe Maker, Amelia Booking, and Bookly.
+Modular WordPress plugin providing bidirectional synchronization between WordPress/WooCommerce and Odoo ERP (v14+). The plugin covers 19 modules across 12 domains: CRM, Sales & Invoicing, WooCommerce, WooCommerce Subscriptions, Easy Digital Downloads, Memberships (WC Memberships + MemberPress + PMPro + RCP), Donations (GiveWP + WP Charitable + WP Simple Pay), Forms (7 plugins), WP Recipe Maker, LMS (LearnDash + LifterLMS), Booking (Amelia + Bookly), and Events (The Events Calendar + Event Tickets).
 
 ```
-┌──────────────────────────────────────────────────────────────────────┐
-│                              WordPress                               │
-│                                                                      │
-│  ┌──────────┐ ┌───────────┐ ┌─────────────┐ ┌─────────┐              │
-│  │   CRM    │ │   Sales   │ │ WooCommerce │ │   EDD   │  Commerce    │
-│  │  Module  │ │   Module  │ │   Module    │ │  Module │  Modules     │
-│  └────┬─────┘ └─────┬─────┘ └──────┬──────┘ └────┬────┘              │
-│       │             │              │              │                  │
-│  ┌────┴──────┐ ┌────┴──────┐ ┌─────┴──────┐ ┌───┴──────┐             │
-│  │Memberships│ │MemberPress│ │   GiveWP   │ │Charitable│  Membership │
-│  │  Module   │ │  Module   │ │   Module   │ │  Module  │  & Donation │
-│  └────┬──────┘ └────┬──────┘ └─────┬──────┘ └────┬─────┘  Modules    │
-│       │             │              │             │                   │
-│  ┌────┴──────┐ ┌────┴──────┐ ┌─────┴──────┐ ┌───────────┐             │
-│  │ SimplePay │ │   Forms   │ │    WPRM    │ │  Amelia   │  Payment,   │
-│  │  Module   │ │  Module   │ │   Module   │ │  Module   │  Forms,     │
-│  └────┬──────┘ └────┬──────┘ └─────┬──────┘ └─────┬─────┘  Content & │
-│       │             │              │              │        Booking    │
-│       │             │              │         ┌────┴──────┐  Modules   │
-│       │             │              │         │  Bookly   │             │
-│       │             │              │         │  Module   │             │
-│       │             │              │         └────┬──────┘             │
-│       └─────────────┼──────────────┴──────────────┘                   │
-│                     ▼                                                │
-│  ┌─────────────────────────────────────────────────────────────────┐ │
-│  │  Shared Infrastructure                                          │ │
-│  │  ┌──────────────┐  ┌────────────────┐  ┌─────────────────┐      │ │
-│  │  │  Sync Engine │  │ Queue Manager  │  │ Partner Service │      │ │
-│  │  │  (cron job)  │  └────────────────┘  └─────────────────┘      │ │
-│  │  └──────┬───────┘                                               │ │
-│  │         │  ┌──────────────┐  ┌────────────────┐                 │ │
-│  │         │  │ Field Mapper │  │Webhook Handler │◄── REST API     │ │
-│  │         │  └──────┬───────┘  └───────┬────────┘                 │ │
-│  │         │         │                  │                          │ │
-│  │  ┌──────▼─────────▼──────────────────▼──────┐                   │ │
-│  │  │             Odoo Client                  │                   │ │
-│  │  │  ┌───────────┐    ┌──────────────┐       │                   │ │
-│  │  │  │ JSON-RPC  │    │   XML-RPC    │       │                   │ │
-│  │  │  │ Transport │    │  Transport   │       │                   │ │
-│  │  │  └┬───────┘       └───────┬──────┘       │                   │ │
-│  │  │   └─ Transport interface ─┘              │                   │ │
-│  │  └────────────────────┬─────────────────────┘                   │ │
-│  └───────────────────────┼─────────────────────────────────────────┘ │
-└──────────────────────────┼───────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────┐
+│                                WordPress                                │
+│                                                                         │
+│  ┌──────────┐ ┌───────────┐ ┌─────────────┐ ┌─────────┐  Commerce      │
+│  │   CRM    │ │   Sales   │ │ WooCommerce │ │   EDD   │  Modules       │
+│  │  Module  │ │   Module  │ │   Module    │ │  Module │                 │
+│  └────┬─────┘ └─────┬─────┘ └──────┬──────┘ └────┬────┘                 │
+│       │             │              │              │                     │
+│  ┌────┴──────┐ ┌────┴──────┐ ┌─────┴──────┐ ┌───┴──────┐  Membership   │
+│  │Memberships│ │MemberPress│ │   PMPro    │ │   RCP    │  Modules       │
+│  │  Module   │ │  Module   │ │   Module   │ │  Module  │                │
+│  └────┬──────┘ └────┬──────┘ └─────┬──────┘ └────┬─────┘                │
+│       │             │              │             │                      │
+│  ┌────┴──────┐ ┌────┴──────┐ ┌─────┴──────┐ ┌───────────┐  Donation    │
+│  │  GiveWP   │ │Charitable │ │ SimplePay  │ │   Forms   │  & Forms     │
+│  │  Module   │ │  Module   │ │   Module   │ │  Module   │  Modules     │
+│  └────┬──────┘ └────┬──────┘ └─────┬──────┘ └─────┬─────┘              │
+│       │             │              │              │                     │
+│  ┌────┴──────┐ ┌────┴──────┐ ┌─────┴──────┐ ┌────┴──────┐  LMS, Book. │
+│  │ LearnDash │ │ LifterLMS │ │   Amelia   │ │  Bookly   │  Content &   │
+│  │  Module   │ │  Module   │ │   Module   │ │  Module   │  Events      │
+│  └────┬──────┘ └────┬──────┘ └─────┬──────┘ └────┬──────┘              │
+│       │             │              │              │                     │
+│  ┌────┴──────┐ ┌────┴──────┐ ┌─────┴──────┐                            │
+│  │WC Subscr. │ │  Events   │ │    WPRM    │  Subscr., Events, Content  │
+│  │  Module   │ │ Calendar  │ │   Module   │                            │
+│  └────┬──────┘ └────┬──────┘ └─────┬──────┘                            │
+│       └─────────────┼──────────────┘                                   │
+│                     ▼                                                  │
+│  ┌───────────────────────────────────────────────────────────────────┐  │
+│  │  Shared Infrastructure                                            │  │
+│  │  ┌──────────────┐  ┌────────────────┐  ┌─────────────────┐        │  │
+│  │  │  Sync Engine │  │ Queue Manager  │  │ Partner Service │        │  │
+│  │  │  (cron job)  │  └────────────────┘  └─────────────────┘        │  │
+│  │  └──────┬───────┘                                                 │  │
+│  │         │  ┌──────────────┐  ┌────────────────┐                   │  │
+│  │         │  │ Field Mapper │  │Webhook Handler │◄── REST API       │  │
+│  │         │  └──────┬───────┘  └───────┬────────┘                   │  │
+│  │         │         │                  │                            │  │
+│  │  ┌──────▼─────────▼──────────────────▼──────┐                     │  │
+│  │  │             Odoo Client                  │                     │  │
+│  │  │  ┌───────────┐    ┌──────────────┐       │                     │  │
+│  │  │  │ JSON-RPC  │    │   XML-RPC    │       │                     │  │
+│  │  │  │ Transport │    │  Transport   │       │                     │  │
+│  │  │  └┬───────┘       └───────┬──────┘       │                     │  │
+│  │  │   └─ Transport interface ─┘              │                     │  │
+│  │  └────────────────────┬─────────────────────┘                     │  │
+│  └───────────────────────┼───────────────────────────────────────────┘  │
+└──────────────────────────┼──────────────────────────────────────────────┘
                            │ HTTP
                            ▼
                  ┌──────────────────┐
@@ -112,10 +117,13 @@ WordPress For Odoo/
 │   │   ├── class-membership-handler.php      # Memberships: plan/membership data load, status mapping
 │   │   ├── class-memberships-module.php      # Memberships: push sync coordinator (uses Membership_Hooks trait)
 │   │   │
+│   │   ├── # ─── Membership Base (MemberPress + PMPro + RCP) ──
+│   │   ├── class-membership-module-base.php  # Shared: abstract base for subscription membership modules
+│   │   │
 │   │   ├── # ─── MemberPress ──────────────────────────────────
 │   │   ├── trait-memberpress-hooks.php       # MemberPress: hook callbacks (plan save, txn store, sub status)
 │   │   ├── class-memberpress-handler.php     # MemberPress: plan/transaction/subscription data load, status mapping
-│   │   ├── class-memberpress-module.php      # MemberPress: push sync coordinator (uses MemberPress_Hooks trait)
+│   │   ├── class-memberpress-module.php      # MemberPress: extends Membership_Module_Base (uses MemberPress_Hooks trait)
 │   │   │
 │   │   ├── # ─── Shared Accounting (GiveWP + Charitable + SimplePay) ─
 │   │   ├── trait-dual-accounting-model.php   # Shared: OCA donation detection, auto-validate, parent sync
@@ -146,6 +154,16 @@ WordPress For Odoo/
 │   │   ├── class-form-handler.php            # Forms: field extraction from GF/WPForms submissions (auto-detection)
 │   │   ├── class-forms-module.php            # Forms: push sync coordinator (GF/WPForms → crm.lead)
 │   │   │
+│   │   ├── # ─── PMPro ─────────────────────────────────────────
+│   │   ├── trait-pmpro-hooks.php             # PMPro: hook callbacks (level saved, order created/updated, membership changed)
+│   │   ├── class-pmpro-handler.php           # PMPro: level/order/membership data load via pmpro API + $wpdb
+│   │   ├── class-pmpro-module.php            # PMPro: extends Membership_Module_Base (uses PMPro_Hooks trait)
+│   │   │
+│   │   ├── # ─── Restrict Content Pro ──────────────────────────
+│   │   ├── trait-rcp-hooks.php               # RCP: hook callbacks (level saved, payment created, membership status)
+│   │   ├── class-rcp-handler.php             # RCP: level/payment/membership data load via RCP v3.0+ classes
+│   │   ├── class-rcp-module.php              # RCP: extends Membership_Module_Base (uses RCP_Hooks trait)
+│   │   │
 │   │   ├── # ─── Booking (Amelia + Bookly) ────────────────────
 │   │   ├── class-booking-module-base.php     # Shared: abstract base class for booking/appointment modules
 │   │   ├── trait-amelia-hooks.php            # Amelia: hook callbacks (booking saved/canceled/rescheduled, service saved)
@@ -153,7 +171,25 @@ WordPress For Odoo/
 │   │   ├── class-amelia-module.php           # Amelia: extends Booking_Module_Base (uses Amelia_Hooks trait)
 │   │   ├── trait-bookly-cron-hooks.php       # Bookly: WP-Cron polling (no hooks available)
 │   │   ├── class-bookly-handler.php          # Bookly: $wpdb queries on bookly_* tables (batch + individual)
-│   │   └── class-bookly-module.php           # Bookly: extends Booking_Module_Base (uses Bookly_Cron_Hooks trait)
+│   │   ├── class-bookly-module.php           # Bookly: extends Booking_Module_Base (uses Bookly_Cron_Hooks trait)
+│   │   │
+│   │   ├── # ─── LMS (LearnDash + LifterLMS) ─────────────────
+│   │   ├── trait-learndash-hooks.php         # LearnDash: hook callbacks (course/group save, transaction, enrollment)
+│   │   ├── class-learndash-handler.php       # LearnDash: course/group/transaction/enrollment data load
+│   │   ├── class-learndash-module.php        # LearnDash: push sync coordinator (uses LearnDash_Hooks trait)
+│   │   ├── trait-lifterlms-hooks.php         # LifterLMS: hook callbacks (course/membership save, order, enrollment)
+│   │   ├── class-lifterlms-handler.php       # LifterLMS: course/membership/order/enrollment data load
+│   │   ├── class-lifterlms-module.php        # LifterLMS: push sync coordinator (uses LifterLMS_Hooks trait)
+│   │   │
+│   │   ├── # ─── WC Subscriptions ─────────────────────────────
+│   │   ├── trait-wc-subscriptions-hooks.php  # WCS: hook callbacks (product save, subscription status, renewal)
+│   │   ├── class-wc-subscriptions-handler.php # WCS: product/subscription/renewal data load, status mapping
+│   │   ├── class-wc-subscriptions-module.php # WCS: push sync coordinator, dual-model (sale.subscription / skip)
+│   │   │
+│   │   ├── # ─── Events Calendar ──────────────────────────────
+│   │   ├── trait-events-calendar-hooks.php   # Events Calendar: hook callbacks (event save, ticket save, attendee created)
+│   │   ├── class-events-calendar-handler.php # Events Calendar: event/ticket/attendee data load + formatting
+│   │   └── class-events-calendar-module.php  # Events Calendar: push sync, dual-model (event.event / calendar.event)
 │   │
 │   ├── admin/
 │   │   ├── class-admin.php            # Admin menu, assets, activation redirect, setup notice
@@ -207,7 +243,7 @@ WordPress For Odoo/
 ├── templates/
 │   └── customer-portal.php           #   Customer portal HTML template (orders/invoices tabs)
 │
-├── tests/                             # 1039 unit tests (1685 assertions) + 26 integration tests (wp-env)
+├── tests/                             # 1484 unit tests (2305 assertions) + 26 integration tests (wp-env)
 │   ├── bootstrap.php                 #   Unit test bootstrap: constants, stub loading, plugin class requires
 │   ├── bootstrap-integration.php     #   Integration test bootstrap: loads WP test framework (wp-env)
 │   ├── stubs/
@@ -225,7 +261,13 @@ WordPress For Odoo/
 │   │   ├── simplepay-classes.php     #   SIMPLE_PAY_VERSION constant
 │   │   ├── wprm-classes.php          #   WPRM_VERSION constant
 │   │   ├── amelia-classes.php        #   AMELIA_VERSION constant
-│   │   └── bookly-classes.php        #   Bookly\Lib\Plugin class
+│   │   ├── bookly-classes.php        #   Bookly\Lib\Plugin class
+│   │   ├── learndash-classes.php    #   LEARNDASH_VERSION, LearnDash functions
+│   │   ├── lifterlms-classes.php    #   LLMS_VERSION, LLMS_Order, LLMS_Student
+│   │   ├── pmpro-classes.php        #   PMPro_Membership_Level, MemberOrder, pmpro_getLevel
+│   │   ├── rcp-classes.php          #   RCP_Membership, RCP_Customer, RCP_Payments
+│   │   ├── wc-subscriptions-classes.php # WC_Subscriptions, WC_Subscription
+│   │   └── events-calendar-classes.php  # Tribe__Events__Main, Tribe__Tickets__Main
 │   ├── Integration/                       #   wp-env integration tests (real WordPress + MySQL)
 │   │   ├── WP4Odoo_TestCase.php          #   Base test case for integration tests
 │   │   ├── DatabaseMigrationTest.php     #   7 tests for table creation, options seeding
@@ -284,7 +326,19 @@ WordPress For Odoo/
 │       ├── AmeliaModuleTest.php         #   24 tests for Amelia_Module
 │       ├── AmeliaHandlerTest.php        #   15 tests for Amelia_Handler
 │       ├── BooklyModuleTest.php         #   24 tests for Bookly_Module
-│       └── BooklyHandlerTest.php        #   22 tests for Bookly_Handler
+│       ├── BooklyHandlerTest.php        #   22 tests for Bookly_Handler
+│       ├── PMProModuleTest.php          #   25 tests for PMPro_Module
+│       ├── PMProHandlerTest.php         #   41 tests for PMPro_Handler
+│       ├── RCPModuleTest.php            #   25 tests for RCP_Module
+│       ├── RCPHandlerTest.php           #   37 tests for RCP_Handler
+│       ├── LearnDashModuleTest.php      #   28 tests for LearnDash_Module
+│       ├── LearnDashHandlerTest.php     #   41 tests for LearnDash_Handler
+│       ├── LifterLMSModuleTest.php      #   26 tests for LifterLMS_Module
+│       ├── LifterLMSHandlerTest.php     #   35 tests for LifterLMS_Handler
+│       ├── WCSubscriptionsModuleTest.php #  27 tests for WC_Subscriptions_Module
+│       ├── WCSubscriptionsHandlerTest.php # 40 tests for WC_Subscriptions_Handler
+│       ├── EventsCalendarModuleTest.php  # 23 tests for Events_Calendar_Module
+│       └── EventsCalendarHandlerTest.php # 30 tests for Events_Calendar_Handler
 │
 ├── uninstall.php                      # Cleanup on plugin uninstall
 │
@@ -328,7 +382,10 @@ Module_Base (abstract)
 ├── WooCommerce_Module          → + stock.quant, product.product (variants)          [bidirectional]
 ├── EDD_Module                  → product.template, sale.order, account.move         [bidirectional]
 ├── Memberships_Module          → product.product, membership.membership_line        [WP → Odoo]
-├── MemberPress_Module          → product.product, account.move, membership.m_line   [WP → Odoo]
+├── Membership_Module_Base (abstract)
+│   ├── MemberPress_Module      → product.product, account.move, membership.m_line   [WP → Odoo]
+│   ├── PMPro_Module            → product.product, account.move, membership.m_line   [WP → Odoo]
+│   └── RCP_Module              → product.product, account.move, membership.m_line   [WP → Odoo]
 ├── Dual_Accounting_Module_Base (abstract, uses Dual_Accounting_Model trait)
 │   ├── GiveWP_Module           → product.product, donation.donation / account.move  [WP → Odoo]
 │   ├── Charitable_Module       → product.product, donation.donation / account.move  [WP → Odoo]
@@ -338,20 +395,25 @@ Module_Base (abstract)
 ├── Booking_Module_Base (abstract)
 │   ├── Amelia_Module           → product.product, calendar.event                    [WP → Odoo]
 │   └── Bookly_Module           → product.product, calendar.event                    [WP → Odoo]
+├── LearnDash_Module            → product.product, account.move, sale.order          [WP → Odoo]
+├── LifterLMS_Module            → product.product, account.move, sale.order          [WP → Odoo]
+├── WC_Subscriptions_Module     → product.product, sale.subscription, account.move   [WP → Odoo]
+├── Events_Calendar_Module      → event.event / calendar.event, product.product,     [WP → Odoo]
+│                                 event.registration
 └── [Custom_Module]             → extensible via action hook
 ```
 
 **Mutual exclusivity rules:**
 - **Commerce**: WooCommerce, EDD, and Sales are mutually exclusive (all share `sale.order` + `product.template`). Priority: WC > EDD > Sales.
-- **Memberships**: WC Memberships and MemberPress are mutually exclusive (both target `membership.membership_line`).
-- All other modules are independent and can coexist freely.
+- **Memberships**: WC Memberships, MemberPress, PMPro, and RCP are mutually exclusive (all target `membership.membership_line`). Priority: MemberPress (10) > RCP (12) > PMPro (15) > WC Memberships (20).
+- All other modules are independent and can coexist freely (LMS, Subscriptions, Events, Booking, Donations, Forms, WPRM).
 
 **Module_Base provides:**
 - Push/Pull orchestration: `push_to_odoo()` returns `Sync_Result` (value object with success, odoo_id, error, Error_Type), `pull_from_odoo()` returns `Sync_Result`
 - Entity mapping CRUD: `get_mapping()`, `save_mapping()`, `get_wp_mapping()`, `remove_mapping()` (delegates to `Entity_Map_Repository`)
 - Data transformation: `map_to_odoo()`, `map_from_odoo()`, `generate_sync_hash()`
 - Settings: `get_settings()`, `get_settings_fields()`, `get_default_settings()`, `get_dependency_status()` (external dependency check for admin UI) — delegates to injected `Settings_Repository`
-- Helpers: `is_importing()` (anti-loop guard, resettable static flag), `mark_importing()`, `clear_importing()` (try/finally in pull), `resolve_many2one_field()` (Many2one → scalar), `delete_wp_post()` (safe post deletion), `log_unsupported_entity()` (centralized warning), `partner_service()` (lazy `Partner_Service` factory), `check_dependency()` (one-liner dependency status), `client()`
+- Helpers: `is_importing()` (anti-loop guard, resettable static flag), `mark_importing()`, `clear_importing()` (try/finally in pull), `resolve_many2one_field()` (Many2one → scalar), `delete_wp_post()` (safe post deletion), `log_unsupported_entity()` (centralized warning), `partner_service()` (lazy `Partner_Service` factory), `check_dependency()` (one-liner dependency status), `client()`, `auto_post_invoice()` (setting check + mapping lookup + `action_post`), `ensure_entity_synced()` (mapping check + auto-push if missing)
 - Subclass hooks: `boot()`, `load_wp_data()`, `save_wp_data()`, `delete_wp_data()`
 
 **Module lifecycle:**
@@ -515,7 +577,20 @@ Three donation/payment modules (GiveWP, Charitable, SimplePay) share a common du
 
 Used by `GiveWP_Handler`, `Charitable_Handler`, and `SimplePay_Handler`.
 
-### 9. Shared Booking Infrastructure
+### 9. Shared Membership Infrastructure
+
+Three subscription-style membership modules (MemberPress, PMPro, RCP) share a common level/payment/membership sync pattern:
+
+**`Membership_Module_Base`** (`class-membership-module-base.php`):
+- Abstract base class extending `Module_Base`
+- Shared `push_to_odoo()`: ensures level synced before payment/membership push, auto-posts invoices for completed payments
+- Shared `load_wp_data()` / `load_payment_data()` / `load_membership_data()`: dispatches to handler, resolves user→partner via `Partner_Service`, resolves level→Odoo product via entity map, resolves member price
+- Uses `Module_Base::auto_post_invoice()` and `Module_Base::ensure_entity_synced()` helpers
+- 10 abstract methods for subclass configuration: `get_level_entity_type()`, `get_payment_entity_type()`, `get_membership_entity_type()`, `handler_load_level()`, `handler_load_payment()`, `handler_load_membership()`, `get_payment_user_and_level()`, `get_level_id_for_entity()`, `is_payment_complete()`, `resolve_member_price()`
+
+Used by `MemberPress_Module`, `PMPro_Module`, and `RCP_Module`.
+
+### 10. Shared Booking Infrastructure
 
 Two booking modules (Amelia, Bookly) share a common service/appointment sync pattern:
 
@@ -749,7 +824,7 @@ All user inputs are sanitized with:
 
 ### MemberPress — COMPLETE
 
-**Files:** `class-memberpress-module.php` (push sync coordinator, uses `MemberPress_Hooks` trait), `trait-memberpress-hooks.php` (hook callbacks), `class-memberpress-handler.php` (plan/transaction/subscription data load, status mapping)
+**Files:** `class-memberpress-module.php` (extends `Membership_Module_Base`, uses `MemberPress_Hooks` trait), `trait-memberpress-hooks.php` (hook callbacks), `class-memberpress-handler.php` (plan/transaction/subscription data load, status mapping)
 
 **Odoo models:** `product.product` (plans), `account.move` (transactions as invoices), `membership.membership_line` (subscriptions)
 
@@ -757,8 +832,8 @@ All user inputs are sanitized with:
 - Push-only (WP → Odoo) — recurring subscriptions → recurring accounting entries
 - Requires MemberPress; `boot()` guards with `defined('MEPR_VERSION')`
 - Mutually exclusive with WC Memberships module
-- Plan auto-sync: `ensure_plan_synced()` pushes plan before dependent entity
-- Invoice auto-posting: completed transactions optionally auto-posted via Odoo `action_post`
+- Level auto-sync via `Membership_Module_Base::ensure_entity_synced()`: pushes plan before dependent entity
+- Invoice auto-posting via `Membership_Module_Base`: completed transactions optionally auto-posted via Odoo `action_post`
 - Uses `Partner_Service` for WP user → Odoo partner resolution
 - Status mapping filterable via `apply_filters('wp4odoo_mepr_txn_status_map', ...)` and `apply_filters('wp4odoo_mepr_sub_status_map', ...)`
 
@@ -878,11 +953,125 @@ All user inputs are sanitized with:
 
 **Settings:** `sync_services`, `sync_bookings`
 
+### Paid Memberships Pro — COMPLETE
+
+**Files:** `class-pmpro-module.php` (extends `Membership_Module_Base`, uses `PMPro_Hooks` trait), `trait-pmpro-hooks.php` (hook callbacks), `class-pmpro-handler.php` (data load from PMPro custom tables, invoice formatting)
+
+**Odoo models:** `product.product` (levels), `account.move` (orders as invoices), `membership.membership_line` (memberships)
+
+**Key features:**
+- Push-only (WP → Odoo) — membership levels, payment orders, user memberships
+- Requires Paid Memberships Pro; `boot()` guards with `defined('PMPRO_VERSION')`
+- Mutually exclusive with MemberPress, RCP, and WC Memberships (`memberships` group, priority 15)
+- Data access via PMPro custom tables (`pmpro_membership_levels`, `pmpro_membership_orders`, `pmpro_memberships_users`) — no CPTs
+- Level auto-sync via `Membership_Module_Base::ensure_entity_synced()`: pushes level before dependent order/membership
+- Invoice auto-posting via `Membership_Module_Base`: completed orders optionally auto-posted via `action_post`
+- Orders pre-formatted as Odoo invoices with `invoice_line_ids` One2many tuples
+- Uses `Partner_Service` for WP user → Odoo partner resolution
+- Status mapping filterable via `wp4odoo_pmpro_order_status_map` (6 statuses) and `wp4odoo_pmpro_membership_status_map` (7 statuses)
+
+**Settings:** `sync_levels`, `sync_orders`, `sync_memberships`, `auto_post_invoices`
+
+### Restrict Content Pro — COMPLETE
+
+**Files:** `class-rcp-module.php` (extends `Membership_Module_Base`, uses `RCP_Hooks` trait), `trait-rcp-hooks.php` (hook callbacks), `class-rcp-handler.php` (data load via RCP v3.0+ API, invoice formatting)
+
+**Odoo models:** `product.product` (levels), `account.move` (payments as invoices), `membership.membership_line` (memberships)
+
+**Key features:**
+- Push-only (WP → Odoo) — membership levels, completed payments, user memberships
+- Requires Restrict Content Pro v3.0+; `boot()` guards with `function_exists('rcp_get_membership')`
+- Mutually exclusive with MemberPress, PMPro, and WC Memberships (`memberships` group, priority 12)
+- Level auto-sync via `Membership_Module_Base::ensure_entity_synced()`: pushes level before dependent payment/membership
+- Invoice auto-posting via `Membership_Module_Base`: completed payments optionally auto-posted via `action_post`
+- Payments pre-formatted as Odoo invoices with `invoice_line_ids` One2many tuples
+- Uses `Partner_Service` for WP user → Odoo partner resolution
+- Uses RCP class-based API: `rcp_get_membership_level()`, `RCP_Payments`, `rcp_get_membership()`
+- Status mapping filterable via `wp4odoo_rcp_payment_status_map` (4 statuses) and `wp4odoo_rcp_membership_status_map` (4 statuses)
+
+**Settings:** `sync_levels`, `sync_payments`, `sync_memberships`, `auto_post_invoices`
+
+### LearnDash — COMPLETE
+
+**Files:** `class-learndash-module.php` (push sync coordinator, uses `LearnDash_Hooks` trait), `trait-learndash-hooks.php` (hook callbacks), `class-learndash-handler.php` (data load via LearnDash functions, invoice/sale order formatting)
+
+**Odoo models:** `product.product` (courses + groups), `account.move` (transactions as invoices), `sale.order` (enrollments)
+
+**Key features:**
+- Push-only (WP → Odoo) — courses, groups, transactions, enrollments
+- Requires LearnDash; `boot()` guards with `defined('LEARNDASH_VERSION')`
+- Independent module (no exclusive group) — LMS coexists with e-commerce modules
+- Courses (`sfwd-courses` CPT) and groups (`groups` CPT) synced as service products
+- Transactions → invoices with `invoice_line_ids` One2many tuples, optional auto-posting
+- Enrollments → sale orders via synthetic ID encoding (`user_id * 1_000_000 + course_id`)
+- Product auto-sync: `ensure_product_synced()` pushes course before dependent transaction/enrollment
+- Uses `Partner_Service` for user → Odoo partner resolution
+
+**Settings:** `sync_courses`, `sync_groups`, `sync_transactions`, `sync_enrollments`, `auto_post_invoice`
+
+### LifterLMS — COMPLETE
+
+**Files:** `class-lifterlms-module.php` (push sync coordinator, uses `LifterLMS_Hooks` trait), `trait-lifterlms-hooks.php` (hook callbacks), `class-lifterlms-handler.php` (data load via LifterLMS classes, invoice/sale order formatting)
+
+**Odoo models:** `product.product` (courses + memberships), `account.move` (orders as invoices), `sale.order` (enrollments)
+
+**Key features:**
+- Push-only (WP → Odoo) — courses, memberships, orders, enrollments
+- Requires LifterLMS; `boot()` guards with `defined('LLMS_VERSION')`
+- Independent module (no exclusive group) — LMS coexists with e-commerce modules
+- Courses (`llms_course` CPT) and memberships (`llms_membership` CPT) synced as service products
+- Orders → invoices with `invoice_line_ids` One2many tuples, optional auto-posting
+- Enrollments → sale orders via synthetic ID encoding (`user_id * 1_000_000 + course_id`)
+- Product auto-sync: `ensure_product_synced()` pushes course/membership before dependent order/enrollment
+- Unenrollment tracking: deletes enrollment sale orders in Odoo when LifterLMS enrollment removed
+- Uses `Partner_Service` for user → Odoo partner resolution
+- Status mapping filterable via `wp4odoo_lifterlms_order_status_map` (8 statuses)
+
+**Settings:** `sync_courses`, `sync_memberships`, `sync_orders`, `sync_enrollments`, `auto_post_invoice`
+
+### WooCommerce Subscriptions — COMPLETE
+
+**Files:** `class-wc-subscriptions-module.php` (push sync coordinator, uses `WC_Subscriptions_Hooks` trait), `trait-wc-subscriptions-hooks.php` (hook callbacks), `class-wc-subscriptions-handler.php` (data load via WC Subscription objects, subscription/invoice formatting)
+
+**Odoo models:** `product.product` (subscription products), `sale.subscription` (subscriptions — Enterprise only), `account.move` (renewal invoices)
+
+**Key features:**
+- Push-only (WP → Odoo) — subscription products, subscriptions, renewal invoices
+- Requires WooCommerce Subscriptions; `boot()` guards with `class_exists('WC_Subscriptions')`
+- Independent module — coexists with WooCommerce module (not mutually exclusive)
+- **Dual-model detection**: probes `ir.model` for `sale.subscription` (Odoo Enterprise, cached 1h); skips subscription push if unavailable
+- Subscriptions pre-formatted with `recurring_invoice_line_ids` One2many tuples and billing period mapping
+- Renewals → invoices with `invoice_line_ids` One2many tuples, optional auto-posting
+- Product auto-sync: `ensure_product_synced()` pushes subscription product before dependent entity
+- Billing period mapping filterable via `wp4odoo_wcs_billing_period_map` (day/week/month/year)
+- Status mapping filterable via `wp4odoo_wcs_status_map` (7 statuses) and `wp4odoo_wcs_renewal_status_map` (3 statuses)
+
+**Settings:** `sync_products`, `sync_subscriptions`, `sync_renewals`, `auto_post_invoices`
+
+### Events Calendar — COMPLETE
+
+**Files:** `class-events-calendar-module.php` (push sync coordinator, uses `Events_Calendar_Hooks` trait), `trait-events-calendar-hooks.php` (hook callbacks), `class-events-calendar-handler.php` (event/ticket/attendee data load and formatting)
+
+**Odoo models:** `event.event` (events — preferred), `calendar.event` (events — fallback), `product.product` (RSVP tickets), `event.registration` (attendees)
+
+**Key features:**
+- Push-only (WP → Odoo) — events, RSVP tickets, RSVP attendees
+- Requires The Events Calendar; `boot()` guards with `class_exists('Tribe__Events__Main')`
+- Event Tickets optional: ticket and attendee sync only if `class_exists('Tribe__Tickets__Main')`
+- Independent module (no exclusive group) — coexists with all other modules
+- **Dual-model detection**: probes `ir.model` for `event.event` (cached 1h); falls back to `calendar.event`
+- Attendees require `event.event` (skipped in fallback mode); tickets always use `product.product`
+- Event auto-sync: `ensure_event_synced_for_attendee()` pushes event before dependent attendee
+- Attendee → Odoo partner resolution via `Partner_Service::get_or_create()`
+- Different field mapping per model: `date_begin`/`date_end`/`date_tz` (event.event) vs `start`/`stop`/`allday` (calendar.event)
+
+**Settings:** `sync_events`, `sync_tickets`, `sync_attendees`
+
 ### Partner Service
 
 **File:** `class-partner-service.php`
 
-Shared service for managing WP user ↔ Odoo `res.partner` relationships. Accessible in all modules via `Module_Base::partner_service()` (lazy factory). Used by `Portal_Manager`, `WooCommerce_Module`, `EDD_Module`, `Memberships_Module`, `MemberPress_Module`, `Dual_Accounting_Module_Base` (GiveWP, Charitable, SimplePay), and `Booking_Module_Base` (Amelia, Bookly).
+Shared service for managing WP user ↔ Odoo `res.partner` relationships. Accessible in all modules via `Module_Base::partner_service()` (lazy factory). Used by `Portal_Manager`, `WooCommerce_Module`, `EDD_Module`, `Memberships_Module`, `MemberPress_Module`, `PMPro_Module`, `RCP_Module`, `Dual_Accounting_Module_Base` (GiveWP, Charitable, SimplePay), `Booking_Module_Base` (Amelia, Bookly), `LearnDash_Module`, `LifterLMS_Module`, `WC_Subscriptions_Module`, and `Events_Calendar_Module`.
 
 **Resolution flow (3-step):**
 1. Check `wp4odoo_entity_map` for existing mapping
@@ -957,6 +1146,14 @@ Auto-dismissed when all steps completed. Dismiss via × button persisted in `wp4
 | `wp4odoo_mepr_sub_status_map` | Customize MemberPress subscription status mapping |
 | `wp4odoo_givewp_donation_status_map` | Customize GiveWP → Odoo donation status mapping |
 | `wp4odoo_charitable_donation_status_map` | Customize Charitable → Odoo donation status mapping |
+| `wp4odoo_pmpro_order_status_map` | Customize PMPro order → Odoo invoice status mapping |
+| `wp4odoo_pmpro_membership_status_map` | Customize PMPro membership → Odoo membership line status mapping |
+| `wp4odoo_rcp_payment_status_map` | Customize RCP payment → Odoo invoice status mapping |
+| `wp4odoo_rcp_membership_status_map` | Customize RCP membership → Odoo membership line status mapping |
+| `wp4odoo_lifterlms_order_status_map` | Customize LifterLMS order → Odoo invoice status mapping |
+| `wp4odoo_wcs_status_map` | Customize WC Subscriptions → Odoo subscription status mapping |
+| `wp4odoo_wcs_renewal_status_map` | Customize WC Subscriptions renewal → Odoo invoice status mapping |
+| `wp4odoo_wcs_billing_period_map` | Customize WC Subscriptions billing period → Odoo recurring rule type |
 | `wp4odoo_form_lead_data` | Modify/skip form lead data before enqueue |
 
 ## Cron

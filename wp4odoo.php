@@ -2,7 +2,7 @@
 /**
  * Plugin Name: WordPress For Odoo
  * Plugin URI: https://github.com/PaulArgoud/wordpress-for-odoo
- * Description: Modular WordPress/WooCommerce sync with Odoo ERP (v14+). 18 modules — CRM, Sales, WooCommerce, WooCommerce Subscriptions, EDD, Memberships, MemberPress, Restrict Content Pro, Paid Memberships Pro, GiveWP, Charitable, WP Simple Pay, WP Recipe Maker, Forms (GF/WPForms/CF7/Fluent/Formidable/Ninja/Forminator), Amelia, Bookly, LearnDash, LifterLMS — covering contacts, leads, orders, invoices, products, donations, bookings, recipes, LMS courses, recurring subscriptions. Async queue, webhooks, customer portal, WP-CLI, encrypted credentials.
+ * Description: Modular WordPress/WooCommerce sync with Odoo ERP (v14+). 19 modules — CRM, Sales, WooCommerce, WooCommerce Subscriptions, EDD, Memberships, MemberPress, Restrict Content Pro, Paid Memberships Pro, GiveWP, Charitable, WP Simple Pay, WP Recipe Maker, Forms (GF/WPForms/CF7/Fluent/Formidable/Ninja/Forminator), Amelia, Bookly, LearnDash, LifterLMS, The Events Calendar — covering contacts, leads, orders, invoices, products, donations, bookings, recipes, LMS courses, recurring subscriptions, events. Async queue, webhooks, customer portal, WP-CLI, encrypted credentials.
  * Version: 2.6.5
  * Requires at least: 6.0
  * Requires PHP: 8.2

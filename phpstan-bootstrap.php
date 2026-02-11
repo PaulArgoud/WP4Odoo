@@ -673,5 +673,22 @@ if ( ! function_exists( 'llms_get_student' ) ) {
 	}
 }
 
+// ─── The Events Calendar + Event Tickets stubs ─────────
+
+if ( ! class_exists( 'Tribe__Events__Main' ) ) {
+	class Tribe__Events__Main {
+		const POSTTYPE            = 'tribe_events';
+		const VENUE_POST_TYPE     = 'tribe_venue';
+		const ORGANIZER_POST_TYPE = 'tribe_organizer';
+		public static string $version = '6.8.0';
+	}
+}
+
+if ( ! class_exists( 'Tribe__Tickets__Main' ) ) {
+	class Tribe__Tickets__Main {
+		public static string $version = '5.14.0';
+	}
+}
+
 // WP_CLI\Utils namespace stub loaded from separate file (PHP namespace rules).
 require_once __DIR__ . '/phpstan-wp-cli-stubs.php';

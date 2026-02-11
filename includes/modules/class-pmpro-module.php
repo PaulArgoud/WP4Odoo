@@ -3,8 +3,6 @@ declare( strict_types=1 );
 
 namespace WP4Odoo\Modules;
 
-use WP4Odoo\Module_Base;
-
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -14,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  *
  * Syncs PMPro membership levels as Odoo membership products (product.product),
  * payment orders as invoices (account.move), and user memberships as
- * membership lines (membership.membership_line). Push-only (WP → Odoo).
+ * membership lines (membership.membership_line). Push-only (WP -> Odoo).
  *
  * Each payment automatically creates an invoice in Odoo,
  * eliminating manual recurring accounting entries.
@@ -30,21 +28,11 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @package WP4Odoo
  * @since   2.6.5
  */
-class PMPro_Module extends Module_Base {
+class PMPro_Module extends Membership_Module_Base {
 
 	use PMPro_Hooks;
 
-	protected string $exclusive_group = 'memberships';
 	protected int $exclusive_priority = 15;
-
-	/**
-	 * Sync direction: push-only (WP → Odoo).
-	 *
-	 * @return string
-	 */
-	public function get_sync_direction(): string {
-		return 'wp_to_odoo';
-	}
 
 	/**
 	 * Odoo models by entity type.
@@ -192,251 +180,93 @@ class PMPro_Module extends Module_Base {
 		return $this->check_dependency( defined( 'PMPRO_VERSION' ), 'Paid Memberships Pro' );
 	}
 
-	// ─── Push override ──────────────────────────────────────
+	// ─── Membership_Module_Base abstract implementations ───
 
 	/**
-	 * Push a WordPress entity to Odoo.
-	 *
-	 * Ensures the level is synced before orders and memberships.
-	 * Auto-posts invoices for completed orders.
-	 *
-	 * @param string $entity_type The entity type.
-	 * @param string $action      'create', 'update', or 'delete'.
-	 * @param int    $wp_id       WordPress entity ID.
-	 * @param int    $odoo_id     Odoo ID (0 if creating).
-	 * @param array  $payload     Additional data.
-	 * @return \WP4Odoo\Sync_Result
+	 * @inheritDoc
 	 */
-	public function push_to_odoo( string $entity_type, string $action, int $wp_id, int $odoo_id = 0, array $payload = [] ): \WP4Odoo\Sync_Result {
-		if ( in_array( $entity_type, [ 'order', 'membership' ], true ) && 'delete' !== $action ) {
-			$this->ensure_level_synced( $wp_id, $entity_type );
-		}
-
-		$result = parent::push_to_odoo( $entity_type, $action, $wp_id, $odoo_id, $payload );
-
-		if ( $result->succeeded() && 'order' === $entity_type && 'create' === $action ) {
-			$this->maybe_auto_post_invoice( $wp_id );
-		}
-
-		return $result;
-	}
-
-	// ─── Data access ────────────────────────────────────────
-
-	/**
-	 * Load WordPress data for an entity.
-	 *
-	 * @param string $entity_type Entity type.
-	 * @param int    $wp_id       WordPress ID.
-	 * @return array<string, mixed>
-	 */
-	protected function load_wp_data( string $entity_type, int $wp_id ): array {
-		return match ( $entity_type ) {
-			'level'      => $this->handler->load_level( $wp_id ),
-			'order'      => $this->load_order_data( $wp_id ),
-			'membership' => $this->load_membership_data( $wp_id ),
-			default      => [],
-		};
+	protected function get_level_entity_type(): string {
+		return 'level';
 	}
 
 	/**
-	 * Load and resolve an order with Odoo references.
-	 *
-	 * Resolves user → partner and membership_id → level Odoo ID.
-	 *
-	 * @param int $order_id PMPro order ID.
-	 * @return array<string, mixed>
+	 * @inheritDoc
 	 */
-	private function load_order_data( int $order_id ): array {
-		$order = new \MemberOrder( $order_id );
+	protected function get_payment_entity_type(): string {
+		return 'order';
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	protected function get_membership_entity_type(): string {
+		return 'membership';
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	protected function handler_load_level( int $wp_id ): array {
+		return $this->handler->load_level( $wp_id );
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	protected function handler_load_payment( int $wp_id, int $partner_id, int $level_odoo_id ): array {
+		return $this->handler->load_order( $wp_id, $partner_id, $level_odoo_id );
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	protected function handler_load_membership( int $wp_id ): array {
+		return $this->handler->load_membership( $wp_id );
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	protected function get_payment_user_and_level( int $wp_id ): array {
+		$order = new \MemberOrder( $wp_id );
 		if ( ! $order->id ) {
-			return [];
+			return [ 0, 0 ];
 		}
-
-		// Resolve user → partner.
-		$user_id = (int) $order->user_id;
-		if ( $user_id <= 0 ) {
-			$this->logger->warning( 'PMPro order has no user.', [ 'order_id' => $order_id ] );
-			return [];
-		}
-
-		$user = get_userdata( $user_id );
-		if ( ! $user ) {
-			$this->logger->warning(
-				'Cannot find user for PMPro order.',
-				[
-					'order_id' => $order_id,
-					'user_id'  => $user_id,
-				]
-			);
-			return [];
-		}
-
-		$partner_id = $this->partner_service()->get_or_create(
-			$user->user_email,
-			[ 'name' => $user->display_name ],
-			$user_id
-		);
-
-		if ( ! $partner_id ) {
-			$this->logger->warning( 'Cannot resolve partner for PMPro order.', [ 'order_id' => $order_id ] );
-			return [];
-		}
-
-		// Resolve membership_id → level Odoo ID.
-		$level_id      = (int) $order->membership_id;
-		$level_odoo_id = 0;
-		if ( $level_id > 0 ) {
-			$level_odoo_id = $this->get_mapping( 'level', $level_id ) ?? 0;
-		}
-
-		if ( ! $level_odoo_id ) {
-			$this->logger->warning( 'Cannot resolve Odoo product for PMPro order level.', [ 'level_id' => $level_id ] );
-			return [];
-		}
-
-		return $this->handler->load_order( $order_id, $partner_id, $level_odoo_id );
+		return [ (int) $order->user_id, (int) $order->membership_id ];
 	}
 
 	/**
-	 * Load and resolve a membership with Odoo references.
-	 *
-	 * Same resolution pattern as MemberPress_Module::load_subscription_data().
-	 *
-	 * @param int $row_id pmpro_memberships_users row ID.
-	 * @return array<string, mixed>
+	 * @inheritDoc
 	 */
-	private function load_membership_data( int $row_id ): array {
-		$data = $this->handler->load_membership( $row_id );
-
-		if ( empty( $data ) ) {
-			return [];
-		}
-
-		// Resolve WP user → Odoo partner.
-		$user_id = $data['user_id'] ?? 0;
-		unset( $data['user_id'] );
-
-		if ( $user_id > 0 ) {
-			$user = get_userdata( $user_id );
-			if ( $user ) {
-				$data['partner_id'] = $this->partner_service()->get_or_create(
-					$user->user_email,
-					[ 'name' => $user->display_name ],
-					$user_id
-				);
-			}
-		}
-
-		if ( empty( $data['partner_id'] ) ) {
-			$this->logger->warning( 'Cannot resolve partner for PMPro membership.', [ 'row_id' => $row_id ] );
-			return [];
-		}
-
-		// Resolve level → Odoo product.product ID.
-		$level_id = $data['level_id'] ?? 0;
-		unset( $data['level_id'] );
-
-		if ( $level_id > 0 ) {
-			$data['membership_id'] = $this->get_mapping( 'level', $level_id );
-		}
-
-		if ( empty( $data['membership_id'] ) ) {
-			$this->logger->warning( 'Cannot resolve Odoo product for PMPro membership level.', [ 'level_id' => $level_id ] );
-			return [];
-		}
-
-		// Resolve member_price from level.
-		$level = pmpro_getLevel( $level_id );
-		if ( $level ) {
-			$billing = (float) $level->billing_amount;
-			$price   = $billing > 0 ? $billing : (float) $level->initial_payment;
-			if ( $price > 0 ) {
-				$data['member_price'] = $price;
-			}
-		}
-
-		return $data;
-	}
-
-	// ─── Level sync ─────────────────────────────────────────
-
-	/**
-	 * Ensure the PMPro level is synced to Odoo before pushing a dependent entity.
-	 *
-	 * @param int    $wp_id       Entity ID (order or membership row).
-	 * @param string $entity_type 'order' or 'membership'.
-	 * @return void
-	 */
-	private function ensure_level_synced( int $wp_id, string $entity_type ): void {
-		$level_id = 0;
-
+	protected function get_level_id_for_entity( int $wp_id, string $entity_type ): int {
 		if ( 'order' === $entity_type ) {
-			$level_id = $this->handler->get_level_id_for_order( $wp_id );
-		} elseif ( 'membership' === $entity_type ) {
-			$level_id = $this->handler->get_level_id_for_membership( $wp_id );
+			return $this->handler->get_level_id_for_order( $wp_id );
 		}
 
-		if ( $level_id <= 0 ) {
-			return;
+		if ( 'membership' === $entity_type ) {
+			return $this->handler->get_level_id_for_membership( $wp_id );
 		}
 
-		$odoo_level_id = $this->get_mapping( 'level', $level_id );
-		if ( $odoo_level_id ) {
-			return;
-		}
-
-		// Level not yet in Odoo — push it synchronously.
-		$this->logger->info( 'Auto-pushing PMPro level before dependent entity.', [ 'level_id' => $level_id ] );
-		parent::push_to_odoo( 'level', 'create', $level_id );
+		return 0;
 	}
 
-	// ─── Invoice auto-posting ───────────────────────────────
+	/**
+	 * @inheritDoc
+	 */
+	protected function is_payment_complete( int $wp_id ): bool {
+		$order = new \MemberOrder( $wp_id );
+		return 'success' === $order->status;
+	}
 
 	/**
-	 * Auto-post an invoice in Odoo for completed orders.
-	 *
-	 * @param int $order_id PMPro order ID.
-	 * @return void
+	 * @inheritDoc
 	 */
-	private function maybe_auto_post_invoice( int $order_id ): void {
-		$settings = $this->get_settings();
-		if ( empty( $settings['auto_post_invoices'] ) ) {
-			return;
+	protected function resolve_member_price( int $level_id ): float {
+		$level = pmpro_getLevel( $level_id );
+		if ( ! $level ) {
+			return 0.0;
 		}
-
-		$order = new \MemberOrder( $order_id );
-		if ( 'success' !== $order->status ) {
-			return;
-		}
-
-		$odoo_id = $this->get_mapping( 'order', $order_id );
-		if ( ! $odoo_id ) {
-			return;
-		}
-
-		try {
-			$this->client()->execute(
-				'account.move',
-				'action_post',
-				[ [ $odoo_id ] ]
-			);
-			$this->logger->info(
-				'Auto-posted PMPro invoice in Odoo.',
-				[
-					'order_id' => $order_id,
-					'odoo_id'  => $odoo_id,
-				]
-			);
-		} catch ( \Exception $e ) {
-			$this->logger->warning(
-				'Could not auto-post PMPro invoice.',
-				[
-					'order_id' => $order_id,
-					'odoo_id'  => $odoo_id,
-					'error'    => $e->getMessage(),
-				]
-			);
-		}
+		$billing = (float) $level->billing_amount;
+		return $billing > 0 ? $billing : (float) $level->initial_payment;
 	}
 }

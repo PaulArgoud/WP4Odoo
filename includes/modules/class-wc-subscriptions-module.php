@@ -255,7 +255,7 @@ class WC_Subscriptions_Module extends Module_Base {
 		$result = parent::push_to_odoo( $entity_type, $action, $wp_id, $odoo_id, $payload );
 
 		if ( $result->succeeded() && 'renewal' === $entity_type && 'create' === $action ) {
-			$this->maybe_auto_post_invoice( $wp_id );
+			$this->auto_post_invoice( 'auto_post_invoices', 'renewal', $wp_id );
 		}
 
 		return $result;
@@ -425,60 +425,6 @@ class WC_Subscriptions_Module extends Module_Base {
 			$product_id = $this->handler->get_product_id_for_renewal( $wp_id );
 		}
 
-		if ( $product_id <= 0 ) {
-			return;
-		}
-
-		$existing = $this->get_mapping( 'product', $product_id );
-		if ( $existing ) {
-			return;
-		}
-
-		$this->logger->info( 'Auto-pushing subscription product before dependent entity.', [ 'product_id' => $product_id ] );
-		parent::push_to_odoo( 'product', 'create', $product_id );
-	}
-
-	// ─── Invoice auto-posting ──────────────────────────────
-
-	/**
-	 * Auto-post a renewal invoice in Odoo.
-	 *
-	 * @param int $order_id WC renewal order ID.
-	 * @return void
-	 */
-	private function maybe_auto_post_invoice( int $order_id ): void {
-		$settings = $this->get_settings();
-		if ( empty( $settings['auto_post_invoices'] ) ) {
-			return;
-		}
-
-		$odoo_id = $this->get_mapping( 'renewal', $order_id );
-		if ( ! $odoo_id ) {
-			return;
-		}
-
-		try {
-			$this->client()->execute(
-				'account.move',
-				'action_post',
-				[ [ $odoo_id ] ]
-			);
-			$this->logger->info(
-				'Auto-posted WC Subscription renewal invoice.',
-				[
-					'order_id' => $order_id,
-					'odoo_id'  => $odoo_id,
-				]
-			);
-		} catch ( \Exception $e ) {
-			$this->logger->warning(
-				'Could not auto-post renewal invoice.',
-				[
-					'order_id' => $order_id,
-					'odoo_id'  => $odoo_id,
-					'error'    => $e->getMessage(),
-				]
-			);
-		}
+		$this->ensure_entity_synced( 'product', $product_id );
 	}
 }

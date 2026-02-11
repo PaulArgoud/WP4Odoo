@@ -494,6 +494,84 @@ abstract class Module_Base {
 		self::$importing = false;
 	}
 
+	// ─── Shared push helpers ──────────────────────────────
+
+	/**
+	 * Auto-post an invoice in Odoo after successful creation.
+	 *
+	 * Checks the module setting, retrieves the Odoo mapping, and calls
+	 * `account.move.action_post`. Logs success or failure.
+	 *
+	 * @param string $setting_key Settings key to check (e.g., 'auto_post_invoices').
+	 * @param string $entity_type Entity type for mapping lookup.
+	 * @param int    $wp_id       WordPress entity ID.
+	 * @return void
+	 */
+	protected function auto_post_invoice( string $setting_key, string $entity_type, int $wp_id ): void {
+		$settings = $this->get_settings();
+		if ( empty( $settings[ $setting_key ] ) ) {
+			return;
+		}
+
+		$odoo_id = $this->get_mapping( $entity_type, $wp_id );
+		if ( ! $odoo_id ) {
+			return;
+		}
+
+		try {
+			$this->client()->execute(
+				'account.move',
+				'action_post',
+				[ [ $odoo_id ] ]
+			);
+			$this->logger->info(
+				'Auto-posted invoice in Odoo.',
+				[
+					'entity_type' => $entity_type,
+					'wp_id'       => $wp_id,
+					'odoo_id'     => $odoo_id,
+				]
+			);
+		} catch ( \Exception $e ) {
+			$this->logger->warning(
+				'Could not auto-post invoice.',
+				[
+					'entity_type' => $entity_type,
+					'wp_id'       => $wp_id,
+					'odoo_id'     => $odoo_id,
+					'error'       => $e->getMessage(),
+				]
+			);
+		}
+	}
+
+	/**
+	 * Ensure a parent entity is synced to Odoo before pushing a dependent entity.
+	 *
+	 * Checks the entity mapping; if the parent is not yet synced, pushes it
+	 * synchronously via `Module_Base::push_to_odoo()`.
+	 *
+	 * @param string $entity_type Parent entity type (e.g., 'course', 'level').
+	 * @param int    $wp_id       WordPress ID of the parent entity.
+	 * @return void
+	 */
+	protected function ensure_entity_synced( string $entity_type, int $wp_id ): void {
+		if ( $wp_id <= 0 ) {
+			return;
+		}
+
+		$existing = $this->get_mapping( $entity_type, $wp_id );
+		if ( $existing ) {
+			return;
+		}
+
+		$this->logger->info(
+			"Auto-pushing {$entity_type} before dependent entity.",
+			[ 'wp_id' => $wp_id ]
+		);
+		$this->push_to_odoo( $entity_type, 'create', $wp_id );
+	}
+
 	/**
 	 * Delete a WordPress post (force delete, bypass Trash).
 	 *

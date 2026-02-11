@@ -213,7 +213,7 @@ class LearnDash_Module extends Module_Base {
 		$result = parent::push_to_odoo( $entity_type, $action, $wp_id, $odoo_id, $payload );
 
 		if ( $result->succeeded() && 'transaction' === $entity_type && 'create' === $action ) {
-			$this->maybe_auto_post_invoice( $wp_id );
+			$this->auto_post_invoice( 'auto_post_invoice', 'transaction', $wp_id );
 		}
 
 		return $result;
@@ -372,61 +372,6 @@ class LearnDash_Module extends Module_Base {
 			$course_id = $wp_id % 1_000_000;
 		}
 
-		if ( $course_id <= 0 ) {
-			return;
-		}
-
-		$existing = $this->get_mapping( 'course', $course_id );
-		if ( $existing ) {
-			return;
-		}
-
-		// Course not yet in Odoo — push it synchronously.
-		$this->logger->info( 'Auto-pushing LearnDash course before dependent entity.', [ 'course_id' => $course_id ] );
-		parent::push_to_odoo( 'course', 'create', $course_id );
-	}
-
-	// ─── Invoice auto-posting ──────────────────────────────
-
-	/**
-	 * Auto-post an invoice in Odoo after successful transaction push.
-	 *
-	 * @param int $transaction_id LearnDash transaction post ID.
-	 * @return void
-	 */
-	private function maybe_auto_post_invoice( int $transaction_id ): void {
-		$settings = $this->get_settings();
-		if ( empty( $settings['auto_post_invoice'] ) ) {
-			return;
-		}
-
-		$odoo_id = $this->get_mapping( 'transaction', $transaction_id );
-		if ( ! $odoo_id ) {
-			return;
-		}
-
-		try {
-			$this->client()->execute(
-				'account.move',
-				'action_post',
-				[ [ $odoo_id ] ]
-			);
-			$this->logger->info(
-				'Auto-posted invoice in Odoo.',
-				[
-					'transaction_id' => $transaction_id,
-					'odoo_id'        => $odoo_id,
-				]
-			);
-		} catch ( \Exception $e ) {
-			$this->logger->warning(
-				'Could not auto-post invoice.',
-				[
-					'transaction_id' => $transaction_id,
-					'odoo_id'        => $odoo_id,
-					'error'          => $e->getMessage(),
-				]
-			);
-		}
+		$this->ensure_entity_synced( 'course', $course_id );
 	}
 }

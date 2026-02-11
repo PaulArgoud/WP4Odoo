@@ -3,8 +3,6 @@ declare( strict_types=1 );
 
 namespace WP4Odoo\Modules;
 
-use WP4Odoo\Module_Base;
-
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -14,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  *
  * Syncs MemberPress plans as Odoo membership products (product.product),
  * transactions as invoices (account.move), and subscriptions as
- * membership lines (membership.membership_line). Push-only (WP → Odoo).
+ * membership lines (membership.membership_line). Push-only (WP -> Odoo).
  *
  * Each recurring payment automatically creates an invoice in Odoo,
  * eliminating manual recurring accounting entries.
@@ -25,21 +23,11 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @package WP4Odoo
  * @since   1.9.9
  */
-class MemberPress_Module extends Module_Base {
+class MemberPress_Module extends Membership_Module_Base {
 
 	use MemberPress_Hooks;
 
-	protected string $exclusive_group = 'memberships';
 	protected int $exclusive_priority = 10;
-
-	/**
-	 * Sync direction: push-only (WP → Odoo).
-	 *
-	 * @return string
-	 */
-	public function get_sync_direction(): string {
-		return 'wp_to_odoo';
-	}
 
 	/**
 	 * Odoo models by entity type.
@@ -182,250 +170,92 @@ class MemberPress_Module extends Module_Base {
 		return $this->check_dependency( defined( 'MEPR_VERSION' ), 'MemberPress' );
 	}
 
-	// ─── Push override ──────────────────────────────────────
+	// ─── Membership_Module_Base abstract implementations ───
 
 	/**
-	 * Push a WordPress entity to Odoo.
-	 *
-	 * Ensures the plan is synced before transactions and subscriptions.
-	 * Auto-posts invoices for completed transactions.
-	 *
-	 * @param string $entity_type The entity type.
-	 * @param string $action      'create', 'update', or 'delete'.
-	 * @param int    $wp_id       WordPress entity ID.
-	 * @param int    $odoo_id     Odoo ID (0 if creating).
-	 * @param array  $payload     Additional data.
-	 * @return \WP4Odoo\Sync_Result
+	 * @inheritDoc
 	 */
-	public function push_to_odoo( string $entity_type, string $action, int $wp_id, int $odoo_id = 0, array $payload = [] ): \WP4Odoo\Sync_Result {
-		if ( in_array( $entity_type, [ 'transaction', 'subscription' ], true ) && 'delete' !== $action ) {
-			$this->ensure_plan_synced( $wp_id, $entity_type );
-		}
-
-		$result = parent::push_to_odoo( $entity_type, $action, $wp_id, $odoo_id, $payload );
-
-		if ( $result->succeeded() && 'transaction' === $entity_type && 'create' === $action ) {
-			$this->maybe_auto_post_invoice( $wp_id );
-		}
-
-		return $result;
-	}
-
-	// ─── Data access ────────────────────────────────────────
-
-	/**
-	 * Load WordPress data for an entity.
-	 *
-	 * @param string $entity_type Entity type.
-	 * @param int    $wp_id       WordPress ID.
-	 * @return array<string, mixed>
-	 */
-	protected function load_wp_data( string $entity_type, int $wp_id ): array {
-		return match ( $entity_type ) {
-			'plan'         => $this->handler->load_plan( $wp_id ),
-			'transaction'  => $this->load_transaction_data( $wp_id ),
-			'subscription' => $this->load_subscription_data( $wp_id ),
-			default        => [],
-		};
+	protected function get_level_entity_type(): string {
+		return 'plan';
 	}
 
 	/**
-	 * Load and resolve a transaction with Odoo references.
-	 *
-	 * Resolves user → partner and product → plan Odoo ID.
-	 *
-	 * @param int $txn_id MemberPress transaction ID.
-	 * @return array<string, mixed>
+	 * @inheritDoc
 	 */
-	private function load_transaction_data( int $txn_id ): array {
-		$txn = new \MeprTransaction( $txn_id );
+	protected function get_payment_entity_type(): string {
+		return 'transaction';
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	protected function get_membership_entity_type(): string {
+		return 'subscription';
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	protected function handler_load_level( int $wp_id ): array {
+		return $this->handler->load_plan( $wp_id );
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	protected function handler_load_payment( int $wp_id, int $partner_id, int $level_odoo_id ): array {
+		return $this->handler->load_transaction( $wp_id, $partner_id, $level_odoo_id );
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	protected function handler_load_membership( int $wp_id ): array {
+		return $this->handler->load_subscription( $wp_id );
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	protected function get_payment_user_and_level( int $wp_id ): array {
+		$txn = new \MeprTransaction( $wp_id );
 		if ( ! $txn->id ) {
-			return [];
+			return [ 0, 0 ];
 		}
-
-		// Resolve user → partner.
-		$user_id = (int) $txn->user_id;
-		if ( $user_id <= 0 ) {
-			$this->logger->warning( 'Transaction has no user.', [ 'txn_id' => $txn_id ] );
-			return [];
-		}
-
-		$user = get_userdata( $user_id );
-		if ( ! $user ) {
-			$this->logger->warning(
-				'Cannot find user for transaction.',
-				[
-					'txn_id'  => $txn_id,
-					'user_id' => $user_id,
-				]
-			);
-			return [];
-		}
-
-		$partner_id = $this->partner_service()->get_or_create(
-			$user->user_email,
-			[ 'name' => $user->display_name ],
-			$user_id
-		);
-
-		if ( ! $partner_id ) {
-			$this->logger->warning( 'Cannot resolve partner for transaction.', [ 'txn_id' => $txn_id ] );
-			return [];
-		}
-
-		// Resolve product → plan Odoo ID.
-		$product_id   = (int) $txn->product_id;
-		$plan_odoo_id = 0;
-		if ( $product_id > 0 ) {
-			$plan_odoo_id = $this->get_mapping( 'plan', $product_id ) ?? 0;
-		}
-
-		if ( ! $plan_odoo_id ) {
-			$this->logger->warning( 'Cannot resolve Odoo product for transaction plan.', [ 'product_id' => $product_id ] );
-			return [];
-		}
-
-		return $this->handler->load_transaction( $txn_id, $partner_id, $plan_odoo_id );
+		return [ (int) $txn->user_id, (int) $txn->product_id ];
 	}
 
 	/**
-	 * Load and resolve a subscription with Odoo references.
-	 *
-	 * Same resolution pattern as Memberships_Module::load_membership_data().
-	 *
-	 * @param int $sub_id MemberPress subscription ID.
-	 * @return array<string, mixed>
+	 * @inheritDoc
 	 */
-	private function load_subscription_data( int $sub_id ): array {
-		$data = $this->handler->load_subscription( $sub_id );
-
-		if ( empty( $data ) ) {
-			return [];
-		}
-
-		// Resolve WP user → Odoo partner.
-		$user_id = $data['user_id'] ?? 0;
-		unset( $data['user_id'] );
-
-		if ( $user_id > 0 ) {
-			$user = get_userdata( $user_id );
-			if ( $user ) {
-				$data['partner_id'] = $this->partner_service()->get_or_create(
-					$user->user_email,
-					[ 'name' => $user->display_name ],
-					$user_id
-				);
-			}
-		}
-
-		if ( empty( $data['partner_id'] ) ) {
-			$this->logger->warning( 'Cannot resolve partner for subscription.', [ 'sub_id' => $sub_id ] );
-			return [];
-		}
-
-		// Resolve plan → Odoo product.product ID.
-		$plan_id = $data['plan_id'] ?? 0;
-		unset( $data['plan_id'] );
-
-		if ( $plan_id > 0 ) {
-			$data['membership_id'] = $this->get_mapping( 'plan', $plan_id );
-		}
-
-		if ( empty( $data['membership_id'] ) ) {
-			$this->logger->warning( 'Cannot resolve Odoo product for subscription plan.', [ 'plan_id' => $plan_id ] );
-			return [];
-		}
-
-		// Resolve member_price from plan.
-		$product = new \MeprProduct( $plan_id );
-		$price   = $product->get_price();
-		if ( $price ) {
-			$data['member_price'] = (float) $price;
-		}
-
-		return $data;
-	}
-
-	// ─── Plan sync ──────────────────────────────────────────
-
-	/**
-	 * Ensure the MemberPress plan is synced to Odoo before pushing a dependent entity.
-	 *
-	 * @param int    $wp_id       Entity ID (transaction or subscription).
-	 * @param string $entity_type 'transaction' or 'subscription'.
-	 * @return void
-	 */
-	private function ensure_plan_synced( int $wp_id, string $entity_type ): void {
-		$product_id = 0;
-
+	protected function get_level_id_for_entity( int $wp_id, string $entity_type ): int {
 		if ( 'transaction' === $entity_type ) {
-			$txn        = new \MeprTransaction( $wp_id );
-			$product_id = (int) $txn->product_id;
-		} elseif ( 'subscription' === $entity_type ) {
-			$sub        = new \MeprSubscription( $wp_id );
-			$product_id = (int) $sub->product_id;
+			$txn = new \MeprTransaction( $wp_id );
+			return (int) $txn->product_id;
 		}
 
-		if ( $product_id <= 0 ) {
-			return;
+		if ( 'subscription' === $entity_type ) {
+			$sub = new \MeprSubscription( $wp_id );
+			return (int) $sub->product_id;
 		}
 
-		$odoo_plan_id = $this->get_mapping( 'plan', $product_id );
-		if ( $odoo_plan_id ) {
-			return;
-		}
-
-		// Plan not yet in Odoo — push it synchronously.
-		$this->logger->info( 'Auto-pushing MemberPress plan before dependent entity.', [ 'product_id' => $product_id ] );
-		parent::push_to_odoo( 'plan', 'create', $product_id );
+		return 0;
 	}
 
-	// ─── Invoice auto-posting ───────────────────────────────
+	/**
+	 * @inheritDoc
+	 */
+	protected function is_payment_complete( int $wp_id ): bool {
+		$txn = new \MeprTransaction( $wp_id );
+		return 'complete' === $txn->status;
+	}
 
 	/**
-	 * Auto-post an invoice in Odoo for completed transactions.
-	 *
-	 * @param int $txn_id MemberPress transaction ID.
-	 * @return void
+	 * @inheritDoc
 	 */
-	private function maybe_auto_post_invoice( int $txn_id ): void {
-		$settings = $this->get_settings();
-		if ( empty( $settings['auto_post_invoices'] ) ) {
-			return;
-		}
-
-		$txn = new \MeprTransaction( $txn_id );
-		if ( 'complete' !== $txn->status ) {
-			return;
-		}
-
-		$odoo_id = $this->get_mapping( 'transaction', $txn_id );
-		if ( ! $odoo_id ) {
-			return;
-		}
-
-		try {
-			$this->client()->execute(
-				'account.move',
-				'action_post',
-				[ [ $odoo_id ] ]
-			);
-			$this->logger->info(
-				'Auto-posted invoice in Odoo.',
-				[
-					'txn_id'  => $txn_id,
-					'odoo_id' => $odoo_id,
-				]
-			);
-		} catch ( \Exception $e ) {
-			$this->logger->warning(
-				'Could not auto-post invoice.',
-				[
-					'txn_id'  => $txn_id,
-					'odoo_id' => $odoo_id,
-					'error'   => $e->getMessage(),
-				]
-			);
-		}
+	protected function resolve_member_price( int $level_id ): float {
+		$product = new \MeprProduct( $level_id );
+		$price   = $product->get_price();
+		return $price ? (float) $price : 0.0;
 	}
 }

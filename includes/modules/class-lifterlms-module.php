@@ -224,7 +224,7 @@ class LifterLMS_Module extends Module_Base {
 		$result = parent::push_to_odoo( $entity_type, $action, $wp_id, $odoo_id, $payload );
 
 		if ( $result->succeeded() && 'order' === $entity_type && 'create' === $action ) {
-			$this->maybe_auto_post_invoice( $wp_id );
+			$this->auto_post_invoice( 'auto_post_invoice', 'order', $wp_id );
 		}
 
 		return $result;
@@ -388,61 +388,6 @@ class LifterLMS_Module extends Module_Base {
 			$product_id = $wp_id % 1_000_000;
 		}
 
-		if ( $product_id <= 0 ) {
-			return;
-		}
-
-		$existing = $this->get_mapping( $product_type, $product_id );
-		if ( $existing ) {
-			return;
-		}
-
-		// Product not yet in Odoo — push it synchronously.
-		$this->logger->info( 'Auto-pushing LifterLMS product before dependent entity.', [ 'product_id' => $product_id ] );
-		parent::push_to_odoo( $product_type, 'create', $product_id );
-	}
-
-	// ─── Invoice auto-posting ──────────────────────────────
-
-	/**
-	 * Auto-post an invoice in Odoo after successful order push.
-	 *
-	 * @param int $order_id LifterLMS order post ID.
-	 * @return void
-	 */
-	private function maybe_auto_post_invoice( int $order_id ): void {
-		$settings = $this->get_settings();
-		if ( empty( $settings['auto_post_invoice'] ) ) {
-			return;
-		}
-
-		$odoo_id = $this->get_mapping( 'order', $order_id );
-		if ( ! $odoo_id ) {
-			return;
-		}
-
-		try {
-			$this->client()->execute(
-				'account.move',
-				'action_post',
-				[ [ $odoo_id ] ]
-			);
-			$this->logger->info(
-				'Auto-posted LifterLMS invoice in Odoo.',
-				[
-					'order_id' => $order_id,
-					'odoo_id'  => $odoo_id,
-				]
-			);
-		} catch ( \Exception $e ) {
-			$this->logger->warning(
-				'Could not auto-post LifterLMS invoice.',
-				[
-					'order_id' => $order_id,
-					'odoo_id'  => $odoo_id,
-					'error'    => $e->getMessage(),
-				]
-			);
-		}
+		$this->ensure_entity_synced( $product_type, $product_id );
 	}
 }

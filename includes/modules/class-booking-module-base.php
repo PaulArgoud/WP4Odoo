@@ -260,24 +260,11 @@ abstract class Booking_Module_Base extends Module_Base {
 	/**
 	 * Ensure the service is synced to Odoo before pushing a booking.
 	 *
-	 * Reads the service_id from the booking, checks if it is already
-	 * mapped, and does a synchronous push if not.
-	 *
 	 * @param int $booking_id Plugin booking/appointment ID.
 	 * @return void
 	 */
 	private function ensure_service_synced( int $booking_id ): void {
 		$service_id = $this->handler_get_service_id( $booking_id );
-		if ( $service_id <= 0 ) {
-			return;
-		}
-
-		$existing = $this->get_mapping( 'service', $service_id );
-		if ( $existing ) {
-			return;
-		}
-
-		// Synchronous push — parent::push_to_odoo handles create + mapping.
-		parent::push_to_odoo( 'service', 'create', $service_id );
+		$this->ensure_entity_synced( 'service', $service_id );
 	}
 }
