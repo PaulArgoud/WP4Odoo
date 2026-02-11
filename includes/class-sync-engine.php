@@ -140,7 +140,7 @@ class Sync_Engine {
 
 		$sync_settings = $this->settings->get_sync_settings();
 		$batch         = (int) $sync_settings['batch_size'];
-		$now   = current_time( 'mysql', true );
+		$now           = current_time( 'mysql', true );
 
 		$jobs       = $this->queue_repo->fetch_pending( $batch, $now );
 		$processed  = 0;

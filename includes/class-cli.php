@@ -75,7 +75,7 @@ class CLI {
 		$modules = \WP4Odoo_Plugin::instance()->get_modules();
 		\WP_CLI::line( '' );
 		\WP_CLI::line( 'Modules:' );
-		$rows = [];
+		$rows     = [];
 		$settings = \WP4Odoo_Plugin::instance()->settings();
 		foreach ( $modules as $id => $module ) {
 			$rows[] = [
