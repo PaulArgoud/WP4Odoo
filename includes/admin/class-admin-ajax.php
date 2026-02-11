@@ -25,6 +25,13 @@ class Admin_Ajax {
 	use Ajax_Setup_Handlers;
 
 	/**
+	 * Query service instance for data retrieval.
+	 *
+	 * @var \WP4Odoo\Query_Service
+	 */
+	private \WP4Odoo\Query_Service $query_service;
+
+	/**
 	 * Mapping from Odoo model names to the Odoo app that provides them.
 	 *
 	 * Used in debug-mode warnings to help users identify which Odoo
@@ -43,6 +50,8 @@ class Admin_Ajax {
 	 * Constructor — registers all AJAX hooks.
 	 */
 	public function __construct() {
+		$this->query_service = new \WP4Odoo\Query_Service();
+
 		$actions = [
 			'wp4odoo_test_connection',
 			'wp4odoo_retry_failed',

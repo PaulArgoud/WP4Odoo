@@ -192,9 +192,9 @@ class CRM_Module extends Module_Base {
 	 * @param int    $wp_id       WordPress entity ID.
 	 * @param int    $odoo_id     Odoo ID (0 if creating).
 	 * @param array  $payload     Additional data from the queue.
-	 * @return bool True on success.
+	 * @return \WP4Odoo\Sync_Result
 	 */
-	public function push_to_odoo( string $entity_type, string $action, int $wp_id, int $odoo_id = 0, array $payload = [] ): bool {
+	public function push_to_odoo( string $entity_type, string $action, int $wp_id, int $odoo_id = 0, array $payload = [] ): \WP4Odoo\Sync_Result {
 		// Handle archive payload.
 		if ( 'contact' === $entity_type && ! empty( $payload['_archive'] ) ) {
 			if ( $odoo_id > 0 ) {
@@ -203,7 +203,7 @@ class CRM_Module extends Module_Base {
 				$this->logger->info( 'Archived Odoo contact.', compact( 'wp_id', 'odoo_id' ) );
 			}
 			$this->remove_mapping( $entity_type, $wp_id );
-			return true;
+			return \WP4Odoo\Sync_Result::success( $odoo_id );
 		}
 
 		// Email dedup on create: search Odoo by email before creating.

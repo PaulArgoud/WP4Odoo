@@ -209,16 +209,16 @@ class MemberPress_Module extends Module_Base {
 	 * @param int    $wp_id       WordPress entity ID.
 	 * @param int    $odoo_id     Odoo ID (0 if creating).
 	 * @param array  $payload     Additional data.
-	 * @return bool True on success.
+	 * @return \WP4Odoo\Sync_Result
 	 */
-	public function push_to_odoo( string $entity_type, string $action, int $wp_id, int $odoo_id = 0, array $payload = [] ): bool {
+	public function push_to_odoo( string $entity_type, string $action, int $wp_id, int $odoo_id = 0, array $payload = [] ): \WP4Odoo\Sync_Result {
 		if ( in_array( $entity_type, [ 'transaction', 'subscription' ], true ) && 'delete' !== $action ) {
 			$this->ensure_plan_synced( $wp_id, $entity_type );
 		}
 
 		$result = parent::push_to_odoo( $entity_type, $action, $wp_id, $odoo_id, $payload );
 
-		if ( $result && 'transaction' === $entity_type && 'create' === $action ) {
+		if ( $result->succeeded() && 'transaction' === $entity_type && 'create' === $action ) {
 			$this->maybe_auto_post_invoice( $wp_id );
 		}
 

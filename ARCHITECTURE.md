@@ -163,7 +163,8 @@ WordPress For Odoo/
 │   │   ├── class-admin-ajax.php       # AJAX coordinator: hook registration, request verification (uses 3 traits)
 │   │   └── class-settings-page.php    # Settings API, 5-tab rendering, setup checklist, sanitize callbacks
 │   │
-│   ├── class-dependency-loader.php    # Loads all plugin class files (70 require_once)
+│   ├── class-sync-result.php          # Value object: success/fail, odoo_id, error message, Error_Type
+│   ├── class-error-type.php           # Backed enum: Transient, Permanent, Config (retry strategy)
 │   ├── class-database-migration.php   # Table creation (dbDelta) and default options
 │   ├── class-settings-repository.php  # Centralized option access: keys, defaults, typed accessors (DI)
 │   ├── class-module-registry.php      # Module registration, mutual exclusivity, lifecycle
@@ -172,9 +173,9 @@ WordPress For Odoo/
 │   ├── class-sync-queue-repository.php # Static DB access for wp4odoo_sync_queue
 │   ├── class-partner-service.php       # Shared res.partner lookup/creation service
 │   ├── class-failure-notifier.php     # Admin email notification on consecutive sync failures
-│   ├── class-sync-engine.php          # Queue processor, batch operations, advisory locking
+│   ├── class-sync-engine.php          # Queue processor, batch operations, advisory locking, smart retry (Error_Type)
 │   ├── class-queue-manager.php        # Helpers for enqueuing sync jobs
-│   ├── class-query-service.php        # Paginated queries (queue jobs, log entries)
+│   ├── class-query-service.php        # Paginated queries (queue jobs, log entries) — injectable instance
 │   ├── class-field-mapper.php         # Type conversions (Many2one, dates, HTML)
 │   ├── class-cpt-helper.php           # Shared CPT register/load/save helpers
 │   ├── class-webhook-handler.php      # REST API endpoints for Odoo webhooks, rate limiting
@@ -313,7 +314,7 @@ function wp4odoo(): WP4Odoo_Plugin {
 }
 ```
 
-The singleton delegates to `Dependency_Loader` (class loading), `Database_Migration` (table DDL + defaults), `Settings_Repository` (centralized option access), and `Module_Registry` (module registration/lifecycle). It keeps hooks, cron, REST, and API client access.
+The singleton delegates to `Database_Migration` (table DDL + defaults), `Settings_Repository` (centralized option access), and `Module_Registry` (module registration/lifecycle). Class loading uses `spl_autoload_register` (WordPress-style filenames: `class-`, `trait-`, `interface-` prefixes). It keeps hooks, cron, REST, and API client access.
 
 ### 2. Module System
 
@@ -345,11 +346,11 @@ Module_Base (abstract)
 - All other modules are independent and can coexist freely.
 
 **Module_Base provides:**
-- Push/Pull orchestration: `push_to_odoo()`, `pull_from_odoo()`
+- Push/Pull orchestration: `push_to_odoo()` returns `Sync_Result` (value object with success, odoo_id, error, Error_Type), `pull_from_odoo()` returns `Sync_Result`
 - Entity mapping CRUD: `get_mapping()`, `save_mapping()`, `get_wp_mapping()`, `remove_mapping()` (delegates to `Entity_Map_Repository`)
 - Data transformation: `map_to_odoo()`, `map_from_odoo()`, `generate_sync_hash()`
 - Settings: `get_settings()`, `get_settings_fields()`, `get_default_settings()`, `get_dependency_status()` (external dependency check for admin UI) — delegates to injected `Settings_Repository`
-- Helpers: `is_importing()` (anti-loop guard), `mark_importing()` (define guard constant), `resolve_many2one_field()` (Many2one → scalar), `delete_wp_post()` (safe post deletion), `log_unsupported_entity()` (centralized warning), `partner_service()` (lazy `Partner_Service` factory), `check_dependency()` (one-liner dependency status), `client()`
+- Helpers: `is_importing()` (anti-loop guard, resettable static flag), `mark_importing()`, `clear_importing()` (try/finally in pull), `resolve_many2one_field()` (Many2one → scalar), `delete_wp_post()` (safe post deletion), `log_unsupported_entity()` (centralized warning), `partner_service()` (lazy `Partner_Service` factory), `check_dependency()` (one-liner dependency status), `client()`
 - Subclass hooks: `boot()`, `load_wp_data()`, `save_wp_data()`, `delete_wp_data()`
 
 **Module lifecycle:**
@@ -463,14 +464,15 @@ The `wp4odoo_entity_map` table maintains the correspondence between WordPress an
 
 ### 6. Query Service (Data Access Layer)
 
-The `Query_Service` class (`includes/class-query-service.php`) provides static methods for paginated data retrieval, decoupling database queries from the admin UI:
+The `Query_Service` class (`includes/class-query-service.php`) provides instance methods for paginated data retrieval, decoupling database queries from the admin UI:
 
 ```php
-Query_Service::get_queue_jobs( $page, $per_page, $status );
-Query_Service::get_log_entries( $filters, $page, $per_page );
+$qs = new Query_Service();
+$qs->get_queue_jobs( $page, $per_page, $status );
+$qs->get_log_entries( $filters, $page, $per_page );
 ```
 
-Used by both `Settings_Page` (server-side rendering) and `Admin_Ajax` (AJAX endpoints).
+Injected into consumers (`Admin_Ajax`, `CLI`) via constructor. Testable without global state.
 
 ### 7. Error Handling Convention
 
@@ -479,13 +481,14 @@ The codebase uses a tiered error-handling strategy. Each tier is appropriate for
 | Tier | Mechanism | When Used | Examples |
 |------|-----------|-----------|---------|
 | **1. Exceptions** | `throw \RuntimeException` | Fatal/configuration errors that prevent operation | `Odoo_Client::call()` on RPC fault, `Sync_Engine::process_job()` when module not found |
-| **2. Bool** | `return bool` | CRUD success/failure (binary outcome) | `Module_Base::push_to_odoo()`, `Entity_Map_Repository::save()`, `Entity_Map_Repository::remove()` |
-| **3. Null** | `return ?int` / `return ?string` | Missing optional data (lookup misses) | `Entity_Map_Repository::get_odoo_id()`, `Module_Base::resolve_many2one_field()`, `Partner_Service::get_or_create()` |
-| **4. Array** | `return array{success: bool, ...}` | Complex multi-part results | `Odoo_Auth::test_connection()`, `Sync_Engine::get_stats()`, `Bulk_Handler::import_products()` |
+| **2. Sync_Result** | `return Sync_Result` | Push/pull outcome with context | `Module_Base::push_to_odoo()`, `Module_Base::pull_from_odoo()` — carries success, odoo_id, error message, `Error_Type` (Transient/Permanent/Config) |
+| **3. Bool** | `return bool` | Simple CRUD success/failure (binary outcome) | `Entity_Map_Repository::save()`, `Entity_Map_Repository::remove()` |
+| **4. Null** | `return ?int` / `return ?string` | Missing optional data (lookup misses) | `Entity_Map_Repository::get_odoo_id()`, `Module_Base::resolve_many2one_field()`, `Partner_Service::get_or_create()` |
+| **5. Array** | `return array{success: bool, ...}` | Complex multi-part results | `Odoo_Auth::test_connection()`, `Sync_Engine::get_stats()`, `Bulk_Handler::import_products()` |
 
 **Guidelines for new code:**
 - **API layer** (`Odoo_Client`): throw on RPC faults, return empty arrays for search with no results.
-- **Modules**: return `bool` from push/pull, `null` from ID lookups, `0` from failed saves.
+- **Modules**: return `Sync_Result` from push/pull, `null` from ID lookups, `0` from failed saves.
 - **Infrastructure**: throw for configuration errors, use typed returns for data access.
 
 ### 8. Shared Accounting Infrastructure
@@ -598,7 +601,7 @@ The webhook is authenticated via an `X-Odoo-Token` header compared against `wp4o
 5. Module::pull_from_odoo() called
 6. Data fetched via Odoo_Client::read()
 7. Transformed via map_from_odoo() + Field_Mapper
-8. WP4ODOO_IMPORTING constant defined (anti-loop)
+8. Resettable static importing flag set (anti-loop, cleared via try/finally)
 9. WP entity created/updated
 10. Mapping and hash saved
 ```

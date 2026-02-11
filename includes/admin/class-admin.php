@@ -42,6 +42,7 @@ class Admin {
 
 		add_action( 'admin_init', [ $this, 'maybe_redirect_after_activation' ] );
 		add_action( 'admin_notices', [ $this, 'maybe_show_setup_notice' ] );
+		add_action( 'admin_notices', [ $this, 'maybe_show_cron_warning' ] );
 	}
 
 	/**
@@ -196,6 +197,31 @@ class Admin {
 		})();
 		</script>
 		<?php
+	}
+
+	/**
+	 * Show a warning when WP-Cron has not fired recently.
+	 *
+	 * Only displayed on the plugin settings page to avoid noise.
+	 *
+	 * @return void
+	 */
+	public function maybe_show_cron_warning(): void {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if ( ! isset( $_GET['page'] ) || 'wp4odoo' !== $_GET['page'] ) {
+			return;
+		}
+
+		$warning = wp4odoo()->settings()->get_cron_warning();
+		if ( '' === $warning ) {
+			return;
+		}
+
+		printf(
+			'<div class="notice notice-warning"><p><strong>%s</strong> %s</p></div>',
+			esc_html__( 'WordPress For Odoo', 'wp4odoo' ),
+			esc_html( $warning )
+		);
 	}
 
 	/**

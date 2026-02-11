@@ -14,11 +14,13 @@ use PHPUnit\Framework\TestCase;
 class QueryServiceTest extends TestCase {
 
 	private \WP_DB_Stub $wpdb;
+	private Query_Service $service;
 
 	protected function setUp(): void {
 		global $wpdb;
-		$this->wpdb = new \WP_DB_Stub();
-		$wpdb       = $this->wpdb;
+		$this->wpdb    = new \WP_DB_Stub();
+		$wpdb          = $this->wpdb;
+		$this->service = new Query_Service();
 	}
 
 	// ─── get_queue_jobs() ──────────────────────────────────
@@ -30,7 +32,7 @@ class QueryServiceTest extends TestCase {
 			(object) [ 'id' => 2, 'status' => 'completed' ],
 		];
 
-		$result = Query_Service::get_queue_jobs();
+		$result = $this->service->get_queue_jobs();
 
 		$this->assertIsArray( $result );
 		$this->assertArrayHasKey( 'items', $result );
@@ -44,7 +46,7 @@ class QueryServiceTest extends TestCase {
 		$this->wpdb->get_var_return = 0;
 		$this->wpdb->get_results_return = [];
 
-		$result = Query_Service::get_queue_jobs();
+		$result = $this->service->get_queue_jobs();
 
 		$this->assertSame( [], $result['items'] );
 		$this->assertSame( 0, $result['total'] );
@@ -55,7 +57,7 @@ class QueryServiceTest extends TestCase {
 		$this->wpdb->get_var_return = 95;
 		$this->wpdb->get_results_return = [];
 
-		$result = Query_Service::get_queue_jobs( 1, 30 );
+		$result = $this->service->get_queue_jobs( 1, 30 );
 
 		$this->assertSame( 4, $result['pages'] );
 	}
@@ -64,7 +66,7 @@ class QueryServiceTest extends TestCase {
 		$this->wpdb->get_var_return = 10;
 		$this->wpdb->get_results_return = [];
 
-		Query_Service::get_queue_jobs( 1, 30 );
+		$this->service->get_queue_jobs( 1, 30 );
 
 		$prepare = $this->get_calls( 'prepare' );
 		$this->assertNotEmpty( $prepare );
@@ -77,7 +79,7 @@ class QueryServiceTest extends TestCase {
 		$this->wpdb->get_var_return = 100;
 		$this->wpdb->get_results_return = [];
 
-		Query_Service::get_queue_jobs( 2, 30 );
+		$this->service->get_queue_jobs( 2, 30 );
 
 		$prepare = $this->get_calls( 'prepare' );
 		$this->assertNotEmpty( $prepare );
@@ -90,7 +92,7 @@ class QueryServiceTest extends TestCase {
 		$this->wpdb->get_var_return = 3;
 		$this->wpdb->get_results_return = [];
 
-		Query_Service::get_queue_jobs( 1, 30, 'failed' );
+		$this->service->get_queue_jobs( 1, 30, 'failed' );
 
 		$prepare = $this->get_calls( 'prepare' );
 		$this->assertCount( 2, $prepare );
@@ -105,7 +107,7 @@ class QueryServiceTest extends TestCase {
 		$this->wpdb->get_var_return = 10;
 		$this->wpdb->get_results_return = [];
 
-		Query_Service::get_queue_jobs( 1, 30, '' );
+		$this->service->get_queue_jobs( 1, 30, '' );
 
 		$get_var = $this->get_calls( 'get_var' );
 		$this->assertNotEmpty( $get_var );
@@ -122,7 +124,7 @@ class QueryServiceTest extends TestCase {
 			(object) [ 'id' => 1, 'level' => 'info' ],
 		];
 
-		$result = Query_Service::get_log_entries( [], 2, 50 );
+		$result = $this->service->get_log_entries( [], 2, 50 );
 
 		$this->assertIsArray( $result );
 		$this->assertArrayHasKey( 'items', $result );
@@ -137,7 +139,7 @@ class QueryServiceTest extends TestCase {
 		$this->wpdb->get_var_return = 2;
 		$this->wpdb->get_results_return = [];
 
-		Query_Service::get_log_entries( [ 'level' => 'error' ], 1, 50 );
+		$this->service->get_log_entries( [ 'level' => 'error' ], 1, 50 );
 
 		$prepare = $this->get_calls( 'prepare' );
 		$this->assertNotEmpty( $prepare );
@@ -153,7 +155,7 @@ class QueryServiceTest extends TestCase {
 		$this->wpdb->get_var_return = 5;
 		$this->wpdb->get_results_return = [];
 
-		Query_Service::get_log_entries( [ 'date_from' => '2025-01-01' ], 1, 50 );
+		$this->service->get_log_entries( [ 'date_from' => '2025-01-01' ], 1, 50 );
 
 		$prepare = $this->get_calls( 'prepare' );
 		$this->assertNotEmpty( $prepare );
@@ -165,7 +167,7 @@ class QueryServiceTest extends TestCase {
 		$this->wpdb->get_var_return = 3;
 		$this->wpdb->get_results_return = [];
 
-		Query_Service::get_log_entries(
+		$this->service->get_log_entries(
 			[
 				'level'  => 'warning',
 				'module' => 'crm',
@@ -190,7 +192,7 @@ class QueryServiceTest extends TestCase {
 		$this->wpdb->get_var_return = 15;
 		$this->wpdb->get_results_return = [];
 
-		Query_Service::get_log_entries( [], 1, 50 );
+		$this->service->get_log_entries( [], 1, 50 );
 
 		$get_var = $this->get_calls( 'get_var' );
 		$this->assertNotEmpty( $get_var );
@@ -203,7 +205,7 @@ class QueryServiceTest extends TestCase {
 		$this->wpdb->get_var_return = 0;
 		$this->wpdb->get_results_return = [];
 
-		$result = Query_Service::get_log_entries( [], 1, 50 );
+		$result = $this->service->get_log_entries( [], 1, 50 );
 
 		$this->assertSame( 0, $result['pages'] );
 		$this->assertSame( 0, $result['total'] );
@@ -213,7 +215,7 @@ class QueryServiceTest extends TestCase {
 		$this->wpdb->get_var_return = 10;
 		$this->wpdb->get_results_return = [];
 
-		Query_Service::get_log_entries( [ 'date_to' => '2025-12-31' ], 1, 50 );
+		$this->service->get_log_entries( [ 'date_to' => '2025-12-31' ], 1, 50 );
 
 		$prepare = $this->get_calls( 'prepare' );
 		$this->assertNotEmpty( $prepare );
@@ -225,7 +227,7 @@ class QueryServiceTest extends TestCase {
 		$this->wpdb->get_var_return = 7;
 		$this->wpdb->get_results_return = [];
 
-		Query_Service::get_log_entries( [ 'module' => 'sales' ], 1, 50 );
+		$this->service->get_log_entries( [ 'module' => 'sales' ], 1, 50 );
 
 		$prepare = $this->get_calls( 'prepare' );
 		$this->assertNotEmpty( $prepare );

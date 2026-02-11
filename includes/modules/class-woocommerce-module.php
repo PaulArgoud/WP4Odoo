@@ -250,9 +250,9 @@ class WooCommerce_Module extends Module_Base {
 	 * @param int    $odoo_id     Odoo entity ID.
 	 * @param int    $wp_id       WordPress ID (0 if creating).
 	 * @param array  $payload     Additional data from the queue.
-	 * @return bool True on success.
+	 * @return \WP4Odoo\Sync_Result
 	 */
-	public function pull_from_odoo( string $entity_type, string $action, int $odoo_id, int $wp_id = 0, array $payload = [] ): bool {
+	public function pull_from_odoo( string $entity_type, string $action, int $odoo_id, int $wp_id = 0, array $payload = [] ): \WP4Odoo\Sync_Result {
 		// Variants: delegate directly to Variant_Handler.
 		if ( 'variant' === $entity_type ) {
 			return $this->pull_variant( $odoo_id, $wp_id, $payload );
@@ -262,7 +262,7 @@ class WooCommerce_Module extends Module_Base {
 		$result = parent::pull_from_odoo( $entity_type, $action, $odoo_id, $wp_id, $payload );
 
 		// After product template pull: import image + enqueue variant pulls.
-		if ( $result && 'product' === $entity_type && 'delete' !== $action ) {
+		if ( $result->succeeded() && 'product' === $entity_type && 'delete' !== $action ) {
 			$pulled_wp_id = $wp_id ?: ( $this->get_wp_mapping( 'product', $odoo_id ) ?? 0 );
 			if ( $pulled_wp_id > 0 ) {
 				$this->maybe_pull_product_image( $pulled_wp_id );
@@ -312,40 +312,47 @@ class WooCommerce_Module extends Module_Base {
 	 * @param int   $odoo_id Odoo product.product ID.
 	 * @param int   $wp_id   Existing WC variation ID (0 if unknown).
 	 * @param array $payload Queue payload (may contain parent_wp_id, template_odoo_id).
-	 * @return bool True on success.
+	 * @return \WP4Odoo\Sync_Result
 	 */
-	private function pull_variant( int $odoo_id, int $wp_id, array $payload ): bool {
+	private function pull_variant( int $odoo_id, int $wp_id, array $payload ): \WP4Odoo\Sync_Result {
 		self::mark_importing();
 
-		$parent_wp_id     = (int) ( $payload['parent_wp_id'] ?? 0 );
-		$template_odoo_id = (int) ( $payload['template_odoo_id'] ?? 0 );
+		try {
+			$parent_wp_id     = (int) ( $payload['parent_wp_id'] ?? 0 );
+			$template_odoo_id = (int) ( $payload['template_odoo_id'] ?? 0 );
 
-		// If parent not in payload, read the variant to find the template, then look up mapping.
-		if ( 0 === $parent_wp_id && 0 === $template_odoo_id ) {
-			$records = $this->client()->read( 'product.product', [ $odoo_id ], [ 'product_tmpl_id' ] );
-			if ( ! empty( $records[0]['product_tmpl_id'] ) ) {
-				$template_odoo_id = is_array( $records[0]['product_tmpl_id'] )
-					? (int) $records[0]['product_tmpl_id'][0]
-					: (int) $records[0]['product_tmpl_id'];
+			// If parent not in payload, read the variant to find the template, then look up mapping.
+			if ( 0 === $parent_wp_id && 0 === $template_odoo_id ) {
+				$records = $this->client()->read( 'product.product', [ $odoo_id ], [ 'product_tmpl_id' ] );
+				if ( ! empty( $records[0]['product_tmpl_id'] ) ) {
+					$template_odoo_id = is_array( $records[0]['product_tmpl_id'] )
+						? (int) $records[0]['product_tmpl_id'][0]
+						: (int) $records[0]['product_tmpl_id'];
+				}
 			}
-		}
 
-		if ( 0 === $parent_wp_id && $template_odoo_id > 0 ) {
-			$parent_wp_id = $this->get_wp_mapping( 'product', $template_odoo_id ) ?? 0;
-		}
+			if ( 0 === $parent_wp_id && $template_odoo_id > 0 ) {
+				$parent_wp_id = $this->get_wp_mapping( 'product', $template_odoo_id ) ?? 0;
+			}
 
-		if ( 0 === $parent_wp_id ) {
-			$this->logger->warning(
-				'Cannot pull variant: parent product not mapped.',
-				[
-					'variant_odoo_id'  => $odoo_id,
-					'template_odoo_id' => $template_odoo_id,
-				]
-			);
-			return false;
-		}
+			if ( 0 === $parent_wp_id ) {
+				$this->logger->warning(
+					'Cannot pull variant: parent product not mapped.',
+					[
+						'variant_odoo_id'  => $odoo_id,
+						'template_odoo_id' => $template_odoo_id,
+					]
+				);
+				return \WP4Odoo\Sync_Result::failure( 'Cannot pull variant: parent product not mapped.', \WP4Odoo\Error_Type::Permanent );
+			}
 
-		return $this->variant_handler->pull_variants( $template_odoo_id, $parent_wp_id );
+			$ok = $this->variant_handler->pull_variants( $template_odoo_id, $parent_wp_id );
+			return $ok
+				? \WP4Odoo\Sync_Result::success( $parent_wp_id )
+				: \WP4Odoo\Sync_Result::failure( 'Variant pull failed.', \WP4Odoo\Error_Type::Transient );
+		} finally {
+			self::clear_importing();
+		}
 	}
 
 	/**

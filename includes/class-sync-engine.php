@@ -165,9 +165,9 @@ class Sync_Engine {
 			$this->queue_repo->update_status( (int) $job->id, 'processing' );
 
 			try {
-				$success = $this->process_job( $job );
+				$result = $this->process_job( $job );
 
-				if ( $success ) {
+				if ( $result->succeeded() ) {
 					$this->queue_repo->update_status(
 						(int) $job->id,
 						'completed',
@@ -177,6 +177,9 @@ class Sync_Engine {
 					);
 					++$processed;
 					++$this->batch_successes;
+				} else {
+					$this->handle_failure( $job, $result->get_message(), $result->get_error_type() );
+					++$this->batch_failures;
 				}
 			} catch ( \Throwable $e ) {
 				$this->handle_failure( $job, $e->getMessage() );
@@ -204,9 +207,9 @@ class Sync_Engine {
 	 * Process a single queue job.
 	 *
 	 * @param object $job The queue row object.
-	 * @return bool True if processed successfully.
+	 * @return Sync_Result
 	 */
-	private function process_job( object $job ): bool {
+	private function process_job( object $job ): Sync_Result {
 		$module = ( $this->module_resolver )( $job->module );
 
 		if ( null === $module ) {
@@ -237,7 +240,7 @@ class Sync_Engine {
 					'odoo_id'     => $odoo_id,
 				]
 			);
-			return true;
+			return Sync_Result::success();
 		}
 
 		if ( 'wp_to_odoo' === $job->direction ) {
@@ -250,15 +253,49 @@ class Sync_Engine {
 	/**
 	 * Handle a failed job: increment attempts, apply backoff or mark as failed.
 	 *
-	 * @param object $job           The job row.
-	 * @param string $error_message The error description.
+	 * Error classification determines retry strategy:
+	 * - Transient (default): retry with exponential backoff.
+	 * - Permanent: fail immediately, no retry.
+	 * - Config: fail immediately and log as error.
+	 *
+	 * @param object          $job           The job row.
+	 * @param string          $error_message The error description.
+	 * @param Error_Type|null $error_type    Error classification (null = Transient for backward compat).
 	 * @return void
 	 */
-	private function handle_failure( object $job, string $error_message ): void {
+	private function handle_failure( object $job, string $error_message, ?Error_Type $error_type = null ): void {
 		$attempts      = (int) $job->attempts + 1;
 		$error_trimmed = sanitize_text_field( mb_substr( $error_message, 0, 65535 ) );
+		$error_type    = $error_type ?? Error_Type::Transient;
 
-		if ( $attempts >= (int) $job->max_attempts ) {
+		// Permanent and Config errors fail immediately — no point retrying.
+		$should_retry = Error_Type::Transient === $error_type && $attempts < (int) $job->max_attempts;
+
+		if ( $should_retry ) {
+			$delay     = $attempts * 60;
+			$scheduled = gmdate( 'Y-m-d H:i:s', time() + $delay );
+
+			$this->queue_repo->update_status(
+				(int) $job->id,
+				'pending',
+				[
+					'attempts'      => $attempts,
+					'error_message' => $error_trimmed,
+					'scheduled_at'  => $scheduled,
+				]
+			);
+
+			$this->logger->warning(
+				'Sync job failed, will retry.',
+				[
+					'job_id'     => $job->id,
+					'attempt'    => $attempts,
+					'retry_at'   => $scheduled,
+					'error'      => $error_message,
+					'error_type' => $error_type->value,
+				]
+			);
+		} else {
 			$this->queue_repo->update_status(
 				(int) $job->id,
 				'failed',
@@ -276,29 +313,7 @@ class Sync_Engine {
 					'module'      => $job->module,
 					'entity_type' => $job->entity_type,
 					'error'       => $error_message,
-				]
-			);
-		} else {
-			$delay     = $attempts * 60;
-			$scheduled = gmdate( 'Y-m-d H:i:s', time() + $delay );
-
-			$this->queue_repo->update_status(
-				(int) $job->id,
-				'pending',
-				[
-					'attempts'      => $attempts,
-					'error_message' => $error_trimmed,
-					'scheduled_at'  => $scheduled,
-				]
-			);
-
-			$this->logger->warning(
-				'Sync job failed, will retry.',
-				[
-					'job_id'   => $job->id,
-					'attempt'  => $attempts,
-					'retry_at' => $scheduled,
-					'error'    => $error_message,
+					'error_type'  => $error_type->value,
 				]
 			);
 		}

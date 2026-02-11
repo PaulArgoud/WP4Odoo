@@ -3,7 +3,7 @@
  * Plugin Name: WordPress For Odoo
  * Plugin URI: https://github.com/PaulArgoud/wordpress-for-odoo
  * Description: Modular WordPress/WooCommerce sync with Odoo ERP (v14+). 13 modules — CRM, Sales, WooCommerce, EDD, Memberships, MemberPress, GiveWP, Charitable, WP Simple Pay, WP Recipe Maker, Forms (GF/WPForms), Amelia, Bookly — covering contacts, leads, orders, invoices, products, donations, bookings, recipes, recurring subscriptions. Async queue, webhooks, customer portal, WP-CLI, encrypted credentials.
- * Version: 2.2.0
+ * Version: 2.3.0
  * Requires at least: 6.0
  * Requires PHP: 8.2
  * Author: Paul ARGOUD
@@ -21,7 +21,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Plugin constants
-define( 'WP4ODOO_VERSION', '2.2.0' );
+define( 'WP4ODOO_VERSION', '2.3.0' );
 define( 'WP4ODOO_PLUGIN_FILE', __FILE__ );
 define( 'WP4ODOO_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'WP4ODOO_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
@@ -30,21 +30,43 @@ define( 'WP4ODOO_MIN_ODOO_VERSION', 14 );
 
 /**
  * Autoloader for plugin classes.
+ *
+ * Converts WP4Odoo namespace to WordPress-style filenames:
+ *   WP4Odoo\Foo_Bar           → includes/class-foo-bar.php
+ *   WP4Odoo\API\Odoo_Client   → includes/api/class-odoo-client.php
+ *   WP4Odoo\Modules\CRM_Hooks → includes/modules/trait-crm-hooks.php
+ *   WP4Odoo\API\Transport      → includes/api/interface-transport.php
+ *
+ * Tries class-, trait-, then interface- prefixes until a match is found.
  */
 spl_autoload_register(
 	function ( $class ) {
-		$prefix   = 'WP4Odoo\\';
-		$base_dir = WP4ODOO_PLUGIN_DIR . 'includes/';
+		$prefix = 'WP4Odoo\\';
 
 		if ( strncmp( $prefix, $class, strlen( $prefix ) ) !== 0 ) {
-				return;
+			return;
 		}
 
-		$relative_class = substr( $class, strlen( $prefix ) );
-		$file           = $base_dir . str_replace( '\\', '/', $relative_class ) . '.php';
+		$relative = substr( $class, strlen( $prefix ) );
+		$parts    = explode( '\\', $relative );
+		$name     = array_pop( $parts );
 
-		if ( file_exists( $file ) ) {
-			require $file;
+		// Sub-namespace → lowercase directory (API → api, Modules → modules).
+		$dir = '';
+		if ( ! empty( $parts ) ) {
+			$dir = strtolower( implode( '/', $parts ) ) . '/';
+		}
+
+		// Class_Name → class-name (WordPress naming convention).
+		$slug = strtolower( str_replace( '_', '-', $name ) );
+		$base = WP4ODOO_PLUGIN_DIR . 'includes/' . $dir;
+
+		foreach ( [ 'class-', 'trait-', 'interface-' ] as $type_prefix ) {
+			$file = $base . $type_prefix . $slug . '.php';
+			if ( file_exists( $file ) ) {
+				require $file;
+				return;
+			}
 		}
 	}
 );
@@ -89,10 +111,6 @@ final class WP4Odoo_Plugin {
 	 * Constructor.
 	 */
 	private function __construct() {
-		// Bootstrap: Dependency_Loader must be loaded directly (not via autoload).
-		require_once WP4ODOO_PLUGIN_DIR . 'includes/class-dependency-loader.php';
-		WP4Odoo\Dependency_Loader::load();
-
 		$this->settings        = new WP4Odoo\Settings_Repository();
 		$this->module_registry = new WP4Odoo\Module_Registry( $this, $this->settings );
 		$this->register_hooks();
@@ -241,6 +259,8 @@ final class WP4Odoo_Plugin {
 	 * Run scheduled synchronization.
 	 */
 	public function run_scheduled_sync(): void {
+		$this->settings->touch_cron_run();
+
 		$sync = new WP4Odoo\Sync_Engine(
 			fn( string $id ) => $this->get_module( $id ),
 			new WP4Odoo\Sync_Queue_Repository(),

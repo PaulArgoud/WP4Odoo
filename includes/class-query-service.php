@@ -10,8 +10,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Database query service for queue jobs and log entries.
  *
- * Provides static methods for paginated data retrieval, decoupling
- * data access from the admin UI layer.
+ * Provides paginated data retrieval, decoupling data access
+ * from the admin UI layer. Instantiated and injected where needed.
  *
  * @package WP4Odoo
  * @since   1.0.0
@@ -26,7 +26,7 @@ class Query_Service {
 	 * @param string $status   Optional status filter.
 	 * @return array{items: array, total: int, pages: int}
 	 */
-	public static function get_queue_jobs( int $page = 1, int $per_page = 30, string $status = '' ): array {
+	public function get_queue_jobs( int $page = 1, int $per_page = 30, string $status = '' ): array {
 		global $wpdb;
 
 		$table  = $wpdb->prefix . 'wp4odoo_sync_queue';
@@ -67,7 +67,7 @@ class Query_Service {
 	 * @param int   $per_page Results per page.
 	 * @return array{items: array, total: int, pages: int, page: int}
 	 */
-	public static function get_log_entries( array $filters = [], int $page = 1, int $per_page = 50 ): array {
+	public function get_log_entries( array $filters = [], int $page = 1, int $per_page = 50 ): array {
 		global $wpdb;
 
 		$table  = $wpdb->prefix . 'wp4odoo_logs';

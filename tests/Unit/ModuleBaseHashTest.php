@@ -30,6 +30,27 @@ class Testable_Module extends Module_Base {
 	public function hash( array $data ): string {
 		return $this->generate_sync_hash( $data );
 	}
+
+	/**
+	 * Expose is_importing() for testing.
+	 */
+	public function check_importing(): bool {
+		return $this->is_importing();
+	}
+
+	/**
+	 * Expose mark_importing() for testing.
+	 */
+	public function start_importing(): void {
+		self::mark_importing();
+	}
+
+	/**
+	 * Expose clear_importing() for testing.
+	 */
+	public function stop_importing(): void {
+		self::clear_importing();
+	}
 }
 
 /**
@@ -83,5 +104,36 @@ class ModuleBaseHashTest extends TestCase {
 	public function test_default_dependency_status_has_no_notices(): void {
 		$status = $this->module->get_dependency_status();
 		$this->assertEmpty( $status['notices'] );
+	}
+
+	// ─── Anti-loop flag ──────────────────────────────────
+
+	protected function tearDown(): void {
+		// Always clear the flag to prevent test pollution.
+		$this->module->stop_importing();
+	}
+
+	public function test_is_importing_defaults_to_false(): void {
+		$this->assertFalse( $this->module->check_importing() );
+	}
+
+	public function test_mark_importing_sets_flag(): void {
+		$this->module->start_importing();
+
+		$this->assertTrue( $this->module->check_importing() );
+	}
+
+	public function test_clear_importing_resets_flag(): void {
+		$this->module->start_importing();
+		$this->module->stop_importing();
+
+		$this->assertFalse( $this->module->check_importing() );
+	}
+
+	public function test_importing_flag_is_shared_across_instances(): void {
+		$other = new Testable_Module();
+		$this->module->start_importing();
+
+		$this->assertTrue( $other->check_importing() );
 	}
 }

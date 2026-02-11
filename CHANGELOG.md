@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.0] - 2026-02-11
+
+### Changed
+- **Autoloading**: replaced manual `Dependency_Loader` (70+ `require_once`) with `spl_autoload_register` — converts `WP4Odoo\Foo_Bar` to `includes/class-foo-bar.php` with class-/trait-/interface- prefix fallback. Deleted `class-dependency-loader.php`
+- **Sync_Result value object**: `push_to_odoo()` and `pull_from_odoo()` now return `Sync_Result` instead of `bool` — carries success/failure status, entity ID, error message, and error classification
+- **Error_Type enum**: `Transient` (retry with backoff), `Permanent` (fail immediately), `Config` (alert admin) — Sync_Engine now uses smart retry based on error type instead of retrying all failures blindly
+- **Query_Service injectable**: converted from static methods to instance methods with constructor injection in Admin_Ajax, Settings_Page, and CLI
+- **Anti-loop flag**: replaced permanent `define('WP4ODOO_IMPORTING')` constant with resettable `static bool $importing` property on `Module_Base` — `pull_from_odoo()` uses `try/finally` to always clear the flag, enabling correct behavior in WP-CLI and webhook batch processing
+
+### Added
+- **WP-Cron reliability detection**: records last cron run timestamp via `Settings_Repository::touch_cron_run()`, warns on plugin settings page when cron hasn't fired in 3× the configured interval, with specific message for `DISABLE_WP_CRON` sites
+- `Error_Type` backed enum (`includes/class-error-type.php`)
+- `Sync_Result` value object (`includes/class-sync-result.php`)
+- 11 new tests (1050 total, 1698 assertions): cron health (6), anti-loop flag (4), Query_Service instance (1)
+
 ## [2.2.0] - 2026-02-11
 
 ### Refactoring

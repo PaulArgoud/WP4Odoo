@@ -90,6 +90,18 @@ abstract class Module_Base {
 	private array $mapping_cache = [];
 
 	/**
+	 * Global anti-loop flag: true while any module is importing from Odoo.
+	 *
+	 * Static so all module instances share the same flag.
+	 * Unlike the previous `define('WP4ODOO_IMPORTING')` approach, this
+	 * can be cleared after each pull operation, allowing subsequent
+	 * operations in the same request (webhooks, WP-CLI) to proceed.
+	 *
+	 * @var bool
+	 */
+	private static bool $importing = false;
+
+	/**
 	 * Lazy Partner_Service instance.
 	 *
 	 * @var Partner_Service|null
@@ -161,9 +173,9 @@ abstract class Module_Base {
 	 * @param int    $wp_id       WordPress entity ID.
 	 * @param int    $odoo_id     Odoo ID (0 if creating).
 	 * @param array  $payload     Additional data from the queue.
-	 * @return bool True on success.
+	 * @return Sync_Result
 	 */
-	public function push_to_odoo( string $entity_type, string $action, int $wp_id, int $odoo_id = 0, array $payload = [] ): bool {
+	public function push_to_odoo( string $entity_type, string $action, int $wp_id, int $odoo_id = 0, array $payload = [] ): Sync_Result {
 		$model = $this->get_odoo_model( $entity_type );
 
 		if ( 'delete' === $action ) {
@@ -172,7 +184,7 @@ abstract class Module_Base {
 				$this->remove_mapping( $entity_type, $wp_id );
 				$this->logger->info( 'Deleted Odoo record.', compact( 'entity_type', 'wp_id', 'odoo_id' ) );
 			}
-			return true;
+			return Sync_Result::success( $odoo_id );
 		}
 
 		$wp_data     = ! empty( $payload ) ? $payload : $this->load_wp_data( $entity_type, $wp_id );
@@ -180,7 +192,7 @@ abstract class Module_Base {
 
 		if ( empty( $odoo_values ) ) {
 			$this->logger->warning( 'No data to push.', compact( 'entity_type', 'wp_id' ) );
-			return false;
+			return Sync_Result::failure( 'No data to push.', Error_Type::Permanent );
 		}
 
 		$new_hash = $this->generate_sync_hash( $odoo_values );
@@ -204,7 +216,7 @@ abstract class Module_Base {
 			$this->logger->info( 'Created Odoo record.', compact( 'entity_type', 'wp_id', 'odoo_id' ) );
 		}
 
-		return true;
+		return Sync_Result::success( $odoo_id );
 	}
 
 	/**
@@ -217,63 +229,67 @@ abstract class Module_Base {
 	 * @param int    $odoo_id     Odoo entity ID.
 	 * @param int    $wp_id       WordPress ID (0 if creating).
 	 * @param array  $payload     Additional data from the queue.
-	 * @return bool True on success.
+	 * @return Sync_Result
 	 */
-	public function pull_from_odoo( string $entity_type, string $action, int $odoo_id, int $wp_id = 0, array $payload = [] ): bool {
+	public function pull_from_odoo( string $entity_type, string $action, int $odoo_id, int $wp_id = 0, array $payload = [] ): Sync_Result {
 		self::mark_importing();
 
-		$model = $this->get_odoo_model( $entity_type );
+		try {
+			$model = $this->get_odoo_model( $entity_type );
 
-		if ( 'delete' === $action ) {
+			if ( 'delete' === $action ) {
+				if ( 0 === $wp_id ) {
+					$wp_id = $this->get_wp_mapping( $entity_type, $odoo_id ) ?? 0;
+				}
+				if ( $wp_id > 0 ) {
+					$this->delete_wp_data( $entity_type, $wp_id );
+					$this->remove_mapping( $entity_type, $wp_id );
+					$this->logger->info( 'Deleted WP entity from Odoo signal.', compact( 'entity_type', 'wp_id', 'odoo_id' ) );
+				}
+				return Sync_Result::success( $wp_id );
+			}
+
+			// Fetch fresh data from Odoo.
+			$records = $this->client()->read( $model, [ $odoo_id ] );
+
+			if ( empty( $records ) ) {
+				$this->logger->warning( 'Odoo record not found during pull.', compact( 'entity_type', 'odoo_id' ) );
+				return Sync_Result::failure( 'Odoo record not found during pull.', Error_Type::Permanent );
+			}
+
+			$odoo_data = $records[0];
+			$wp_data   = $this->map_from_odoo( $entity_type, $odoo_data );
+
+			/**
+			 * Filter WordPress data after mapping from Odoo.
+			 *
+			 * @since 1.0.0
+			 *
+			 * @param array  $wp_data     The mapped WordPress data.
+			 * @param array  $odoo_data   The raw Odoo record data.
+			 * @param string $entity_type The entity type.
+			 */
+			$wp_data = apply_filters( "wp4odoo_map_from_odoo_{$this->id}_{$entity_type}", $wp_data, $odoo_data, $entity_type );
+
+			// Find existing WP entity.
 			if ( 0 === $wp_id ) {
 				$wp_id = $this->get_wp_mapping( $entity_type, $odoo_id ) ?? 0;
 			}
+
+			$wp_id = $this->save_wp_data( $entity_type, $wp_data, $wp_id );
+
 			if ( $wp_id > 0 ) {
-				$this->delete_wp_data( $entity_type, $wp_id );
-				$this->remove_mapping( $entity_type, $wp_id );
-				$this->logger->info( 'Deleted WP entity from Odoo signal.', compact( 'entity_type', 'wp_id', 'odoo_id' ) );
+				$new_hash = $this->generate_sync_hash( $odoo_data );
+				$this->save_mapping( $entity_type, $wp_id, $odoo_id, $new_hash );
+				$this->logger->info( 'Pulled from Odoo.', compact( 'entity_type', 'wp_id', 'odoo_id' ) );
+				return Sync_Result::success( $wp_id );
 			}
-			return true;
+
+			$this->logger->error( 'Failed to save WP data during pull.', compact( 'entity_type', 'odoo_id' ) );
+			return Sync_Result::failure( 'Failed to save WP data during pull.', Error_Type::Permanent );
+		} finally {
+			self::clear_importing();
 		}
-
-		// Fetch fresh data from Odoo.
-		$records = $this->client()->read( $model, [ $odoo_id ] );
-
-		if ( empty( $records ) ) {
-			$this->logger->warning( 'Odoo record not found during pull.', compact( 'entity_type', 'odoo_id' ) );
-			return false;
-		}
-
-		$odoo_data = $records[0];
-		$wp_data   = $this->map_from_odoo( $entity_type, $odoo_data );
-
-		/**
-		 * Filter WordPress data after mapping from Odoo.
-		 *
-		 * @since 1.0.0
-		 *
-		 * @param array  $wp_data     The mapped WordPress data.
-		 * @param array  $odoo_data   The raw Odoo record data.
-		 * @param string $entity_type The entity type.
-		 */
-		$wp_data = apply_filters( "wp4odoo_map_from_odoo_{$this->id}_{$entity_type}", $wp_data, $odoo_data, $entity_type );
-
-		// Find existing WP entity.
-		if ( 0 === $wp_id ) {
-			$wp_id = $this->get_wp_mapping( $entity_type, $odoo_id ) ?? 0;
-		}
-
-		$wp_id = $this->save_wp_data( $entity_type, $wp_data, $wp_id );
-
-		if ( $wp_id > 0 ) {
-			$new_hash = $this->generate_sync_hash( $odoo_data );
-			$this->save_mapping( $entity_type, $wp_id, $odoo_id, $new_hash );
-			$this->logger->info( 'Pulled from Odoo.', compact( 'entity_type', 'wp_id', 'odoo_id' ) );
-			return true;
-		}
-
-		$this->logger->error( 'Failed to save WP data during pull.', compact( 'entity_type', 'odoo_id' ) );
-		return false;
 	}
 
 	// -------------------------------------------------------------------------
@@ -452,18 +468,25 @@ abstract class Module_Base {
 	 * @return bool True if a pull/import is in progress.
 	 */
 	protected function is_importing(): bool {
-		return defined( 'WP4ODOO_IMPORTING' ) && WP4ODOO_IMPORTING;
+		return self::$importing;
 	}
 
 	/**
-	 * Set the WP4ODOO_IMPORTING constant to prevent hook re-entry.
+	 * Set the anti-loop flag to prevent hook re-entry during import.
 	 *
 	 * @return void
 	 */
 	protected static function mark_importing(): void {
-		if ( ! defined( 'WP4ODOO_IMPORTING' ) ) {
-			define( 'WP4ODOO_IMPORTING', true );
-		}
+		self::$importing = true;
+	}
+
+	/**
+	 * Clear the anti-loop flag after import completes.
+	 *
+	 * @return void
+	 */
+	protected static function clear_importing(): void {
+		self::$importing = false;
 	}
 
 	/**

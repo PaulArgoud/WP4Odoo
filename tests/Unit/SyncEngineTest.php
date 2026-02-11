@@ -74,7 +74,7 @@ class SyncEngineTest extends TestCase {
 
 		// Create a mock module that succeeds.
 		$module = new Mock_Module( 'test' );
-		$module->push_result = true;
+		$module->push_result = \WP4Odoo\Sync_Result::success();
 
 		\WP4Odoo_Plugin::instance()->register_module( 'test', $module );
 
@@ -109,7 +109,7 @@ class SyncEngineTest extends TestCase {
 		$this->wpdb->get_var_return = '1';
 
 		$module = new Mock_Module( 'test' );
-		$module->pull_result = true;
+		$module->pull_result = \WP4Odoo\Sync_Result::success();
 
 		\WP4Odoo_Plugin::instance()->register_module( 'test', $module );
 
@@ -335,10 +335,10 @@ class SyncEngineTest extends TestCase {
 		$this->wpdb->get_var_return = '1';
 
 		$module1 = new Mock_Module( 'crm' );
-		$module1->push_result = true;
+		$module1->push_result = \WP4Odoo\Sync_Result::success();
 
 		$module2 = new Mock_Module( 'sales' );
-		$module2->pull_result = true;
+		$module2->pull_result = \WP4Odoo\Sync_Result::success();
 
 		\WP4Odoo_Plugin::instance()->register_module( 'crm', $module1 );
 		\WP4Odoo_Plugin::instance()->register_module( 'sales', $module2 );
@@ -385,7 +385,7 @@ class SyncEngineTest extends TestCase {
 		$this->wpdb->get_var_return = '1';
 
 		$module = new Mock_Module( 'test' );
-		$module->push_result = true;
+		$module->push_result = \WP4Odoo\Sync_Result::success();
 		\WP4Odoo_Plugin::instance()->register_module( 'test', $module );
 
 		$job = (object) [
@@ -451,7 +451,7 @@ class SyncEngineTest extends TestCase {
 		$GLOBALS['_wp_options']['wp4odoo_consecutive_failures'] = 10;
 
 		$module = new Mock_Module( 'test' );
-		$module->push_result = true;
+		$module->push_result = \WP4Odoo\Sync_Result::success();
 		\WP4Odoo_Plugin::instance()->register_module( 'test', $module );
 
 		$job = (object) [
@@ -549,8 +549,8 @@ namespace WP4Odoo\Tests\Unit;
  */
 class Mock_Module extends \WP4Odoo\Module_Base {
 
-	public bool $push_result = true;
-	public bool $pull_result = true;
+	public \WP4Odoo\Sync_Result $push_result;
+	public \WP4Odoo\Sync_Result $pull_result;
 	public ?\Throwable $throw_on_push = null;
 	public ?\Throwable $throw_on_pull = null;
 
@@ -564,8 +564,10 @@ class Mock_Module extends \WP4Odoo\Module_Base {
 	public array $last_payload = [];
 
 	public function __construct( string $id ) {
-		$this->id   = $id;
-		$this->name = 'Mock Module';
+		$this->id          = $id;
+		$this->name        = 'Mock Module';
+		$this->push_result = \WP4Odoo\Sync_Result::success();
+		$this->pull_result = \WP4Odoo\Sync_Result::success();
 		parent::__construct( wp4odoo_test_client_provider(), wp4odoo_test_entity_map(), wp4odoo_test_settings() );
 	}
 
@@ -575,7 +577,7 @@ class Mock_Module extends \WP4Odoo\Module_Base {
 		return [];
 	}
 
-	public function push_to_odoo( string $entity_type, string $action, int $wp_id, int $odoo_id = 0, array $payload = [] ): bool {
+	public function push_to_odoo( string $entity_type, string $action, int $wp_id, int $odoo_id = 0, array $payload = [] ): \WP4Odoo\Sync_Result {
 		$this->push_called      = true;
 		$this->last_entity_type = $entity_type;
 		$this->last_action      = $action;
@@ -590,7 +592,7 @@ class Mock_Module extends \WP4Odoo\Module_Base {
 		return $this->push_result;
 	}
 
-	public function pull_from_odoo( string $entity_type, string $action, int $odoo_id, int $wp_id = 0, array $payload = [] ): bool {
+	public function pull_from_odoo( string $entity_type, string $action, int $odoo_id, int $wp_id = 0, array $payload = [] ): \WP4Odoo\Sync_Result {
 		$this->pull_called      = true;
 		$this->last_entity_type = $entity_type;
 		$this->last_action      = $action;

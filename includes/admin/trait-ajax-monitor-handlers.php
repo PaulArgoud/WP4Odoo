@@ -4,7 +4,6 @@ declare( strict_types=1 );
 namespace WP4Odoo\Admin;
 
 use WP4Odoo\Logger;
-use WP4Odoo\Query_Service;
 use WP4Odoo\Queue_Manager;
 use WP4Odoo\Sync_Engine;
 
@@ -135,7 +134,7 @@ trait Ajax_Monitor_Handlers {
 		$per_page = $this->get_post_field( 'per_page', 'int' );
 		$per_page = ( $per_page > 0 ) ? min( 100, $per_page ) : 50;
 
-		$data = Query_Service::get_log_entries( $filters, $page, $per_page );
+		$data = $this->query_service->get_log_entries( $filters, $page, $per_page );
 
 		// Serialize items for JSON transport.
 		$items = [];
@@ -172,7 +171,7 @@ trait Ajax_Monitor_Handlers {
 		$per_page = $this->get_post_field( 'per_page', 'int' );
 		$per_page = ( $per_page > 0 ) ? min( 100, $per_page ) : 30;
 
-		$data = Query_Service::get_queue_jobs( $page, $per_page );
+		$data = $this->query_service->get_queue_jobs( $page, $per_page );
 
 		$items = [];
 		foreach ( $data['items'] as $job ) {

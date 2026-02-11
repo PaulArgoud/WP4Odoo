@@ -20,6 +20,20 @@ if ( ! defined( 'ABSPATH' ) ) {
 class CLI {
 
 	/**
+	 * Query service instance.
+	 *
+	 * @var \WP4Odoo\Query_Service
+	 */
+	private Query_Service $query_service;
+
+	/**
+	 * Constructor.
+	 */
+	public function __construct() {
+		$this->query_service = new Query_Service();
+	}
+
+	/**
 	 * Show plugin status: connection, queue stats, modules.
 	 *
 	 * ## EXAMPLES
@@ -276,7 +290,7 @@ class CLI {
 		$per_page = max( 1, min( 100, (int) ( $assoc_args['per-page'] ?? 30 ) ) );
 		$format   = $assoc_args['format'] ?? 'table';
 
-		$data = Query_Service::get_queue_jobs( $page, $per_page );
+		$data = $this->query_service->get_queue_jobs( $page, $per_page );
 
 		if ( empty( $data['items'] ) ) {
 			\WP_CLI::line( 'No jobs found.' );

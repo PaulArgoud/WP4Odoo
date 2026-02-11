@@ -27,6 +27,13 @@ class Settings_Page {
 	private const TAB_SLUGS = [ 'connection', 'sync', 'modules', 'queue', 'logs' ];
 
 	/**
+	 * Query service instance.
+	 *
+	 * @var \WP4Odoo\Query_Service
+	 */
+	private \WP4Odoo\Query_Service $query_service;
+
+	/**
 	 * Get available tabs with translated labels.
 	 *
 	 * @return array<string, string>
@@ -45,6 +52,7 @@ class Settings_Page {
 	 * Constructor.
 	 */
 	public function __construct() {
+		$this->query_service = new \WP4Odoo\Query_Service();
 		add_action( 'admin_init', [ $this, 'register_settings' ] );
 	}
 
@@ -327,7 +335,7 @@ class Settings_Page {
 		$stats    = \WP4Odoo\Queue_Manager::get_stats();
 		$page     = isset( $_GET['paged'] ) ? max( 1, absint( $_GET['paged'] ) ) : 1; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$per_page = 30;
-		$jobs     = Query_Service::get_queue_jobs( $page, $per_page );
+		$jobs     = $this->query_service->get_queue_jobs( $page, $per_page );
 
 		include WP4ODOO_PLUGIN_DIR . 'admin/views/tab-queue.php';
 	}
@@ -343,7 +351,7 @@ class Settings_Page {
 		$page     = isset( $_GET['log_paged'] ) ? max( 1, absint( $_GET['log_paged'] ) ) : 1; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$per_page = 50;
 		$filters  = [];
-		$log_data = Query_Service::get_log_entries( $filters, $page, $per_page );
+		$log_data = $this->query_service->get_log_entries( $filters, $page, $per_page );
 
 		include WP4ODOO_PLUGIN_DIR . 'admin/views/tab-logs.php';
 	}

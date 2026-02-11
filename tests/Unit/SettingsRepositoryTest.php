@@ -285,6 +285,60 @@ class SettingsRepositoryTest extends TestCase {
 		$this->assertSame( [], $this->repo->get_module_mappings( 'crm' ) );
 	}
 
+	// ── Cron health ──────────────────────────────────────
+
+	public function test_get_last_cron_run_defaults_to_zero(): void {
+		$this->assertSame( 0, $this->repo->get_last_cron_run() );
+	}
+
+	public function test_touch_cron_run_records_timestamp(): void {
+		$this->repo->touch_cron_run();
+
+		$this->assertGreaterThan( 0, $this->repo->get_last_cron_run() );
+	}
+
+	public function test_get_cron_warning_empty_when_never_run(): void {
+		$this->assertSame( '', $this->repo->get_cron_warning() );
+	}
+
+	public function test_get_cron_warning_empty_when_recent(): void {
+		$GLOBALS['_wp_options'][ Settings_Repository::OPT_LAST_CRON_RUN ] = time() - 60;
+
+		$this->assertSame( '', $this->repo->get_cron_warning() );
+	}
+
+	public function test_get_cron_warning_returns_message_when_stale(): void {
+		// 5-minute interval, stale after 3× = 900s. Set last run 2000s ago.
+		$GLOBALS['_wp_options'][ Settings_Repository::OPT_LAST_CRON_RUN ] = time() - 2000;
+
+		$warning = $this->repo->get_cron_warning();
+
+		$this->assertNotSame( '', $warning );
+		$this->assertStringContainsString( 'WP-Cron', $warning );
+	}
+
+	public function test_get_cron_warning_mentions_disable_when_constant_set(): void {
+		if ( ! defined( 'DISABLE_WP_CRON' ) ) {
+			define( 'DISABLE_WP_CRON', true );
+		}
+
+		$GLOBALS['_wp_options'][ Settings_Repository::OPT_LAST_CRON_RUN ] = time() - 2000;
+
+		$warning = $this->repo->get_cron_warning();
+
+		$this->assertStringContainsString( 'DISABLE_WP_CRON', $warning );
+	}
+
+	public function test_get_cron_warning_uses_fifteen_minute_interval(): void {
+		$GLOBALS['_wp_options'][ Settings_Repository::OPT_SYNC_SETTINGS ] = [
+			'sync_interval' => 'wp4odoo_fifteen_minutes',
+		];
+		// 15-min interval, stale after 3× = 2700s. Set last run 2000s ago — should be OK.
+		$GLOBALS['_wp_options'][ Settings_Repository::OPT_LAST_CRON_RUN ] = time() - 2000;
+
+		$this->assertSame( '', $this->repo->get_cron_warning() );
+	}
+
 	// ── Constants ─────────────────────────────────────────
 
 	public function test_option_key_constants_are_prefixed(): void {
@@ -299,6 +353,7 @@ class SettingsRepositoryTest extends TestCase {
 			Settings_Repository::OPT_CHECKLIST_DISMISSED,
 			Settings_Repository::OPT_CHECKLIST_WEBHOOKS,
 			Settings_Repository::OPT_DB_VERSION,
+			Settings_Repository::OPT_LAST_CRON_RUN,
 		];
 
 		foreach ( $constants as $constant ) {
