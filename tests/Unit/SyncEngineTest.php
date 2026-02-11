@@ -4,6 +4,7 @@ declare( strict_types=1 );
 namespace WP4Odoo\Tests\Unit;
 
 use WP4Odoo\Sync_Engine;
+use WP4Odoo\Queue_Manager;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -34,7 +35,7 @@ class SyncEngineTest extends TestCase {
 		// GET_LOCK() returns '0' when lock cannot be acquired.
 		$this->wpdb->get_var_return = '0';
 
-		$engine    = new Sync_Engine();
+		$engine    = new Sync_Engine( wp4odoo_test_module_resolver(), wp4odoo_test_queue_repo() );
 		$processed = $engine->process_queue();
 
 		$this->assertSame( 0, $processed );
@@ -46,7 +47,7 @@ class SyncEngineTest extends TestCase {
 		$this->wpdb->get_var_return     = '1';
 		$this->wpdb->get_results_return = [];
 
-		$engine    = new Sync_Engine();
+		$engine    = new Sync_Engine( wp4odoo_test_module_resolver(), wp4odoo_test_queue_repo() );
 		$processed = $engine->process_queue();
 
 		$this->assertSame( 0, $processed );
@@ -60,7 +61,7 @@ class SyncEngineTest extends TestCase {
 		$this->wpdb->get_var_return     = '1'; // Lock acquired.
 		$this->wpdb->get_results_return = [];  // No jobs.
 
-		$engine    = new Sync_Engine();
+		$engine    = new Sync_Engine( wp4odoo_test_module_resolver(), wp4odoo_test_queue_repo() );
 		$processed = $engine->process_queue();
 
 		$this->assertSame( 0, $processed );
@@ -93,7 +94,7 @@ class SyncEngineTest extends TestCase {
 
 		$this->wpdb->get_results_return = [ $job ];
 
-		$engine    = new Sync_Engine();
+		$engine    = new Sync_Engine( wp4odoo_test_module_resolver(), wp4odoo_test_queue_repo() );
 		$processed = $engine->process_queue();
 
 		$this->assertSame( 1, $processed );
@@ -127,7 +128,7 @@ class SyncEngineTest extends TestCase {
 
 		$this->wpdb->get_results_return = [ $job ];
 
-		$engine    = new Sync_Engine();
+		$engine    = new Sync_Engine( wp4odoo_test_module_resolver(), wp4odoo_test_queue_repo() );
 		$processed = $engine->process_queue();
 
 		$this->assertSame( 1, $processed );
@@ -163,7 +164,7 @@ class SyncEngineTest extends TestCase {
 
 		$this->wpdb->get_results_return = [ $job ];
 
-		$engine    = new Sync_Engine();
+		$engine    = new Sync_Engine( wp4odoo_test_module_resolver(), wp4odoo_test_queue_repo() );
 		$processed = $engine->process_queue();
 
 		$this->assertSame( 0, $processed );
@@ -204,7 +205,7 @@ class SyncEngineTest extends TestCase {
 
 		$this->wpdb->get_results_return = [ $job ];
 
-		$engine    = new Sync_Engine();
+		$engine    = new Sync_Engine( wp4odoo_test_module_resolver(), wp4odoo_test_queue_repo() );
 		$processed = $engine->process_queue();
 
 		$this->assertSame( 0, $processed );
@@ -236,7 +237,7 @@ class SyncEngineTest extends TestCase {
 
 		$this->wpdb->get_results_return = [ $job ];
 
-		$engine    = new Sync_Engine();
+		$engine    = new Sync_Engine( wp4odoo_test_module_resolver(), wp4odoo_test_queue_repo() );
 		$processed = $engine->process_queue();
 
 		$this->assertSame( 0, $processed );
@@ -254,7 +255,7 @@ class SyncEngineTest extends TestCase {
 
 		update_option( 'wp4odoo_sync_settings', [ 'batch_size' => 100 ] );
 
-		$engine    = new Sync_Engine();
+		$engine    = new Sync_Engine( wp4odoo_test_module_resolver(), wp4odoo_test_queue_repo() );
 		$processed = $engine->process_queue();
 
 		$this->assertSame( 0, $processed );
@@ -269,7 +270,7 @@ class SyncEngineTest extends TestCase {
 		$this->wpdb->get_results_return = [];
 
 		// No batch_size in options.
-		$engine    = new Sync_Engine();
+		$engine    = new Sync_Engine( wp4odoo_test_module_resolver(), wp4odoo_test_queue_repo() );
 		$processed = $engine->process_queue();
 
 		$this->assertSame( 0, $processed );
@@ -279,20 +280,12 @@ class SyncEngineTest extends TestCase {
 		$this->assertNotEmpty( $get_results_calls );
 	}
 
-	// ─── Static delegator methods ──────────────────────────
+	// ─── Queue_Manager delegator methods ──────────────────
 
-	public function test_enqueue_delegates_to_sync_queue_repository(): void {
+	public function test_push_delegates_to_sync_queue_repository(): void {
 		$this->wpdb->insert_id = 123;
 
-		$args = [
-			'module'      => 'crm',
-			'direction'   => 'wp_to_odoo',
-			'entity_type' => 'contact',
-			'wp_id'       => 10,
-			'action'      => 'create',
-		];
-
-		$result = Sync_Engine::enqueue( $args );
+		$result = Queue_Manager::push( 'crm', 'contact', 'create', 10 );
 
 		$this->assertSame( 123, $result );
 
@@ -303,7 +296,7 @@ class SyncEngineTest extends TestCase {
 	public function test_get_stats_returns_expected_structure(): void {
 		$this->wpdb->get_var_return = '5';  // Used by get_stats for counts.
 
-		$stats = Sync_Engine::get_stats();
+		$stats = Queue_Manager::get_stats();
 
 		$this->assertIsArray( $stats );
 		$this->assertArrayHasKey( 'pending', $stats );
@@ -317,7 +310,7 @@ class SyncEngineTest extends TestCase {
 	public function test_cleanup_delegates_to_sync_queue_repository(): void {
 		$this->wpdb->query_return = 10;
 
-		$result = Sync_Engine::cleanup( 14 );
+		$result = Queue_Manager::cleanup( 14 );
 
 		$this->assertSame( 10, $result );
 
@@ -328,7 +321,7 @@ class SyncEngineTest extends TestCase {
 	public function test_retry_failed_delegates_to_sync_queue_repository(): void {
 		$this->wpdb->query_return = 5;
 
-		$result = Sync_Engine::retry_failed();
+		$result = Queue_Manager::retry_failed();
 
 		$this->assertSame( 5, $result );
 
@@ -378,7 +371,7 @@ class SyncEngineTest extends TestCase {
 
 		$this->wpdb->get_results_return = [ $job1, $job2 ];
 
-		$engine    = new Sync_Engine();
+		$engine    = new Sync_Engine( wp4odoo_test_module_resolver(), wp4odoo_test_queue_repo() );
 		$processed = $engine->process_queue();
 
 		$this->assertSame( 2, $processed );
@@ -410,7 +403,7 @@ class SyncEngineTest extends TestCase {
 
 		$this->wpdb->get_results_return = [ $job ];
 
-		$engine = new Sync_Engine();
+		$engine = new Sync_Engine( wp4odoo_test_module_resolver(), wp4odoo_test_queue_repo() );
 		$engine->set_dry_run( true );
 		$processed = $engine->process_queue();
 
@@ -445,7 +438,7 @@ class SyncEngineTest extends TestCase {
 
 		$this->wpdb->get_results_return = [ $job ];
 
-		$engine = new Sync_Engine();
+		$engine = new Sync_Engine( wp4odoo_test_module_resolver(), wp4odoo_test_queue_repo() );
 		$engine->process_queue();
 
 		$this->assertNotEmpty( $GLOBALS['_wp_mail_calls'] );
@@ -476,7 +469,7 @@ class SyncEngineTest extends TestCase {
 
 		$this->wpdb->get_results_return = [ $job ];
 
-		$engine = new Sync_Engine();
+		$engine = new Sync_Engine( wp4odoo_test_module_resolver(), wp4odoo_test_queue_repo() );
 		$engine->process_queue();
 
 		$this->assertSame( 0, (int) get_option( 'wp4odoo_consecutive_failures', 0 ) );
@@ -508,7 +501,7 @@ class SyncEngineTest extends TestCase {
 
 		$this->wpdb->get_results_return = [ $job ];
 
-		$engine = new Sync_Engine();
+		$engine = new Sync_Engine( wp4odoo_test_module_resolver(), wp4odoo_test_queue_repo() );
 		$engine->process_queue();
 
 		$this->assertEmpty( $GLOBALS['_wp_mail_calls'] );
@@ -573,7 +566,7 @@ class Mock_Module extends \WP4Odoo\Module_Base {
 	public function __construct( string $id ) {
 		$this->id   = $id;
 		$this->name = 'Mock Module';
-		parent::__construct();
+		parent::__construct( wp4odoo_test_client_provider(), wp4odoo_test_entity_map() );
 	}
 
 	public function boot(): void {}

@@ -49,7 +49,10 @@ class Module_Registry {
 	 * @return void
 	 */
 	public function register_all(): void {
-		$this->register( 'crm', new Modules\CRM_Module() );
+		$client_provider = fn() => $this->plugin->client();
+		$entity_map      = new Entity_Map_Repository();
+
+		$this->register( 'crm', new Modules\CRM_Module( $client_provider, $entity_map ) );
 
 		$wc_active   = class_exists( 'WooCommerce' );
 		$wc_enabled  = get_option( 'wp4odoo_module_woocommerce_enabled', false );
@@ -57,62 +60,62 @@ class Module_Registry {
 		$edd_enabled = get_option( 'wp4odoo_module_edd_enabled', false );
 
 		if ( $wc_active && $wc_enabled ) {
-			$this->register( 'woocommerce', new Modules\WooCommerce_Module() );
+			$this->register( 'woocommerce', new Modules\WooCommerce_Module( $client_provider, $entity_map ) );
 		} elseif ( $edd_active && $edd_enabled ) {
-			$this->register( 'edd', new Modules\EDD_Module() );
+			$this->register( 'edd', new Modules\EDD_Module( $client_provider, $entity_map ) );
 		} else {
-			$this->register( 'sales', new Modules\Sales_Module() );
+			$this->register( 'sales', new Modules\Sales_Module( $client_provider, $entity_map ) );
 		}
 
 		// Register inactive commerce modules for admin UI visibility.
 		if ( $wc_active && ! $wc_enabled ) {
-			$this->register( 'woocommerce', new Modules\WooCommerce_Module() );
+			$this->register( 'woocommerce', new Modules\WooCommerce_Module( $client_provider, $entity_map ) );
 		}
 		if ( $edd_active && ! $edd_enabled ) {
-			$this->register( 'edd', new Modules\EDD_Module() );
+			$this->register( 'edd', new Modules\EDD_Module( $client_provider, $entity_map ) );
 		}
 
 		// Memberships module (requires WooCommerce + WC Memberships).
 		if ( $wc_active ) {
-			$this->register( 'memberships', new Modules\Memberships_Module() );
+			$this->register( 'memberships', new Modules\Memberships_Module( $client_provider, $entity_map ) );
 		}
 
 		// MemberPress module (mutually exclusive with WC Memberships — same Odoo models).
 		if ( defined( 'MEPR_VERSION' ) ) {
 			if ( ! isset( $this->modules['memberships'] ) || ! get_option( 'wp4odoo_module_memberships_enabled', false ) ) {
-				$this->register( 'memberpress', new Modules\MemberPress_Module() );
+				$this->register( 'memberpress', new Modules\MemberPress_Module( $client_provider, $entity_map ) );
 			}
 		}
 
 		// GiveWP module (donations → Odoo accounting).
 		if ( defined( 'GIVE_VERSION' ) ) {
-			$this->register( 'givewp', new Modules\GiveWP_Module() );
+			$this->register( 'givewp', new Modules\GiveWP_Module( $client_provider, $entity_map ) );
 		}
 
 		// WP Charitable module (donations → Odoo accounting).
 		if ( class_exists( 'Charitable' ) ) {
-			$this->register( 'charitable', new Modules\Charitable_Module() );
+			$this->register( 'charitable', new Modules\Charitable_Module( $client_provider, $entity_map ) );
 		}
 
 		// WP Simple Pay module (Stripe payments → Odoo accounting).
 		if ( defined( 'SIMPLE_PAY_VERSION' ) ) {
-			$this->register( 'simplepay', new Modules\SimplePay_Module() );
+			$this->register( 'simplepay', new Modules\SimplePay_Module( $client_provider, $entity_map ) );
 		}
 
 		// WP Recipe Maker module (recipes → Odoo products).
 		if ( defined( 'WPRM_VERSION' ) ) {
-			$this->register( 'wprm', new Modules\WPRM_Module() );
+			$this->register( 'wprm', new Modules\WPRM_Module( $client_provider, $entity_map ) );
 		}
 
 		// Forms module (requires Gravity Forms or WPForms).
 		$gf_active  = class_exists( 'GFAPI' );
 		$wpf_active = function_exists( 'wpforms' );
 		if ( $gf_active || $wpf_active ) {
-			$this->register( 'forms', new Modules\Forms_Module() );
+			$this->register( 'forms', new Modules\Forms_Module( $client_provider, $entity_map ) );
 		}
 
-		// Allow third-party modules.
-		do_action( 'wp4odoo_register_modules', $this->plugin );
+		// Allow third-party modules (closures and shared entity map available as arguments).
+		do_action( 'wp4odoo_register_modules', $this->plugin, $client_provider, $entity_map );
 	}
 
 	/**

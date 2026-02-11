@@ -69,10 +69,29 @@ abstract class Module_Base {
 	private array $mapping_cache = [];
 
 	/**
-	 * Constructor.
+	 * Closure that returns the Odoo_Client instance (lazy, injected by Module_Registry).
+	 *
+	 * @var \Closure(): Odoo_Client
 	 */
-	public function __construct() {
-		$this->logger = new Logger( $this->id );
+	private \Closure $client_provider;
+
+	/**
+	 * Entity map repository (injected by Module_Registry).
+	 *
+	 * @var Entity_Map_Repository
+	 */
+	private Entity_Map_Repository $entity_map;
+
+	/**
+	 * Constructor.
+	 *
+	 * @param \Closure              $client_provider Returns the shared Odoo_Client instance.
+	 * @param Entity_Map_Repository $entity_map      Shared entity map repository.
+	 */
+	public function __construct( \Closure $client_provider, Entity_Map_Repository $entity_map ) {
+		$this->client_provider = $client_provider;
+		$this->entity_map      = $entity_map;
+		$this->logger          = new Logger( $this->id );
 	}
 
 	/**
@@ -232,7 +251,7 @@ abstract class Module_Base {
 	 * @return int|null The Odoo ID, or null if not mapped.
 	 */
 	public function get_mapping( string $entity_type, int $wp_id ): ?int {
-		return Entity_Map_Repository::get_odoo_id( $this->id, $entity_type, $wp_id );
+		return $this->entity_map->get_odoo_id( $this->id, $entity_type, $wp_id );
 	}
 
 	/**
@@ -243,7 +262,7 @@ abstract class Module_Base {
 	 * @return int|null The WordPress ID, or null if not mapped.
 	 */
 	public function get_wp_mapping( string $entity_type, int $odoo_id ): ?int {
-		return Entity_Map_Repository::get_wp_id( $this->id, $entity_type, $odoo_id );
+		return $this->entity_map->get_wp_id( $this->id, $entity_type, $odoo_id );
 	}
 
 	/**
@@ -257,7 +276,7 @@ abstract class Module_Base {
 	 */
 	public function save_mapping( string $entity_type, int $wp_id, int $odoo_id, string $sync_hash = '' ): bool {
 		$odoo_model = $this->get_odoo_model( $entity_type );
-		return Entity_Map_Repository::save( $this->id, $entity_type, $wp_id, $odoo_id, $odoo_model, $sync_hash );
+		return $this->entity_map->save( $this->id, $entity_type, $wp_id, $odoo_id, $odoo_model, $sync_hash );
 	}
 
 	/**
@@ -268,7 +287,7 @@ abstract class Module_Base {
 	 * @return bool True if a mapping was deleted.
 	 */
 	public function remove_mapping( string $entity_type, int $wp_id ): bool {
-		return Entity_Map_Repository::remove( $this->id, $entity_type, $wp_id );
+		return $this->entity_map->remove( $this->id, $entity_type, $wp_id );
 	}
 
 	// -------------------------------------------------------------------------
@@ -468,12 +487,24 @@ abstract class Module_Base {
 	}
 
 	/**
-	 * Get the Odoo client instance.
+	 * Get the Odoo client instance (lazy, via injected closure).
 	 *
 	 * @return Odoo_Client
 	 */
 	protected function client(): Odoo_Client {
-		return \WP4Odoo_Plugin::instance()->client();
+		return ( $this->client_provider )();
+	}
+
+	/**
+	 * Get the entity map repository.
+	 *
+	 * Subclasses use this to inject the repository into helper classes
+	 * (Partner_Service, Variant_Handler, etc.).
+	 *
+	 * @return Entity_Map_Repository
+	 */
+	protected function entity_map(): Entity_Map_Repository {
+		return $this->entity_map;
 	}
 
 	/**

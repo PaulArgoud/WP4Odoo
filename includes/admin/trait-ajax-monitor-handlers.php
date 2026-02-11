@@ -30,7 +30,7 @@ trait Ajax_Monitor_Handlers {
 	public function retry_failed(): void {
 		$this->verify_request();
 
-		$count = Sync_Engine::retry_failed();
+		$count = \WP4Odoo\Queue_Manager::retry_failed();
 
 		wp_send_json_success(
 			[
@@ -53,7 +53,7 @@ trait Ajax_Monitor_Handlers {
 		$this->verify_request();
 
 		$days    = $this->get_post_field( 'days', 'int' ) ?: 7;
-		$deleted = Sync_Engine::cleanup( $days );
+		$deleted = \WP4Odoo\Queue_Manager::cleanup( $days );
 
 		wp_send_json_success(
 			[
@@ -208,6 +208,6 @@ trait Ajax_Monitor_Handlers {
 	public function queue_stats(): void {
 		$this->verify_request();
 
-		wp_send_json_success( Sync_Engine::get_stats() );
+		wp_send_json_success( \WP4Odoo\Queue_Manager::get_stats() );
 	}
 }

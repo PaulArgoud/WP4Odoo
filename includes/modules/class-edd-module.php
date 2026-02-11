@@ -97,7 +97,7 @@ class EDD_Module extends Module_Base {
 
 		$settings = $this->get_settings();
 
-		$this->partner_service  = new Partner_Service( fn() => $this->client() );
+		$this->partner_service  = new Partner_Service( fn() => $this->client(), $this->entity_map() );
 		$this->download_handler = new EDD_Download_Handler( $this->logger );
 		$this->order_handler    = new EDD_Order_Handler( $this->logger, $this->partner_service );
 

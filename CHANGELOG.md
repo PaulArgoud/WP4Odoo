@@ -155,6 +155,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+#### Dependency Injection — Service Locator Removal
+- `Module_Base` — constructor now requires `\Closure $client_provider`; `client()` uses the injected closure instead of `WP4Odoo_Plugin::instance()->client()` (removes hidden service locator pattern)
+- 8 module constructors updated to forward `$client_provider` to parent: `CRM_Module`, `Memberships_Module`, `MemberPress_Module`, `GiveWP_Module`, `Charitable_Module`, `SimplePay_Module`, `WPRM_Module`, `Forms_Module`
+- 3 modules inherit automatically (no constructor): `Sales_Module`, `WooCommerce_Module`, `EDD_Module`
+- `Module_Registry` — acts as factory: creates a single `$client_provider` closure and distributes it to all modules; `wp4odoo_register_modules` hook now passes `$client_provider` as 2nd argument for third-party modules
+- `Sync_Engine` — constructor now requires `\Closure $module_resolver`; `process_job()` uses the injected closure instead of `WP4Odoo_Plugin::instance()->get_module()` (removes singleton access)
+- `wp4odoo.php` and `class-cli.php` — pass module resolver closure to `Sync_Engine`
+- Tests — added `wp4odoo_test_client_provider()` and `wp4odoo_test_module_resolver()` helpers in bootstrap; updated all module and engine tests
+
+#### Dependency Injection — Static Repositories → Injected Instances
+- `Entity_Map_Repository` — converted from pure-static class to injectable instance; 7 methods now non-static, per-request cache is per-instance (test-isolable)
+- `Sync_Queue_Repository` — converted from pure-static class to injectable instance; 9 methods now non-static
+- `Module_Base` — constructor now requires `Entity_Map_Repository $entity_map`; 4 wrapper methods (`get_mapping`, `get_wp_mapping`, `save_mapping`, `remove_mapping`) delegate to `$this->entity_map` instead of static calls; new protected getter `entity_map()` for subclasses
+- 8 module constructors updated to forward `$entity_map` to parent
+- `Module_Registry` — creates one shared `Entity_Map_Repository` instance and distributes it to all modules; `wp4odoo_register_modules` hook now passes `$entity_map` as 3rd argument
+- `Partner_Service` — constructor now requires `Entity_Map_Repository $entity_map`; 4 static calls replaced with instance calls
+- `Variant_Handler` — constructor now requires `Entity_Map_Repository $entity_map`; 2 static calls replaced with instance calls
+- `Bulk_Handler` — constructor now requires `Entity_Map_Repository $entity_map`; 2 static calls replaced with instance calls
+- `Sync_Engine` — constructor now requires `Sync_Queue_Repository $queue_repo`; 4 internal static calls replaced with instance calls; 4 static wrappers (`enqueue`, `get_stats`, `cleanup`, `retry_failed`) removed
+- `Queue_Manager` — now owns a lazy `Sync_Queue_Repository` instance internally; absorbed the 3 convenience methods from Sync_Engine (`get_stats`, `retry_failed`, `cleanup`)
+- `CLI`, `Admin_Ajax`, `Settings_Page` — all `Sync_Engine::get_stats/retry_failed/cleanup` calls migrated to `Queue_Manager::`
+- Tests — added `wp4odoo_test_entity_map()` and `wp4odoo_test_queue_repo()` helpers; updated ~20 test files for instance-based repositories
+
 - Plugin version bumped from 1.9.8 to 2.0.0
 - PHPUnit: 879 unit tests, 1436 assertions — all green (was 436/855)
 - PHPStan: 0 errors on 75 files (was 47 — added 3 module files + 2 forms files + 1 exchange rate file + 4 EDD files + 3 MemberPress files + 3 GiveWP files + 3 Charitable files + 3 SimplePay files + 3 WPRM files + 2 shared accounting files)

@@ -54,6 +54,13 @@ class Sync_Engine {
 	private Failure_Notifier $failure_notifier;
 
 	/**
+	 * Closure that resolves a module by ID (injected, replaces singleton access).
+	 *
+	 * @var \Closure(string): ?Module_Base
+	 */
+	private \Closure $module_resolver;
+
+	/**
 	 * When true, jobs are logged but not executed.
 	 *
 	 * @var bool
@@ -75,9 +82,21 @@ class Sync_Engine {
 	private int $batch_successes = 0;
 
 	/**
-	 * Constructor.
+	 * Sync queue repository (injected).
+	 *
+	 * @var Sync_Queue_Repository
 	 */
-	public function __construct() {
+	private Sync_Queue_Repository $queue_repo;
+
+	/**
+	 * Constructor.
+	 *
+	 * @param \Closure              $module_resolver Returns a Module_Base (or null) for a given module ID.
+	 * @param Sync_Queue_Repository $queue_repo      Sync queue repository.
+	 */
+	public function __construct( \Closure $module_resolver, Sync_Queue_Repository $queue_repo ) {
+		$this->module_resolver  = $module_resolver;
+		$this->queue_repo       = $queue_repo;
 		$this->logger           = new Logger( 'sync' );
 		$this->failure_notifier = new Failure_Notifier( $this->logger );
 	}
@@ -117,7 +136,7 @@ class Sync_Engine {
 		$batch = (int) ( $settings['batch_size'] ?? 50 );
 		$now   = current_time( 'mysql', true );
 
-		$jobs       = Sync_Queue_Repository::fetch_pending( $batch, $now );
+		$jobs       = $this->queue_repo->fetch_pending( $batch, $now );
 		$processed  = 0;
 		$start_time = microtime( true );
 
@@ -137,13 +156,13 @@ class Sync_Engine {
 				break;
 			}
 
-			Sync_Queue_Repository::update_status( (int) $job->id, 'processing' );
+			$this->queue_repo->update_status( (int) $job->id, 'processing' );
 
 			try {
 				$success = $this->process_job( $job );
 
 				if ( $success ) {
-					Sync_Queue_Repository::update_status(
+					$this->queue_repo->update_status(
 						(int) $job->id,
 						'completed',
 						[
@@ -176,64 +195,13 @@ class Sync_Engine {
 	}
 
 	/**
-	 * Enqueue a sync job with deduplication.
-	 *
-	 * If a pending job already exists for the same module/entity_type/direction
-	 * and wp_id or odoo_id, update it instead of creating a duplicate.
-	 *
-	 * @param array $args {
-	 *     @type string   $module      Module identifier.
-	 *     @type string   $direction   'wp_to_odoo' or 'odoo_to_wp'.
-	 *     @type string   $entity_type Entity type (e.g., 'product', 'order').
-	 *     @type int|null $wp_id       WordPress entity ID.
-	 *     @type int|null $odoo_id     Odoo entity ID.
-	 *     @type string   $action      'create', 'update', or 'delete'.
-	 *     @type array    $payload     Data payload.
-	 *     @type int      $priority    Priority (1-10, lower = higher priority).
-	 * }
-	 * @return int|false The job ID, or false on failure.
-	 */
-	public static function enqueue( array $args ): int|false {
-		return Sync_Queue_Repository::enqueue( $args );
-	}
-
-	/**
-	 * Get queue statistics.
-	 *
-	 * @return array{pending: int, processing: int, completed: int, failed: int, total: int, last_completed_at: string}
-	 */
-	public static function get_stats(): array {
-		return Sync_Queue_Repository::get_stats();
-	}
-
-	/**
-	 * Clean up completed and old failed jobs.
-	 *
-	 * @param int $days_old Delete completed/failed jobs older than this many days.
-	 * @return int Number of deleted rows.
-	 */
-	public static function cleanup( int $days_old = 7 ): int {
-		return Sync_Queue_Repository::cleanup( $days_old );
-	}
-
-	/**
-	 * Retry all failed jobs by resetting their status to pending.
-	 *
-	 * @return int Number of jobs reset.
-	 */
-	public static function retry_failed(): int {
-		return Sync_Queue_Repository::retry_failed();
-	}
-
-	/**
 	 * Process a single queue job.
 	 *
 	 * @param object $job The queue row object.
 	 * @return bool True if processed successfully.
 	 */
 	private function process_job( object $job ): bool {
-		$plugin = \WP4Odoo_Plugin::instance();
-		$module = $plugin->get_module( $job->module );
+		$module = ( $this->module_resolver )( $job->module );
 
 		if ( null === $module ) {
 
@@ -285,7 +253,7 @@ class Sync_Engine {
 		$error_trimmed = sanitize_text_field( mb_substr( $error_message, 0, 65535 ) );
 
 		if ( $attempts >= (int) $job->max_attempts ) {
-			Sync_Queue_Repository::update_status(
+			$this->queue_repo->update_status(
 				(int) $job->id,
 				'failed',
 				[
@@ -308,7 +276,7 @@ class Sync_Engine {
 			$delay     = $attempts * 60;
 			$scheduled = gmdate( 'Y-m-d H:i:s', time() + $delay );
 
-			Sync_Queue_Repository::update_status(
+			$this->queue_repo->update_status(
 				(int) $job->id,
 				'pending',
 				[

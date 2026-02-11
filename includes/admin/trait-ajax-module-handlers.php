@@ -174,7 +174,7 @@ trait Ajax_Module_Handlers {
 			);
 		}
 
-		$handler = new Bulk_Handler( $plugin->client() );
+		$handler = new Bulk_Handler( $plugin->client(), new \WP4Odoo\Entity_Map_Repository() );
 		wp_send_json_success( $handler->import_products() );
 	}
 
@@ -195,7 +195,7 @@ trait Ajax_Module_Handlers {
 			);
 		}
 
-		$handler = new Bulk_Handler( $plugin->client() );
+		$handler = new Bulk_Handler( $plugin->client(), new \WP4Odoo\Entity_Map_Repository() );
 		wp_send_json_success( $handler->export_products() );
 	}
 }

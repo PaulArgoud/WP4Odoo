@@ -29,12 +29,21 @@ final class Bulk_Handler {
 	private Odoo_Client $client;
 
 	/**
+	 * Entity map repository.
+	 *
+	 * @var Entity_Map_Repository
+	 */
+	private Entity_Map_Repository $entity_map;
+
+	/**
 	 * Constructor.
 	 *
-	 * @param Odoo_Client $client Odoo API client.
+	 * @param Odoo_Client           $client     Odoo API client.
+	 * @param Entity_Map_Repository $entity_map Entity map repository.
 	 */
-	public function __construct( Odoo_Client $client ) {
-		$this->client = $client;
+	public function __construct( Odoo_Client $client, Entity_Map_Repository $entity_map ) {
+		$this->client     = $client;
+		$this->entity_map = $entity_map;
 	}
 
 	/**
@@ -64,7 +73,7 @@ final class Bulk_Handler {
 
 			$odoo_ids = array_map( 'intval', $odoo_ids );
 			$fetched  = count( $odoo_ids );
-			$map      = Entity_Map_Repository::get_wp_ids_batch( 'woocommerce', 'product', $odoo_ids );
+			$map      = $this->entity_map->get_wp_ids_batch( 'woocommerce', 'product', $odoo_ids );
 
 			foreach ( $odoo_ids as $odoo_id ) {
 				$wp_id  = $map[ $odoo_id ] ?? 0;
@@ -124,7 +133,7 @@ final class Bulk_Handler {
 
 			$product_ids = array_map( 'intval', $product_ids );
 			$fetched     = count( $product_ids );
-			$map         = Entity_Map_Repository::get_odoo_ids_batch( 'woocommerce', 'product', $product_ids );
+			$map         = $this->entity_map->get_odoo_ids_batch( 'woocommerce', 'product', $product_ids );
 
 			foreach ( $product_ids as $wp_id ) {
 				$odoo_id = $map[ $wp_id ] ?? 0;

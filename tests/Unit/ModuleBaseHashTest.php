@@ -14,6 +14,10 @@ class Testable_Module extends Module_Base {
 	protected string $id   = 'test';
 	protected string $name = 'Test';
 
+	public function __construct() {
+		parent::__construct( wp4odoo_test_client_provider(), wp4odoo_test_entity_map() );
+	}
+
 	public function boot(): void {}
 
 	public function get_default_settings(): array {

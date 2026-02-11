@@ -91,7 +91,7 @@ class Sales_Module extends Module_Base {
 	 * @return void
 	 */
 	public function boot(): void {
-		$partner_service      = new Partner_Service( fn() => $this->client() );
+		$partner_service      = new Partner_Service( fn() => $this->client(), $this->entity_map() );
 		$this->portal_manager = new Portal_Manager( $this->logger, fn() => $this->get_settings(), $partner_service );
 
 		// Register CPTs.

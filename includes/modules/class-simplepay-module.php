@@ -103,8 +103,8 @@ class SimplePay_Module extends Module_Base {
 	/**
 	 * Constructor.
 	 */
-	public function __construct() {
-		parent::__construct();
+	public function __construct( \Closure $client_provider, \WP4Odoo\Entity_Map_Repository $entity_map ) {
+		parent::__construct( $client_provider, $entity_map );
 		$this->handler = new SimplePay_Handler( $this->logger );
 	}
 

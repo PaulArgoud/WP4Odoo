@@ -14,7 +14,7 @@ class SimplePayModuleTest extends TestCase {
 	private SimplePay_Module $module;
 
 	protected function setUp(): void {
-		$this->module = new SimplePay_Module();
+		$this->module = new SimplePay_Module( wp4odoo_test_client_provider(), wp4odoo_test_entity_map() );
 	}
 
 	// ─── Identity ───────────────────────────────────────────

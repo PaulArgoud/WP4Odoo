@@ -320,7 +320,7 @@ class Settings_Page {
 	 * @return void
 	 */
 	public function render_tab_queue(): void {
-		$stats    = Sync_Engine::get_stats();
+		$stats    = \WP4Odoo\Queue_Manager::get_stats();
 		$page     = isset( $_GET['paged'] ) ? max( 1, absint( $_GET['paged'] ) ) : 1; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$per_page = 30;
 		$jobs     = Query_Service::get_queue_jobs( $page, $per_page );

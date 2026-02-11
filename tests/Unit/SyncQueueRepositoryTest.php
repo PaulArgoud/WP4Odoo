@@ -14,17 +14,20 @@ use PHPUnit\Framework\TestCase;
 class SyncQueueRepositoryTest extends TestCase {
 
 	private \WP_DB_Stub $wpdb;
+	private Sync_Queue_Repository $repo;
 
 	protected function setUp(): void {
 		global $wpdb;
 		$this->wpdb = new \WP_DB_Stub();
 		$wpdb       = $this->wpdb;
+
+		$this->repo = new Sync_Queue_Repository();
 	}
 
 	// ─── enqueue() — Validation ────────────────────────────
 
 	public function test_enqueue_returns_false_for_empty_module(): void {
-		$result = Sync_Queue_Repository::enqueue( [
+		$result = $this->repo->enqueue( [
 			'module'      => '',
 			'entity_type' => 'contact',
 		] );
@@ -33,7 +36,7 @@ class SyncQueueRepositoryTest extends TestCase {
 	}
 
 	public function test_enqueue_returns_false_for_empty_entity_type(): void {
-		$result = Sync_Queue_Repository::enqueue( [
+		$result = $this->repo->enqueue( [
 			'module'      => 'crm',
 			'entity_type' => '',
 		] );
@@ -46,7 +49,7 @@ class SyncQueueRepositoryTest extends TestCase {
 	public function test_enqueue_defaults_direction_to_wp_to_odoo(): void {
 		$this->wpdb->insert_id = 1;
 
-		Sync_Queue_Repository::enqueue( [
+		$this->repo->enqueue( [
 			'module'      => 'crm',
 			'entity_type' => 'contact',
 			'wp_id'       => 10,
@@ -59,7 +62,7 @@ class SyncQueueRepositoryTest extends TestCase {
 	public function test_enqueue_accepts_odoo_to_wp_direction(): void {
 		$this->wpdb->insert_id = 1;
 
-		Sync_Queue_Repository::enqueue( [
+		$this->repo->enqueue( [
 			'module'      => 'crm',
 			'entity_type' => 'contact',
 			'direction'   => 'odoo_to_wp',
@@ -73,7 +76,7 @@ class SyncQueueRepositoryTest extends TestCase {
 	public function test_enqueue_defaults_action_to_update(): void {
 		$this->wpdb->insert_id = 1;
 
-		Sync_Queue_Repository::enqueue( [
+		$this->repo->enqueue( [
 			'module'      => 'crm',
 			'entity_type' => 'contact',
 			'wp_id'       => 10,
@@ -86,7 +89,7 @@ class SyncQueueRepositoryTest extends TestCase {
 	public function test_enqueue_accepts_valid_action(): void {
 		$this->wpdb->insert_id = 1;
 
-		Sync_Queue_Repository::enqueue( [
+		$this->repo->enqueue( [
 			'module'      => 'crm',
 			'entity_type' => 'contact',
 			'wp_id'       => 10,
@@ -100,7 +103,7 @@ class SyncQueueRepositoryTest extends TestCase {
 	public function test_enqueue_defaults_priority_to_5(): void {
 		$this->wpdb->insert_id = 1;
 
-		Sync_Queue_Repository::enqueue( [
+		$this->repo->enqueue( [
 			'module'      => 'crm',
 			'entity_type' => 'contact',
 			'wp_id'       => 10,
@@ -115,7 +118,7 @@ class SyncQueueRepositoryTest extends TestCase {
 	public function test_enqueue_updates_existing_pending_job(): void {
 		$this->wpdb->get_var_return = '99';
 
-		$result = Sync_Queue_Repository::enqueue( [
+		$result = $this->repo->enqueue( [
 			'module'      => 'crm',
 			'entity_type' => 'contact',
 			'wp_id'       => 10,
@@ -131,7 +134,7 @@ class SyncQueueRepositoryTest extends TestCase {
 		$this->wpdb->get_var_return = null;
 		$this->wpdb->insert_id     = 42;
 
-		$result = Sync_Queue_Repository::enqueue( [
+		$result = $this->repo->enqueue( [
 			'module'      => 'crm',
 			'entity_type' => 'contact',
 			'wp_id'       => 10,
@@ -146,7 +149,7 @@ class SyncQueueRepositoryTest extends TestCase {
 		$this->wpdb->get_var_return = null;
 		$this->wpdb->insert_id     = 0;
 
-		$result = Sync_Queue_Repository::enqueue( [
+		$result = $this->repo->enqueue( [
 			'module'      => 'crm',
 			'entity_type' => 'contact',
 			'wp_id'       => 10,
@@ -158,7 +161,7 @@ class SyncQueueRepositoryTest extends TestCase {
 	public function test_enqueue_includes_wp_id_in_insert_data(): void {
 		$this->wpdb->insert_id = 1;
 
-		Sync_Queue_Repository::enqueue( [
+		$this->repo->enqueue( [
 			'module'      => 'crm',
 			'entity_type' => 'contact',
 			'wp_id'       => 77,
@@ -171,7 +174,7 @@ class SyncQueueRepositoryTest extends TestCase {
 	public function test_enqueue_includes_odoo_id_in_insert_data(): void {
 		$this->wpdb->insert_id = 1;
 
-		Sync_Queue_Repository::enqueue( [
+		$this->repo->enqueue( [
 			'module'      => 'sales',
 			'entity_type' => 'order',
 			'direction'   => 'odoo_to_wp',
@@ -185,7 +188,7 @@ class SyncQueueRepositoryTest extends TestCase {
 	public function test_enqueue_sets_status_to_pending(): void {
 		$this->wpdb->insert_id = 1;
 
-		Sync_Queue_Repository::enqueue( [
+		$this->repo->enqueue( [
 			'module'      => 'crm',
 			'entity_type' => 'contact',
 			'wp_id'       => 10,
@@ -198,7 +201,7 @@ class SyncQueueRepositoryTest extends TestCase {
 	public function test_enqueue_encodes_payload_as_json(): void {
 		$this->wpdb->insert_id = 1;
 
-		Sync_Queue_Repository::enqueue( [
+		$this->repo->enqueue( [
 			'module'      => 'crm',
 			'entity_type' => 'contact',
 			'wp_id'       => 10,
@@ -218,7 +221,7 @@ class SyncQueueRepositoryTest extends TestCase {
 		];
 		$this->wpdb->get_var_return = '2025-06-15 14:30:00';
 
-		$stats = Sync_Queue_Repository::get_stats();
+		$stats = $this->repo->get_stats();
 
 		$this->assertArrayHasKey( 'last_completed_at', $stats );
 		$this->assertSame( '2025-06-15 14:30:00', $stats['last_completed_at'] );
@@ -229,7 +232,7 @@ class SyncQueueRepositoryTest extends TestCase {
 		$this->wpdb->get_results_return = [];
 		$this->wpdb->get_var_return     = null;
 
-		$stats = Sync_Queue_Repository::get_stats();
+		$stats = $this->repo->get_stats();
 
 		$this->assertArrayHasKey( 'last_completed_at', $stats );
 		$this->assertSame( '', $stats['last_completed_at'] );
@@ -240,12 +243,12 @@ class SyncQueueRepositoryTest extends TestCase {
 
 	public function test_cancel_returns_true_when_deleted(): void {
 		$this->wpdb->delete_return = 1;
-		$this->assertTrue( Sync_Queue_Repository::cancel( 42 ) );
+		$this->assertTrue( $this->repo->cancel( 42 ) );
 	}
 
 	public function test_cancel_returns_false_when_not_found(): void {
 		$this->wpdb->delete_return = 0;
-		$this->assertFalse( Sync_Queue_Repository::cancel( 999 ) );
+		$this->assertFalse( $this->repo->cancel( 999 ) );
 	}
 
 	// ─── fetch_pending() ──────────────────────────────────
@@ -256,7 +259,7 @@ class SyncQueueRepositoryTest extends TestCase {
 			(object) [ 'id' => '2', 'module' => 'crm', 'status' => 'pending' ],
 		];
 
-		$jobs = Sync_Queue_Repository::fetch_pending( 50, '2025-06-15 12:00:00' );
+		$jobs = $this->repo->fetch_pending( 50, '2025-06-15 12:00:00' );
 
 		$this->assertCount( 2, $jobs );
 		$this->assertSame( '1', $jobs[0]->id );
@@ -265,7 +268,7 @@ class SyncQueueRepositoryTest extends TestCase {
 	public function test_fetch_pending_returns_empty_when_no_jobs(): void {
 		$this->wpdb->get_results_return = [];
 
-		$jobs = Sync_Queue_Repository::fetch_pending( 50, '2025-06-15 12:00:00' );
+		$jobs = $this->repo->fetch_pending( 50, '2025-06-15 12:00:00' );
 
 		$this->assertSame( [], $jobs );
 	}
@@ -273,7 +276,7 @@ class SyncQueueRepositoryTest extends TestCase {
 	public function test_fetch_pending_queries_pending_with_schedule(): void {
 		$this->wpdb->get_results_return = [];
 
-		Sync_Queue_Repository::fetch_pending( 10, '2025-12-01 00:00:00' );
+		$this->repo->fetch_pending( 10, '2025-12-01 00:00:00' );
 
 		$prepare = $this->get_calls( 'prepare' );
 		$this->assertNotEmpty( $prepare );
@@ -285,7 +288,7 @@ class SyncQueueRepositoryTest extends TestCase {
 	// ─── update_status() ──────────────────────────────────
 
 	public function test_update_status_calls_update_with_status(): void {
-		Sync_Queue_Repository::update_status( 42, 'completed' );
+		$this->repo->update_status( 42, 'completed' );
 
 		$update = $this->get_last_call( 'update' );
 		$this->assertNotNull( $update );
@@ -294,7 +297,7 @@ class SyncQueueRepositoryTest extends TestCase {
 	}
 
 	public function test_update_status_merges_extra_fields(): void {
-		Sync_Queue_Repository::update_status( 42, 'failed', [
+		$this->repo->update_status( 42, 'failed', [
 			'attempts'      => 3,
 			'error_message' => 'Connection error',
 		] );
@@ -311,7 +314,7 @@ class SyncQueueRepositoryTest extends TestCase {
 	public function test_cleanup_deletes_old_jobs(): void {
 		$this->wpdb->query_return = 5;
 
-		$result = Sync_Queue_Repository::cleanup( 7 );
+		$result = $this->repo->cleanup( 7 );
 
 		$this->assertSame( 5, $result );
 		$queries = $this->get_calls( 'query' );
@@ -321,7 +324,7 @@ class SyncQueueRepositoryTest extends TestCase {
 	public function test_cleanup_returns_zero_when_nothing_deleted(): void {
 		$this->wpdb->query_return = 0;
 
-		$result = Sync_Queue_Repository::cleanup( 30 );
+		$result = $this->repo->cleanup( 30 );
 
 		$this->assertSame( 0, $result );
 	}
@@ -329,7 +332,7 @@ class SyncQueueRepositoryTest extends TestCase {
 	public function test_cleanup_uses_prepare_with_status_filter(): void {
 		$this->wpdb->query_return = 0;
 
-		Sync_Queue_Repository::cleanup( 7 );
+		$this->repo->cleanup( 7 );
 
 		$prepare = $this->get_calls( 'prepare' );
 		$this->assertNotEmpty( $prepare );
@@ -341,7 +344,7 @@ class SyncQueueRepositoryTest extends TestCase {
 	public function test_retry_failed_resets_failed_jobs(): void {
 		$this->wpdb->query_return = 3;
 
-		$result = Sync_Queue_Repository::retry_failed();
+		$result = $this->repo->retry_failed();
 
 		$this->assertSame( 3, $result );
 		$queries = $this->get_calls( 'query' );
@@ -352,7 +355,7 @@ class SyncQueueRepositoryTest extends TestCase {
 	public function test_retry_failed_returns_zero_when_no_failed_jobs(): void {
 		$this->wpdb->query_return = 0;
 
-		$result = Sync_Queue_Repository::retry_failed();
+		$result = $this->repo->retry_failed();
 
 		$this->assertSame( 0, $result );
 	}
@@ -364,7 +367,7 @@ class SyncQueueRepositoryTest extends TestCase {
 			(object) [ 'id' => '1', 'module' => 'crm', 'entity_type' => 'contact' ],
 		];
 
-		$jobs = Sync_Queue_Repository::get_pending( 'crm' );
+		$jobs = $this->repo->get_pending( 'crm' );
 
 		$this->assertCount( 1, $jobs );
 	}
@@ -372,7 +375,7 @@ class SyncQueueRepositoryTest extends TestCase {
 	public function test_get_pending_filters_by_entity_type(): void {
 		$this->wpdb->get_results_return = [];
 
-		Sync_Queue_Repository::get_pending( 'woocommerce', 'product' );
+		$this->repo->get_pending( 'woocommerce', 'product' );
 
 		$prepare = $this->get_calls( 'prepare' );
 		$this->assertNotEmpty( $prepare );
@@ -382,7 +385,7 @@ class SyncQueueRepositoryTest extends TestCase {
 	public function test_get_pending_returns_empty_when_no_jobs(): void {
 		$this->wpdb->get_results_return = [];
 
-		$jobs = Sync_Queue_Repository::get_pending( 'sales' );
+		$jobs = $this->repo->get_pending( 'sales' );
 
 		$this->assertSame( [], $jobs );
 	}

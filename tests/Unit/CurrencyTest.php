@@ -96,12 +96,12 @@ class CurrencyTest extends TestCase {
 	private function create_wc_module(): WooCommerce_Module {
 		global $wpdb;
 		$wpdb = new \WP_DB_Stub();
-		return new WooCommerce_Module();
+		return new WooCommerce_Module( wp4odoo_test_client_provider(), wp4odoo_test_entity_map() );
 	}
 
 	private function create_sales_module(): Sales_Module {
 		global $wpdb;
 		$wpdb = new \WP_DB_Stub();
-		return new Sales_Module();
+		return new Sales_Module( wp4odoo_test_client_provider(), wp4odoo_test_entity_map() );
 	}
 }

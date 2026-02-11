@@ -22,7 +22,7 @@ class WooCommerceModuleTest extends TestCase {
 		$this->wpdb = new \WP_DB_Stub();
 		$wpdb       = $this->wpdb;
 
-		$this->module = new WooCommerce_Module();
+		$this->module = new WooCommerce_Module( wp4odoo_test_client_provider(), wp4odoo_test_entity_map() );
 	}
 
 	// ─── Module Identity ───────────────────────────────────

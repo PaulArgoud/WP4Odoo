@@ -142,10 +142,10 @@ class WooCommerce_Module extends Module_Base {
 		$convert_currency = ! empty( $settings['convert_currency'] );
 		$rate_service     = new Exchange_Rate_Service( $this->logger, fn() => $this->client() );
 
-		$this->partner_service = new Partner_Service( fn() => $this->client() );
+		$this->partner_service = new Partner_Service( fn() => $this->client(), $this->entity_map() );
 		$this->product_handler = new Product_Handler( $this->logger, $rate_service, $convert_currency );
 		$this->order_handler   = new Order_Handler( $this->logger, $this->partner_service );
-		$this->variant_handler = new Variant_Handler( $this->logger, fn() => $this->client(), $rate_service, $convert_currency );
+		$this->variant_handler = new Variant_Handler( $this->logger, fn() => $this->client(), $this->entity_map(), $rate_service, $convert_currency );
 		$this->image_handler   = new Image_Handler( $this->logger );
 
 		// Capture raw Odoo data during product pull for image processing.

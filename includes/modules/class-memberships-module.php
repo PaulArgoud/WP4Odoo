@@ -93,8 +93,8 @@ class Memberships_Module extends Module_Base {
 	/**
 	 * Constructor.
 	 */
-	public function __construct() {
-		parent::__construct();
+	public function __construct( \Closure $client_provider, \WP4Odoo\Entity_Map_Repository $entity_map ) {
+		parent::__construct( $client_provider, $entity_map );
 		$this->membership_handler = new Membership_Handler( $this->logger );
 	}
 
@@ -316,7 +316,7 @@ class Memberships_Module extends Module_Base {
 	 */
 	private function partner_service(): Partner_Service {
 		if ( null === $this->partner_service ) {
-			$this->partner_service = new Partner_Service( fn() => $this->client() );
+			$this->partner_service = new Partner_Service( fn() => $this->client(), $this->entity_map() );
 		}
 
 		return $this->partner_service;

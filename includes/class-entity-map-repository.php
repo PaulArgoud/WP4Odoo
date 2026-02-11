@@ -29,7 +29,7 @@ class Entity_Map_Repository {
 	 *
 	 * @var array<string, int|null>
 	 */
-	private static array $cache = [];
+	private array $cache = [];
 
 	/**
 	 * Get the Odoo ID mapped to a WordPress entity.
@@ -39,11 +39,11 @@ class Entity_Map_Repository {
 	 * @param int    $wp_id       WordPress ID.
 	 * @return int|null The Odoo ID, or null if not mapped.
 	 */
-	public static function get_odoo_id( string $module, string $entity_type, int $wp_id ): ?int {
+	public function get_odoo_id( string $module, string $entity_type, int $wp_id ): ?int {
 		$cache_key = "{$module}:{$entity_type}:wp:{$wp_id}";
 
-		if ( array_key_exists( $cache_key, self::$cache ) ) {
-			return self::$cache[ $cache_key ];
+		if ( array_key_exists( $cache_key, $this->cache ) ) {
+			return $this->cache[ $cache_key ];
 		}
 
 		global $wpdb;
@@ -61,10 +61,10 @@ class Entity_Map_Repository {
 
 		$result = null !== $odoo_id ? (int) $odoo_id : null;
 
-		self::$cache[ $cache_key ] = $result;
+		$this->cache[ $cache_key ] = $result;
 
 		if ( null !== $result ) {
-			self::$cache[ "{$module}:{$entity_type}:odoo:{$result}" ] = $wp_id;
+			$this->cache[ "{$module}:{$entity_type}:odoo:{$result}" ] = $wp_id;
 		}
 
 		return $result;
@@ -78,11 +78,11 @@ class Entity_Map_Repository {
 	 * @param int    $odoo_id     Odoo ID.
 	 * @return int|null The WordPress ID, or null if not mapped.
 	 */
-	public static function get_wp_id( string $module, string $entity_type, int $odoo_id ): ?int {
+	public function get_wp_id( string $module, string $entity_type, int $odoo_id ): ?int {
 		$cache_key = "{$module}:{$entity_type}:odoo:{$odoo_id}";
 
-		if ( array_key_exists( $cache_key, self::$cache ) ) {
-			return self::$cache[ $cache_key ];
+		if ( array_key_exists( $cache_key, $this->cache ) ) {
+			return $this->cache[ $cache_key ];
 		}
 
 		global $wpdb;
@@ -100,10 +100,10 @@ class Entity_Map_Repository {
 
 		$result = null !== $wp_id ? (int) $wp_id : null;
 
-		self::$cache[ $cache_key ] = $result;
+		$this->cache[ $cache_key ] = $result;
 
 		if ( null !== $result ) {
-			self::$cache[ "{$module}:{$entity_type}:wp:{$result}" ] = $odoo_id;
+			$this->cache[ "{$module}:{$entity_type}:wp:{$result}" ] = $odoo_id;
 		}
 
 		return $result;
@@ -117,7 +117,7 @@ class Entity_Map_Repository {
 	 * @param array<int>   $odoo_ids    Odoo IDs to look up.
 	 * @return array<int, int> Map of odoo_id => wp_id for existing mappings.
 	 */
-	public static function get_wp_ids_batch( string $module, string $entity_type, array $odoo_ids ): array {
+	public function get_wp_ids_batch( string $module, string $entity_type, array $odoo_ids ): array {
 		if ( empty( $odoo_ids ) ) {
 			return [];
 		}
@@ -145,8 +145,8 @@ class Entity_Map_Repository {
 
 				$map[ $o_id ] = $w_id;
 
-				self::$cache[ "{$module}:{$entity_type}:odoo:{$o_id}" ] = $w_id;
-				self::$cache[ "{$module}:{$entity_type}:wp:{$w_id}" ]   = $o_id;
+				$this->cache[ "{$module}:{$entity_type}:odoo:{$o_id}" ] = $w_id;
+				$this->cache[ "{$module}:{$entity_type}:wp:{$w_id}" ]   = $o_id;
 			}
 		}
 
@@ -161,7 +161,7 @@ class Entity_Map_Repository {
 	 * @param array<int>   $wp_ids      WordPress IDs to look up.
 	 * @return array<int, int> Map of wp_id => odoo_id for existing mappings.
 	 */
-	public static function get_odoo_ids_batch( string $module, string $entity_type, array $wp_ids ): array {
+	public function get_odoo_ids_batch( string $module, string $entity_type, array $wp_ids ): array {
 		if ( empty( $wp_ids ) ) {
 			return [];
 		}
@@ -189,8 +189,8 @@ class Entity_Map_Repository {
 
 				$map[ $w_id ] = $o_id;
 
-				self::$cache[ "{$module}:{$entity_type}:wp:{$w_id}" ]   = $o_id;
-				self::$cache[ "{$module}:{$entity_type}:odoo:{$o_id}" ] = $w_id;
+				$this->cache[ "{$module}:{$entity_type}:wp:{$w_id}" ]   = $o_id;
+				$this->cache[ "{$module}:{$entity_type}:odoo:{$o_id}" ] = $w_id;
 			}
 		}
 
@@ -210,7 +210,7 @@ class Entity_Map_Repository {
 	 * @param string $sync_hash   SHA-256 hash of synced data.
 	 * @return bool True on success.
 	 */
-	public static function save( string $module, string $entity_type, int $wp_id, int $odoo_id, string $odoo_model, string $sync_hash = '' ): bool {
+	public function save( string $module, string $entity_type, int $wp_id, int $odoo_id, string $odoo_model, string $sync_hash = '' ): bool {
 		global $wpdb;
 
 		$table = $wpdb->prefix . 'wp4odoo_entity_map';
@@ -229,8 +229,8 @@ class Entity_Map_Repository {
 		);
 
 		if ( false !== $result ) {
-			self::$cache[ "{$module}:{$entity_type}:wp:{$wp_id}" ]     = $odoo_id;
-			self::$cache[ "{$module}:{$entity_type}:odoo:{$odoo_id}" ] = $wp_id;
+			$this->cache[ "{$module}:{$entity_type}:wp:{$wp_id}" ]     = $odoo_id;
+			$this->cache[ "{$module}:{$entity_type}:odoo:{$odoo_id}" ] = $wp_id;
 		}
 
 		return false !== $result;
@@ -244,9 +244,9 @@ class Entity_Map_Repository {
 	 * @param int    $wp_id       WordPress ID.
 	 * @return bool True if a mapping was deleted.
 	 */
-	public static function remove( string $module, string $entity_type, int $wp_id ): bool {
+	public function remove( string $module, string $entity_type, int $wp_id ): bool {
 		$forward_key = "{$module}:{$entity_type}:wp:{$wp_id}";
-		$odoo_id     = self::$cache[ $forward_key ] ?? null;
+		$odoo_id     = $this->cache[ $forward_key ] ?? null;
 
 		global $wpdb;
 
@@ -261,9 +261,9 @@ class Entity_Map_Repository {
 			[ '%s', '%s', '%d' ]
 		);
 
-		unset( self::$cache[ $forward_key ] );
+		unset( $this->cache[ $forward_key ] );
 		if ( null !== $odoo_id ) {
-			unset( self::$cache[ "{$module}:{$entity_type}:odoo:{$odoo_id}" ] );
+			unset( $this->cache[ "{$module}:{$entity_type}:odoo:{$odoo_id}" ] );
 		}
 
 		return $deleted > 0;
@@ -276,7 +276,7 @@ class Entity_Map_Repository {
 	 *
 	 * @return void
 	 */
-	public static function flush_cache(): void {
-		self::$cache = [];
+	public function flush_cache(): void {
+		$this->cache = [];
 	}
 }

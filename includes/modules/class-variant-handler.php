@@ -51,16 +51,25 @@ class Variant_Handler {
 	private bool $convert_currency;
 
 	/**
+	 * Entity map repository.
+	 *
+	 * @var \WP4Odoo\Entity_Map_Repository
+	 */
+	private \WP4Odoo\Entity_Map_Repository $entity_map;
+
+	/**
 	 * Constructor.
 	 *
-	 * @param Logger                     $logger           Logger instance.
-	 * @param \Closure                   $client_fn        Closure returning \WP4Odoo\API\Odoo_Client.
-	 * @param Exchange_Rate_Service|null $rate_service     Exchange rate service (null to disable conversion).
-	 * @param bool                       $convert_currency Whether to convert prices on currency mismatch.
+	 * @param Logger                          $logger           Logger instance.
+	 * @param \Closure                        $client_fn        Closure returning \WP4Odoo\API\Odoo_Client.
+	 * @param \WP4Odoo\Entity_Map_Repository  $entity_map       Entity map repository.
+	 * @param Exchange_Rate_Service|null       $rate_service     Exchange rate service (null to disable conversion).
+	 * @param bool                            $convert_currency Whether to convert prices on currency mismatch.
 	 */
-	public function __construct( Logger $logger, \Closure $client_fn, ?Exchange_Rate_Service $rate_service = null, bool $convert_currency = false ) {
+	public function __construct( Logger $logger, \Closure $client_fn, \WP4Odoo\Entity_Map_Repository $entity_map, ?Exchange_Rate_Service $rate_service = null, bool $convert_currency = false ) {
 		$this->logger           = $logger;
 		$this->client_fn        = $client_fn;
+		$this->entity_map       = $entity_map;
 		$this->rate_service     = $rate_service;
 		$this->convert_currency = $convert_currency;
 	}
@@ -135,7 +144,7 @@ class Variant_Handler {
 			$variant_odoo_id = (int) $variant['id'];
 
 			// Check existing mapping.
-			$existing_wp_id = Entity_Map_Repository::get_wp_id( 'woocommerce', 'variant', $variant_odoo_id );
+			$existing_wp_id = $this->entity_map->get_wp_id( 'woocommerce', 'variant', $variant_odoo_id );
 
 			// Currency guard: skip or convert price if Odoo currency ≠ WC shop currency.
 			$guard      = Currency_Guard::check( $variant['currency_id'] ?? false );
@@ -206,7 +215,7 @@ class Variant_Handler {
 			);
 
 			if ( $variation_id > 0 ) {
-				Entity_Map_Repository::save(
+				$this->entity_map->save(
 					'woocommerce',
 					'variant',
 					$variation_id,

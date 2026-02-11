@@ -3,6 +3,7 @@ declare( strict_types=1 );
 
 namespace WP4Odoo\Tests\Unit;
 
+use WP4Odoo\Entity_Map_Repository;
 use WP4Odoo\Partner_Service;
 use PHPUnit\Framework\TestCase;
 
@@ -15,6 +16,7 @@ use PHPUnit\Framework\TestCase;
 class PartnerServiceTest extends TestCase {
 
 	private \WP_DB_Stub $wpdb;
+	private Entity_Map_Repository $repo;
 
 	/** @var object Mock Odoo client. */
 	private object $client;
@@ -26,7 +28,8 @@ class PartnerServiceTest extends TestCase {
 		$this->wpdb = new \WP_DB_Stub();
 		$wpdb       = $this->wpdb;
 
-		\WP4Odoo\Entity_Map_Repository::flush_cache();
+		$this->repo = new Entity_Map_Repository();
+		$this->repo->flush_cache();
 
 		// Create a simple mock Odoo client.
 		$this->client = new class {
@@ -58,7 +61,7 @@ class PartnerServiceTest extends TestCase {
 		};
 
 		$client        = $this->client;
-		$this->service = new Partner_Service( fn() => $client );
+		$this->service = new Partner_Service( fn() => $client, $this->repo );
 	}
 
 	// ─── get_partner_id_for_user() ─────────────────────────

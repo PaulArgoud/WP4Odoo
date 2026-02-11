@@ -15,46 +15,49 @@ use WP4Odoo\Entity_Map_Repository;
  */
 class EntityMapRepositoryTest extends WP4Odoo_TestCase {
 
+	private Entity_Map_Repository $repo;
+
 	protected function setUp(): void {
 		parent::setUp();
-		Entity_Map_Repository::flush_cache();
+		$this->repo = new Entity_Map_Repository();
+		$this->repo->flush_cache();
 	}
 
 	protected function tearDown(): void {
-		Entity_Map_Repository::flush_cache();
+		$this->repo->flush_cache();
 		parent::tearDown();
 	}
 
 	// ─── save + get_odoo_id ────────────────────────────────
 
 	public function test_save_and_get_odoo_id(): void {
-		Entity_Map_Repository::save( 'crm', 'contact', 10, 42, 'res.partner' );
+		$this->repo->save( 'crm', 'contact', 10, 42, 'res.partner' );
 
-		Entity_Map_Repository::flush_cache();
+		$this->repo->flush_cache();
 
-		$result = Entity_Map_Repository::get_odoo_id( 'crm', 'contact', 10 );
+		$result = $this->repo->get_odoo_id( 'crm', 'contact', 10 );
 		$this->assertSame( 42, $result );
 	}
 
 	public function test_save_and_get_wp_id(): void {
-		Entity_Map_Repository::save( 'crm', 'contact', 10, 42, 'res.partner' );
+		$this->repo->save( 'crm', 'contact', 10, 42, 'res.partner' );
 
-		Entity_Map_Repository::flush_cache();
+		$this->repo->flush_cache();
 
-		$result = Entity_Map_Repository::get_wp_id( 'crm', 'contact', 42 );
+		$result = $this->repo->get_wp_id( 'crm', 'contact', 42 );
 		$this->assertSame( 10, $result );
 	}
 
 	public function test_get_odoo_id_returns_null_when_not_found(): void {
-		$result = Entity_Map_Repository::get_odoo_id( 'crm', 'contact', 99999 );
+		$result = $this->repo->get_odoo_id( 'crm', 'contact', 99999 );
 		$this->assertNull( $result );
 	}
 
 	// ─── REPLACE INTO behavior ─────────────────────────────
 
 	public function test_save_overwrites_existing_mapping(): void {
-		Entity_Map_Repository::save( 'crm', 'contact', 10, 42, 'res.partner', 'hash_v1' );
-		Entity_Map_Repository::save( 'crm', 'contact', 10, 42, 'res.partner', 'hash_v2' );
+		$this->repo->save( 'crm', 'contact', 10, 42, 'res.partner', 'hash_v1' );
+		$this->repo->save( 'crm', 'contact', 10, 42, 'res.partner', 'hash_v2' );
 
 		global $wpdb;
 		$count = $wpdb->get_var(
@@ -72,25 +75,25 @@ class EntityMapRepositoryTest extends WP4Odoo_TestCase {
 	// ─── remove ────────────────────────────────────────────
 
 	public function test_remove_deletes_mapping(): void {
-		Entity_Map_Repository::save( 'crm', 'contact', 10, 42, 'res.partner' );
-		Entity_Map_Repository::remove( 'crm', 'contact', 10 );
+		$this->repo->save( 'crm', 'contact', 10, 42, 'res.partner' );
+		$this->repo->remove( 'crm', 'contact', 10 );
 
-		Entity_Map_Repository::flush_cache();
+		$this->repo->flush_cache();
 
-		$result = Entity_Map_Repository::get_odoo_id( 'crm', 'contact', 10 );
+		$result = $this->repo->get_odoo_id( 'crm', 'contact', 10 );
 		$this->assertNull( $result );
 	}
 
 	// ─── Batch methods ─────────────────────────────────────
 
 	public function test_get_wp_ids_batch(): void {
-		Entity_Map_Repository::save( 'woocommerce', 'product', 1, 101, 'product.template' );
-		Entity_Map_Repository::save( 'woocommerce', 'product', 2, 102, 'product.template' );
-		Entity_Map_Repository::save( 'woocommerce', 'product', 3, 103, 'product.template' );
+		$this->repo->save( 'woocommerce', 'product', 1, 101, 'product.template' );
+		$this->repo->save( 'woocommerce', 'product', 2, 102, 'product.template' );
+		$this->repo->save( 'woocommerce', 'product', 3, 103, 'product.template' );
 
-		Entity_Map_Repository::flush_cache();
+		$this->repo->flush_cache();
 
-		$map = Entity_Map_Repository::get_wp_ids_batch( 'woocommerce', 'product', [ 101, 103, 999 ] );
+		$map = $this->repo->get_wp_ids_batch( 'woocommerce', 'product', [ 101, 103, 999 ] );
 
 		$this->assertSame( 1, $map[101] );
 		$this->assertSame( 3, $map[103] );
@@ -98,12 +101,12 @@ class EntityMapRepositoryTest extends WP4Odoo_TestCase {
 	}
 
 	public function test_get_odoo_ids_batch(): void {
-		Entity_Map_Repository::save( 'woocommerce', 'product', 1, 101, 'product.template' );
-		Entity_Map_Repository::save( 'woocommerce', 'product', 2, 102, 'product.template' );
+		$this->repo->save( 'woocommerce', 'product', 1, 101, 'product.template' );
+		$this->repo->save( 'woocommerce', 'product', 2, 102, 'product.template' );
 
-		Entity_Map_Repository::flush_cache();
+		$this->repo->flush_cache();
 
-		$map = Entity_Map_Repository::get_odoo_ids_batch( 'woocommerce', 'product', [ 1, 2, 999 ] );
+		$map = $this->repo->get_odoo_ids_batch( 'woocommerce', 'product', [ 1, 2, 999 ] );
 
 		$this->assertSame( 101, $map[1] );
 		$this->assertSame( 102, $map[2] );

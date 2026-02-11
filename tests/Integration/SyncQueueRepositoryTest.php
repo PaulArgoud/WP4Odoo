@@ -15,10 +15,17 @@ use WP4Odoo\Sync_Queue_Repository;
  */
 class SyncQueueRepositoryTest extends WP4Odoo_TestCase {
 
+	private Sync_Queue_Repository $repo;
+
+	protected function setUp(): void {
+		parent::setUp();
+		$this->repo = new Sync_Queue_Repository();
+	}
+
 	// ─── enqueue ───────────────────────────────────────────
 
 	public function test_enqueue_creates_job(): void {
-		$id = Sync_Queue_Repository::enqueue( [
+		$id = $this->repo->enqueue( [
 			'module'      => 'crm',
 			'direction'   => 'wp_to_odoo',
 			'entity_type' => 'contact',
@@ -31,7 +38,7 @@ class SyncQueueRepositoryTest extends WP4Odoo_TestCase {
 	}
 
 	public function test_enqueue_deduplicates_pending_job(): void {
-		$id1 = Sync_Queue_Repository::enqueue( [
+		$id1 = $this->repo->enqueue( [
 			'module'      => 'crm',
 			'direction'   => 'wp_to_odoo',
 			'entity_type' => 'contact',
@@ -39,7 +46,7 @@ class SyncQueueRepositoryTest extends WP4Odoo_TestCase {
 			'action'      => 'create',
 		] );
 
-		$id2 = Sync_Queue_Repository::enqueue( [
+		$id2 = $this->repo->enqueue( [
 			'module'      => 'crm',
 			'direction'   => 'wp_to_odoo',
 			'entity_type' => 'contact',
@@ -51,7 +58,7 @@ class SyncQueueRepositoryTest extends WP4Odoo_TestCase {
 	}
 
 	public function test_enqueue_returns_false_for_empty_module(): void {
-		$result = Sync_Queue_Repository::enqueue( [
+		$result = $this->repo->enqueue( [
 			'module'      => '',
 			'entity_type' => 'contact',
 		] );
@@ -62,7 +69,7 @@ class SyncQueueRepositoryTest extends WP4Odoo_TestCase {
 	// ─── fetch_pending ─────────────────────────────────────
 
 	public function test_fetch_pending_respects_priority_ordering(): void {
-		Sync_Queue_Repository::enqueue( [
+		$this->repo->enqueue( [
 			'module'      => 'woocommerce',
 			'direction'   => 'odoo_to_wp',
 			'entity_type' => 'product',
@@ -71,7 +78,7 @@ class SyncQueueRepositoryTest extends WP4Odoo_TestCase {
 			'priority'    => 8,
 		] );
 
-		Sync_Queue_Repository::enqueue( [
+		$this->repo->enqueue( [
 			'module'      => 'woocommerce',
 			'direction'   => 'odoo_to_wp',
 			'entity_type' => 'product',
@@ -81,7 +88,7 @@ class SyncQueueRepositoryTest extends WP4Odoo_TestCase {
 		] );
 
 		$now  = current_time( 'mysql', true );
-		$jobs = Sync_Queue_Repository::fetch_pending( 10, $now );
+		$jobs = $this->repo->fetch_pending( 10, $now );
 
 		$this->assertCount( 2, $jobs );
 		$this->assertSame( '2', $jobs[0]->priority );
@@ -91,7 +98,7 @@ class SyncQueueRepositoryTest extends WP4Odoo_TestCase {
 	public function test_fetch_pending_excludes_future_scheduled_jobs(): void {
 		global $wpdb;
 
-		$id = Sync_Queue_Repository::enqueue( [
+		$id = $this->repo->enqueue( [
 			'module'      => 'crm',
 			'direction'   => 'wp_to_odoo',
 			'entity_type' => 'contact',
@@ -107,7 +114,7 @@ class SyncQueueRepositoryTest extends WP4Odoo_TestCase {
 		);
 
 		$now  = current_time( 'mysql', true );
-		$jobs = Sync_Queue_Repository::fetch_pending( 10, $now );
+		$jobs = $this->repo->fetch_pending( 10, $now );
 
 		$ids = array_map( fn( $j ) => (int) $j->id, $jobs );
 		$this->assertNotContains( $id, $ids );
@@ -118,7 +125,7 @@ class SyncQueueRepositoryTest extends WP4Odoo_TestCase {
 	public function test_update_status_changes_job_status(): void {
 		global $wpdb;
 
-		$id = Sync_Queue_Repository::enqueue( [
+		$id = $this->repo->enqueue( [
 			'module'      => 'crm',
 			'direction'   => 'wp_to_odoo',
 			'entity_type' => 'contact',
@@ -126,7 +133,7 @@ class SyncQueueRepositoryTest extends WP4Odoo_TestCase {
 			'action'      => 'update',
 		] );
 
-		Sync_Queue_Repository::update_status( $id, 'completed', [
+		$this->repo->update_status( $id, 'completed', [
 			'processed_at' => current_time( 'mysql', true ),
 		] );
 
@@ -143,7 +150,7 @@ class SyncQueueRepositoryTest extends WP4Odoo_TestCase {
 	// ─── cancel ────────────────────────────────────────────
 
 	public function test_cancel_deletes_pending_job(): void {
-		$id = Sync_Queue_Repository::enqueue( [
+		$id = $this->repo->enqueue( [
 			'module'      => 'crm',
 			'direction'   => 'wp_to_odoo',
 			'entity_type' => 'contact',
@@ -151,11 +158,11 @@ class SyncQueueRepositoryTest extends WP4Odoo_TestCase {
 			'action'      => 'create',
 		] );
 
-		$this->assertTrue( Sync_Queue_Repository::cancel( $id ) );
+		$this->assertTrue( $this->repo->cancel( $id ) );
 	}
 
 	public function test_cancel_ignores_non_pending_job(): void {
-		$id = Sync_Queue_Repository::enqueue( [
+		$id = $this->repo->enqueue( [
 			'module'      => 'crm',
 			'direction'   => 'wp_to_odoo',
 			'entity_type' => 'contact',
@@ -163,9 +170,9 @@ class SyncQueueRepositoryTest extends WP4Odoo_TestCase {
 			'action'      => 'create',
 		] );
 
-		Sync_Queue_Repository::update_status( $id, 'processing' );
+		$this->repo->update_status( $id, 'processing' );
 
-		$this->assertFalse( Sync_Queue_Repository::cancel( $id ) );
+		$this->assertFalse( $this->repo->cancel( $id ) );
 	}
 
 	// ─── cleanup ───────────────────────────────────────────
@@ -174,7 +181,7 @@ class SyncQueueRepositoryTest extends WP4Odoo_TestCase {
 		global $wpdb;
 		$table = $wpdb->prefix . 'wp4odoo_sync_queue';
 
-		$id = Sync_Queue_Repository::enqueue( [
+		$id = $this->repo->enqueue( [
 			'module'      => 'crm',
 			'direction'   => 'wp_to_odoo',
 			'entity_type' => 'contact',
@@ -182,19 +189,19 @@ class SyncQueueRepositoryTest extends WP4Odoo_TestCase {
 			'action'      => 'update',
 		] );
 
-		Sync_Queue_Repository::update_status( $id, 'completed' );
+		$this->repo->update_status( $id, 'completed' );
 
 		$old_date = gmdate( 'Y-m-d H:i:s', time() - ( 30 * DAY_IN_SECONDS ) );
 		$wpdb->update( $table, [ 'created_at' => $old_date ], [ 'id' => $id ] );
 
-		$deleted = Sync_Queue_Repository::cleanup( 7 );
+		$deleted = $this->repo->cleanup( 7 );
 		$this->assertSame( 1, $deleted );
 	}
 
 	// ─── retry_failed ──────────────────────────────────────
 
 	public function test_retry_failed_resets_to_pending(): void {
-		$id = Sync_Queue_Repository::enqueue( [
+		$id = $this->repo->enqueue( [
 			'module'      => 'crm',
 			'direction'   => 'wp_to_odoo',
 			'entity_type' => 'contact',
@@ -202,12 +209,12 @@ class SyncQueueRepositoryTest extends WP4Odoo_TestCase {
 			'action'      => 'update',
 		] );
 
-		Sync_Queue_Repository::update_status( $id, 'failed', [
+		$this->repo->update_status( $id, 'failed', [
 			'error_message' => 'Connection timeout',
 			'attempts'      => 3,
 		] );
 
-		$reset = Sync_Queue_Repository::retry_failed();
+		$reset = $this->repo->retry_failed();
 		$this->assertSame( 1, $reset );
 
 		global $wpdb;
@@ -223,7 +230,7 @@ class SyncQueueRepositoryTest extends WP4Odoo_TestCase {
 	// ─── get_stats ─────────────────────────────────────────
 
 	public function test_get_stats_returns_correct_counts(): void {
-		Sync_Queue_Repository::enqueue( [
+		$this->repo->enqueue( [
 			'module'      => 'crm',
 			'direction'   => 'wp_to_odoo',
 			'entity_type' => 'contact',
@@ -231,7 +238,7 @@ class SyncQueueRepositoryTest extends WP4Odoo_TestCase {
 			'action'      => 'create',
 		] );
 
-		$id2 = Sync_Queue_Repository::enqueue( [
+		$id2 = $this->repo->enqueue( [
 			'module'      => 'crm',
 			'direction'   => 'wp_to_odoo',
 			'entity_type' => 'contact',
@@ -239,11 +246,11 @@ class SyncQueueRepositoryTest extends WP4Odoo_TestCase {
 			'action'      => 'create',
 		] );
 
-		Sync_Queue_Repository::update_status( $id2, 'completed', [
+		$this->repo->update_status( $id2, 'completed', [
 			'processed_at' => current_time( 'mysql', true ),
 		] );
 
-		$stats = Sync_Queue_Repository::get_stats();
+		$stats = $this->repo->get_stats();
 
 		$this->assertGreaterThanOrEqual( 1, $stats['pending'] );
 		$this->assertGreaterThanOrEqual( 1, $stats['completed'] );

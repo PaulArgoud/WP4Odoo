@@ -39,7 +39,7 @@ class VariantHandlerTest extends TestCase {
 			}
 		};
 
-		$this->handler = new Variant_Handler( $logger, $client_fn );
+		$this->handler = new Variant_Handler( $logger, $client_fn, wp4odoo_test_entity_map() );
 	}
 
 	// ─── Instantiation ───────────────────────────────────

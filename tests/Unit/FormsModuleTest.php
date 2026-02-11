@@ -22,7 +22,7 @@ class FormsModuleTest extends TestCase {
 
 		$GLOBALS['_wp_options'] = [];
 
-		$this->module = new Forms_Module();
+		$this->module = new Forms_Module( wp4odoo_test_client_provider(), wp4odoo_test_entity_map() );
 	}
 
 	// ─── Module Identity ───────────────────────────────────

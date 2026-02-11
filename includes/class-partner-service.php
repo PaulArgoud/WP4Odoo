@@ -34,13 +34,22 @@ class Partner_Service {
 	private \Closure $client_getter;
 
 	/**
+	 * Entity map repository.
+	 *
+	 * @var Entity_Map_Repository
+	 */
+	private Entity_Map_Repository $entity_map;
+
+	/**
 	 * Constructor.
 	 *
-	 * @param \Closure $client_getter Returns the Odoo_Client instance.
+	 * @param \Closure              $client_getter Returns the Odoo_Client instance.
+	 * @param Entity_Map_Repository $entity_map    Entity map repository.
 	 */
-	public function __construct( \Closure $client_getter ) {
+	public function __construct( \Closure $client_getter, Entity_Map_Repository $entity_map ) {
 		$this->logger        = new Logger( 'partner' );
 		$this->client_getter = $client_getter;
+		$this->entity_map    = $entity_map;
 	}
 
 	/**
@@ -50,7 +59,7 @@ class Partner_Service {
 	 * @return int|null Odoo partner ID, or null if not linked.
 	 */
 	public function get_partner_id_for_user( int $user_id ): ?int {
-		return Entity_Map_Repository::get_odoo_id( 'crm', 'contact', $user_id );
+		return $this->entity_map->get_odoo_id( 'crm', 'contact', $user_id );
 	}
 
 	/**
@@ -60,7 +69,7 @@ class Partner_Service {
 	 * @return int|null WordPress user ID, or null if not linked.
 	 */
 	public function get_user_for_partner( int $odoo_id ): ?int {
-		return Entity_Map_Repository::get_wp_id( 'crm', 'contact', $odoo_id );
+		return $this->entity_map->get_wp_id( 'crm', 'contact', $odoo_id );
 	}
 
 	/**
@@ -112,7 +121,7 @@ class Partner_Service {
 
 			// Save mapping if we have a WP user.
 			if ( $wp_id > 0 ) {
-				Entity_Map_Repository::save( 'crm', 'contact', $wp_id, $odoo_id, 'res.partner' );
+				$this->entity_map->save( 'crm', 'contact', $wp_id, $odoo_id, 'res.partner' );
 			}
 
 			return $odoo_id;
@@ -139,7 +148,7 @@ class Partner_Service {
 
 			// Save mapping if we have a WP user.
 			if ( $wp_id > 0 ) {
-				Entity_Map_Repository::save( 'crm', 'contact', $wp_id, $odoo_id, 'res.partner' );
+				$this->entity_map->save( 'crm', 'contact', $wp_id, $odoo_id, 'res.partner' );
 			}
 
 			return $odoo_id;

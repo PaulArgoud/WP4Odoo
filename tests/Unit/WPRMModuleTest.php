@@ -14,7 +14,7 @@ class WPRMModuleTest extends TestCase {
 	private WPRM_Module $module;
 
 	protected function setUp(): void {
-		$this->module = new WPRM_Module();
+		$this->module = new WPRM_Module( wp4odoo_test_client_provider(), wp4odoo_test_entity_map() );
 	}
 
 	// ─── Identity ───────────────────────────────────────────

@@ -16,13 +16,15 @@ use PHPUnit\Framework\TestCase;
 class BulkSyncTest extends TestCase {
 
 	private \WP_DB_Stub $wpdb;
+	private Entity_Map_Repository $repo;
 
 	protected function setUp(): void {
 		global $wpdb;
 		$this->wpdb = new \WP_DB_Stub();
 		$wpdb       = $this->wpdb;
 
-		\WP4Odoo\Entity_Map_Repository::flush_cache();
+		$this->repo = new Entity_Map_Repository();
+		$this->repo->flush_cache();
 	}
 
 	// ─── Entity Map lookups for bulk ──────────────────────
@@ -30,28 +32,28 @@ class BulkSyncTest extends TestCase {
 	public function test_entity_map_returns_null_for_unmapped_product(): void {
 		$this->wpdb->get_var_return = null;
 
-		$result = Entity_Map_Repository::get_wp_id( 'woocommerce', 'product', 999 );
+		$result = $this->repo->get_wp_id( 'woocommerce', 'product', 999 );
 		$this->assertNull( $result );
 	}
 
 	public function test_entity_map_returns_wp_id_for_mapped_product(): void {
 		$this->wpdb->get_var_return = '42';
 
-		$result = Entity_Map_Repository::get_wp_id( 'woocommerce', 'product', 100 );
+		$result = $this->repo->get_wp_id( 'woocommerce', 'product', 100 );
 		$this->assertSame( 42, $result );
 	}
 
 	public function test_entity_map_returns_odoo_id_for_mapped_product(): void {
 		$this->wpdb->get_var_return = '200';
 
-		$result = Entity_Map_Repository::get_odoo_id( 'woocommerce', 'product', 42 );
+		$result = $this->repo->get_odoo_id( 'woocommerce', 'product', 42 );
 		$this->assertSame( 200, $result );
 	}
 
 	public function test_entity_map_returns_null_for_unmapped_odoo_id(): void {
 		$this->wpdb->get_var_return = null;
 
-		$result = Entity_Map_Repository::get_odoo_id( 'woocommerce', 'product', 999 );
+		$result = $this->repo->get_odoo_id( 'woocommerce', 'product', 999 );
 		$this->assertNull( $result );
 	}
 
@@ -82,7 +84,7 @@ class BulkSyncTest extends TestCase {
 		// Simulate checking mapping: returns null (not mapped).
 		$this->wpdb->get_var_return = null;
 
-		$wp_id  = Entity_Map_Repository::get_wp_id( 'woocommerce', 'product', 100 );
+		$wp_id  = $this->repo->get_wp_id( 'woocommerce', 'product', 100 );
 		$action = $wp_id ? 'update' : 'create';
 
 		$this->assertNull( $wp_id );
@@ -92,7 +94,7 @@ class BulkSyncTest extends TestCase {
 	public function test_bulk_import_enqueues_update_for_mapped_products(): void {
 		$this->wpdb->get_var_return = '42';
 
-		$wp_id  = Entity_Map_Repository::get_wp_id( 'woocommerce', 'product', 100 );
+		$wp_id  = $this->repo->get_wp_id( 'woocommerce', 'product', 100 );
 		$action = $wp_id ? 'update' : 'create';
 
 		$this->assertSame( 42, $wp_id );
@@ -104,7 +106,7 @@ class BulkSyncTest extends TestCase {
 	public function test_bulk_export_enqueues_create_for_unmapped_wc_products(): void {
 		$this->wpdb->get_var_return = null;
 
-		$odoo_id = Entity_Map_Repository::get_odoo_id( 'woocommerce', 'product', 42 );
+		$odoo_id = $this->repo->get_odoo_id( 'woocommerce', 'product', 42 );
 		$action  = $odoo_id ? 'update' : 'create';
 
 		$this->assertNull( $odoo_id );
@@ -114,7 +116,7 @@ class BulkSyncTest extends TestCase {
 	public function test_bulk_export_enqueues_update_for_mapped_wc_products(): void {
 		$this->wpdb->get_var_return = '200';
 
-		$odoo_id = Entity_Map_Repository::get_odoo_id( 'woocommerce', 'product', 42 );
+		$odoo_id = $this->repo->get_odoo_id( 'woocommerce', 'product', 42 );
 		$action  = $odoo_id ? 'update' : 'create';
 
 		$this->assertSame( 200, $odoo_id );
@@ -129,7 +131,7 @@ class BulkSyncTest extends TestCase {
 			(object) [ 'odoo_id' => '200', 'wp_id' => '20' ],
 		];
 
-		$map = Entity_Map_Repository::get_wp_ids_batch( 'woocommerce', 'product', [ 100, 200, 300 ] );
+		$map = $this->repo->get_wp_ids_batch( 'woocommerce', 'product', [ 100, 200, 300 ] );
 
 		$this->assertSame( 10, $map[100] );
 		$this->assertSame( 20, $map[200] );
@@ -137,7 +139,7 @@ class BulkSyncTest extends TestCase {
 	}
 
 	public function test_batch_wp_ids_empty_returns_empty_map(): void {
-		$result = Entity_Map_Repository::get_wp_ids_batch( 'woocommerce', 'product', [] );
+		$result = $this->repo->get_wp_ids_batch( 'woocommerce', 'product', [] );
 		$this->assertSame( [], $result );
 	}
 
@@ -146,7 +148,7 @@ class BulkSyncTest extends TestCase {
 			(object) [ 'wp_id' => '42', 'odoo_id' => '200' ],
 		];
 
-		$map = Entity_Map_Repository::get_odoo_ids_batch( 'woocommerce', 'product', [ 42, 99 ] );
+		$map = $this->repo->get_odoo_ids_batch( 'woocommerce', 'product', [ 42, 99 ] );
 
 		$this->assertSame( 200, $map[42] );
 		$this->assertArrayNotHasKey( 99, $map );
@@ -158,7 +160,7 @@ class BulkSyncTest extends TestCase {
 		];
 
 		$odoo_ids = [ 100, 200 ];
-		$map      = Entity_Map_Repository::get_wp_ids_batch( 'woocommerce', 'product', $odoo_ids );
+		$map      = $this->repo->get_wp_ids_batch( 'woocommerce', 'product', $odoo_ids );
 
 		$this->assertSame( 'update', ( $map[100] ?? 0 ) ? 'update' : 'create' );
 		$this->assertSame( 'create', ( $map[200] ?? 0 ) ? 'update' : 'create' );
@@ -170,7 +172,7 @@ class BulkSyncTest extends TestCase {
 		];
 
 		$wp_ids = [ 42, 99 ];
-		$map    = Entity_Map_Repository::get_odoo_ids_batch( 'woocommerce', 'product', $wp_ids );
+		$map    = $this->repo->get_odoo_ids_batch( 'woocommerce', 'product', $wp_ids );
 
 		$this->assertSame( 'update', ( $map[42] ?? 0 ) ? 'update' : 'create' );
 		$this->assertSame( 'create', ( $map[99] ?? 0 ) ? 'update' : 'create' );
@@ -181,12 +183,12 @@ class BulkSyncTest extends TestCase {
 	public function test_variant_entity_map_lookup(): void {
 		$this->wpdb->get_var_return = '55';
 
-		$result = Entity_Map_Repository::get_wp_id( 'woocommerce', 'variant', 300 );
+		$result = $this->repo->get_wp_id( 'woocommerce', 'variant', 300 );
 		$this->assertSame( 55, $result );
 	}
 
 	public function test_variant_entity_map_save(): void {
-		$result = Entity_Map_Repository::save(
+		$result = $this->repo->save(
 			'woocommerce',
 			'variant',
 			55,

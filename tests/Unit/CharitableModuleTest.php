@@ -14,7 +14,7 @@ class CharitableModuleTest extends TestCase {
 	private Charitable_Module $module;
 
 	protected function setUp(): void {
-		$this->module = new Charitable_Module();
+		$this->module = new Charitable_Module( wp4odoo_test_client_provider(), wp4odoo_test_entity_map() );
 	}
 
 	// ─── Identity ───────────────────────────────────────────

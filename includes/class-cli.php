@@ -51,7 +51,7 @@ class CLI {
 		}
 
 		// Queue stats.
-		$stats = Sync_Engine::get_stats();
+		$stats = Queue_Manager::get_stats();
 		\WP_CLI::line( '' );
 		\WP_CLI::line( 'Queue:' );
 		\WP_CLI\Utils\format_items(
@@ -150,7 +150,10 @@ class CLI {
 			\WP_CLI::line( 'Processing sync queue...' );
 		}
 
-		$engine = new Sync_Engine();
+		$engine = new Sync_Engine(
+			fn( string $id ) => \WP4Odoo_Plugin::instance()->get_module( $id ),
+			new Sync_Queue_Repository()
+		);
 
 		if ( $dry_run ) {
 			$engine->set_dry_run( true );
@@ -244,7 +247,7 @@ class CLI {
 	 * @param array $assoc_args Associative arguments.
 	 */
 	private function queue_stats( array $assoc_args ): void {
-		$stats  = Sync_Engine::get_stats();
+		$stats  = Queue_Manager::get_stats();
 		$format = $assoc_args['format'] ?? 'table';
 
 		\WP_CLI\Utils\format_items(
@@ -315,7 +318,7 @@ class CLI {
 	 * Retry all failed jobs.
 	 */
 	private function queue_retry(): void {
-		$count = Sync_Engine::retry_failed();
+		$count = Queue_Manager::retry_failed();
 		\WP_CLI::success( sprintf( '%d failed job(s) retried.', $count ) );
 	}
 
@@ -326,7 +329,7 @@ class CLI {
 	 */
 	private function queue_cleanup( array $assoc_args ): void {
 		$days    = max( 1, (int) ( $assoc_args['days'] ?? 7 ) );
-		$deleted = Sync_Engine::cleanup( $days );
+		$deleted = Queue_Manager::cleanup( $days );
 		\WP_CLI::success( sprintf( '%d job(s) deleted (older than %d days).', $deleted, $days ) );
 	}
 

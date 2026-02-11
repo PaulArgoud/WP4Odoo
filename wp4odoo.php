@@ -214,7 +214,10 @@ final class WP4Odoo_Plugin {
 	 * Run scheduled synchronization.
 	 */
 	public function run_scheduled_sync(): void {
-		$sync = new WP4Odoo\Sync_Engine();
+		$sync = new WP4Odoo\Sync_Engine(
+			fn( string $id ) => $this->get_module( $id ),
+			new WP4Odoo\Sync_Queue_Repository()
+		);
 		$sync->process_queue();
 	}
 

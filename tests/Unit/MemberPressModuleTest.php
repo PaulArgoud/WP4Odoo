@@ -26,7 +26,7 @@ class MemberPressModuleTest extends TestCase {
 		$GLOBALS['_mepr_transactions']   = [];
 		$GLOBALS['_mepr_subscriptions']  = [];
 
-		$this->module = new MemberPress_Module();
+		$this->module = new MemberPress_Module( wp4odoo_test_client_provider(), wp4odoo_test_entity_map() );
 	}
 
 	// ─── Module Identity ───────────────────────────────────

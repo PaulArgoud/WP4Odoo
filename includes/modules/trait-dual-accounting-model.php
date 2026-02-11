@@ -186,7 +186,7 @@ trait Dual_Accounting_Model {
 	 */
 	private function partner_service(): Partner_Service {
 		if ( null === $this->partner_service ) {
-			$this->partner_service = new Partner_Service( fn() => $this->client() );
+			$this->partner_service = new Partner_Service( fn() => $this->client(), $this->entity_map() );
 		}
 
 		return $this->partner_service;
