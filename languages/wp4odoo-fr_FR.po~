@@ -176,6 +176,8 @@ msgid ""
 "%1$d product(s) enqueued for import so far (%2$d found in Odoo). Operation "
 "timed out — run again to continue."
 msgstr ""
+"%1$d produit(s) mis en file d'attente pour l'import (%2$d trouvés dans "
+"Odoo). Opération expirée — relancez pour continuer."
 
 #, php-format
 msgid "%1$d product(s) enqueued for import (%2$d found in Odoo)."
@@ -190,6 +192,8 @@ msgid ""
 "%d product(s) enqueued for export so far. Operation timed out — run again to "
 "continue."
 msgstr ""
+"%d produit(s) mis en file d'attente pour l'export. Opération expirée — "
+"relancez pour continuer."
 
 #, php-format
 msgid "%d product(s) enqueued for export."
@@ -250,7 +254,7 @@ msgstr "Identifiants Odoo non configurés."
 
 #, php-format
 msgid "Server error HTTP %1$d on %2$s after %3$d attempts."
-msgstr ""
+msgstr "Erreur serveur HTTP %1$d sur %2$s après %3$d tentatives."
 
 #, php-format
 msgid "HTTP error: %s"
@@ -650,10 +654,10 @@ msgid "Automatically validate payments in Odoo after creation."
 msgstr "Valider automatiquement les paiements dans Odoo après leur création."
 
 msgid "LearnDash course"
-msgstr ""
+msgstr "Cours LearnDash"
 
 msgid "LearnDash enrollment"
-msgstr ""
+msgstr "Inscription LearnDash"
 
 msgid "Memberships module enabled but WooCommerce Memberships is not active."
 msgstr ""
@@ -684,23 +688,23 @@ msgstr "WPForms : %s"
 
 #, php-format
 msgid "Contact Form 7: %s"
-msgstr ""
+msgstr "Contact Form 7 : %s"
 
 #, php-format
 msgid "Fluent Forms: %s"
-msgstr ""
+msgstr "Fluent Forms : %s"
 
 #, php-format
 msgid "Formidable: %s"
-msgstr ""
+msgstr "Formidable : %s"
 
 #, php-format
 msgid "Ninja Forms: %s"
-msgstr ""
+msgstr "Ninja Forms : %s"
 
 #, php-format
 msgid "Forminator: %s"
-msgstr ""
+msgstr "Forminator : %s"
 
 msgid "Sync Gravity Forms"
 msgstr "Synchroniser Gravity Forms"
@@ -715,60 +719,62 @@ msgid "Create Odoo leads from WPForms submissions."
 msgstr "Créer des leads Odoo à partir des soumissions WPForms."
 
 msgid "Sync Contact Form 7"
-msgstr ""
+msgstr "Synchroniser Contact Form 7"
 
 msgid "Create Odoo leads from Contact Form 7 submissions."
-msgstr ""
+msgstr "Créer des leads Odoo depuis les soumissions Contact Form 7."
 
 msgid "Sync Fluent Forms"
-msgstr ""
+msgstr "Synchroniser Fluent Forms"
 
 msgid "Create Odoo leads from Fluent Forms submissions."
-msgstr ""
+msgstr "Créer des leads Odoo depuis les soumissions Fluent Forms."
 
 msgid "Sync Formidable Forms"
-msgstr ""
+msgstr "Synchroniser Formidable Forms"
 
 msgid "Create Odoo leads from Formidable Forms submissions."
-msgstr ""
+msgstr "Créer des leads Odoo depuis les soumissions Formidable Forms."
 
 msgid "Sync Ninja Forms"
-msgstr ""
+msgstr "Synchroniser Ninja Forms"
 
 msgid "Create Odoo leads from Ninja Forms submissions."
-msgstr ""
+msgstr "Créer des leads Odoo depuis les soumissions Ninja Forms."
 
 msgid "Sync Forminator"
-msgstr ""
+msgstr "Synchroniser Forminator"
 
 msgid "Create Odoo leads from Forminator submissions."
-msgstr ""
+msgstr "Créer des leads Odoo depuis les soumissions Forminator."
 
 msgid ""
 "At least one form plugin must be installed and activated to use this module."
 msgstr ""
+"Au moins un plugin de formulaire doit être installé et activé pour utiliser "
+"ce module."
 
 #, php-format
 msgid "%s is not active."
-msgstr ""
+msgstr "%s n'est pas actif."
 
 msgid "RCP membership"
-msgstr ""
+msgstr "Adhésion RCP"
 
 msgid "LifterLMS course"
-msgstr ""
+msgstr "Cours LifterLMS"
 
 msgid "LifterLMS enrollment"
-msgstr ""
+msgstr "Inscription LifterLMS"
 
 msgid "PMPro membership"
-msgstr ""
+msgstr "Adhésion PMPro"
 
 msgid "WC Subscription"
-msgstr ""
+msgstr "Abonnement WC"
 
 msgid "WC Subscription renewal"
-msgstr ""
+msgstr "Renouvellement d'abonnement WC"
 
 msgid "MemberPress module enabled but MemberPress is not active."
 msgstr "Module MemberPress activé mais MemberPress n'est pas actif."
@@ -798,59 +804,68 @@ msgstr ""
 "finalisées."
 
 msgid "PMPro module enabled but Paid Memberships Pro is not active."
-msgstr ""
+msgstr "Module PMPro activé mais Paid Memberships Pro n'est pas actif."
 
 msgid "Sync membership levels"
-msgstr ""
+msgstr "Synchroniser les niveaux d'adhésion"
 
 msgid "Push PMPro levels to Odoo as membership products."
-msgstr ""
+msgstr "Envoyer les niveaux PMPro vers Odoo comme produits d'adhésion."
 
 msgid "Push completed payment orders to Odoo as invoices."
-msgstr ""
+msgstr "Envoyer les commandes de paiement terminées vers Odoo comme factures."
 
 msgid "Sync memberships"
-msgstr ""
+msgstr "Synchroniser les adhésions"
 
 msgid "Push user membership status to Odoo membership lines."
 msgstr ""
+"Envoyer le statut d'adhésion des utilisateurs vers les lignes d'adhésion "
+"Odoo."
 
 msgid "Automatically confirm invoices in Odoo for completed orders."
 msgstr ""
+"Confirmer automatiquement les factures dans Odoo pour les commandes "
+"terminées."
 
 msgid "RCP module enabled but Restrict Content Pro is not active."
-msgstr ""
+msgstr "Module RCP activé mais Restrict Content Pro n'est pas actif."
 
 msgid "Push RCP levels to Odoo as membership products."
-msgstr ""
+msgstr "Envoyer les niveaux RCP vers Odoo comme produits d'adhésion."
 
 msgid "Push completed payments to Odoo as invoices."
-msgstr ""
+msgstr "Envoyer les paiements terminés vers Odoo comme factures."
 
 msgid "Automatically confirm invoices in Odoo for completed payments."
 msgstr ""
+"Confirmer automatiquement les factures dans Odoo pour les paiements terminés."
 
 msgid ""
 "WC Subscriptions module enabled but WooCommerce Subscriptions is not active."
 msgstr ""
+"Module WC Subscriptions activé mais WooCommerce Subscriptions n'est pas "
+"actif."
 
 msgid "Sync subscription products"
-msgstr ""
+msgstr "Synchroniser les produits d'abonnement"
 
 msgid "Push WC subscription products to Odoo as service products."
 msgstr ""
+"Envoyer les produits d'abonnement WC vers Odoo comme produits de service."
 
 msgid "Push subscriptions to Odoo sale.subscription (Enterprise only)."
 msgstr ""
+"Envoyer les abonnements vers Odoo sale.subscription (Enterprise uniquement)."
 
 msgid "Sync renewal orders"
-msgstr ""
+msgstr "Synchroniser les renouvellements"
 
 msgid "Push renewal payments to Odoo as invoices."
-msgstr ""
+msgstr "Envoyer les paiements de renouvellement vers Odoo comme factures."
 
 msgid "Automatically confirm renewal invoices in Odoo."
-msgstr ""
+msgstr "Confirmer automatiquement les factures de renouvellement dans Odoo."
 
 #, php-format
 msgid "%1$s — %2$s"
@@ -858,143 +873,153 @@ msgstr "%1$s — %2$s"
 
 msgid "Events Calendar module enabled but The Events Calendar is not active."
 msgstr ""
+"Module Events Calendar activé mais The Events Calendar n'est pas actif."
 
 msgid "Sync events"
-msgstr ""
+msgstr "Synchroniser les événements"
 
 msgid "Push events to Odoo (event.event or calendar.event)."
-msgstr ""
+msgstr "Envoyer les événements vers Odoo (event.event ou calendar.event)."
 
 msgid "Sync tickets"
-msgstr ""
+msgstr "Synchroniser les billets"
 
 msgid ""
 "Push RSVP ticket types to Odoo as service products. Requires Event Tickets."
 msgstr ""
+"Envoyer les types de billets RSVP vers Odoo comme produits de service. "
+"Nécessite Event Tickets."
 
 msgid "Sync attendees"
-msgstr ""
+msgstr "Synchroniser les participants"
 
 msgid ""
 "Push RSVP attendees to Odoo as event registrations. Requires Event Tickets "
 "and Odoo Events module."
 msgstr ""
+"Envoyer les participants RSVP vers Odoo comme inscriptions aux événements. "
+"Nécessite Event Tickets et le module Événements Odoo."
 
 msgid "LearnDash module enabled but LearnDash is not active."
-msgstr ""
+msgstr "Module LearnDash activé mais LearnDash n'est pas actif."
 
 msgid "Sync courses"
-msgstr ""
+msgstr "Synchroniser les cours"
 
 msgid "Push LearnDash courses to Odoo as service products."
-msgstr ""
+msgstr "Envoyer les cours LearnDash vers Odoo comme produits de service."
 
 msgid "Sync groups"
-msgstr ""
+msgstr "Synchroniser les groupes"
 
 msgid "Push LearnDash groups to Odoo as service products."
-msgstr ""
+msgstr "Envoyer les groupes LearnDash vers Odoo comme produits de service."
 
 msgid "Push LearnDash payment transactions to Odoo as invoices."
 msgstr ""
+"Envoyer les transactions de paiement LearnDash vers Odoo comme factures."
 
 msgid "Sync enrollments"
-msgstr ""
+msgstr "Synchroniser les inscriptions"
 
 msgid "Push course enrollments to Odoo as sale orders."
-msgstr ""
+msgstr "Envoyer les inscriptions aux cours vers Odoo comme bons de commande."
 
 msgid "LifterLMS module enabled but LifterLMS is not active."
-msgstr ""
+msgstr "Module LifterLMS activé mais LifterLMS n'est pas actif."
 
 msgid "Push LifterLMS courses to Odoo as service products."
-msgstr ""
+msgstr "Envoyer les cours LifterLMS vers Odoo comme produits de service."
 
 msgid "Push LifterLMS memberships to Odoo as service products."
-msgstr ""
+msgstr "Envoyer les adhésions LifterLMS vers Odoo comme produits de service."
 
 msgid "Push completed orders to Odoo as invoices."
-msgstr ""
+msgstr "Envoyer les commandes terminées vers Odoo comme factures."
 
 msgid "Amelia module enabled but Amelia is not active."
 msgstr "Module Amelia activé mais Amelia n'est pas actif."
 
 msgid "Sprout Invoices module enabled but Sprout Invoices is not active."
-msgstr ""
+msgstr "Module Sprout Invoices activé mais Sprout Invoices n'est pas actif."
 
 msgid "Sync invoices"
-msgstr ""
+msgstr "Synchroniser les factures"
 
 msgid "Push Sprout Invoices invoices to Odoo as account moves."
 msgstr ""
+"Envoyer les factures Sprout Invoices vers Odoo comme écritures comptables."
 
 msgid "Push Sprout Invoices payments to Odoo."
-msgstr ""
+msgstr "Envoyer les paiements Sprout Invoices vers Odoo."
 
 msgid "Automatically confirm invoices in Odoo for completed invoices."
 msgstr ""
+"Confirmer automatiquement les factures dans Odoo pour les factures terminées."
 
 #, php-format
 msgid "Invoice %s"
-msgstr ""
+msgstr "Facture %s"
 
 msgid "WP Crowdfunding module enabled but WP Crowdfunding is not active."
-msgstr ""
+msgstr "Module WP Crowdfunding activé mais WP Crowdfunding n'est pas actif."
 
 msgid "Push crowdfunding campaigns to Odoo as service products."
 msgstr ""
+"Envoyer les campagnes de crowdfunding vers Odoo comme produits de service."
 
 #, php-format
 msgid "Order %s"
-msgstr ""
+msgstr "Commande %s"
 
 msgid "Ecwid module enabled but Ecwid is not active."
-msgstr ""
+msgstr "Module Ecwid activé mais Ecwid n'est pas actif."
 
 msgid "Store ID"
-msgstr ""
+msgstr "ID de la boutique"
 
 msgid "Your Ecwid store ID."
-msgstr ""
+msgstr "L'identifiant de votre boutique Ecwid."
 
 msgid "API token"
-msgstr ""
+msgstr "Jeton API"
 
 msgid "Your Ecwid API secret token."
-msgstr ""
+msgstr "Votre jeton secret API Ecwid."
 
 msgid "Push Ecwid products to Odoo."
-msgstr ""
+msgstr "Envoyer les produits Ecwid vers Odoo."
 
 msgid "Push Ecwid orders to Odoo."
-msgstr ""
+msgstr "Envoyer les commandes Ecwid vers Odoo."
 
 msgid "ShopWP module enabled but ShopWP is not active."
-msgstr ""
+msgstr "Module ShopWP activé mais ShopWP n'est pas actif."
 
 msgid "Push ShopWP products to Odoo."
-msgstr ""
+msgstr "Envoyer les produits ShopWP vers Odoo."
 
 #, php-format
 msgid "Funding goal: %s"
-msgstr ""
+msgstr "Objectif de financement : %s"
 
 #, php-format
 msgid "End date: %s"
-msgstr ""
+msgstr "Date de fin : %s"
 
 #, php-format
 msgid "Min pledge: %s"
-msgstr ""
+msgstr "Contribution minimum : %s"
 
 msgid "WP-Invoice module enabled but WP-Invoice is not active."
-msgstr ""
+msgstr "Module WP-Invoice activé mais WP-Invoice n'est pas actif."
 
 msgid "Push WP-Invoice invoices to Odoo as account moves."
-msgstr ""
+msgstr "Envoyer les factures WP-Invoice vers Odoo comme écritures comptables."
 
 msgid "Automatically confirm invoices in Odoo for paid invoices."
 msgstr ""
+"Confirmer automatiquement les factures dans Odoo pour les factures payées."
 
 #, php-format
 msgid "[WP4Odoo] %d consecutive sync failures"
@@ -1042,15 +1067,21 @@ msgid ""
 "WP-Cron is disabled (DISABLE_WP_CRON). Ensure a system cron job calls wp-"
 "cron.php regularly, or queue processing will not run."
 msgstr ""
+"WP-Cron est désactivé (DISABLE_WP_CRON). Assurez-vous qu'une tâche cron "
+"système appelle wp-cron.php régulièrement, sinon la file d'attente ne sera "
+"pas traitée."
 
 msgid ""
 "WP-Cron has not triggered recently. On low-traffic sites, scheduled sync may "
 "be delayed. Consider setting up a system cron job."
 msgstr ""
+"WP-Cron ne s'est pas déclenché récemment. Sur les sites à faible trafic, la "
+"synchronisation planifiée peut être retardée. Envisagez de configurer une "
+"tâche cron système."
 
 #, php-format
 msgid "%s must be installed and activated to use this module."
-msgstr ""
+msgstr "%s doit être installé et activé pour utiliser ce module."
 
 #, php-format
 msgid "Entity type \"%1$s\" is not registered in module \"%2$s\"."
@@ -1322,6 +1353,10 @@ msgid ""
 "define WP4ODOO_ENCRYPTION_KEY in wp-config.php to ensure keys remain "
 "decryptable after salt rotation."
 msgstr ""
+"Les clés API sont chiffrées au repos. Pour les configurations multi-"
+"environnements ou staging, définissez WP4ODOO_ENCRYPTION_KEY dans wp-"
+"config.php afin que les clés restent déchiffrables après une rotation des "
+"salts."
 
 msgid "Protocol"
 msgstr "Protocole"

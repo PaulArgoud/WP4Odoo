@@ -6,7 +6,7 @@
  * @package WP4Odoo
  */
 
-define( 'WP4ODOO_VERSION', '2.8.0' );
+define( 'WP4ODOO_VERSION', '2.8.5' );
 define( 'WP4ODOO_PLUGIN_FILE', __DIR__ . '/wp4odoo.php' );
 define( 'WP4ODOO_PLUGIN_DIR', __DIR__ . '/' );
 define( 'WP4ODOO_PLUGIN_URL', 'https://example.com/wp-content/plugins/wp4odoo/' );
@@ -676,6 +676,7 @@ if ( ! class_exists( 'WC_Subscription' ) ) {
 		/** @return array<int, array<string, mixed>> */
 		public function get_items(): array { return []; }
 		public function get_user_id(): int { return 0; }
+		public function update_status( string $new_status ): void {}
 	}
 }
 

@@ -10,7 +10,7 @@ use PHPUnit\Framework\TestCase;
 /**
  * Unit tests for Events_Calendar_Handler.
  *
- * Tests event/ticket/attendee loading, formatting, and helper methods.
+ * Tests event/ticket/attendee loading, formatting, parsing (pull), saving, and helper methods.
  */
 class EventsCalendarHandlerTest extends TestCase {
 
@@ -377,5 +377,181 @@ class EventsCalendarHandlerTest extends TestCase {
 
 		$result = $this->handler->format_event( $data, true );
 		$this->assertSame( 'UTC', $result['date_tz'] );
+	}
+
+	// ─── parse_event_from_odoo (event.event) ────────────
+
+	public function test_parse_event_from_odoo_event_model(): void {
+		$odoo = [
+			'name'        => 'Odoo Conference',
+			'date_begin'  => '2026-07-01 10:00:00',
+			'date_end'    => '2026-07-01 18:00:00',
+			'date_tz'     => 'America/New_York',
+			'description' => '<p>From Odoo</p>',
+		];
+
+		$result = $this->handler->parse_event_from_odoo( $odoo, true );
+
+		$this->assertSame( 'Odoo Conference', $result['name'] );
+		$this->assertSame( '2026-07-01 10:00:00', $result['start_date'] );
+		$this->assertSame( '2026-07-01 18:00:00', $result['end_date'] );
+		$this->assertSame( 'America/New_York', $result['timezone'] );
+		$this->assertFalse( $result['all_day'] );
+		$this->assertSame( '<p>From Odoo</p>', $result['description'] );
+	}
+
+	public function test_parse_event_from_odoo_event_model_defaults_timezone(): void {
+		$odoo = [
+			'name'        => 'Event',
+			'date_begin'  => '2026-07-01 10:00:00',
+			'date_end'    => '2026-07-01 18:00:00',
+		];
+
+		$result = $this->handler->parse_event_from_odoo( $odoo, true );
+		$this->assertSame( 'UTC', $result['timezone'] );
+	}
+
+	// ─── parse_event_from_odoo (calendar.event) ─────────
+
+	public function test_parse_event_from_odoo_calendar_model(): void {
+		$odoo = [
+			'name'        => 'Calendar Event',
+			'start'       => '2026-07-01 10:00:00',
+			'stop'        => '2026-07-01 18:00:00',
+			'allday'      => true,
+			'description' => 'Calendar desc',
+		];
+
+		$result = $this->handler->parse_event_from_odoo( $odoo, false );
+
+		$this->assertSame( 'Calendar Event', $result['name'] );
+		$this->assertSame( '2026-07-01 10:00:00', $result['start_date'] );
+		$this->assertSame( '2026-07-01 18:00:00', $result['end_date'] );
+		$this->assertSame( '', $result['timezone'] );
+		$this->assertTrue( $result['all_day'] );
+		$this->assertSame( 'Calendar desc', $result['description'] );
+	}
+
+	public function test_parse_calendar_event_allday_false(): void {
+		$odoo = [
+			'name'   => 'Partial Day',
+			'start'  => '2026-07-01 10:00:00',
+			'stop'   => '2026-07-01 12:00:00',
+			'allday' => false,
+		];
+
+		$result = $this->handler->parse_event_from_odoo( $odoo, false );
+		$this->assertFalse( $result['all_day'] );
+	}
+
+	// ─── save_event ─────────────────────────────────────
+
+	public function test_save_event_creates_new_post(): void {
+		$data = [
+			'name'        => 'New Event',
+			'description' => 'Created from Odoo',
+			'start_date'  => '2026-07-01 10:00:00',
+			'end_date'    => '2026-07-01 18:00:00',
+			'timezone'    => 'Europe/Paris',
+			'all_day'     => false,
+		];
+
+		$post_id = $this->handler->save_event( $data, 0 );
+
+		$this->assertGreaterThan( 0, $post_id );
+	}
+
+	public function test_save_event_updates_existing_post(): void {
+		$GLOBALS['_wp_posts'][10] = (object) [
+			'post_type'    => 'tribe_events',
+			'post_title'   => 'Old Title',
+			'post_content' => '',
+		];
+
+		$data = [
+			'name'        => 'Updated Title',
+			'description' => 'Updated content',
+			'start_date'  => '2026-07-01 10:00:00',
+			'end_date'    => '2026-07-01 18:00:00',
+			'timezone'    => 'UTC',
+			'all_day'     => false,
+		];
+
+		$post_id = $this->handler->save_event( $data, 10 );
+
+		$this->assertSame( 10, $post_id );
+	}
+
+	public function test_save_event_sets_meta_fields(): void {
+		$data = [
+			'name'        => 'Meta Test Event',
+			'description' => '',
+			'start_date'  => '2026-07-01 09:00:00',
+			'end_date'    => '2026-07-01 17:00:00',
+			'timezone'    => 'America/New_York',
+			'all_day'     => true,
+		];
+
+		$post_id = $this->handler->save_event( $data, 0 );
+
+		$this->assertSame( '2026-07-01 09:00:00', $GLOBALS['_wp_post_meta'][ $post_id ]['_EventStartDateUTC'] );
+		$this->assertSame( '2026-07-01 17:00:00', $GLOBALS['_wp_post_meta'][ $post_id ]['_EventEndDateUTC'] );
+		$this->assertSame( 'America/New_York', $GLOBALS['_wp_post_meta'][ $post_id ]['_EventTimezone'] );
+		$this->assertSame( 'yes', $GLOBALS['_wp_post_meta'][ $post_id ]['_EventAllDay'] );
+	}
+
+	public function test_save_event_allday_empty_when_false(): void {
+		$data = [
+			'name'        => 'Not All Day',
+			'description' => '',
+			'start_date'  => '2026-07-01 09:00:00',
+			'end_date'    => '2026-07-01 17:00:00',
+			'timezone'    => 'UTC',
+			'all_day'     => false,
+		];
+
+		$post_id = $this->handler->save_event( $data, 0 );
+
+		$this->assertSame( '', $GLOBALS['_wp_post_meta'][ $post_id ]['_EventAllDay'] );
+	}
+
+	// ─── save_ticket ────────────────────────────────────
+
+	public function test_save_ticket_creates_new_post(): void {
+		$data = [
+			'name'       => 'VIP Ticket',
+			'list_price' => 99.99,
+		];
+
+		$post_id = $this->handler->save_ticket( $data, 0 );
+
+		$this->assertGreaterThan( 0, $post_id );
+	}
+
+	public function test_save_ticket_updates_existing(): void {
+		$GLOBALS['_wp_posts'][20] = (object) [
+			'post_type'  => 'tribe_rsvp_tickets',
+			'post_title' => 'Old Ticket',
+		];
+
+		$data = [
+			'name'       => 'Updated Ticket',
+			'list_price' => 50.0,
+		];
+
+		$post_id = $this->handler->save_ticket( $data, 20 );
+
+		$this->assertSame( 20, $post_id );
+	}
+
+	public function test_save_ticket_sets_price_meta(): void {
+		$data = [
+			'name'       => 'Priced Ticket',
+			'list_price' => 25.50,
+		];
+
+		$post_id = $this->handler->save_ticket( $data, 0 );
+
+		$this->assertSame( '25.5', $GLOBALS['_wp_post_meta'][ $post_id ]['_price'] );
 	}
 }

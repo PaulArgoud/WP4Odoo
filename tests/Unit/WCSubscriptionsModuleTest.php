@@ -10,7 +10,7 @@ use PHPUnit\Framework\TestCase;
  * Unit tests for WC_Subscriptions_Module.
  *
  * Tests module configuration, entity type declarations, field mappings,
- * and default settings.
+ * default settings, and bidirectional pull support.
  */
 class WCSubscriptionsModuleTest extends TestCase {
 
@@ -46,8 +46,8 @@ class WCSubscriptionsModuleTest extends TestCase {
 		$this->assertSame( 0, $this->module->get_exclusive_priority() );
 	}
 
-	public function test_sync_direction_is_wp_to_odoo(): void {
-		$this->assertSame( 'wp_to_odoo', $this->module->get_sync_direction() );
+	public function test_sync_direction_is_bidirectional(): void {
+		$this->assertSame( 'bidirectional', $this->module->get_sync_direction() );
 	}
 
 	// ─── Odoo Models ─────────────────────────────────────
@@ -94,9 +94,14 @@ class WCSubscriptionsModuleTest extends TestCase {
 		$this->assertTrue( $settings['auto_post_invoices'] );
 	}
 
-	public function test_default_settings_has_exactly_four_keys(): void {
+	public function test_default_settings_has_pull_subscriptions(): void {
 		$settings = $this->module->get_default_settings();
-		$this->assertCount( 4, $settings );
+		$this->assertTrue( $settings['pull_subscriptions'] );
+	}
+
+	public function test_default_settings_has_exactly_five_keys(): void {
+		$settings = $this->module->get_default_settings();
+		$this->assertCount( 5, $settings );
 	}
 
 	// ─── Settings Fields ──────────────────────────────────
@@ -205,6 +210,53 @@ class WCSubscriptionsModuleTest extends TestCase {
 	public function test_dependency_has_no_warnings_with_wc_subscriptions(): void {
 		$status = $this->module->get_dependency_status();
 		$this->assertEmpty( $status['notices'] );
+	}
+
+	// ─── Settings Fields: Pull ────────────────────────────
+
+	public function test_settings_fields_exposes_pull_subscriptions(): void {
+		$fields = $this->module->get_settings_fields();
+		$this->assertArrayHasKey( 'pull_subscriptions', $fields );
+		$this->assertSame( 'checkbox', $fields['pull_subscriptions']['type'] );
+	}
+
+	// ─── Pull: product skipped ──────────────────────────
+
+	public function test_pull_product_skipped(): void {
+		$result = $this->module->pull_from_odoo( 'product', 'update', 100, 0 );
+		$this->assertTrue( $result->succeeded() );
+		$this->assertSame( 0, $result->get_entity_id() );
+	}
+
+	public function test_pull_renewal_skipped(): void {
+		$result = $this->module->pull_from_odoo( 'renewal', 'create', 200, 0 );
+		$this->assertTrue( $result->succeeded() );
+		$this->assertSame( 0, $result->get_entity_id() );
+	}
+
+	// ─── Pull: delete not supported ─────────────────────
+
+	public function test_pull_delete_subscription_succeeds(): void {
+		$result = $this->module->pull_from_odoo( 'subscription', 'delete', 300, 20 );
+		$this->assertTrue( $result->succeeded() );
+	}
+
+	// ─── map_from_odoo ──────────────────────────────────
+
+	public function test_map_from_odoo_subscription_parses_correctly(): void {
+		$odoo_data = [
+			'state'                => 'in_progress',
+			'date_start'           => '2026-01-15',
+			'recurring_next_date'  => '2026-02-15',
+			'recurring_rule_type'  => 'monthly',
+			'recurring_interval'   => 1,
+		];
+
+		$wp_data = $this->module->map_from_odoo( 'subscription', $odoo_data );
+
+		$this->assertSame( 'active', $wp_data['status'] );
+		$this->assertSame( '2026-01-15', $wp_data['start_date'] );
+		$this->assertSame( 'month', $wp_data['billing_period'] );
 	}
 
 	// ─── Boot Guard ───────────────────────────────────────

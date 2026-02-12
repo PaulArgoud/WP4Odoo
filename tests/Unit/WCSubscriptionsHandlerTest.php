@@ -10,7 +10,8 @@ use PHPUnit\Framework\TestCase;
 /**
  * Unit tests for WC_Subscriptions_Handler.
  *
- * Tests product/subscription loading, formatting, and status/billing mapping.
+ * Tests product/subscription loading, formatting, status/billing mapping,
+ * reverse mappings (Odoo → WCS), parsing, and save methods for pull sync.
  */
 class WCSubscriptionsHandlerTest extends TestCase {
 
@@ -350,5 +351,132 @@ class WCSubscriptionsHandlerTest extends TestCase {
 
 		$product_id = $this->handler->get_product_id_for_renewal( 100 );
 		$this->assertSame( 0, $product_id );
+	}
+
+	// ─── Reverse status mapping (Odoo → WCS) ────────────
+
+	public function test_reverse_status_draft_to_pending(): void {
+		$this->assertSame( 'pending', $this->handler->map_odoo_status_to_wcs( 'draft' ) );
+	}
+
+	public function test_reverse_status_in_progress_to_active(): void {
+		$this->assertSame( 'active', $this->handler->map_odoo_status_to_wcs( 'in_progress' ) );
+	}
+
+	public function test_reverse_status_paused_to_on_hold(): void {
+		$this->assertSame( 'on-hold', $this->handler->map_odoo_status_to_wcs( 'paused' ) );
+	}
+
+	public function test_reverse_status_close_to_cancelled(): void {
+		$this->assertSame( 'cancelled', $this->handler->map_odoo_status_to_wcs( 'close' ) );
+	}
+
+	public function test_reverse_status_unknown_to_pending(): void {
+		$this->assertSame( 'pending', $this->handler->map_odoo_status_to_wcs( 'unknown_state' ) );
+	}
+
+	// ─── Reverse billing period mapping (Odoo → WCS) ────
+
+	public function test_reverse_billing_daily_to_day(): void {
+		$this->assertSame( 'day', $this->handler->map_odoo_billing_period_to_wcs( 'daily' ) );
+	}
+
+	public function test_reverse_billing_weekly_to_week(): void {
+		$this->assertSame( 'week', $this->handler->map_odoo_billing_period_to_wcs( 'weekly' ) );
+	}
+
+	public function test_reverse_billing_monthly_to_month(): void {
+		$this->assertSame( 'month', $this->handler->map_odoo_billing_period_to_wcs( 'monthly' ) );
+	}
+
+	public function test_reverse_billing_yearly_to_year(): void {
+		$this->assertSame( 'year', $this->handler->map_odoo_billing_period_to_wcs( 'yearly' ) );
+	}
+
+	public function test_reverse_billing_unknown_to_month(): void {
+		$this->assertSame( 'month', $this->handler->map_odoo_billing_period_to_wcs( 'unknown_rule' ) );
+	}
+
+	// ─── parse_subscription_from_odoo ───────────────────
+
+	public function test_parse_subscription_from_odoo(): void {
+		$odoo_data = [
+			'state'                => 'in_progress',
+			'date_start'           => '2026-01-15',
+			'recurring_next_date'  => '2026-02-15',
+			'recurring_rule_type'  => 'monthly',
+			'recurring_interval'   => 1,
+		];
+
+		$result = $this->handler->parse_subscription_from_odoo( $odoo_data );
+
+		$this->assertSame( 'active', $result['status'] );
+		$this->assertSame( '2026-01-15', $result['start_date'] );
+		$this->assertSame( '2026-02-15', $result['next_payment'] );
+		$this->assertSame( 'month', $result['billing_period'] );
+		$this->assertSame( 1, $result['billing_interval'] );
+	}
+
+	public function test_parse_subscription_from_odoo_defaults(): void {
+		$odoo_data = [];
+
+		$result = $this->handler->parse_subscription_from_odoo( $odoo_data );
+
+		$this->assertSame( 'pending', $result['status'] );
+		$this->assertSame( 'month', $result['billing_period'] );
+		$this->assertSame( 1, $result['billing_interval'] );
+	}
+
+	// ─── save_subscription ──────────────────────────────
+
+	public function test_save_subscription_updates_status(): void {
+		$GLOBALS['_wc_subscriptions'][20] = [
+			'user_id'          => 42,
+			'billing_period'   => 'month',
+			'billing_interval' => 1,
+			'start_date'       => '2026-01-15',
+			'next_payment'     => '2026-02-15',
+			'status'           => 'active',
+			'items'            => [],
+		];
+
+		$data   = [ 'status' => 'on-hold' ];
+		$result = $this->handler->save_subscription( $data, 20 );
+
+		$this->assertSame( 20, $result );
+		$this->assertSame( 'on-hold', $GLOBALS['_wc_subscriptions'][20]['status'] );
+	}
+
+	public function test_save_subscription_returns_zero_for_missing(): void {
+		$data   = [ 'status' => 'cancelled' ];
+		$result = $this->handler->save_subscription( $data, 999 );
+
+		$this->assertSame( 0, $result );
+	}
+
+	public function test_save_subscription_returns_zero_for_wp_id_zero(): void {
+		$data   = [ 'status' => 'active' ];
+		$result = $this->handler->save_subscription( $data, 0 );
+
+		$this->assertSame( 0, $result );
+	}
+
+	public function test_save_subscription_no_change_when_same_status(): void {
+		$GLOBALS['_wc_subscriptions'][20] = [
+			'user_id'          => 42,
+			'billing_period'   => 'month',
+			'billing_interval' => 1,
+			'start_date'       => '2026-01-15',
+			'next_payment'     => '2026-02-15',
+			'status'           => 'active',
+			'items'            => [],
+		];
+
+		$data   = [ 'status' => 'active' ];
+		$result = $this->handler->save_subscription( $data, 20 );
+
+		$this->assertSame( 20, $result );
+		// Status unchanged.
+		$this->assertSame( 'active', $GLOBALS['_wc_subscriptions'][20]['status'] );
 	}
 }

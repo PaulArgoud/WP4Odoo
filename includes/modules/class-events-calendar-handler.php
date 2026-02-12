@@ -15,9 +15,10 @@ if ( ! defined( 'ABSPATH' ) ) {
  *
  * Loads tribe_events CPT data and post meta, RSVP ticket posts, and
  * RSVP attendee posts. Formats data for Odoo event.event / calendar.event
- * (dual-model) and event.registration.
+ * (dual-model) and event.registration. Also provides reverse parsing
+ * (Odoo → WP) and save methods for pull sync.
  *
- * Called by Events_Calendar_Module via its load_wp_data dispatch.
+ * Called by Events_Calendar_Module via its load_wp_data / save_wp_data dispatch.
  *
  * @package WP4Odoo
  * @since   2.7.0
@@ -161,6 +162,120 @@ class Events_Calendar_Handler {
 			'name'       => $data['name'] ?? '',
 			'email'      => $data['email'] ?? '',
 		];
+	}
+
+	// ─── Parse event from Odoo ────────────────────────────
+
+	/**
+	 * Parse Odoo event data into WordPress-compatible format.
+	 *
+	 * Reverse of format_event(). Handles both event.event and
+	 * calendar.event field layouts.
+	 *
+	 * @param array<string, mixed> $odoo_data       Odoo record data.
+	 * @param bool                 $use_event_model True for event.event, false for calendar.event.
+	 * @return array<string, mixed> WordPress event data.
+	 */
+	public function parse_event_from_odoo( array $odoo_data, bool $use_event_model ): array {
+		if ( $use_event_model ) {
+			return [
+				'name'        => $odoo_data['name'] ?? '',
+				'start_date'  => $odoo_data['date_begin'] ?? '',
+				'end_date'    => $odoo_data['date_end'] ?? '',
+				'timezone'    => $odoo_data['date_tz'] ?? 'UTC',
+				'all_day'     => false,
+				'description' => $odoo_data['description'] ?? '',
+			];
+		}
+
+		return [
+			'name'        => $odoo_data['name'] ?? '',
+			'start_date'  => $odoo_data['start'] ?? '',
+			'end_date'    => $odoo_data['stop'] ?? '',
+			'timezone'    => '',
+			'all_day'     => ! empty( $odoo_data['allday'] ),
+			'description' => $odoo_data['description'] ?? '',
+		];
+	}
+
+	// ─── Save event ──────────────────────────────────────
+
+	/**
+	 * Save event data to a tribe_events CPT post.
+	 *
+	 * Creates a new post when $wp_id is 0, updates an existing one otherwise.
+	 *
+	 * @param array<string, mixed> $data  Parsed event data from parse_event_from_odoo().
+	 * @param int                  $wp_id Existing post ID (0 to create new).
+	 * @return int The post ID, or 0 on failure.
+	 */
+	public function save_event( array $data, int $wp_id = 0 ): int {
+		$post_args = [
+			'post_title'   => $data['name'] ?? '',
+			'post_content' => $data['description'] ?? '',
+			'post_type'    => 'tribe_events',
+			'post_status'  => 'publish',
+		];
+
+		if ( $wp_id > 0 ) {
+			$post_args['ID'] = $wp_id;
+			$result          = \wp_update_post( $post_args, true );
+		} else {
+			$result = \wp_insert_post( $post_args, true );
+		}
+
+		if ( \is_wp_error( $result ) || 0 === $result ) {
+			$this->logger->error( 'Failed to save event post.', [ 'wp_id' => $wp_id ] );
+			return 0;
+		}
+
+		$post_id = (int) $result;
+
+		\update_post_meta( $post_id, '_EventStartDateUTC', $data['start_date'] ?? '' );
+		\update_post_meta( $post_id, '_EventEndDateUTC', $data['end_date'] ?? '' );
+		\update_post_meta( $post_id, '_EventTimezone', $data['timezone'] ?? '' );
+		\update_post_meta( $post_id, '_EventAllDay', ! empty( $data['all_day'] ) ? 'yes' : '' );
+
+		return $post_id;
+	}
+
+	// ─── Save ticket ─────────────────────────────────────
+
+	/**
+	 * Save ticket data to a tribe_rsvp_tickets CPT post.
+	 *
+	 * Creates a new post when $wp_id is 0, updates an existing one otherwise.
+	 *
+	 * @param array<string, mixed> $data  Mapped ticket data.
+	 * @param int                  $wp_id Existing post ID (0 to create new).
+	 * @return int The post ID, or 0 on failure.
+	 */
+	public function save_ticket( array $data, int $wp_id = 0 ): int {
+		$post_args = [
+			'post_title'  => $data['name'] ?? '',
+			'post_type'   => 'tribe_rsvp_tickets',
+			'post_status' => 'publish',
+		];
+
+		if ( $wp_id > 0 ) {
+			$post_args['ID'] = $wp_id;
+			$result          = \wp_update_post( $post_args, true );
+		} else {
+			$result = \wp_insert_post( $post_args, true );
+		}
+
+		if ( \is_wp_error( $result ) || 0 === $result ) {
+			$this->logger->error( 'Failed to save ticket post.', [ 'wp_id' => $wp_id ] );
+			return 0;
+		}
+
+		$post_id = (int) $result;
+
+		if ( isset( $data['list_price'] ) ) {
+			\update_post_meta( $post_id, '_price', (string) $data['list_price'] );
+		}
+
+		return $post_id;
 	}
 
 	// ─── Helpers ──────────────────────────────────────────

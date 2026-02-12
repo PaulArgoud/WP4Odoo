@@ -15,8 +15,9 @@ if ( ! defined( 'ABSPATH' ) ) {
  *
  * Loads WC Subscriptions entities, maps statuses and billing periods to Odoo,
  * and pre-formats data for sale.subscription and account.move models.
+ * Also provides reverse parsing (Odoo → WP) and save methods for pull sync.
  *
- * Called by WC_Subscriptions_Module via its load_wp_data dispatch.
+ * Called by WC_Subscriptions_Module via its load_wp_data / save_wp_data dispatch.
  *
  * @package WP4Odoo
  * @since   2.6.5
@@ -59,6 +60,30 @@ class WC_Subscriptions_Handler {
 		'week'  => 'weekly',
 		'month' => 'monthly',
 		'year'  => 'yearly',
+	];
+
+	/**
+	 * Reverse status mapping: Odoo sale.subscription state → WCS status.
+	 *
+	 * @var array<string, string>
+	 */
+	private const REVERSE_STATUS_MAP = [
+		'draft'       => 'pending',
+		'in_progress' => 'active',
+		'paused'      => 'on-hold',
+		'close'       => 'cancelled',
+	];
+
+	/**
+	 * Reverse billing period mapping: Odoo recurring_rule_type → WCS period.
+	 *
+	 * @var array<string, string>
+	 */
+	private const REVERSE_BILLING_PERIOD_MAP = [
+		'daily'   => 'day',
+		'weekly'  => 'week',
+		'monthly' => 'month',
+		'yearly'  => 'year',
 	];
 
 	/**
@@ -259,6 +284,93 @@ class WC_Subscriptions_Handler {
 		$map = \apply_filters( 'wp4odoo_wcs_billing_period_map', self::BILLING_PERIOD_MAP );
 
 		return $map[ $period ] ?? 'monthly';
+	}
+
+	// ─── Reverse status mapping ───────────────────────────
+
+	/**
+	 * Map an Odoo sale.subscription state to a WCS subscription status.
+	 *
+	 * @param string $odoo_state Odoo subscription state.
+	 * @return string WCS subscription status.
+	 */
+	public function map_odoo_status_to_wcs( string $odoo_state ): string {
+		$map = \apply_filters( 'wp4odoo_wcs_reverse_status_map', self::REVERSE_STATUS_MAP );
+
+		return $map[ $odoo_state ] ?? 'pending';
+	}
+
+	/**
+	 * Map an Odoo recurring_rule_type to a WCS billing period.
+	 *
+	 * @param string $odoo_rule Odoo recurring rule type.
+	 * @return string WCS billing period.
+	 */
+	public function map_odoo_billing_period_to_wcs( string $odoo_rule ): string {
+		$map = \apply_filters( 'wp4odoo_wcs_reverse_billing_period_map', self::REVERSE_BILLING_PERIOD_MAP );
+
+		return $map[ $odoo_rule ] ?? 'month';
+	}
+
+	// ─── Parse subscription from Odoo ─────────────────────
+
+	/**
+	 * Parse Odoo sale.subscription data into WordPress-compatible format.
+	 *
+	 * Reverse of format_subscription(). Applies reverse status and billing
+	 * period mappings.
+	 *
+	 * @param array<string, mixed> $odoo_data Odoo record data.
+	 * @return array<string, mixed> WordPress subscription data.
+	 */
+	public function parse_subscription_from_odoo( array $odoo_data ): array {
+		$state = $odoo_data['stage_id'][1] ?? ( $odoo_data['state'] ?? 'draft' );
+		if ( is_array( $state ) ) {
+			$state = 'draft';
+		}
+
+		return [
+			'status'           => $this->map_odoo_status_to_wcs( (string) $state ),
+			'start_date'       => $odoo_data['date_start'] ?? '',
+			'next_payment'     => $odoo_data['recurring_next_date'] ?? '',
+			'billing_period'   => $this->map_odoo_billing_period_to_wcs( $odoo_data['recurring_rule_type'] ?? 'monthly' ),
+			'billing_interval' => (int) ( $odoo_data['recurring_interval'] ?? 1 ),
+		];
+	}
+
+	// ─── Save subscription ────────────────────────────────
+
+	/**
+	 * Save pulled subscription data to WooCommerce.
+	 *
+	 * Only updates existing subscriptions (no creation from Odoo side —
+	 * subscriptions are created by WC checkout). Applies status changes
+	 * via update_status().
+	 *
+	 * @param array<string, mixed> $data  Parsed subscription data.
+	 * @param int                  $wp_id WC Subscription ID (must be > 0).
+	 * @return int Subscription ID on success, 0 on failure.
+	 */
+	public function save_subscription( array $data, int $wp_id ): int {
+		if ( $wp_id <= 0 ) {
+			$this->logger->warning( 'Cannot create subscriptions from Odoo — subscriptions originate in WooCommerce.', [ 'wp_id' => $wp_id ] );
+			return 0;
+		}
+
+		$subscription = \wcs_get_subscription( $wp_id );
+		if ( ! $subscription ) {
+			$this->logger->warning( 'WC Subscription not found for pull update.', [ 'wp_id' => $wp_id ] );
+			return 0;
+		}
+
+		$new_status     = $data['status'] ?? '';
+		$current_status = $subscription->get_status();
+
+		if ( ! empty( $new_status ) && $new_status !== $current_status ) {
+			$subscription->update_status( $new_status );
+		}
+
+		return $wp_id;
 	}
 
 	// ─── Helpers ───────────────────────────────────────────

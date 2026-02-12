@@ -65,6 +65,17 @@ if ( ! class_exists( 'WC_Subscription' ) ) {
 		public function get_user_id(): int {
 			return (int) ( $this->data['user_id'] ?? $this->data['customer_id'] ?? 0 );
 		}
+
+		/**
+		 * Update subscription status.
+		 *
+		 * @param string $new_status New status (without 'wc-' prefix).
+		 * @return void
+		 */
+		public function update_status( string $new_status ): void {
+			$this->data['status'] = $new_status;
+			$GLOBALS['_wc_subscriptions'][ $this->id ]['status'] = $new_status;
+		}
 	}
 }
 

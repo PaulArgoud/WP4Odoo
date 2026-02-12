@@ -10,11 +10,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * WooCommerce Subscriptions Module — push recurring subscriptions to Odoo.
+ * WooCommerce Subscriptions Module — bidirectional subscription sync,
+ * push-only for products and renewals.
  *
  * Syncs WC subscription products as Odoo service products (product.product),
  * subscriptions as sale.subscription (Odoo Enterprise), and renewal orders
- * as invoices (account.move). Push-only (WP → Odoo).
+ * as invoices (account.move).
+ *
+ * Subscriptions are bidirectional (push + pull status updates).
+ * Products and renewals are push-only (they originate in WooCommerce).
  *
  * Dual-model: probes Odoo for sale.subscription model at runtime.
  * If available (Odoo 14-16 Enterprise), subscriptions are pushed there.
@@ -31,12 +35,12 @@ class WC_Subscriptions_Module extends Module_Base {
 	use WC_Subscriptions_Hooks;
 
 	/**
-	 * Sync direction: push-only (WP → Odoo).
+	 * Sync direction: bidirectional for subscriptions, push-only for products/renewals.
 	 *
 	 * @return string
 	 */
 	public function get_sync_direction(): string {
-		return 'wp_to_odoo';
+		return 'bidirectional';
 	}
 
 	/**
@@ -146,6 +150,7 @@ class WC_Subscriptions_Module extends Module_Base {
 			'sync_subscriptions' => true,
 			'sync_renewals'      => true,
 			'auto_post_invoices' => true,
+			'pull_subscriptions' => true,
 		];
 	}
 
@@ -175,6 +180,11 @@ class WC_Subscriptions_Module extends Module_Base {
 				'label'       => __( 'Auto-post invoices', 'wp4odoo' ),
 				'type'        => 'checkbox',
 				'description' => __( 'Automatically confirm renewal invoices in Odoo.', 'wp4odoo' ),
+			],
+			'pull_subscriptions' => [
+				'label'       => __( 'Pull subscription updates from Odoo', 'wp4odoo' ),
+				'type'        => 'checkbox',
+				'description' => __( 'Pull subscription status changes from Odoo back to WooCommerce.', 'wp4odoo' ),
 			],
 		];
 	}
@@ -222,6 +232,88 @@ class WC_Subscriptions_Module extends Module_Base {
 		$this->subscription_model_detected = $result;
 
 		return $result;
+	}
+
+	// ─── Pull override ─────────────────────────────────────
+
+	/**
+	 * Pull an Odoo entity to WordPress.
+	 *
+	 * Only subscriptions can be pulled (status updates). Products and
+	 * renewals are push-only (they originate in WooCommerce).
+	 *
+	 * @param string $entity_type Entity type.
+	 * @param string $action      'create', 'update', or 'delete'.
+	 * @param int    $odoo_id     Odoo record ID.
+	 * @param int    $wp_id       WordPress entity ID (0 if unknown).
+	 * @param array  $payload     Additional data.
+	 * @return \WP4Odoo\Sync_Result
+	 */
+	public function pull_from_odoo( string $entity_type, string $action, int $odoo_id, int $wp_id = 0, array $payload = [] ): \WP4Odoo\Sync_Result {
+		if ( 'product' === $entity_type || 'renewal' === $entity_type ) {
+			$this->logger->info(
+				\sprintf( '%s pull not supported — originates in WooCommerce.', $entity_type ),
+				[ 'odoo_id' => $odoo_id ]
+			);
+			return \WP4Odoo\Sync_Result::success( 0 );
+		}
+
+		if ( 'subscription' === $entity_type ) {
+			$settings = $this->get_settings();
+			if ( empty( $settings['pull_subscriptions'] ) ) {
+				return \WP4Odoo\Sync_Result::success( 0 );
+			}
+		}
+
+		return parent::pull_from_odoo( $entity_type, $action, $odoo_id, $wp_id, $payload );
+	}
+
+	/**
+	 * Map Odoo data to WordPress format for pull.
+	 *
+	 * Subscriptions use the handler's parse method for reverse mapping.
+	 *
+	 * @param string $entity_type Entity type.
+	 * @param array  $odoo_data   Raw Odoo record data.
+	 * @return array<string, mixed>
+	 */
+	public function map_from_odoo( string $entity_type, array $odoo_data ): array {
+		if ( 'subscription' === $entity_type ) {
+			return $this->handler->parse_subscription_from_odoo( $odoo_data );
+		}
+
+		return parent::map_from_odoo( $entity_type, $odoo_data );
+	}
+
+	/**
+	 * Save pulled data to WordPress.
+	 *
+	 * Only subscription status updates are supported.
+	 *
+	 * @param string $entity_type Entity type.
+	 * @param array  $data        Mapped data.
+	 * @param int    $wp_id       Existing WP ID (0 if new).
+	 * @return int The WordPress entity ID (0 on failure).
+	 */
+	protected function save_wp_data( string $entity_type, array $data, int $wp_id = 0 ): int {
+		if ( 'subscription' === $entity_type ) {
+			return $this->handler->save_subscription( $data, $wp_id );
+		}
+
+		return 0;
+	}
+
+	/**
+	 * Delete a WordPress entity during pull.
+	 *
+	 * Subscriptions cannot be deleted from Odoo side.
+	 *
+	 * @param string $entity_type Entity type.
+	 * @param int    $wp_id       WordPress ID.
+	 * @return bool
+	 */
+	protected function delete_wp_data( string $entity_type, int $wp_id ): bool {
+		return false;
 	}
 
 	// ─── Push override ─────────────────────────────────────

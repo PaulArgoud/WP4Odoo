@@ -10,7 +10,7 @@ use PHPUnit\Framework\TestCase;
  * Unit tests for Events_Calendar_Module.
  *
  * Tests module identity, Odoo models, settings, field mappings,
- * dependency status, and boot guard.
+ * dependency status, boot guard, and bidirectional pull support.
  */
 class EventsCalendarModuleTest extends TestCase {
 
@@ -21,6 +21,7 @@ class EventsCalendarModuleTest extends TestCase {
 		$wpdb = new \WP_DB_Stub();
 
 		$GLOBALS['_wp_options']       = [];
+		$GLOBALS['_wp_transients']    = [];
 		$GLOBALS['_wp_posts']         = [];
 		$GLOBALS['_wp_post_meta']     = [];
 		$GLOBALS['_tribe_events']     = [];
@@ -52,8 +53,8 @@ class EventsCalendarModuleTest extends TestCase {
 		$this->assertSame( 0, $this->module->get_exclusive_priority() );
 	}
 
-	public function test_sync_direction_is_push_only(): void {
-		$this->assertSame( 'wp_to_odoo', $this->module->get_sync_direction() );
+	public function test_sync_direction_is_bidirectional(): void {
+		$this->assertSame( 'bidirectional', $this->module->get_sync_direction() );
 	}
 
 	// ─── Odoo models ────────────────────────────────────
@@ -94,14 +95,24 @@ class EventsCalendarModuleTest extends TestCase {
 		$this->assertTrue( $settings['sync_attendees'] );
 	}
 
+	public function test_pull_events_enabled_by_default(): void {
+		$settings = $this->module->get_default_settings();
+		$this->assertTrue( $settings['pull_events'] );
+	}
+
+	public function test_pull_tickets_enabled_by_default(): void {
+		$settings = $this->module->get_default_settings();
+		$this->assertTrue( $settings['pull_tickets'] );
+	}
+
 	public function test_default_settings_count(): void {
-		$this->assertCount( 3, $this->module->get_default_settings() );
+		$this->assertCount( 5, $this->module->get_default_settings() );
 	}
 
 	// ─── Settings fields ────────────────────────────────
 
 	public function test_settings_fields_count(): void {
-		$this->assertCount( 3, $this->module->get_settings_fields() );
+		$this->assertCount( 5, $this->module->get_settings_fields() );
 	}
 
 	public function test_settings_fields_have_labels(): void {
@@ -180,6 +191,102 @@ class EventsCalendarModuleTest extends TestCase {
 	public function test_dependency_has_empty_notices_when_available(): void {
 		$status = $this->module->get_dependency_status();
 		$this->assertEmpty( $status['notices'] );
+	}
+
+	// ─── Pull: attendee skipped ─────────────────────────
+
+	public function test_pull_attendee_skipped(): void {
+		$result = $this->module->pull_from_odoo( 'attendee', 'update', 100, 0 );
+		$this->assertTrue( $result->succeeded() );
+		$this->assertSame( 0, $result->get_entity_id() );
+	}
+
+	public function test_pull_attendee_create_skipped(): void {
+		$result = $this->module->pull_from_odoo( 'attendee', 'create', 200, 0 );
+		$this->assertTrue( $result->succeeded() );
+		$this->assertSame( 0, $result->get_entity_id() );
+	}
+
+	// ─── Pull: delete ───────────────────────────────────
+
+	public function test_pull_event_delete_removes_post(): void {
+		$GLOBALS['_wp_posts'][50] = (object) [
+			'post_type'    => 'tribe_events',
+			'post_title'   => 'Event to delete',
+			'post_content' => '',
+		];
+
+		$result = $this->module->pull_from_odoo( 'event', 'delete', 100, 50 );
+		$this->assertTrue( $result->succeeded() );
+	}
+
+	public function test_pull_ticket_delete_removes_post(): void {
+		$GLOBALS['_wp_posts'][60] = (object) [
+			'post_type'  => 'tribe_rsvp_tickets',
+			'post_title' => 'Ticket to delete',
+		];
+
+		$result = $this->module->pull_from_odoo( 'ticket', 'delete', 200, 60 );
+		$this->assertTrue( $result->succeeded() );
+	}
+
+	// ─── map_from_odoo ──────────────────────────────────
+
+	public function test_map_from_odoo_event_parses_calendar_fields(): void {
+		// Without event.event model, uses calendar.event fields (start/stop/allday).
+		$odoo_data = [
+			'name'        => 'Pulled Conference',
+			'start'       => '2026-08-01 09:00:00',
+			'stop'        => '2026-08-01 17:00:00',
+			'allday'      => false,
+			'description' => 'From Odoo',
+		];
+
+		$wp_data = $this->module->map_from_odoo( 'event', $odoo_data );
+
+		$this->assertSame( 'Pulled Conference', $wp_data['name'] );
+		$this->assertSame( '2026-08-01 09:00:00', $wp_data['start_date'] );
+		$this->assertSame( '2026-08-01 17:00:00', $wp_data['end_date'] );
+		$this->assertFalse( $wp_data['all_day'] );
+	}
+
+	public function test_map_from_odoo_event_with_event_model(): void {
+		// Simulate event.event model detection via transient.
+		$GLOBALS['_wp_transients']['wp4odoo_has_event_event'] = 1;
+
+		$module = new Events_Calendar_Module(
+			wp4odoo_test_client_provider(),
+			wp4odoo_test_entity_map(),
+			wp4odoo_test_settings()
+		);
+
+		$odoo_data = [
+			'name'        => 'Pulled Conference',
+			'date_begin'  => '2026-08-01 09:00:00',
+			'date_end'    => '2026-08-01 17:00:00',
+			'date_tz'     => 'Europe/Paris',
+			'description' => 'From Odoo',
+		];
+
+		$wp_data = $module->map_from_odoo( 'event', $odoo_data );
+
+		$this->assertSame( 'Pulled Conference', $wp_data['name'] );
+		$this->assertSame( '2026-08-01 09:00:00', $wp_data['start_date'] );
+		$this->assertSame( '2026-08-01 17:00:00', $wp_data['end_date'] );
+		$this->assertSame( 'Europe/Paris', $wp_data['timezone'] );
+	}
+
+	public function test_map_from_odoo_ticket_uses_parent_mapping(): void {
+		$odoo_data = [
+			'name'       => 'Pulled Ticket',
+			'list_price' => 30.0,
+			'type'       => 'service',
+		];
+
+		$wp_data = $this->module->map_from_odoo( 'ticket', $odoo_data );
+
+		$this->assertSame( 'Pulled Ticket', $wp_data['name'] );
+		$this->assertSame( 30.0, $wp_data['list_price'] );
 	}
 
 	// ─── Boot guard ─────────────────────────────────────

@@ -10,12 +10,16 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Events Calendar Module — push events, tickets, and attendees to Odoo.
+ * Events Calendar Module — bidirectional sync for events and tickets,
+ * push-only for attendees.
  *
  * Syncs The Events Calendar events as Odoo events (event.event) or calendar
  * entries (calendar.event fallback), Event Tickets RSVP ticket types as
  * service products (product.product), and RSVP attendees as event
- * registrations (event.registration). Push-only (WP → Odoo).
+ * registrations (event.registration).
+ *
+ * Events and tickets are bidirectional (push + pull). Attendees are
+ * push-only (they originate in WordPress RSVP forms).
  *
  * Dual-model: probes Odoo for event.event model at runtime.
  * If available, events and attendees use the rich event module.
@@ -34,12 +38,12 @@ class Events_Calendar_Module extends Module_Base {
 	use Events_Calendar_Hooks;
 
 	/**
-	 * Sync direction: push-only (WP → Odoo).
+	 * Sync direction: bidirectional for events/tickets, push-only for attendees.
 	 *
 	 * @return string
 	 */
 	public function get_sync_direction(): string {
-		return 'wp_to_odoo';
+		return 'bidirectional';
 	}
 
 	/**
@@ -153,6 +157,8 @@ class Events_Calendar_Module extends Module_Base {
 			'sync_events'    => true,
 			'sync_tickets'   => true,
 			'sync_attendees' => true,
+			'pull_events'    => true,
+			'pull_tickets'   => true,
 		];
 	}
 
@@ -177,6 +183,16 @@ class Events_Calendar_Module extends Module_Base {
 				'label'       => \__( 'Sync attendees', 'wp4odoo' ),
 				'type'        => 'checkbox',
 				'description' => \__( 'Push RSVP attendees to Odoo as event registrations. Requires Event Tickets and Odoo Events module.', 'wp4odoo' ),
+			],
+			'pull_events'    => [
+				'label'       => \__( 'Pull events from Odoo', 'wp4odoo' ),
+				'type'        => 'checkbox',
+				'description' => \__( 'Pull event changes from Odoo back to WordPress.', 'wp4odoo' ),
+			],
+			'pull_tickets'   => [
+				'label'       => \__( 'Pull tickets from Odoo', 'wp4odoo' ),
+				'type'        => 'checkbox',
+				'description' => \__( 'Pull ticket product changes from Odoo back to WordPress.', 'wp4odoo' ),
 			],
 		];
 	}
@@ -240,6 +256,90 @@ class Events_Calendar_Module extends Module_Base {
 		}
 
 		return parent::get_odoo_model( $entity_type );
+	}
+
+	// ─── Pull override ─────────────────────────────────────
+
+	/**
+	 * Pull an Odoo entity to WordPress.
+	 *
+	 * Attendees are push-only and cannot be pulled. Events and tickets
+	 * delegate to the parent pull_from_odoo() infrastructure.
+	 *
+	 * @param string $entity_type Entity type.
+	 * @param string $action      'create', 'update', or 'delete'.
+	 * @param int    $odoo_id     Odoo record ID.
+	 * @param int    $wp_id       WordPress entity ID (0 if unknown).
+	 * @param array  $payload     Additional data.
+	 * @return \WP4Odoo\Sync_Result
+	 */
+	public function pull_from_odoo( string $entity_type, string $action, int $odoo_id, int $wp_id = 0, array $payload = [] ): \WP4Odoo\Sync_Result {
+		if ( 'attendee' === $entity_type ) {
+			$this->logger->info( 'Attendee pull not supported — attendees originate in WordPress.', [ 'odoo_id' => $odoo_id ] );
+			return \WP4Odoo\Sync_Result::success( 0 );
+		}
+
+		$settings = $this->get_settings();
+
+		if ( 'event' === $entity_type && empty( $settings['pull_events'] ) ) {
+			return \WP4Odoo\Sync_Result::success( 0 );
+		}
+
+		if ( 'ticket' === $entity_type && empty( $settings['pull_tickets'] ) ) {
+			return \WP4Odoo\Sync_Result::success( 0 );
+		}
+
+		return parent::pull_from_odoo( $entity_type, $action, $odoo_id, $wp_id, $payload );
+	}
+
+	/**
+	 * Map Odoo data to WordPress format for pull.
+	 *
+	 * Events use the handler's parse method (dual-model aware).
+	 * Tickets use standard reverse field mapping from parent.
+	 *
+	 * @param string $entity_type Entity type.
+	 * @param array  $odoo_data   Raw Odoo record data.
+	 * @return array<string, mixed>
+	 */
+	public function map_from_odoo( string $entity_type, array $odoo_data ): array {
+		if ( 'event' === $entity_type ) {
+			return $this->handler->parse_event_from_odoo( $odoo_data, $this->has_event_model() );
+		}
+
+		return parent::map_from_odoo( $entity_type, $odoo_data );
+	}
+
+	/**
+	 * Save pulled data to WordPress.
+	 *
+	 * @param string $entity_type Entity type.
+	 * @param array  $data        Mapped data.
+	 * @param int    $wp_id       Existing WP ID (0 if new).
+	 * @return int The WordPress entity ID (0 on failure).
+	 */
+	protected function save_wp_data( string $entity_type, array $data, int $wp_id = 0 ): int {
+		return match ( $entity_type ) {
+			'event'  => $this->handler->save_event( $data, $wp_id ),
+			'ticket' => $this->handler->save_ticket( $data, $wp_id ),
+			default  => 0,
+		};
+	}
+
+	/**
+	 * Delete a WordPress entity during pull.
+	 *
+	 * @param string $entity_type Entity type.
+	 * @param int    $wp_id       WordPress post ID.
+	 * @return bool
+	 */
+	protected function delete_wp_data( string $entity_type, int $wp_id ): bool {
+		if ( 'event' === $entity_type || 'ticket' === $entity_type ) {
+			$deleted = \wp_delete_post( $wp_id, true );
+			return false !== $deleted && null !== $deleted;
+		}
+
+		return false;
 	}
 
 	// ─── Push override ─────────────────────────────────────

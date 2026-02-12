@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.8.5] - Unreleased
+
+### Changed
+- **Events Calendar Module** — Now bidirectional: events and tickets support pull from Odoo (create/update/delete). Attendees remain push-only (originate in WordPress RSVP). `Events_Calendar_Handler` gains `parse_event_from_odoo()`, `save_event()`, `save_ticket()` methods. New settings: `pull_events`, `pull_tickets`
+- **WC Subscriptions Module** — Now bidirectional: subscriptions support status pull from Odoo (update only — subscriptions originate in WooCommerce checkout). `WC_Subscriptions_Handler` gains reverse status/billing period maps, `parse_subscription_from_odoo()`, `save_subscription()` methods. New setting: `pull_subscriptions`
+
+### Added
+- 43 new unit tests for Events Calendar and WC Subscriptions pull support (1738 total)
+
 ## [2.8.0] - Unreleased
 
 ### Changed
