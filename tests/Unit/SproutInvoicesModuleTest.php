@@ -54,8 +54,8 @@ class SproutInvoicesModuleTest extends Module_Test_Case {
 		$this->assertSame( 10, $this->module->get_exclusive_priority() );
 	}
 
-	public function test_sync_direction_is_wp_to_odoo(): void {
-		$this->assertSame( 'wp_to_odoo', $this->module->get_sync_direction() );
+	public function test_sync_direction_is_bidirectional(): void {
+		$this->assertSame( 'bidirectional', $this->module->get_sync_direction() );
 	}
 
 	// ─── Odoo Models ────────────────────────────────────────
@@ -90,7 +90,7 @@ class SproutInvoicesModuleTest extends Module_Test_Case {
 	}
 
 	public function test_default_settings_count(): void {
-		$this->assertCount( 3, $this->module->get_default_settings() );
+		$this->assertCount( 5, $this->module->get_default_settings() );
 	}
 
 	// ─── Settings Fields ────────────────────────────────────
@@ -108,7 +108,7 @@ class SproutInvoicesModuleTest extends Module_Test_Case {
 	}
 
 	public function test_settings_fields_count(): void {
-		$this->assertCount( 3, $this->module->get_settings_fields() );
+		$this->assertCount( 5, $this->module->get_settings_fields() );
 	}
 
 	// ─── Field Mappings ─────────────────────────────────────
@@ -387,6 +387,209 @@ class SproutInvoicesModuleTest extends Module_Test_Case {
 		$this->module->on_payment( 200 );
 
 		$this->assertEmpty( $this->wpdb->calls );
+	}
+
+	// ─── Pull settings ──────────────────────────────────
+
+	public function test_default_settings_has_pull_invoices(): void {
+		$this->assertTrue( $this->module->get_default_settings()['pull_invoices'] );
+	}
+
+	public function test_default_settings_has_pull_payments(): void {
+		$this->assertTrue( $this->module->get_default_settings()['pull_payments'] );
+	}
+
+	public function test_settings_fields_exposes_pull_invoices(): void {
+		$this->assertSame( 'checkbox', $this->module->get_settings_fields()['pull_invoices']['type'] );
+	}
+
+	public function test_settings_fields_exposes_pull_payments(): void {
+		$this->assertSame( 'checkbox', $this->module->get_settings_fields()['pull_payments']['type'] );
+	}
+
+	// ─── Pull: delete ───────────────────────────────────
+
+	public function test_pull_invoice_delete_removes_post(): void {
+		$this->create_invoice_post( 50, 'publish' );
+
+		$result = $this->module->pull_from_odoo( 'invoice', 'delete', 100, 50 );
+		$this->assertTrue( $result->succeeded() );
+	}
+
+	public function test_pull_payment_delete_removes_post(): void {
+		$this->create_payment_post( 60 );
+
+		$result = $this->module->pull_from_odoo( 'payment', 'delete', 200, 60 );
+		$this->assertTrue( $result->succeeded() );
+	}
+
+	// ─── map_from_odoo ──────────────────────────────────
+
+	public function test_map_from_odoo_invoice(): void {
+		$odoo_data = [
+			'ref'              => 'INV-100',
+			'invoice_date'     => '2025-03-01',
+			'invoice_date_due' => '2025-04-01',
+			'amount_total'     => 500.0,
+			'state'            => 'posted',
+			'invoice_line_ids' => [
+				[ 0, 0, [ 'name' => 'Consulting', 'quantity' => 2.0, 'price_unit' => 250.0 ] ],
+			],
+		];
+
+		$wp_data = $this->module->map_from_odoo( 'invoice', $odoo_data );
+
+		$this->assertSame( 'INV-100', $wp_data['title'] );
+		$this->assertSame( 500.0, $wp_data['total'] );
+		$this->assertSame( 'complete', $wp_data['status'] );
+		$this->assertCount( 1, $wp_data['line_items'] );
+		$this->assertSame( 'Consulting', $wp_data['line_items'][0]['desc'] );
+	}
+
+	public function test_map_from_odoo_payment(): void {
+		$odoo_data = [
+			'amount' => 150.0,
+			'date'   => '2025-03-15',
+			'ref'    => 'Bank Transfer',
+		];
+
+		$wp_data = $this->module->map_from_odoo( 'payment', $odoo_data );
+
+		$this->assertSame( 150.0, $wp_data['amount'] );
+		$this->assertSame( '2025-03-15', $wp_data['date'] );
+		$this->assertSame( 'Bank Transfer', $wp_data['method'] );
+	}
+
+	// ─── Handler: reverse status mapping ────────────────
+
+	public function test_handler_odoo_draft_maps_to_publish(): void {
+		$this->assertSame( 'publish', $this->handler->map_odoo_status_to_si( 'draft' ) );
+	}
+
+	public function test_handler_odoo_posted_maps_to_complete(): void {
+		$this->assertSame( 'complete', $this->handler->map_odoo_status_to_si( 'posted' ) );
+	}
+
+	public function test_handler_odoo_cancel_maps_to_write_off(): void {
+		$this->assertSame( 'write-off', $this->handler->map_odoo_status_to_si( 'cancel' ) );
+	}
+
+	public function test_handler_odoo_unknown_maps_to_publish(): void {
+		$this->assertSame( 'publish', $this->handler->map_odoo_status_to_si( 'unknown' ) );
+	}
+
+	// ─── Handler: parse_invoice_from_odoo ───────────────
+
+	public function test_handler_parse_invoice_from_odoo(): void {
+		$odoo_data = [
+			'ref'              => 'INV-200',
+			'invoice_date'     => '2025-05-01',
+			'invoice_date_due' => '2025-06-01',
+			'amount_total'     => 300.0,
+			'state'            => 'draft',
+			'invoice_line_ids' => [
+				[ 0, 0, [ 'name' => 'Service A', 'quantity' => 1.0, 'price_unit' => 300.0 ] ],
+			],
+		];
+
+		$data = $this->handler->parse_invoice_from_odoo( $odoo_data );
+
+		$this->assertSame( 'INV-200', $data['title'] );
+		$this->assertSame( 300.0, $data['total'] );
+		$this->assertSame( 'publish', $data['status'] );
+		$this->assertCount( 1, $data['line_items'] );
+	}
+
+	public function test_handler_parse_invoice_handles_flat_line_items(): void {
+		$odoo_data = [
+			'ref'              => 'INV-300',
+			'state'            => 'posted',
+			'invoice_line_ids' => [
+				[ 'name' => 'Flat Line', 'quantity' => 2.0, 'price_unit' => 100.0 ],
+			],
+		];
+
+		$data = $this->handler->parse_invoice_from_odoo( $odoo_data );
+
+		$this->assertCount( 1, $data['line_items'] );
+		$this->assertSame( 'Flat Line', $data['line_items'][0]['desc'] );
+	}
+
+	// ─── Handler: parse_payment_from_odoo ───────────────
+
+	public function test_handler_parse_payment_from_odoo(): void {
+		$odoo_data = [
+			'amount' => 200.0,
+			'date'   => '2025-05-15',
+			'ref'    => 'Wire Transfer',
+		];
+
+		$data = $this->handler->parse_payment_from_odoo( $odoo_data );
+
+		$this->assertSame( 200.0, $data['amount'] );
+		$this->assertSame( '2025-05-15', $data['date'] );
+		$this->assertSame( 'Wire Transfer', $data['method'] );
+	}
+
+	// ─── Handler: save_invoice ──────────────────────────
+
+	public function test_handler_save_invoice_creates_new_post(): void {
+		$data = [
+			'title'      => 'New Invoice',
+			'total'      => 500.0,
+			'issue_date' => '2025-03-01',
+			'due_date'   => '2025-04-01',
+			'ref'        => 'INV-NEW',
+			'status'     => 'publish',
+			'line_items' => [
+				[ 'desc' => 'Service', 'qty' => 1, 'rate' => 500.0 ],
+			],
+		];
+
+		$result = $this->handler->save_invoice( $data );
+		$this->assertGreaterThan( 0, $result );
+	}
+
+	public function test_handler_save_invoice_updates_existing(): void {
+		$this->create_invoice_post( 100, 'publish' );
+
+		$data = [
+			'title'      => 'Updated Invoice',
+			'total'      => 600.0,
+			'issue_date' => '2025-03-01',
+			'due_date'   => '2025-04-01',
+			'ref'        => 'INV-UPD',
+			'status'     => 'complete',
+		];
+
+		$result = $this->handler->save_invoice( $data, 100 );
+		$this->assertSame( 100, $result );
+	}
+
+	// ─── Handler: save_payment ──────────────────────────
+
+	public function test_handler_save_payment_creates_new_post(): void {
+		$data = [
+			'amount' => 150.0,
+			'date'   => '2025-03-15',
+			'method' => 'Check',
+		];
+
+		$result = $this->handler->save_payment( $data );
+		$this->assertGreaterThan( 0, $result );
+	}
+
+	public function test_handler_save_payment_updates_existing(): void {
+		$this->create_payment_post( 200 );
+
+		$data = [
+			'amount' => 200.0,
+			'date'   => '2025-03-20',
+			'method' => 'Bank Transfer',
+		];
+
+		$result = $this->handler->save_payment( $data, 200 );
+		$this->assertSame( 200, $result );
 	}
 
 	// ─── Helpers ────────────────────────────────────────────

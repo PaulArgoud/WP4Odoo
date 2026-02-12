@@ -11,10 +11,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Sprout Invoices Module — push invoices and payments to Odoo.
+ * Sprout Invoices Module — bidirectional invoice and payment sync with Odoo.
  *
  * Syncs SI invoices as Odoo account.move (with invoice_line_ids One2many tuples)
- * and payments as Odoo account.payment. Push-only (WP → Odoo).
+ * and payments as Odoo account.payment. Bidirectional.
  *
  * Client → WP user → Odoo partner resolution via Partner_Service.
  * Auto-posts completed invoices via action_post.
@@ -34,12 +34,12 @@ class Sprout_Invoices_Module extends Module_Base {
 	protected int $exclusive_priority = 10;
 
 	/**
-	 * Sync direction: push-only (WP → Odoo).
+	 * Sync direction: bidirectional.
 	 *
 	 * @return string
 	 */
 	public function get_sync_direction(): string {
-		return 'wp_to_odoo';
+		return 'bidirectional';
 	}
 
 	/**
@@ -132,6 +132,8 @@ class Sprout_Invoices_Module extends Module_Base {
 			'sync_invoices'      => true,
 			'sync_payments'      => true,
 			'auto_post_invoices' => true,
+			'pull_invoices'      => true,
+			'pull_payments'      => true,
 		];
 	}
 
@@ -156,6 +158,16 @@ class Sprout_Invoices_Module extends Module_Base {
 				'label'       => __( 'Auto-post invoices', 'wp4odoo' ),
 				'type'        => 'checkbox',
 				'description' => __( 'Automatically confirm invoices in Odoo for completed invoices.', 'wp4odoo' ),
+			],
+			'pull_invoices'      => [
+				'label'       => __( 'Pull invoices from Odoo', 'wp4odoo' ),
+				'type'        => 'checkbox',
+				'description' => __( 'Pull invoice changes from Odoo back to WordPress.', 'wp4odoo' ),
+			],
+			'pull_payments'      => [
+				'label'       => __( 'Pull payments from Odoo', 'wp4odoo' ),
+				'type'        => 'checkbox',
+				'description' => __( 'Pull payment changes from Odoo back to WordPress.', 'wp4odoo' ),
 			],
 		];
 	}
@@ -203,6 +215,80 @@ class Sprout_Invoices_Module extends Module_Base {
 		}
 
 		return $result;
+	}
+
+	// ─── Pull override ─────────────────────────────────────
+
+	/**
+	 * Pull an Odoo entity to WordPress.
+	 *
+	 * Checks pull settings and delegates to parent for actual processing.
+	 *
+	 * @param string $entity_type Entity type.
+	 * @param string $action      'create', 'update', or 'delete'.
+	 * @param int    $odoo_id     Odoo record ID.
+	 * @param int    $wp_id       WordPress entity ID (0 if unknown).
+	 * @param array  $payload     Additional data.
+	 * @return Sync_Result
+	 */
+	public function pull_from_odoo( string $entity_type, string $action, int $odoo_id, int $wp_id = 0, array $payload = [] ): Sync_Result {
+		$settings = $this->get_settings();
+
+		if ( 'invoice' === $entity_type && empty( $settings['pull_invoices'] ) ) {
+			return Sync_Result::success( 0 );
+		}
+
+		if ( 'payment' === $entity_type && empty( $settings['pull_payments'] ) ) {
+			return Sync_Result::success( 0 );
+		}
+
+		return parent::pull_from_odoo( $entity_type, $action, $odoo_id, $wp_id, $payload );
+	}
+
+	/**
+	 * Map Odoo data to WordPress format for pull.
+	 *
+	 * @param string $entity_type Entity type.
+	 * @param array  $odoo_data   Raw Odoo record data.
+	 * @return array<string, mixed>
+	 */
+	public function map_from_odoo( string $entity_type, array $odoo_data ): array {
+		return match ( $entity_type ) {
+			'invoice' => $this->handler->parse_invoice_from_odoo( $odoo_data ),
+			'payment' => $this->handler->parse_payment_from_odoo( $odoo_data ),
+			default   => parent::map_from_odoo( $entity_type, $odoo_data ),
+		};
+	}
+
+	/**
+	 * Save pulled data to WordPress.
+	 *
+	 * @param string $entity_type Entity type.
+	 * @param array  $data        Mapped data.
+	 * @param int    $wp_id       Existing WP ID (0 if new).
+	 * @return int The WordPress entity ID (0 on failure).
+	 */
+	protected function save_wp_data( string $entity_type, array $data, int $wp_id = 0 ): int {
+		return match ( $entity_type ) {
+			'invoice' => $this->handler->save_invoice( $data, $wp_id ),
+			'payment' => $this->handler->save_payment( $data, $wp_id ),
+			default   => 0,
+		};
+	}
+
+	/**
+	 * Delete a WordPress entity during pull.
+	 *
+	 * @param string $entity_type Entity type.
+	 * @param int    $wp_id       WordPress post ID.
+	 * @return bool
+	 */
+	protected function delete_wp_data( string $entity_type, int $wp_id ): bool {
+		if ( 'invoice' === $entity_type || 'payment' === $entity_type ) {
+			return $this->delete_wp_post( $wp_id );
+		}
+
+		return false;
 	}
 
 	// ─── Data access ───────────────────────────────────────

@@ -319,4 +319,95 @@ class LifterLMSHandlerTest extends TestCase {
 		// passes through apply_filters (llms-active → posted still works).
 		$this->assertSame( 'posted', $this->handler->map_order_status_to_odoo( 'llms-active' ) );
 	}
+
+	// ─── Parse course from Odoo ─────────────────────────
+
+	public function test_parse_course_from_odoo(): void {
+		$odoo_data = [
+			'name'             => 'Odoo Course',
+			'description_sale' => 'From Odoo',
+			'list_price'       => 49.99,
+		];
+
+		$data = $this->handler->parse_course_from_odoo( $odoo_data );
+
+		$this->assertSame( 'Odoo Course', $data['title'] );
+		$this->assertSame( 'From Odoo', $data['description'] );
+		$this->assertSame( 49.99, $data['list_price'] );
+	}
+
+	public function test_parse_course_from_odoo_handles_missing_fields(): void {
+		$data = $this->handler->parse_course_from_odoo( [] );
+
+		$this->assertSame( '', $data['title'] );
+		$this->assertSame( '', $data['description'] );
+		$this->assertSame( 0.0, $data['list_price'] );
+	}
+
+	// ─── Parse membership from Odoo ─────────────────────
+
+	public function test_parse_membership_from_odoo(): void {
+		$odoo_data = [
+			'name'             => 'Odoo Membership',
+			'description_sale' => 'From Odoo',
+			'list_price'       => 99.0,
+		];
+
+		$data = $this->handler->parse_membership_from_odoo( $odoo_data );
+
+		$this->assertSame( 'Odoo Membership', $data['title'] );
+		$this->assertSame( 99.0, $data['list_price'] );
+	}
+
+	// ─── Save course ────────────────────────────────────
+
+	public function test_save_course_creates_new_post(): void {
+		$data = [ 'title' => 'New Course', 'description' => 'Desc', 'list_price' => 49.99 ];
+
+		$result = $this->handler->save_course( $data );
+		$this->assertGreaterThan( 0, $result );
+	}
+
+	public function test_save_course_updates_existing(): void {
+		$this->create_post( 100, 'llms_course', 'Old Title' );
+
+		$data   = [ 'title' => 'New Title', 'description' => 'Updated', 'list_price' => 59.99 ];
+		$result = $this->handler->save_course( $data, 100 );
+		$this->assertSame( 100, $result );
+	}
+
+	// ─── Save membership ────────────────────────────────
+
+	public function test_save_membership_creates_new_post(): void {
+		$data = [ 'title' => 'New Membership', 'description' => 'Desc', 'list_price' => 99.0 ];
+
+		$result = $this->handler->save_membership( $data );
+		$this->assertGreaterThan( 0, $result );
+	}
+
+	public function test_save_membership_updates_existing(): void {
+		$this->create_post( 200, 'llms_membership', 'Old Title' );
+
+		$data   = [ 'title' => 'New Title', 'description' => 'Updated', 'list_price' => 149.0 ];
+		$result = $this->handler->save_membership( $data, 200 );
+		$this->assertSame( 200, $result );
+	}
+
+	// ─── Reverse status mapping ─────────────────────────
+
+	public function test_odoo_draft_maps_to_llms_pending(): void {
+		$this->assertSame( 'llms-pending', $this->handler->map_odoo_status_to_llms( 'draft' ) );
+	}
+
+	public function test_odoo_posted_maps_to_llms_completed(): void {
+		$this->assertSame( 'llms-completed', $this->handler->map_odoo_status_to_llms( 'posted' ) );
+	}
+
+	public function test_odoo_cancel_maps_to_llms_cancelled(): void {
+		$this->assertSame( 'llms-cancelled', $this->handler->map_odoo_status_to_llms( 'cancel' ) );
+	}
+
+	public function test_odoo_unknown_status_maps_to_llms_pending(): void {
+		$this->assertSame( 'llms-pending', $this->handler->map_odoo_status_to_llms( 'unknown' ) );
+	}
 }

@@ -230,4 +230,107 @@ class LearnDash_Handler {
 			],
 		];
 	}
+
+	// ─── Parse course from Odoo ───────────────────────────
+
+	/**
+	 * Parse Odoo product data into WordPress course format.
+	 *
+	 * Reverse of load_course() + map_to_odoo(). Extracts name,
+	 * description, and list_price from Odoo product.product data.
+	 *
+	 * @param array<string, mixed> $odoo_data Odoo record data.
+	 * @return array<string, mixed> WordPress course data.
+	 */
+	public function parse_course_from_odoo( array $odoo_data ): array {
+		return [
+			'title'       => $odoo_data['name'] ?? '',
+			'description' => $odoo_data['description_sale'] ?? '',
+			'list_price'  => (float) ( $odoo_data['list_price'] ?? 0 ),
+		];
+	}
+
+	// ─── Parse group from Odoo ────────────────────────────
+
+	/**
+	 * Parse Odoo product data into WordPress group format.
+	 *
+	 * @param array<string, mixed> $odoo_data Odoo record data.
+	 * @return array<string, mixed> WordPress group data.
+	 */
+	public function parse_group_from_odoo( array $odoo_data ): array {
+		return [
+			'title'       => $odoo_data['name'] ?? '',
+			'description' => $odoo_data['description_sale'] ?? '',
+			'list_price'  => (float) ( $odoo_data['list_price'] ?? 0 ),
+		];
+	}
+
+	// ─── Save course ──────────────────────────────────────
+
+	/**
+	 * Save course data to a sfwd-courses CPT post.
+	 *
+	 * Creates a new post when $wp_id is 0, updates an existing one otherwise.
+	 *
+	 * @param array<string, mixed> $data  Parsed course data.
+	 * @param int                  $wp_id Existing post ID (0 to create new).
+	 * @return int The post ID, or 0 on failure.
+	 */
+	public function save_course( array $data, int $wp_id = 0 ): int {
+		$post_args = [
+			'post_title'   => $data['title'] ?? '',
+			'post_content' => $data['description'] ?? '',
+			'post_type'    => 'sfwd-courses',
+			'post_status'  => 'publish',
+		];
+
+		if ( $wp_id > 0 ) {
+			$post_args['ID'] = $wp_id;
+			$result          = \wp_update_post( $post_args, true );
+		} else {
+			$result = \wp_insert_post( $post_args, true );
+		}
+
+		if ( \is_wp_error( $result ) ) {
+			$this->logger->error( 'Failed to save course post.', [ 'wp_id' => $wp_id ] );
+			return 0;
+		}
+
+		return $result;
+	}
+
+	// ─── Save group ───────────────────────────────────────
+
+	/**
+	 * Save group data to a groups CPT post.
+	 *
+	 * Creates a new post when $wp_id is 0, updates an existing one otherwise.
+	 *
+	 * @param array<string, mixed> $data  Parsed group data.
+	 * @param int                  $wp_id Existing post ID (0 to create new).
+	 * @return int The post ID, or 0 on failure.
+	 */
+	public function save_group( array $data, int $wp_id = 0 ): int {
+		$post_args = [
+			'post_title'   => $data['title'] ?? '',
+			'post_content' => $data['description'] ?? '',
+			'post_type'    => 'groups',
+			'post_status'  => 'publish',
+		];
+
+		if ( $wp_id > 0 ) {
+			$post_args['ID'] = $wp_id;
+			$result          = \wp_update_post( $post_args, true );
+		} else {
+			$result = \wp_insert_post( $post_args, true );
+		}
+
+		if ( \is_wp_error( $result ) ) {
+			$this->logger->error( 'Failed to save group post.', [ 'wp_id' => $wp_id ] );
+			return 0;
+		}
+
+		return $result;
+	}
 }

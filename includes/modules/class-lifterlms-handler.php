@@ -13,6 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * LifterLMS Handler — data access for courses, memberships, orders, and enrollments.
  *
  * Loads LifterLMS entities and formats data for Odoo push.
+ * Provides reverse parsing (Odoo → WP) and save methods for pull sync.
  * Orders are pre-formatted as Odoo `account.move` data (invoice).
  * Enrollments are formatted as Odoo `sale.order` data.
  *
@@ -21,7 +22,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * - `llms_membership` — memberships
  * - `llms_order` — payment orders (LLMS_Order wrapper)
  *
- * Called by LifterLMS_Module via its load_wp_data dispatch.
+ * Called by LifterLMS_Module via its load_wp_data / save_wp_data dispatch.
  *
  * @package WP4Odoo
  * @since   2.6.5
@@ -270,6 +271,146 @@ class LifterLMS_Handler {
 	public function get_product_id_for_order( int $order_id ): int {
 		$order = new \LLMS_Order( $order_id );
 		return $order->get_product_id();
+	}
+
+	// ─── Parse course from Odoo ───────────────────────────
+
+	/**
+	 * Parse Odoo product data into WordPress course format.
+	 *
+	 * Reverse of load_course() + map_to_odoo(). Extracts name,
+	 * description, and list_price from Odoo product.product data.
+	 *
+	 * @param array<string, mixed> $odoo_data Odoo record data.
+	 * @return array<string, mixed> WordPress course data.
+	 */
+	public function parse_course_from_odoo( array $odoo_data ): array {
+		return [
+			'title'       => $odoo_data['name'] ?? '',
+			'description' => $odoo_data['description_sale'] ?? '',
+			'list_price'  => (float) ( $odoo_data['list_price'] ?? 0 ),
+		];
+	}
+
+	// ─── Parse membership from Odoo ───────────────────────
+
+	/**
+	 * Parse Odoo product data into WordPress membership format.
+	 *
+	 * @param array<string, mixed> $odoo_data Odoo record data.
+	 * @return array<string, mixed> WordPress membership data.
+	 */
+	public function parse_membership_from_odoo( array $odoo_data ): array {
+		return [
+			'title'       => $odoo_data['name'] ?? '',
+			'description' => $odoo_data['description_sale'] ?? '',
+			'list_price'  => (float) ( $odoo_data['list_price'] ?? 0 ),
+		];
+	}
+
+	// ─── Save course ──────────────────────────────────────
+
+	/**
+	 * Save course data to an llms_course CPT post.
+	 *
+	 * Creates a new post when $wp_id is 0, updates an existing one otherwise.
+	 *
+	 * @param array<string, mixed> $data  Parsed course data.
+	 * @param int                  $wp_id Existing post ID (0 to create new).
+	 * @return int The post ID, or 0 on failure.
+	 */
+	public function save_course( array $data, int $wp_id = 0 ): int {
+		$post_args = [
+			'post_title'   => $data['title'] ?? '',
+			'post_content' => $data['description'] ?? '',
+			'post_type'    => 'llms_course',
+			'post_status'  => 'publish',
+		];
+
+		if ( $wp_id > 0 ) {
+			$post_args['ID'] = $wp_id;
+			$result          = \wp_update_post( $post_args, true );
+		} else {
+			$result = \wp_insert_post( $post_args, true );
+		}
+
+		if ( \is_wp_error( $result ) ) {
+			$this->logger->error( 'Failed to save course post.', [ 'wp_id' => $wp_id ] );
+			return 0;
+		}
+
+		$post_id = $result;
+
+		if ( isset( $data['list_price'] ) ) {
+			\update_post_meta( $post_id, '_llms_regular_price', (string) $data['list_price'] );
+		}
+
+		return $post_id;
+	}
+
+	// ─── Save membership ─────────────────────────────────
+
+	/**
+	 * Save membership data to an llms_membership CPT post.
+	 *
+	 * Creates a new post when $wp_id is 0, updates an existing one otherwise.
+	 *
+	 * @param array<string, mixed> $data  Parsed membership data.
+	 * @param int                  $wp_id Existing post ID (0 to create new).
+	 * @return int The post ID, or 0 on failure.
+	 */
+	public function save_membership( array $data, int $wp_id = 0 ): int {
+		$post_args = [
+			'post_title'   => $data['title'] ?? '',
+			'post_content' => $data['description'] ?? '',
+			'post_type'    => 'llms_membership',
+			'post_status'  => 'publish',
+		];
+
+		if ( $wp_id > 0 ) {
+			$post_args['ID'] = $wp_id;
+			$result          = \wp_update_post( $post_args, true );
+		} else {
+			$result = \wp_insert_post( $post_args, true );
+		}
+
+		if ( \is_wp_error( $result ) ) {
+			$this->logger->error( 'Failed to save membership post.', [ 'wp_id' => $wp_id ] );
+			return 0;
+		}
+
+		$post_id = $result;
+
+		if ( isset( $data['list_price'] ) ) {
+			\update_post_meta( $post_id, '_llms_regular_price', (string) $data['list_price'] );
+		}
+
+		return $post_id;
+	}
+
+	// ─── Reverse status mapping ──────────────────────────
+
+	/**
+	 * Reverse order status mapping: Odoo account.move state → LifterLMS.
+	 *
+	 * @var array<string, string>
+	 */
+	private const REVERSE_ORDER_STATUS_MAP = [
+		'draft'  => 'llms-pending',
+		'posted' => 'llms-completed',
+		'cancel' => 'llms-cancelled',
+	];
+
+	/**
+	 * Map an Odoo account.move state to a LifterLMS order status.
+	 *
+	 * @param string $odoo_state Odoo account.move state.
+	 * @return string LifterLMS order status.
+	 */
+	public function map_odoo_status_to_llms( string $odoo_state ): string {
+		$map = \apply_filters( 'wp4odoo_lifterlms_reverse_order_status_map', self::REVERSE_ORDER_STATUS_MAP );
+
+		return $map[ $odoo_state ] ?? 'llms-pending';
 	}
 
 	// ─── Status mapping ────────────────────────────────────

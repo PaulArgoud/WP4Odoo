@@ -11,9 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Events Calendar Module** — Now bidirectional: events and tickets support pull from Odoo (create/update/delete). Attendees remain push-only (originate in WordPress RSVP). `Events_Calendar_Handler` gains `parse_event_from_odoo()`, `save_event()`, `save_ticket()` methods. New settings: `pull_events`, `pull_tickets`
 - **WC Subscriptions Module** — Now bidirectional: subscriptions support status pull from Odoo (update only — subscriptions originate in WooCommerce checkout). `WC_Subscriptions_Handler` gains reverse status/billing period maps, `parse_subscription_from_odoo()`, `save_subscription()` methods. New setting: `pull_subscriptions`
 - **Dual-model detection refactored** — `has_odoo_model()` extracted into `Module_Helpers` trait, replacing 3 identical ~25-line implementations in `Events_Calendar_Module`, `WC_Subscriptions_Module`, and `Dual_Accounting_Module_Base`. Same behavior (in-memory cache + transient 1h + `ir.model` probe), single source of truth
+- **LearnDash Module** — Now bidirectional: courses and groups support pull from Odoo (create/update/delete). Transactions and enrollments remain push-only. `LearnDash_Handler` gains `parse_course_from_odoo()`, `parse_group_from_odoo()`, `save_course()`, `save_group()` methods. New settings: `pull_courses`, `pull_groups`
+- **LifterLMS Module** — Now bidirectional: courses and memberships support pull from Odoo (create/update/delete). Orders and enrollments remain push-only. `LifterLMS_Handler` gains `parse_course_from_odoo()`, `parse_membership_from_odoo()`, `save_course()`, `save_membership()`, `map_odoo_status_to_llms()` methods. New settings: `pull_courses`, `pull_memberships`
+- **Sprout Invoices Module** — Now bidirectional: invoices and payments support pull from Odoo (create/update/delete). `Sprout_Invoices_Handler` gains `parse_invoice_from_odoo()`, `parse_payment_from_odoo()`, `save_invoice()`, `save_payment()`, `map_odoo_status_to_si()` methods. New settings: `pull_invoices`, `pull_payments`
 
 ### Added
-- 43 new unit tests for Events Calendar and WC Subscriptions pull support (1738 total)
+- 93 new unit tests for Events Calendar, WC Subscriptions, LearnDash, LifterLMS, and Sprout Invoices pull support (1788 total)
 - **`composer check` script** — Runs PHPCS, PHPUnit, and PHPStan (with cache clearing) in sequence, reproducing CI conditions locally to catch errors before push
 
 ## [2.8.0] - Unreleased

@@ -10,11 +10,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * LearnDash Module — push LMS data to Odoo.
+ * LearnDash Module — bidirectional LMS data sync with Odoo.
  *
  * Syncs LearnDash courses and groups as Odoo service products (product.product),
  * transactions as invoices (account.move), and enrollments as sale orders
- * (sale.order). Push-only (WP → Odoo).
+ * (sale.order). Courses and groups are bidirectional (push + pull).
+ * Transactions and enrollments are push-only.
  *
  * Requires the LearnDash LMS plugin to be active.
  * No mutual exclusivity — LearnDash is an LMS, not an e-commerce plugin.
@@ -27,12 +28,12 @@ class LearnDash_Module extends Module_Base {
 	use LearnDash_Hooks;
 
 	/**
-	 * Sync direction: push-only (WP → Odoo).
+	 * Sync direction: bidirectional for courses/groups, push-only for transactions/enrollments.
 	 *
 	 * @return string
 	 */
 	public function get_sync_direction(): string {
-		return 'wp_to_odoo';
+		return 'bidirectional';
 	}
 
 	/**
@@ -143,6 +144,8 @@ class LearnDash_Module extends Module_Base {
 			'sync_transactions'  => true,
 			'sync_enrollments'   => true,
 			'auto_post_invoices' => true,
+			'pull_courses'       => true,
+			'pull_groups'        => true,
 		];
 	}
 
@@ -177,6 +180,16 @@ class LearnDash_Module extends Module_Base {
 				'label'       => __( 'Auto-post invoices', 'wp4odoo' ),
 				'type'        => 'checkbox',
 				'description' => __( 'Automatically confirm invoices in Odoo for completed transactions.', 'wp4odoo' ),
+			],
+			'pull_courses'       => [
+				'label'       => __( 'Pull courses from Odoo', 'wp4odoo' ),
+				'type'        => 'checkbox',
+				'description' => __( 'Pull course changes from Odoo back to WordPress.', 'wp4odoo' ),
+			],
+			'pull_groups'        => [
+				'label'       => __( 'Pull groups from Odoo', 'wp4odoo' ),
+				'type'        => 'checkbox',
+				'description' => __( 'Pull group changes from Odoo back to WordPress.', 'wp4odoo' ),
 			],
 		];
 	}
@@ -217,6 +230,88 @@ class LearnDash_Module extends Module_Base {
 		}
 
 		return $result;
+	}
+
+	// ─── Pull override ─────────────────────────────────────
+
+	/**
+	 * Pull an Odoo entity to WordPress.
+	 *
+	 * Transactions and enrollments are push-only and cannot be pulled.
+	 * Courses and groups delegate to the parent pull_from_odoo() infrastructure.
+	 *
+	 * @param string $entity_type Entity type.
+	 * @param string $action      'create', 'update', or 'delete'.
+	 * @param int    $odoo_id     Odoo record ID.
+	 * @param int    $wp_id       WordPress entity ID (0 if unknown).
+	 * @param array  $payload     Additional data.
+	 * @return \WP4Odoo\Sync_Result
+	 */
+	public function pull_from_odoo( string $entity_type, string $action, int $odoo_id, int $wp_id = 0, array $payload = [] ): \WP4Odoo\Sync_Result {
+		if ( in_array( $entity_type, [ 'transaction', 'enrollment' ], true ) ) {
+			$this->logger->info( "{$entity_type} pull not supported — {$entity_type}s originate in WordPress.", [ 'odoo_id' => $odoo_id ] );
+			return \WP4Odoo\Sync_Result::success( 0 );
+		}
+
+		$settings = $this->get_settings();
+
+		if ( 'course' === $entity_type && empty( $settings['pull_courses'] ) ) {
+			return \WP4Odoo\Sync_Result::success( 0 );
+		}
+
+		if ( 'group' === $entity_type && empty( $settings['pull_groups'] ) ) {
+			return \WP4Odoo\Sync_Result::success( 0 );
+		}
+
+		return parent::pull_from_odoo( $entity_type, $action, $odoo_id, $wp_id, $payload );
+	}
+
+	/**
+	 * Map Odoo data to WordPress format for pull.
+	 *
+	 * Courses and groups use the handler's parse methods.
+	 *
+	 * @param string $entity_type Entity type.
+	 * @param array  $odoo_data   Raw Odoo record data.
+	 * @return array<string, mixed>
+	 */
+	public function map_from_odoo( string $entity_type, array $odoo_data ): array {
+		return match ( $entity_type ) {
+			'course' => $this->handler->parse_course_from_odoo( $odoo_data ),
+			'group'  => $this->handler->parse_group_from_odoo( $odoo_data ),
+			default  => parent::map_from_odoo( $entity_type, $odoo_data ),
+		};
+	}
+
+	/**
+	 * Save pulled data to WordPress.
+	 *
+	 * @param string $entity_type Entity type.
+	 * @param array  $data        Mapped data.
+	 * @param int    $wp_id       Existing WP ID (0 if new).
+	 * @return int The WordPress entity ID (0 on failure).
+	 */
+	protected function save_wp_data( string $entity_type, array $data, int $wp_id = 0 ): int {
+		return match ( $entity_type ) {
+			'course' => $this->handler->save_course( $data, $wp_id ),
+			'group'  => $this->handler->save_group( $data, $wp_id ),
+			default  => 0,
+		};
+	}
+
+	/**
+	 * Delete a WordPress entity during pull.
+	 *
+	 * @param string $entity_type Entity type.
+	 * @param int    $wp_id       WordPress post ID.
+	 * @return bool
+	 */
+	protected function delete_wp_data( string $entity_type, int $wp_id ): bool {
+		if ( 'course' === $entity_type || 'group' === $entity_type ) {
+			return $this->delete_wp_post( $wp_id );
+		}
+
+		return false;
 	}
 
 	// ─── Data access ────────────────────────────────────────

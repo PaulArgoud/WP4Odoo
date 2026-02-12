@@ -151,9 +151,181 @@ class Sprout_Invoices_Handler {
 		 *
 		 * @param array<string, string> $map Status mapping.
 		 */
-		$map = apply_filters( 'wp4odoo_si_invoice_status_map', self::STATUS_MAP );
+		$map = \apply_filters( 'wp4odoo_si_invoice_status_map', self::STATUS_MAP );
 
 		return $map[ $post_status ] ?? 'draft';
+	}
+
+	// ─── Parse invoice from Odoo ─────────────────────────
+
+	/**
+	 * Reverse status mapping: Odoo account.move state → SI post_status.
+	 *
+	 * @var array<string, string>
+	 */
+	private const REVERSE_STATUS_MAP = [
+		'draft'  => 'publish',
+		'posted' => 'complete',
+		'cancel' => 'write-off',
+	];
+
+	/**
+	 * Map an Odoo account.move state to an SI invoice post status.
+	 *
+	 * @param string $odoo_state Odoo account.move state.
+	 * @return string SI post status.
+	 */
+	public function map_odoo_status_to_si( string $odoo_state ): string {
+		/**
+		 * Filters the Odoo → Sprout Invoices reverse invoice status map.
+		 *
+		 * @param array<string, string> $map Status mapping.
+		 */
+		$map = \apply_filters( 'wp4odoo_si_reverse_invoice_status_map', self::REVERSE_STATUS_MAP );
+
+		return $map[ $odoo_state ] ?? 'publish';
+	}
+
+	/**
+	 * Parse Odoo account.move data into WordPress invoice format.
+	 *
+	 * Extracts invoice fields and converts invoice_line_ids One2many
+	 * tuples back to SI line items format.
+	 *
+	 * @param array<string, mixed> $odoo_data Odoo record data.
+	 * @return array<string, mixed> WordPress invoice data.
+	 */
+	public function parse_invoice_from_odoo( array $odoo_data ): array {
+		$line_items = [];
+		$lines      = $odoo_data['invoice_line_ids'] ?? [];
+
+		if ( is_array( $lines ) ) {
+			foreach ( $lines as $line ) {
+				// Odoo read returns line IDs as integers or tuples.
+				if ( is_array( $line ) && isset( $line[2] ) && is_array( $line[2] ) ) {
+					$vals = $line[2];
+				} elseif ( is_array( $line ) && isset( $line['name'] ) ) {
+					$vals = $line;
+				} else {
+					continue;
+				}
+
+				$line_items[] = [
+					'desc' => $vals['name'] ?? '',
+					'qty'  => (float) ( $vals['quantity'] ?? 1 ),
+					'rate' => (float) ( $vals['price_unit'] ?? 0 ),
+				];
+			}
+		}
+
+		return [
+			'title'      => $odoo_data['ref'] ?? '',
+			'total'      => (float) ( $odoo_data['amount_total'] ?? 0 ),
+			'issue_date' => $odoo_data['invoice_date'] ?? '',
+			'due_date'   => $odoo_data['invoice_date_due'] ?? '',
+			'ref'        => $odoo_data['ref'] ?? '',
+			'status'     => $this->map_odoo_status_to_si( $odoo_data['state'] ?? 'draft' ),
+			'line_items' => $line_items,
+		];
+	}
+
+	/**
+	 * Parse Odoo account.payment data into WordPress payment format.
+	 *
+	 * @param array<string, mixed> $odoo_data Odoo record data.
+	 * @return array<string, mixed> WordPress payment data.
+	 */
+	public function parse_payment_from_odoo( array $odoo_data ): array {
+		return [
+			'amount' => (float) ( $odoo_data['amount'] ?? 0 ),
+			'date'   => $odoo_data['date'] ?? '',
+			'method' => $odoo_data['ref'] ?? '',
+		];
+	}
+
+	// ─── Save invoice ─────────────────────────────────────
+
+	/**
+	 * Save invoice data to an sa_invoice CPT post.
+	 *
+	 * Creates a new post when $wp_id is 0, updates an existing one otherwise.
+	 * Sets SI meta fields (_total, _doc_line_items, _invoice_issue_date,
+	 * _due_date, _invoice_id).
+	 *
+	 * @param array<string, mixed> $data  Parsed invoice data from parse_invoice_from_odoo().
+	 * @param int                  $wp_id Existing post ID (0 to create new).
+	 * @return int The post ID, or 0 on failure.
+	 */
+	public function save_invoice( array $data, int $wp_id = 0 ): int {
+		$post_args = [
+			'post_title'  => $data['title'] ?? '',
+			'post_type'   => 'sa_invoice',
+			'post_status' => $data['status'] ?? 'publish',
+		];
+
+		if ( $wp_id > 0 ) {
+			$post_args['ID'] = $wp_id;
+			$result          = \wp_update_post( $post_args, true );
+		} else {
+			$result = \wp_insert_post( $post_args, true );
+		}
+
+		if ( \is_wp_error( $result ) ) {
+			$this->logger->error( 'Failed to save invoice post.', [ 'wp_id' => $wp_id ] );
+			return 0;
+		}
+
+		$post_id = $result;
+
+		\update_post_meta( $post_id, '_total', $data['total'] ?? 0 );
+		\update_post_meta( $post_id, '_invoice_issue_date', $data['issue_date'] ?? '' );
+		\update_post_meta( $post_id, '_due_date', $data['due_date'] ?? '' );
+		\update_post_meta( $post_id, '_invoice_id', $data['ref'] ?? '' );
+
+		if ( ! empty( $data['line_items'] ) ) {
+			\update_post_meta( $post_id, '_doc_line_items', $data['line_items'] );
+		}
+
+		return $post_id;
+	}
+
+	// ─── Save payment ─────────────────────────────────────
+
+	/**
+	 * Save payment data to an sa_payment CPT post.
+	 *
+	 * Creates a new post when $wp_id is 0, updates an existing one otherwise.
+	 *
+	 * @param array<string, mixed> $data  Parsed payment data from parse_payment_from_odoo().
+	 * @param int                  $wp_id Existing post ID (0 to create new).
+	 * @return int The post ID, or 0 on failure.
+	 */
+	public function save_payment( array $data, int $wp_id = 0 ): int {
+		$post_args = [
+			'post_title'  => $data['method'] ?? \__( 'Payment', 'wp4odoo' ),
+			'post_type'   => 'sa_payment',
+			'post_status' => 'publish',
+		];
+
+		if ( $wp_id > 0 ) {
+			$post_args['ID'] = $wp_id;
+			$result          = \wp_update_post( $post_args, true );
+		} else {
+			$result = \wp_insert_post( $post_args, true );
+		}
+
+		if ( \is_wp_error( $result ) ) {
+			$this->logger->error( 'Failed to save payment post.', [ 'wp_id' => $wp_id ] );
+			return 0;
+		}
+
+		$post_id = $result;
+
+		\update_post_meta( $post_id, '_payment_total', $data['amount'] ?? 0 );
+		\update_post_meta( $post_id, '_payment_method', $data['method'] ?? '' );
+		\update_post_meta( $post_id, '_payment_date', $data['date'] ?? '' );
+
+		return $post_id;
 	}
 
 	// ─── Private ──────────────────────────────────────────

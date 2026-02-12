@@ -52,8 +52,8 @@ class LearnDashModuleTest extends TestCase {
 		$this->assertSame( '', $this->module->get_exclusive_group() );
 	}
 
-	public function test_sync_direction_is_wp_to_odoo(): void {
-		$this->assertSame( 'wp_to_odoo', $this->module->get_sync_direction() );
+	public function test_sync_direction_is_bidirectional(): void {
+		$this->assertSame( 'bidirectional', $this->module->get_sync_direction() );
 	}
 
 	// ─── Odoo Models ───────────────────────────────────────
@@ -110,9 +110,9 @@ class LearnDashModuleTest extends TestCase {
 		$this->assertTrue( $settings['auto_post_invoices'] );
 	}
 
-	public function test_default_settings_has_exactly_five_keys(): void {
+	public function test_default_settings_has_exactly_seven_keys(): void {
 		$settings = $this->module->get_default_settings();
-		$this->assertCount( 5, $settings );
+		$this->assertCount( 7, $settings );
 	}
 
 	// ─── Settings Fields ───────────────────────────────────
@@ -595,6 +595,90 @@ class LearnDashModuleTest extends TestCase {
 
 		$expected_id = 42 * 1_000_000 + 350; // 42000350
 		$this->assertQueueContains( 'learndash', 'enrollment', 'create', $expected_id );
+	}
+
+	// ─── Pull settings ──────────────────────────────────
+
+	public function test_default_settings_has_pull_courses(): void {
+		$settings = $this->module->get_default_settings();
+		$this->assertTrue( $settings['pull_courses'] );
+	}
+
+	public function test_default_settings_has_pull_groups(): void {
+		$settings = $this->module->get_default_settings();
+		$this->assertTrue( $settings['pull_groups'] );
+	}
+
+	public function test_settings_fields_exposes_pull_courses(): void {
+		$fields = $this->module->get_settings_fields();
+		$this->assertArrayHasKey( 'pull_courses', $fields );
+		$this->assertSame( 'checkbox', $fields['pull_courses']['type'] );
+	}
+
+	public function test_settings_fields_exposes_pull_groups(): void {
+		$fields = $this->module->get_settings_fields();
+		$this->assertArrayHasKey( 'pull_groups', $fields );
+		$this->assertSame( 'checkbox', $fields['pull_groups']['type'] );
+	}
+
+	// ─── Pull: transaction/enrollment skipped ───────────
+
+	public function test_pull_transaction_skipped(): void {
+		$result = $this->module->pull_from_odoo( 'transaction', 'create', 100, 0 );
+		$this->assertTrue( $result->succeeded() );
+		$this->assertSame( 0, $result->get_entity_id() );
+	}
+
+	public function test_pull_enrollment_skipped(): void {
+		$result = $this->module->pull_from_odoo( 'enrollment', 'create', 200, 0 );
+		$this->assertTrue( $result->succeeded() );
+		$this->assertSame( 0, $result->get_entity_id() );
+	}
+
+	// ─── Pull: delete ───────────────────────────────────
+
+	public function test_pull_course_delete_removes_post(): void {
+		$this->create_post( 50, 'sfwd-courses', 'Course to delete' );
+
+		$result = $this->module->pull_from_odoo( 'course', 'delete', 100, 50 );
+		$this->assertTrue( $result->succeeded() );
+	}
+
+	public function test_pull_group_delete_removes_post(): void {
+		$this->create_post( 60, 'groups', 'Group to delete' );
+
+		$result = $this->module->pull_from_odoo( 'group', 'delete', 200, 60 );
+		$this->assertTrue( $result->succeeded() );
+	}
+
+	// ─── map_from_odoo ──────────────────────────────────
+
+	public function test_map_from_odoo_course(): void {
+		$odoo_data = [
+			'name'             => 'Pulled Course',
+			'description_sale' => 'From Odoo',
+			'list_price'       => 79.99,
+		];
+
+		$wp_data = $this->module->map_from_odoo( 'course', $odoo_data );
+
+		$this->assertSame( 'Pulled Course', $wp_data['title'] );
+		$this->assertSame( 'From Odoo', $wp_data['description'] );
+		$this->assertSame( 79.99, $wp_data['list_price'] );
+	}
+
+	public function test_map_from_odoo_group(): void {
+		$odoo_data = [
+			'name'             => 'Pulled Group',
+			'description_sale' => 'Group from Odoo',
+			'list_price'       => 199.0,
+		];
+
+		$wp_data = $this->module->map_from_odoo( 'group', $odoo_data );
+
+		$this->assertSame( 'Pulled Group', $wp_data['title'] );
+		$this->assertSame( 'Group from Odoo', $wp_data['description'] );
+		$this->assertSame( 199.0, $wp_data['list_price'] );
 	}
 
 	// ─── Helpers ───────────────────────────────────────────

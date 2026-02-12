@@ -41,8 +41,8 @@ class LifterLMSModuleTest extends TestCase {
 		$this->assertSame( '', $this->module->get_exclusive_group() );
 	}
 
-	public function test_sync_direction_is_wp_to_odoo(): void {
-		$this->assertSame( 'wp_to_odoo', $this->module->get_sync_direction() );
+	public function test_sync_direction_is_bidirectional(): void {
+		$this->assertSame( 'bidirectional', $this->module->get_sync_direction() );
 	}
 
 	// ─── Odoo Models ───────────────────────────────────────
@@ -99,9 +99,9 @@ class LifterLMSModuleTest extends TestCase {
 		$this->assertTrue( $settings['auto_post_invoices'] );
 	}
 
-	public function test_default_settings_has_exactly_five_keys(): void {
+	public function test_default_settings_has_exactly_seven_keys(): void {
 		$settings = $this->module->get_default_settings();
-		$this->assertCount( 5, $settings );
+		$this->assertCount( 7, $settings );
 	}
 
 	// ─── Settings Fields ───────────────────────────────────
@@ -223,6 +223,98 @@ class LifterLMSModuleTest extends TestCase {
 		$status = $this->module->get_dependency_status();
 		$this->assertNotEmpty( $status['notices'] );
 		$this->assertSame( 'warning', $status['notices'][0]['type'] );
+	}
+
+	// ─── Pull Settings ──────────────────────────────────
+
+	public function test_default_settings_has_pull_courses(): void {
+		$settings = $this->module->get_default_settings();
+		$this->assertTrue( $settings['pull_courses'] );
+	}
+
+	public function test_default_settings_has_pull_memberships(): void {
+		$settings = $this->module->get_default_settings();
+		$this->assertTrue( $settings['pull_memberships'] );
+	}
+
+	public function test_settings_fields_exposes_pull_courses(): void {
+		$fields = $this->module->get_settings_fields();
+		$this->assertArrayHasKey( 'pull_courses', $fields );
+		$this->assertSame( 'checkbox', $fields['pull_courses']['type'] );
+	}
+
+	public function test_settings_fields_exposes_pull_memberships(): void {
+		$fields = $this->module->get_settings_fields();
+		$this->assertArrayHasKey( 'pull_memberships', $fields );
+		$this->assertSame( 'checkbox', $fields['pull_memberships']['type'] );
+	}
+
+	// ─── Pull: order/enrollment skipped ─────────────────
+
+	public function test_pull_order_skipped(): void {
+		$result = $this->module->pull_from_odoo( 'order', 'create', 100, 0 );
+		$this->assertTrue( $result->succeeded() );
+		$this->assertSame( 0, $result->get_entity_id() );
+	}
+
+	public function test_pull_enrollment_skipped(): void {
+		$result = $this->module->pull_from_odoo( 'enrollment', 'create', 200, 0 );
+		$this->assertTrue( $result->succeeded() );
+		$this->assertSame( 0, $result->get_entity_id() );
+	}
+
+	// ─── Pull: delete ───────────────────────────────────
+
+	public function test_pull_course_delete_removes_post(): void {
+		$GLOBALS['_wp_posts'][50] = (object) [
+			'post_type'    => 'llms_course',
+			'post_title'   => 'Course to delete',
+			'post_content' => '',
+		];
+
+		$result = $this->module->pull_from_odoo( 'course', 'delete', 100, 50 );
+		$this->assertTrue( $result->succeeded() );
+	}
+
+	public function test_pull_membership_delete_removes_post(): void {
+		$GLOBALS['_wp_posts'][60] = (object) [
+			'post_type'    => 'llms_membership',
+			'post_title'   => 'Membership to delete',
+			'post_content' => '',
+		];
+
+		$result = $this->module->pull_from_odoo( 'membership', 'delete', 200, 60 );
+		$this->assertTrue( $result->succeeded() );
+	}
+
+	// ─── map_from_odoo ──────────────────────────────────
+
+	public function test_map_from_odoo_course(): void {
+		$odoo_data = [
+			'name'             => 'Pulled Course',
+			'description_sale' => 'From Odoo',
+			'list_price'       => 79.99,
+		];
+
+		$wp_data = $this->module->map_from_odoo( 'course', $odoo_data );
+
+		$this->assertSame( 'Pulled Course', $wp_data['title'] );
+		$this->assertSame( 'From Odoo', $wp_data['description'] );
+		$this->assertSame( 79.99, $wp_data['list_price'] );
+	}
+
+	public function test_map_from_odoo_membership(): void {
+		$odoo_data = [
+			'name'             => 'Pulled Membership',
+			'description_sale' => 'Membership from Odoo',
+			'list_price'       => 99.0,
+		];
+
+		$wp_data = $this->module->map_from_odoo( 'membership', $odoo_data );
+
+		$this->assertSame( 'Pulled Membership', $wp_data['title'] );
+		$this->assertSame( 'Membership from Odoo', $wp_data['description'] );
+		$this->assertSame( 99.0, $wp_data['list_price'] );
 	}
 
 	// ─── Boot Guard ────────────────────────────────────────

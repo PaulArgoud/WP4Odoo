@@ -16,7 +16,7 @@ Ships in **3 languages** (English, French, Spanish) and is fully translation-rea
 
 - **Admin Dashboard** — 5-tab settings interface: Connection, Sync, Modules, Queue, Logs
 - **Async Queue** — No API calls during user requests; all sync jobs go through a persistent database queue with exponential backoff, deduplication, and configurable batch size
-- **Code Quality** — WordPress Coding Standards (PHPCS), PHPStan level 5 static analysis, 1738 unit tests + 26 integration tests, CI/CD with GitHub Actions
+- **Code Quality** — WordPress Coding Standards (PHPCS), PHPStan level 5 static analysis, 1788 unit tests + 26 integration tests, CI/CD with GitHub Actions
 - **Dual Transport** — JSON-RPC 2.0 (default for Odoo 17+) and XML-RPC (legacy), swappable via settings, shared retry logic via `Retryable_Http` trait (3 attempts, exponential backoff + jitter)
 - **Encrypted Credentials** — API keys encrypted at rest with libsodium (OpenSSL fallback)
 - **Extensible** — Register custom modules via `wp4odoo_register_modules` action hook; filter data with `wp4odoo_map_to_odoo_*` / `wp4odoo_map_from_odoo_*`
@@ -76,8 +76,8 @@ Each Odoo domain is encapsulated in an independent module extending `Module_Base
 | **Events Calendar**           |   ↔️   | Contacts, Events (+ Calendar)         |  ⚠️  | Event/ticket/attendee sync, dual-model (event.event or calendar.event)         |
 | **Forms (7 plugins)**         |   ➡️   | Contacts, CRM                         |  ⚠️  | GF, WPForms, CF7, Fluent, Formidable, Ninja, Forminator — lead auto-detection  |
 | **GiveWP**                    |   ➡️   | Contacts, Invoicing (+ OCA Donation)  |  ⚠️  | Form/donation sync, dual-model detection, auto-validate, recurring donations   |
-| **LearnDash**                 |   ➡️   | Contacts, Sales, Invoicing            |  ❌  | Course/group/transaction/enrollment sync, auto-post invoices                   |
-| **LifterLMS**                 |   ➡️   | Contacts, Sales, Invoicing            |  ❌  | Course/membership/order/enrollment sync, auto-post invoices                    |
+| **LearnDash**                 |   ↔️   | Contacts, Sales, Invoicing            |  ❌  | Course/group/transaction/enrollment sync, auto-post invoices, course/group pull |
+| **LifterLMS**                 |   ↔️   | Contacts, Sales, Invoicing            |  ❌  | Course/membership/order/enrollment sync, auto-post invoices, course/membership pull |
 | **MemberPress**               |   ➡️   | Contacts, Members, Invoicing          |  ❌  | Plan/txn/sub sync, auto-post invoices, status mapping                          |
 | **Paid Memberships Pro**      |   ➡️   | Contacts, Members, Invoicing          |  ❌  | Level/order/membership sync, auto-post invoices, status mapping                |
 | **Restrict Content Pro**      |   ➡️   | Contacts, Members, Invoicing          |  ❌  | Level/payment/membership sync, auto-post invoices, status mapping              |
@@ -87,7 +87,7 @@ Each Odoo domain is encapsulated in an independent module extending `Module_Base
 | **WooCommerce**               |   ↔️   | Contacts, Sales, Inventory, Invoicing |  ❌  | Product/order/stock sync, variants, image pull, exchange rates, bulk ops       |
 | **WooCommerce Memberships**   |   ➡️   | Contacts, Members                     |  ❌  | Plan auto-sync, status mapping, filterable via `wp4odoo_membership_status_map` |
 | **WooCommerce Subscriptions** |   ↔️   | Contacts, Subscriptions, Invoicing    |  ❌  | Subscription/renewal sync, dual-model (sale.subscription / account.move)       |
-| **Sprout Invoices**           |   ➡️   | Contacts, Invoicing                   |  ⚠️  | Invoice/payment sync, status mapping, auto-posting, One2many line items        |
+| **Sprout Invoices**           |   ↔️   | Contacts, Invoicing                   |  ⚠️  | Invoice/payment sync, status mapping, auto-posting, One2many line items, pull  |
 | **WP-Invoice**                |   ➡️   | Contacts, Invoicing                   |  ⚠️  | Invoice sync, auto-posting for paid invoices, One2many line items              |
 | **WP Crowdfunding**           |   ➡️   | Products                              |  ❌  | Campaign sync as service products, funding description, coexists with WC       |
 | **Ecwid**                     |   ➡️   | Contacts, Sales                       |  ❌  | Product/order sync via WP-Cron polling, REST API, hash-based change detection  |
