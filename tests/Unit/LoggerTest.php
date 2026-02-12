@@ -21,8 +21,8 @@ class LoggerTest extends TestCase {
 		$wpdb       = $this->wpdb;
 		// Reset options for each test.
 		$GLOBALS['_wp_options'] = [];
-		// Clear the static settings cache so each test starts fresh.
-		Logger::reset_cache();
+		// Clear all static caches so each test starts fresh.
+		\WP4Odoo\Tests\Module_Test_Case::reset_static_caches();
 	}
 
 	// ─── log() with invalid level ──────────────────────────

@@ -5,7 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.9.0] - Unreleased
+## [2.9.5] - Unreleased
+
+### Changed
+- **Query_Service** — Replaced deprecated `SQL_CALC_FOUND_ROWS` / `FOUND_ROWS()` with separate `COUNT(*)` + `SELECT` queries for MySQL 8.0+ / MariaDB 10.5+ compatibility
+- **Webhook_Handler rate limiter** — Switched from `get_transient()` / `set_transient()` to `wp_cache_get()` / `wp_cache_set()` with a non-persistent cache group, avoiding a database write on every webhook request when no persistent object cache is configured
+- **Module_Test_Case** — Added centralized `reset_static_caches()` method calling `Logger::reset_cache()` and `Odoo_Auth::flush_credentials_cache()`. Non-module tests (OdooAuthTest, CLITest, AdminAjaxTest, LoggerTest) now delegate to this single method instead of duplicating individual flush calls
+- **ARCHITECTURE.md** — Documented `handler_*()` vs `get_*()` abstract method naming convention in intermediate base classes
+
+### Added
+- `wp_cache_get()` / `wp_cache_set()` / `wp_cache_delete()` stubs for unit tests
+- MySQL 8.0+ / MariaDB 10.5+ added to README.md requirements
+
+## [2.9.0] - 2026-02-12
 
 ### Changed
 - **Amelia Module** — Now bidirectional: services support pull from Odoo (create/update/delete). Appointments remain push-only (originate in WordPress). `Amelia_Handler` gains `parse_service_from_odoo()`, `save_service()`, `delete_service()` methods. New setting: `pull_services`

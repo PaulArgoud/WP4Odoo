@@ -22,6 +22,7 @@ class WebhookHandlerTest extends TestCase {
 		$wpdb       = $this->wpdb;
 		$GLOBALS['_wp_options']    = [];
 		$GLOBALS['_wp_transients'] = [];
+		$GLOBALS['_wp_cache']      = [];
 		$GLOBALS['_wp_options']['wp4odoo_log_settings'] = [ 'enabled' => true, 'level' => 'debug' ];
 
 		// Set a webhook token so ensure_webhook_token() uses it.

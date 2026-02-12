@@ -35,6 +35,7 @@ abstract class Module_Test_Case extends TestCase {
 	private const GLOBAL_STORES = [
 		'_wp_options',
 		'_wp_transients',
+		'_wp_cache',
 		'_wp_mail_calls',
 		'_wp_posts',
 		'_wp_post_meta',
@@ -73,8 +74,7 @@ abstract class Module_Test_Case extends TestCase {
 		$wpdb       = $this->wpdb;
 
 		self::reset_globals();
-
-		\WP4Odoo\Logger::reset_cache();
+		self::reset_static_caches();
 	}
 
 	/**
@@ -86,5 +86,19 @@ abstract class Module_Test_Case extends TestCase {
 		foreach ( self::GLOBAL_STORES as $key ) {
 			$GLOBALS[ $key ] = [];
 		}
+	}
+
+	/**
+	 * Reset all static caches in plugin classes.
+	 *
+	 * Centralizes the static reset calls so that non-module tests
+	 * (OdooAuthTest, CLITest, AdminAjaxTest, LoggerTest, etc.) can
+	 * reuse the same list without duplicating individual flush calls.
+	 *
+	 * @return void
+	 */
+	public static function reset_static_caches(): void {
+		\WP4Odoo\Logger::reset_cache();
+		\WP4Odoo\API\Odoo_Auth::flush_credentials_cache();
 	}
 }

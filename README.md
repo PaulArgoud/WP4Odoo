@@ -28,6 +28,7 @@ Ships in **3 languages** (English, French, Spanish) and is fully translation-rea
 ## Requirements
 
 - PHP 8.2+
+- MySQL 8.0+ or MariaDB 10.5+
 - Odoo 17+ (JSON-RPC) or Odoo 14+ (XML-RPC)
 - WordPress 6.0+
 

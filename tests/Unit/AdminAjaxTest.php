@@ -28,9 +28,8 @@ class AdminAjaxTest extends TestCase {
 		$GLOBALS['_wp_current_user_can'] = true;
 		$_POST                           = [];
 
-		\WP4Odoo\API\Odoo_Auth::flush_credentials_cache();
+		\WP4Odoo\Tests\Module_Test_Case::reset_static_caches();
 		\WP4Odoo_Plugin::reset_instance();
-		\WP4Odoo\Logger::reset_cache();
 
 		$this->ajax = new Admin_Ajax();
 	}

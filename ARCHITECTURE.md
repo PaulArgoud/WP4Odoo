@@ -480,6 +480,16 @@ Handler classes receive their dependencies via closures from their parent module
 
 Both patterns are intentional. Simple handlers are pure data transformers (load WP data → return array); complex handlers encapsulate domain logic requiring API access. The choice depends on whether the handler needs to interact with Odoo directly.
 
+### Abstract Method Naming Convention
+
+Intermediate base classes (`Membership_Module_Base`, `Dual_Accounting_Module_Base`, `Booking_Module_Base`) define abstract methods for subclass configuration. Two naming prefixes distinguish their purpose:
+
+- **`handler_*()`** — delegates to the handler class for data operations (load, save, parse, delete). These methods interact with the WordPress database or plugin APIs. Examples: `handler_load_level()`, `handler_load_child()`, `handler_parse_service_from_odoo()`, `handler_save_service()`.
+
+- **`get_*()`** — pure configuration accessors that return static values (entity type names, meta keys, setting keys). No side effects, no I/O. Examples: `get_level_entity_type()`, `get_child_entity_type()`, `get_parent_meta_key()`.
+
+This convention makes the code self-documenting: when reading a base class, `handler_*` calls clearly indicate delegation to the handler layer, while `get_*` calls are simple configuration lookups.
+
 ### 3. Queue-Based Synchronization
 
 No Odoo API requests are made during user requests. Everything goes through a persistent database queue:

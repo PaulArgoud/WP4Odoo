@@ -24,7 +24,7 @@ class CLITest extends TestCase {
 		$this->wpdb             = new \WP_DB_Stub();
 		$wpdb                   = $this->wpdb;
 		$GLOBALS['_wp_options'] = [];
-		\WP4Odoo\API\Odoo_Auth::flush_credentials_cache();
+		\WP4Odoo\Tests\Module_Test_Case::reset_static_caches();
 		\WP4Odoo_Plugin::reset_instance();
 		\WP_CLI::reset();
 		$this->cli = new CLI();

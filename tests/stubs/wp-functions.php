@@ -71,6 +71,34 @@ if ( ! function_exists( 'delete_transient' ) ) {
 	}
 }
 
+// ─── Object Cache ───────────────────────────────────────
+
+if ( ! function_exists( 'wp_cache_get' ) ) {
+	function wp_cache_get( $key, $group = '', $force = false, &$found = null ) {
+		$store = $GLOBALS['_wp_cache'][ $group ] ?? [];
+		if ( isset( $store[ $key ] ) ) {
+			$found = true;
+			return $store[ $key ];
+		}
+		$found = false;
+		return false;
+	}
+}
+
+if ( ! function_exists( 'wp_cache_set' ) ) {
+	function wp_cache_set( $key, $data, $group = '', $expire = 0 ) {
+		$GLOBALS['_wp_cache'][ $group ][ $key ] = $data;
+		return true;
+	}
+}
+
+if ( ! function_exists( 'wp_cache_delete' ) ) {
+	function wp_cache_delete( $key, $group = '' ) {
+		unset( $GLOBALS['_wp_cache'][ $group ][ $key ] );
+		return true;
+	}
+}
+
 // ─── Hooks ──────────────────────────────────────────────
 
 if ( ! function_exists( 'do_action' ) ) {

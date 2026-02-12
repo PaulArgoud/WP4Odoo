@@ -404,17 +404,28 @@ class Webhook_Handler {
 	}
 
 	/**
+	 * Non-persistent cache group for rate limiting.
+	 *
+	 * Using the object cache instead of transients avoids a DB write
+	 * on every webhook request when no persistent object cache is
+	 * configured. The counter resets naturally on each PHP process
+	 * or when the object cache TTL expires.
+	 */
+	private const RATE_LIMIT_CACHE_GROUP = 'wp4odoo_rate_limit';
+
+	/**
 	 * Check the per-IP rate limit for webhook requests.
 	 *
-	 * Uses a transient counter with a 60-second window.
-	 * Returns WP_Error with 429 status if the limit is exceeded.
+	 * Uses the WP object cache with a non-persistent group and a
+	 * 60-second window. Returns WP_Error with 429 status if the
+	 * limit is exceeded.
 	 *
 	 * @param string $ip Client IP address.
 	 * @return true|\WP_Error True if under limit, WP_Error if exceeded.
 	 */
 	private function check_rate_limit( string $ip ): true|\WP_Error {
-		$key   = 'wp4odoo_rate_' . md5( $ip );
-		$count = (int) get_transient( $key );
+		$key   = md5( $ip );
+		$count = (int) wp_cache_get( $key, self::RATE_LIMIT_CACHE_GROUP );
 
 		if ( $count >= self::RATE_LIMIT_MAX ) {
 			$this->logger->warning(
@@ -432,7 +443,7 @@ class Webhook_Handler {
 			);
 		}
 
-		set_transient( $key, $count + 1, self::RATE_LIMIT_WINDOW );
+		wp_cache_set( $key, $count + 1, self::RATE_LIMIT_CACHE_GROUP, self::RATE_LIMIT_WINDOW );
 
 		return true;
 	}
