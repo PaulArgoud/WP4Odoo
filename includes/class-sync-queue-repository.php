@@ -29,10 +29,13 @@ class Sync_Queue_Repository {
 	}
 
 	/**
-	 * Enqueue a sync job with deduplication.
+	 * Enqueue a sync job with atomic deduplication.
 	 *
 	 * If a pending job already exists for the same module/entity_type/direction
 	 * and wp_id or odoo_id, update it instead of creating a duplicate.
+	 *
+	 * Uses a MySQL transaction with SELECT … FOR UPDATE to prevent
+	 * concurrent hook fires from inserting duplicate pending jobs.
 	 *
 	 * @param array $args {
 	 *     @type string   $module      Module identifier.
@@ -68,6 +71,12 @@ class Sync_Queue_Repository {
 			return false;
 		}
 
+		// Atomic deduplication: wrap in transaction so concurrent hook fires
+		// cannot both see "no existing record" and insert duplicates.
+		// InnoDB's SELECT … FOR UPDATE takes a gap lock when no rows match,
+		// blocking other transactions until this one commits.
+		$wpdb->query( 'START TRANSACTION' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+
 		// Deduplication: look for an existing pending job with same key fields.
 		$where_parts = [
 			$wpdb->prepare( 'module = %s', $module ),
@@ -83,7 +92,7 @@ class Sync_Queue_Repository {
 		}
 
 		$where    = implode( ' AND ', $where_parts );
-		$existing = $wpdb->get_var( "SELECT id FROM {$table} WHERE {$where} LIMIT 1" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$existing = $wpdb->get_var( "SELECT id FROM {$table} WHERE {$where} LIMIT 1 FOR UPDATE" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
 		if ( $existing ) {
 			$wpdb->update(
@@ -95,6 +104,7 @@ class Sync_Queue_Repository {
 				],
 				[ 'id' => (int) $existing ]
 			);
+			$wpdb->query( 'COMMIT' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 			return (int) $existing;
 		}
 
@@ -116,8 +126,15 @@ class Sync_Queue_Repository {
 		}
 
 		$wpdb->insert( $table, $insert_data );
+		$new_id = $wpdb->insert_id ? (int) $wpdb->insert_id : false;
 
-		return $wpdb->insert_id ? (int) $wpdb->insert_id : false;
+		if ( false === $new_id ) {
+			$wpdb->query( 'ROLLBACK' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+			return false;
+		}
+
+		$wpdb->query( 'COMMIT' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+		return $new_id;
 	}
 
 	/**

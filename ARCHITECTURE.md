@@ -228,9 +228,10 @@ WordPress For Odoo/
 │   ├── class-database-migration.php   # Table creation (dbDelta) and default options
 │   ├── class-settings-repository.php  # Centralized option access: keys, defaults, typed accessors (DI)
 │   ├── class-module-registry.php      # Module registration, mutual exclusivity, lifecycle
-│   ├── class-module-base.php          # Abstract base class for modules (partner_service, check_dependency)
-│   ├── class-entity-map-repository.php # Static DB access for wp4odoo_entity_map (incl. batch lookups)
-│   ├── class-sync-queue-repository.php # Static DB access for wp4odoo_sync_queue
+│   ├── class-module-base.php          # Abstract base class for modules (push/pull, mapping, anti-loop)
+│   ├── trait-module-helpers.php       # Shared helpers: auto_post_invoice, ensure_entity_synced, synthetic IDs, partner_service, check_dependency
+│   ├── class-entity-map-repository.php # DB access for wp4odoo_entity_map (incl. batch lookups)
+│   ├── class-sync-queue-repository.php # DB access for wp4odoo_sync_queue (atomic dedup via transaction)
 │   ├── class-partner-service.php       # Shared res.partner lookup/creation service
 │   ├── class-failure-notifier.php     # Admin email notification on consecutive sync failures
 │   ├── class-circuit-breaker.php     # Circuit breaker for Odoo connectivity (transient-based, 3-state)

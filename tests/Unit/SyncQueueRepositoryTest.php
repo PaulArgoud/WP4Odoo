@@ -158,6 +158,55 @@ class SyncQueueRepositoryTest extends TestCase {
 		$this->assertFalse( $result );
 	}
 
+	// ─── enqueue() — Transaction safety ───────────────────
+
+	public function test_enqueue_wraps_in_transaction(): void {
+		$this->wpdb->insert_id = 1;
+
+		$this->repo->enqueue( [
+			'module'      => 'crm',
+			'entity_type' => 'contact',
+			'wp_id'       => 10,
+		] );
+
+		$queries = $this->get_calls( 'query' );
+		$sql     = array_map( fn( $c ) => $c['args'][0], $queries );
+		$this->assertContains( 'START TRANSACTION', $sql );
+		$this->assertContains( 'COMMIT', $sql );
+	}
+
+	public function test_enqueue_rollbacks_on_insert_failure(): void {
+		$this->wpdb->get_var_return = null;
+		$this->wpdb->insert_id     = 0;
+
+		$this->repo->enqueue( [
+			'module'      => 'crm',
+			'entity_type' => 'contact',
+			'wp_id'       => 10,
+		] );
+
+		$queries = $this->get_calls( 'query' );
+		$sql     = array_map( fn( $c ) => $c['args'][0], $queries );
+		$this->assertContains( 'ROLLBACK', $sql );
+		$this->assertNotContains( 'COMMIT', $sql );
+	}
+
+	public function test_enqueue_dedup_select_uses_for_update(): void {
+		$this->wpdb->insert_id = 1;
+
+		$this->repo->enqueue( [
+			'module'      => 'crm',
+			'entity_type' => 'contact',
+			'wp_id'       => 10,
+		] );
+
+		$get_var = $this->get_calls( 'get_var' );
+		$this->assertNotEmpty( $get_var );
+		$this->assertStringContainsString( 'FOR UPDATE', $get_var[0]['args'][0] );
+	}
+
+	// ─── enqueue() — Insert data ──────────────────────────
+
 	public function test_enqueue_includes_wp_id_in_insert_data(): void {
 		$this->wpdb->insert_id = 1;
 

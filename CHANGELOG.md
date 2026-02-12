@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.8.0] - Unreleased
+
+### Changed
+- **Module_Helpers trait** — Extracted 9 helper methods from `Module_Base` into `Module_Helpers` trait: `auto_post_invoice()`, `ensure_entity_synced()`, `encode_synthetic_id()`, `decode_synthetic_id()`, `delete_wp_post()`, `log_unsupported_entity()`, `resolve_many2one_field()`, `partner_service()`, `check_dependency()`. Reduces `Module_Base` from 889 to 695 lines, keeping the base class focused on push/pull orchestration, entity mapping, and field mapping
+- **Atomic queue deduplication** — `Sync_Queue_Repository::enqueue()` now wraps the check-then-insert pattern in a MySQL transaction with `SELECT … FOR UPDATE`, preventing concurrent hook fires from inserting duplicate pending jobs. Added `idx_dedup_wp` composite index for efficient gap locking
+
 ## [2.7.5] - Unreleased
 
 ### Added
