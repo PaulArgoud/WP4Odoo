@@ -248,7 +248,7 @@ Before submitting your PR, make sure:
 - [ ] Translatable strings use `__()`, `esc_html__()`, etc. with the `wp4odoo` text domain.
 - [ ] No hardcoded Odoo field names — use `Field_Mapper` constants.
 - [ ] PR description explains **what** changed and **why**.
-- [ ] If adding a hook, it's documented in the README hooks table.
+- [ ] If adding a hook, it's documented in the [ARCHITECTURE.md hooks table](ARCHITECTURE.md#hooks--filters).
 
 ### Branch Naming
 

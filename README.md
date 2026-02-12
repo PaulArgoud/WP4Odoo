@@ -60,7 +60,7 @@ All hosting types expose the standard Odoo external API used by the plugin. No c
 
 ## Module System
 
-Each Odoo domain is encapsulated in an independent module extending `Module_Base`. The plugin automatically detects missing Odoo apps at connection test and module activation.
+Each Odoo domain is encapsulated in an independent module extending `Module_Base`. The plugin automatically detects missing Odoo apps at connection test and module activation. Third-party modules can be registered via the `wp4odoo_register_modules` action hook (see [ARCHITECTURE.md — Module System](ARCHITECTURE.md#2-module-system)).
 
 **Sync direction:** ↔️ Bidirectional — ➡️ WP to Odoo — ⬅️ Odoo to WP
 
@@ -129,16 +129,6 @@ Each Odoo domain is encapsulated in an independent module extending `Module_Base
 | **WP Recipe Maker** |  ➡️  | Products  |  ❌  | Recipe sync as service products, structured descriptions         |
 
 > ⁴ **[One App Free](https://www.odoo.com/pricing)**: with CRM as your free app, CRM and Forms modules work. With Invoicing as your free app, GiveWP, WP Charitable, WP Simple Pay, Sprout Invoices, and WP-Invoice work. With Calendar as your free app, Amelia, Bookly, and Events Calendar (fallback mode) work (partial — no Contacts). Sales, WooCommerce, WooCommerce Subscriptions (Enterprise), Memberships (MemberPress/PMPro/RCP/WC Memberships), LMS (LearnDash/LifterLMS), Ecwid, and WP Recipe Maker require 2–4 apps.
-
-### Third-party modules
-
-Third-party modules can be registered:
-
-```php
-add_action('wp4odoo_register_modules', function($plugin) {
-    $plugin->register_module('my_module', new My_Custom_Module());
-});
-```
 
 ## Shortcodes
 
