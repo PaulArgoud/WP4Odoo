@@ -45,7 +45,7 @@ PHP 8.2+, MySQL 8.0+ / MariaDB 10.5+, WordPress 6.0+, Odoo 17+ (JSON-RPC) or 14+
 - **Odoo 14 – 16** — uses XML-RPC (legacy transport, select in plugin settings)
 - **Odoo < 14** — not supported (external API incompatibilities)
 
-All hosting types expose the standard Odoo external API used by the plugin. No custom Odoo modules are required — only the standard apps listed in the [module table](#module-system) below.
+All hosting types expose the standard Odoo external API used by the plugin. No custom Odoo modules are required — only the standard apps listed in the module tables below.
 
 ## Installation
 
@@ -58,7 +58,7 @@ All hosting types expose the standard Odoo external API used by the plugin. No c
 
 ## Module System
 
-Each Odoo domain is encapsulated in an independent module extending `Module_Base`. The plugin automatically detects missing Odoo apps at connection test and module activation. Third-party modules can be registered via the `wp4odoo_register_modules` action hook (see [ARCHITECTURE.md — Module System](ARCHITECTURE.md#2-module-system)).
+Each Odoo domain is encapsulated in an independent module extending `Module_Base`. The plugin automatically detects missing Odoo apps at connection test and module activation.
 
 **Sync direction:** ↔️ Bidirectional — ➡️ WP to Odoo — ⬅️ Odoo to WP
 
@@ -158,13 +158,9 @@ wp wp4odoo module disable crm        # Disable a module
 
 The plugin exposes 3 REST endpoints under `wp-json/wp4odoo/v1/` (webhook receiver, health check, manual sync trigger) and 6 action hooks + 20 data filters for customization.
 
-See [ARCHITECTURE.md — REST API](ARCHITECTURE.md#rest-api) for endpoints, authentication, and rate limiting details, and [Hooks & Filters](ARCHITECTURE.md#hooks--filters) for the complete reference with parameters and naming conventions.
-
-## Architecture & Development
+## Architecture
 
 ![WP4ODOO Architecture](assets/images/architecture-v2.svg)
-
-### Sync Flow
 
 All synchronization goes through a persistent database queue — no Odoo API calls are made during user requests:
 
@@ -182,20 +178,18 @@ All synchronization goes through a persistent database queue — no Odoo API cal
 - All inputs sanitized (`sanitize_text_field`, `esc_url_raw`, `absint`)
 - `index.php` in every subdirectory to prevent directory listing
 
-### Quick Check
+## Development
 
 ```bash
 composer install
 composer check          # Runs PHPCS + PHPUnit + PHPStan (mirrors CI)
 ```
 
-Integration tests require Docker — see [CONTRIBUTING.md](CONTRIBUTING.md#testing) for the full setup.
+Integration tests require Docker — see CONTRIBUTING.md for the full setup.
 
-For detailed architecture, class diagrams, and data flows, see [ARCHITECTURE.md](ARCHITECTURE.md). For version history, see [CHANGELOG.md](CHANGELOG.md).
-
-### Contributing
-
-We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for everything you need: development setup, coding standards, testing guidelines, translation workflow, commit conventions, and PR checklist.
+📖 [ARCHITECTURE.md](ARCHITECTURE.md) — Class diagrams, data flows, REST API endpoints, hooks & filters reference
+📋 [CONTRIBUTING.md](CONTRIBUTING.md) — Development setup, coding standards, testing, translations, commit conventions, PR checklist
+📝 [CHANGELOG.md](CHANGELOG.md) — Version history
 
 ## License
 
