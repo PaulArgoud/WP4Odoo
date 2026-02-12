@@ -81,6 +81,11 @@ trait Module_Helpers {
 	 * Checks the module setting, retrieves the Odoo mapping, and calls
 	 * `account.move.action_post`. Logs success or failure.
 	 *
+	 * Setting key convention: `auto_{odoo_verb}_{entity_noun}` where the verb
+	 * matches the Odoo RPC method (confirm → action_confirm, post → action_post,
+	 * validate → validate). Examples: auto_confirm_orders, auto_post_invoices,
+	 * auto_validate_donations, auto_validate_payments.
+	 *
 	 * @param string $setting_key Settings key to check (e.g., 'auto_post_invoices').
 	 * @param string $entity_type Entity type for mapping lookup.
 	 * @param int    $wp_id       WordPress entity ID.

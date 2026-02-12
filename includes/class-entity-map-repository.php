@@ -22,6 +22,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Entity_Map_Repository {
 
 	/**
+	 * Maximum number of IDs in a single SQL IN clause.
+	 *
+	 * Prevents oversized queries that could exceed max_allowed_packet.
+	 */
+	private const BATCH_CHUNK_SIZE = 500;
+
+	/**
 	 * Per-request lookup cache.
 	 *
 	 * Keys use the format "{module}:{entity_type}:wp:{wp_id}" or
@@ -124,29 +131,31 @@ class Entity_Map_Repository {
 
 		global $wpdb;
 
-		$table        = $wpdb->prefix . 'wp4odoo_entity_map';
-		$placeholders = implode( ',', array_fill( 0, count( $odoo_ids ), '%d' ) );
+		$table = $wpdb->prefix . 'wp4odoo_entity_map';
+		$map   = [];
 
-		$prepare_args = array_merge( [ $module, $entity_type ], array_map( 'intval', $odoo_ids ) );
+		foreach ( array_chunk( $odoo_ids, self::BATCH_CHUNK_SIZE ) as $chunk ) {
+			$placeholders = implode( ',', array_fill( 0, count( $chunk ), '%d' ) );
+			$prepare_args = array_merge( [ $module, $entity_type ], array_map( 'intval', $chunk ) );
 
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table and $placeholders are safe (prefix + array_fill).
-		$sql = "SELECT odoo_id, wp_id FROM {$table} WHERE module = %s AND entity_type = %s AND odoo_id IN ({$placeholders})";
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table and $placeholders are safe (prefix + array_fill).
+			$sql = "SELECT odoo_id, wp_id FROM {$table} WHERE module = %s AND entity_type = %s AND odoo_id IN ({$placeholders})";
 
-		$rows = $wpdb->get_results(
-			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber,WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- Dynamic placeholders for batch query; $sql from safe prefix + array_fill.
-			$wpdb->prepare( $sql, $prepare_args )
-		);
+			$rows = $wpdb->get_results(
+				// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber,WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- Dynamic placeholders for batch query; $sql from safe prefix + array_fill.
+				$wpdb->prepare( $sql, $prepare_args )
+			);
 
-		$map = [];
-		if ( $rows ) {
-			foreach ( $rows as $row ) {
-				$o_id = (int) $row->odoo_id;
-				$w_id = (int) $row->wp_id;
+			if ( $rows ) {
+				foreach ( $rows as $row ) {
+					$o_id = (int) $row->odoo_id;
+					$w_id = (int) $row->wp_id;
 
-				$map[ $o_id ] = $w_id;
+					$map[ $o_id ] = $w_id;
 
-				$this->cache[ "{$module}:{$entity_type}:odoo:{$o_id}" ] = $w_id;
-				$this->cache[ "{$module}:{$entity_type}:wp:{$w_id}" ]   = $o_id;
+					$this->cache[ "{$module}:{$entity_type}:odoo:{$o_id}" ] = $w_id;
+					$this->cache[ "{$module}:{$entity_type}:wp:{$w_id}" ]   = $o_id;
+				}
 			}
 		}
 
@@ -168,29 +177,31 @@ class Entity_Map_Repository {
 
 		global $wpdb;
 
-		$table        = $wpdb->prefix . 'wp4odoo_entity_map';
-		$placeholders = implode( ',', array_fill( 0, count( $wp_ids ), '%d' ) );
+		$table = $wpdb->prefix . 'wp4odoo_entity_map';
+		$map   = [];
 
-		$prepare_args = array_merge( [ $module, $entity_type ], array_map( 'intval', $wp_ids ) );
+		foreach ( array_chunk( $wp_ids, self::BATCH_CHUNK_SIZE ) as $chunk ) {
+			$placeholders = implode( ',', array_fill( 0, count( $chunk ), '%d' ) );
+			$prepare_args = array_merge( [ $module, $entity_type ], array_map( 'intval', $chunk ) );
 
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table and $placeholders safe (prefix + array_fill).
-		$sql = "SELECT wp_id, odoo_id FROM {$table} WHERE module = %s AND entity_type = %s AND wp_id IN ({$placeholders})";
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table and $placeholders safe (prefix + array_fill).
+			$sql = "SELECT wp_id, odoo_id FROM {$table} WHERE module = %s AND entity_type = %s AND wp_id IN ({$placeholders})";
 
-		$rows = $wpdb->get_results(
-			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber,WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- Dynamic placeholders for batch query; $sql from safe prefix + array_fill.
-			$wpdb->prepare( $sql, $prepare_args )
-		);
+			$rows = $wpdb->get_results(
+				// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber,WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- Dynamic placeholders for batch query; $sql from safe prefix + array_fill.
+				$wpdb->prepare( $sql, $prepare_args )
+			);
 
-		$map = [];
-		if ( $rows ) {
-			foreach ( $rows as $row ) {
-				$w_id = (int) $row->wp_id;
-				$o_id = (int) $row->odoo_id;
+			if ( $rows ) {
+				foreach ( $rows as $row ) {
+					$w_id = (int) $row->wp_id;
+					$o_id = (int) $row->odoo_id;
 
-				$map[ $w_id ] = $o_id;
+					$map[ $w_id ] = $o_id;
 
-				$this->cache[ "{$module}:{$entity_type}:wp:{$w_id}" ]   = $o_id;
-				$this->cache[ "{$module}:{$entity_type}:odoo:{$o_id}" ] = $w_id;
+					$this->cache[ "{$module}:{$entity_type}:wp:{$w_id}" ]   = $o_id;
+					$this->cache[ "{$module}:{$entity_type}:odoo:{$o_id}" ] = $w_id;
+				}
 			}
 		}
 

@@ -19,6 +19,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Logger {
 
 	/**
+	 * Maximum byte length for the JSON-encoded context column.
+	 *
+	 * Prevents unbounded log table growth on high-volume sites.
+	 */
+	private const MAX_CONTEXT_BYTES = 4096;
+
+	/**
 	 * Log levels in ascending severity order.
 	 *
 	 * @var array<string, int>
@@ -90,7 +97,7 @@ class Logger {
 				'level'   => $level,
 				'module'  => $this->module,
 				'message' => $message,
-				'context' => ! empty( $context ) ? wp_json_encode( $context ) : null,
+				'context' => ! empty( $context ) ? self::truncate_context( $context ) : null,
 			],
 			[ '%s', '%s', '%s', '%s' ]
 		);
@@ -151,6 +158,26 @@ class Logger {
 	 */
 	public function critical( string $message, array $context = [] ): bool {
 		return $this->log( 'critical', $message, $context );
+	}
+
+	/**
+	 * Encode context to JSON and truncate to MAX_CONTEXT_BYTES.
+	 *
+	 * @param array $context Context data.
+	 * @return string|null JSON string, or null if empty.
+	 */
+	private static function truncate_context( array $context ): ?string {
+		$json = wp_json_encode( $context );
+
+		if ( false === $json ) {
+			return null;
+		}
+
+		if ( strlen( $json ) > self::MAX_CONTEXT_BYTES ) {
+			$json = mb_strcut( $json, 0, self::MAX_CONTEXT_BYTES - 14 ) . '…[truncated]';
+		}
+
+		return $json;
 	}
 
 	/**

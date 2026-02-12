@@ -131,12 +131,26 @@ class WooCommerce_Module extends Module_Base {
 	/**
 	 * Constructor.
 	 *
+	 * Handlers are initialized here (not in boot()) because Sync_Engine
+	 * can call push_to_odoo / pull_from_odoo on non-booted modules for
+	 * residual queue jobs.
+	 *
 	 * @param \Closure                         $client_provider Returns the shared Odoo_Client instance.
 	 * @param \WP4Odoo\Entity_Map_Repository   $entity_map      Shared entity map repository.
 	 * @param \WP4Odoo\Settings_Repository     $settings        Settings repository.
 	 */
 	public function __construct( \Closure $client_provider, \WP4Odoo\Entity_Map_Repository $entity_map, \WP4Odoo\Settings_Repository $settings ) {
 		parent::__construct( 'woocommerce', 'WooCommerce', $client_provider, $entity_map, $settings );
+
+		$module_settings  = $this->get_settings();
+		$convert_currency = ! empty( $module_settings['convert_currency'] );
+		$rate_service     = new Exchange_Rate_Service( $this->logger, fn() => $this->client() );
+
+		$this->partner_service = new Partner_Service( fn() => $this->client(), $this->entity_map() );
+		$this->product_handler = new Product_Handler( $this->logger, $rate_service, $convert_currency );
+		$this->order_handler   = new Order_Handler( $this->logger, $this->partner_service );
+		$this->variant_handler = new Variant_Handler( $this->logger, fn() => $this->client(), $this->entity_map(), $rate_service, $convert_currency );
+		$this->image_handler   = new Image_Handler( $this->logger );
 	}
 
 	/**
@@ -150,15 +164,7 @@ class WooCommerce_Module extends Module_Base {
 			return;
 		}
 
-		$settings         = $this->get_settings();
-		$convert_currency = ! empty( $settings['convert_currency'] );
-		$rate_service     = new Exchange_Rate_Service( $this->logger, fn() => $this->client() );
-
-		$this->partner_service = new Partner_Service( fn() => $this->client(), $this->entity_map() );
-		$this->product_handler = new Product_Handler( $this->logger, $rate_service, $convert_currency );
-		$this->order_handler   = new Order_Handler( $this->logger, $this->partner_service );
-		$this->variant_handler = new Variant_Handler( $this->logger, fn() => $this->client(), $this->entity_map(), $rate_service, $convert_currency );
-		$this->image_handler   = new Image_Handler( $this->logger );
+		$settings = $this->get_settings();
 
 		// Capture raw Odoo data during product pull for image processing.
 		add_filter( "wp4odoo_map_from_odoo_{$this->id}_product", [ $this, 'capture_odoo_data' ], 1, 3 );

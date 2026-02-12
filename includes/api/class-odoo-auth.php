@@ -277,6 +277,52 @@ class Odoo_Auth {
 	}
 
 	/**
+	 * Re-encrypt stored credentials after an encryption key change.
+	 *
+	 * Call this after updating WP4ODOO_ENCRYPTION_KEY or the WordPress
+	 * auth salts to re-encrypt credentials with the new key.
+	 *
+	 * @param string $old_key_material The previous key material (constant value or salt concatenation).
+	 * @return bool True if re-encryption succeeded.
+	 */
+	public static function rotate_encryption_key( string $old_key_material ): bool {
+		$connection = get_option( Settings_Repository::OPT_CONNECTION, [] );
+
+		if ( empty( $connection['api_key'] ) ) {
+			return true;
+		}
+
+		// Decrypt with the old key.
+		$old_key = hash( 'sha256', $old_key_material, true );
+		$decoded = base64_decode( $connection['api_key'], true );
+
+		if ( false === $decoded ) {
+			return false;
+		}
+
+		if ( self::has_sodium() ) {
+			if ( strlen( $decoded ) < SODIUM_CRYPTO_SECRETBOX_NONCEBYTES + SODIUM_CRYPTO_SECRETBOX_MACBYTES ) {
+				return false;
+			}
+			$nonce     = substr( $decoded, 0, SODIUM_CRYPTO_SECRETBOX_NONCEBYTES );
+			$cipher    = substr( $decoded, SODIUM_CRYPTO_SECRETBOX_NONCEBYTES );
+			$plaintext = sodium_crypto_secretbox_open( $cipher, $nonce, $old_key );
+			sodium_memzero( $old_key );
+		} else {
+			$plaintext = self::openssl_decrypt_value( $decoded, $old_key );
+		}
+
+		if ( false === $plaintext ) {
+			return false;
+		}
+
+		// Re-encrypt with the current (new) key.
+		$connection['api_key'] = self::encrypt( $plaintext );
+
+		return update_option( Settings_Repository::OPT_CONNECTION, $connection );
+	}
+
+	/**
 	 * Derive the encryption key.
 	 *
 	 * Uses WP4ODOO_ENCRYPTION_KEY constant if defined,

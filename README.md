@@ -16,7 +16,7 @@ Ships in **3 languages** (English, French, Spanish) and is fully translation-rea
 
 - **Admin Dashboard** — 5-tab settings interface: Connection, Sync, Modules, Queue, Logs
 - **Async Queue** — No API calls during user requests; all sync jobs go through a persistent database queue with exponential backoff, deduplication, and configurable batch size
-- **Code Quality** — WordPress Coding Standards (PHPCS), PHPStan level 5 static analysis, 1695 unit tests + 26 integration tests, CI/CD with GitHub Actions
+- **Code Quality** — WordPress Coding Standards (PHPCS), PHPStan level 5 static analysis, 1696 unit tests + 26 integration tests, CI/CD with GitHub Actions
 - **Dual Transport** — JSON-RPC 2.0 (default for Odoo 17+) and XML-RPC (legacy), swappable via settings, shared retry logic via `Retryable_Http` trait (3 attempts, exponential backoff + jitter)
 - **Encrypted Credentials** — API keys encrypted at rest with libsodium (OpenSSL fallback)
 - **Extensible** — Register custom modules via `wp4odoo_register_modules` action hook; filter data with `wp4odoo_map_to_odoo_*` / `wp4odoo_map_from_odoo_*`

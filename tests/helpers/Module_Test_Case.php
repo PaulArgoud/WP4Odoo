@@ -25,6 +25,40 @@ abstract class Module_Test_Case extends TestCase {
 	protected \WP_DB_Stub $wpdb;
 
 	/**
+	 * All global stores that should be reset between tests.
+	 *
+	 * Centralizes the list so that adding a new global only requires
+	 * updating this array instead of every test setUp().
+	 *
+	 * @var array<int, string>
+	 */
+	private const GLOBAL_STORES = [
+		'_wp_options',
+		'_wp_transients',
+		'_wp_mail_calls',
+		'_wp_posts',
+		'_wp_post_meta',
+		'_wp_users',
+		'_wp_user_meta',
+		'_wc_memberships',
+		'_wc_membership_plans',
+		'_edd_orders',
+		'_mepr_transactions',
+		'_mepr_subscriptions',
+		'_pmpro_levels',
+		'_pmpro_orders',
+		'_rcp_levels',
+		'_rcp_payments',
+		'_rcp_memberships',
+		'_llms_orders',
+		'_llms_enrollments',
+		'_wc_subscriptions',
+		'_tribe_events',
+		'_tribe_tickets',
+		'_tribe_attendees',
+	];
+
+	/**
 	 * Set up common test infrastructure.
 	 *
 	 * Initializes the $wpdb stub and clears all global stores.
@@ -38,8 +72,19 @@ abstract class Module_Test_Case extends TestCase {
 		$this->wpdb = new \WP_DB_Stub();
 		$wpdb       = $this->wpdb;
 
-		$GLOBALS['_wp_options']    = [];
-		$GLOBALS['_wp_transients'] = [];
-		$GLOBALS['_wp_mail_calls'] = [];
+		self::reset_globals();
+
+		\WP4Odoo\Logger::reset_cache();
+	}
+
+	/**
+	 * Reset all global stores to empty arrays.
+	 *
+	 * @return void
+	 */
+	public static function reset_globals(): void {
+		foreach ( self::GLOBAL_STORES as $key ) {
+			$GLOBALS[ $key ] = [];
+		}
 	}
 }

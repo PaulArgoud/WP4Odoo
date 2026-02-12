@@ -10,6 +10,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - **Module_Helpers trait** — Extracted 9 helper methods from `Module_Base` into `Module_Helpers` trait: `auto_post_invoice()`, `ensure_entity_synced()`, `encode_synthetic_id()`, `decode_synthetic_id()`, `delete_wp_post()`, `log_unsupported_entity()`, `resolve_many2one_field()`, `partner_service()`, `check_dependency()`. Reduces `Module_Base` from 889 to 695 lines, keeping the base class focused on push/pull orchestration, entity mapping, and field mapping
 - **Atomic queue deduplication** — `Sync_Queue_Repository::enqueue()` now wraps the check-then-insert pattern in a MySQL transaction with `SELECT … FOR UPDATE`, preventing concurrent hook fires from inserting duplicate pending jobs. Added `idx_dedup_wp` composite index for efficient gap locking. Uses `@@in_transaction` detection with SAVEPOINT fallback when already inside an outer transaction (e.g. WordPress test framework), avoiding implicit commits
+- **Sync_Engine release_lock()** — Now uses `$wpdb->get_var()` to check the return value of `RELEASE_LOCK()` and logs a warning if the lock was not held or could not be released (e.g. database connection dropped during processing)
+- **Entity_Map_Repository batch chunking** — `get_wp_ids_batch()` and `get_odoo_ids_batch()` now split large ID arrays into chunks of 500 via `array_chunk()`, preventing oversized SQL `IN` clauses that could exceed `max_allowed_packet`
+- **Logger context truncation** — Context JSON is now truncated to 4KB (`MAX_CONTEXT_BYTES`) before insertion, preventing unbounded log table growth on high-volume sites with large context arrays
+- **Handler initialization in __construct()** — `WooCommerce_Module` and `CRM_Module` now initialize all handlers (Product_Handler, Order_Handler, Contact_Manager, Lead_Manager, etc.) in `__construct()` instead of `boot()`, ensuring residual queue jobs on non-booted modules don't cause fatal errors
+- **Circuit breaker probe mutex** — Half-open state now uses a `wp4odoo_cb_probe` transient mutex (60s TTL) to prevent multiple concurrent cron processes from all sending probe batches simultaneously during recovery
+
+### Added
+- **idx_dedup_odoo index** — New composite index `(module, entity_type, direction, status, odoo_id)` on `wp4odoo_sync_queue` for efficient deduplication queries filtering by `odoo_id` (mirrors the existing `idx_dedup_wp` for `wp_id`)
+- **Encryption key rotation** — `Odoo_Auth::rotate_encryption_key()` allows re-encrypting stored API credentials after changing the encryption key material. Handles both sodium and OpenSSL paths
+- **Backoff timing test** — New `test_backoff_delay_is_exponential()` in SyncEngineTest verifies exponential delay growth (2^n × 60s) across retry attempts
+- **Module_Test_Case centralized reset** — `GLOBAL_STORES` constant and `reset_globals()` static method centralize global store initialization for all 23 test stores, eliminating copy-paste in individual test setUp() methods
 
 ## [2.7.5] - Unreleased
 

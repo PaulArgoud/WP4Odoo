@@ -48,6 +48,7 @@ final class Database_Migration {
 			KEY idx_status_priority (status, priority, scheduled_at),
 			KEY idx_module_entity (module, entity_type),
 			KEY idx_dedup_wp (module, entity_type, direction, status, wp_id),
+			KEY idx_dedup_odoo (module, entity_type, direction, status, odoo_id),
 			KEY idx_wp_id (wp_id),
 			KEY idx_odoo_id (odoo_id)
 		) $charset_collate;

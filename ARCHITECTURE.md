@@ -234,7 +234,7 @@ WordPress For Odoo/
 │   ├── class-sync-queue-repository.php # DB access for wp4odoo_sync_queue (atomic dedup via transaction)
 │   ├── class-partner-service.php       # Shared res.partner lookup/creation service
 │   ├── class-failure-notifier.php     # Admin email notification on consecutive sync failures
-│   ├── class-circuit-breaker.php     # Circuit breaker for Odoo connectivity (transient-based, 3-state)
+│   ├── class-circuit-breaker.php     # Circuit breaker for Odoo connectivity (transient-based, 3-state, probe mutex)
 │   ├── class-sync-engine.php          # Queue processor, batch operations, advisory locking, smart retry (Error_Type)
 │   ├── class-queue-manager.php        # Helpers for enqueuing sync jobs
 │   ├── class-query-service.php        # Paginated queries (queue jobs, log entries) — injectable instance
@@ -242,7 +242,7 @@ WordPress For Odoo/
 │   ├── class-cpt-helper.php           # Shared CPT register/load/save helpers
 │   ├── class-webhook-handler.php      # REST API endpoints for Odoo webhooks, rate limiting
 │   ├── class-cli.php                 # WP-CLI commands (loaded only in CLI context)
-│   └── class-logger.php              # DB-backed logger with level filtering
+│   └── class-logger.php              # DB-backed logger with level filtering, 4KB context truncation
 │
 ├── admin/
 │   ├── css/admin.css                  # Admin styles (~400 lines)
@@ -268,7 +268,7 @@ WordPress For Odoo/
 ├── templates/
 │   └── customer-portal.php           #   Customer portal HTML template (orders/invoices tabs)
 │
-├── tests/                             # 1695 unit tests (2597 assertions) + 26 integration tests (wp-env)
+├── tests/                             # 1696 unit tests (2606 assertions) + 26 integration tests (wp-env)
 │   ├── bootstrap.php                 #   Unit test bootstrap: constants, stub loading, plugin class requires
 │   ├── bootstrap-integration.php     #   Integration test bootstrap: loads WP test framework (wp-env)
 │   ├── stubs/
@@ -320,7 +320,7 @@ WordPress For Odoo/
 │       ├── ImageHandlerTest.php         #   9 tests for Image_Handler
 │       ├── CurrencyTest.php             #   9 tests for multi-currency support
 │       ├── LoggerTest.php               #   33 tests for Logger
-│       ├── SyncEngineTest.php           #   15 tests for Sync_Engine
+│       ├── SyncEngineTest.php           #   16 tests for Sync_Engine
 │       ├── OdooAuthTest.php             #   20 tests for Odoo_Auth
 │       ├── OdooClientTest.php           #   14 tests for Odoo_Client
 │       ├── QueryServiceTest.php         #   15 tests for Query_Service
@@ -513,14 +513,15 @@ WP Event               Sync Engine (cron)           Odoo
 | `attempts` | Retry counter (max 3 by default) |
 | `max_attempts` | Maximum retry count (default 3) |
 | `error_message` | Last error message on failure |
-| `scheduled_at` | Scheduling (exponential backoff: `attempts × 60s`) |
+| `scheduled_at` | Scheduling (exponential backoff: `2^(attempts+1) × 60s`) |
 | `processed_at` | Timestamp when the job was last processed |
 | `created_at` | Timestamp when the job was enqueued |
 
 **Reliability mechanisms:**
-- MySQL advisory locking via `GET_LOCK()` / `RELEASE_LOCK()` (prevents parallel execution)
-- Exponential backoff on failure
-- Deduplication: updates an existing `pending` job rather than creating a duplicate
+- MySQL advisory locking via `GET_LOCK()` / `RELEASE_LOCK()` (prevents parallel execution, return value verified)
+- Exponential backoff on failure (`2^(attempts+1) × 60s`)
+- Circuit breaker: pauses processing after 3 consecutive all-fail batches (5-min recovery delay, probe mutex)
+- Deduplication: updates an existing `pending` job rather than creating a duplicate (atomic via `SELECT … FOR UPDATE`)
 - Configurable batch size (50 items per cron tick by default)
 
 ### 4. Interchangeable Transport (Strategy Pattern)
@@ -669,7 +670,7 @@ Managed via `dbDelta()` in `Database_Migration::create_tables()`:
 
 **`{prefix}wp4odoo_logs`** — Structured logs
 - Indexes: `(level, created_at)` and `(module)`
-- `context` field stores JSON contextual data
+- `context` field stores JSON contextual data (truncated to 4KB)
 
 ### WordPress Options (`wp_options`)
 

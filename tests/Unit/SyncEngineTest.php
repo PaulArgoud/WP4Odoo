@@ -182,6 +182,67 @@ class SyncEngineTest extends TestCase {
 		$this->assertArrayHasKey( 'scheduled_at', $data );
 	}
 
+	public function test_backoff_delay_is_exponential(): void {
+		$this->wpdb->get_var_return = '1';
+
+		$module = new Mock_Module( 'test' );
+		$module->throw_on_push = new \RuntimeException( 'Temp error' );
+		\WP4Odoo_Plugin::instance()->register_module( 'test', $module );
+
+		// Test with attempt 0 → delay = 2^1 * 60 = 120 s.
+		$job1 = (object) [
+			'id'           => 901,
+			'module'       => 'test',
+			'direction'    => 'wp_to_odoo',
+			'entity_type'  => 'product',
+			'action'       => 'create',
+			'wp_id'        => 1,
+			'odoo_id'      => 0,
+			'payload'      => '{}',
+			'attempts'     => 0,
+			'max_attempts' => 5,
+		];
+
+		$this->wpdb->get_results_return = [ $job1 ];
+
+		$engine = new Sync_Engine( wp4odoo_test_module_resolver(), wp4odoo_test_queue_repo(), wp4odoo_test_settings() );
+		$engine->process_queue();
+
+		$updates = $this->get_calls( 'update' );
+		$retry1  = end( $updates );
+		$scheduled1 = $retry1['args'][1]['scheduled_at'];
+		$delay1     = strtotime( $scheduled1 ) - time();
+
+		// 2^1 * 60 = 120 seconds (±5 s tolerance for execution time).
+		$this->assertGreaterThanOrEqual( 115, $delay1 );
+		$this->assertLessThanOrEqual( 125, $delay1 );
+
+		// Test with attempt 1 → delay = 2^2 * 60 = 240 s.
+		$this->wpdb->calls = [];
+
+		$job2 = clone $job1;
+		$job2->id       = 902;
+		$job2->attempts = 1;
+
+		$this->wpdb->get_var_return     = '1';
+		$this->wpdb->get_results_return = [ $job2 ];
+
+		$engine2 = new Sync_Engine( wp4odoo_test_module_resolver(), wp4odoo_test_queue_repo(), wp4odoo_test_settings() );
+		$engine2->process_queue();
+
+		$updates2    = $this->get_calls( 'update' );
+		$retry2      = end( $updates2 );
+		$scheduled2  = $retry2['args'][1]['scheduled_at'];
+		$delay2      = strtotime( $scheduled2 ) - time();
+
+		// 2^2 * 60 = 240 seconds (±5 s tolerance).
+		$this->assertGreaterThanOrEqual( 235, $delay2 );
+		$this->assertLessThanOrEqual( 245, $delay2 );
+
+		// Verify exponential growth: delay2 ≈ 2 × delay1.
+		$this->assertGreaterThan( $delay1, $delay2 );
+	}
+
 	public function test_process_queue_marks_job_as_failed_after_max_attempts(): void {
 		$this->wpdb->get_var_return = '1';
 
@@ -515,17 +576,17 @@ class SyncEngineTest extends TestCase {
 	}
 
 	private function assert_lock_released(): void {
-		$query_calls = $this->get_calls( 'query' );
-		$found       = false;
+		$get_var_calls = $this->get_calls( 'get_var' );
+		$found         = false;
 
-		foreach ( $query_calls as $call ) {
+		foreach ( $get_var_calls as $call ) {
 			if ( str_contains( $call['args'][0], 'RELEASE_LOCK' ) ) {
 				$found = true;
 				break;
 			}
 		}
 
-		$this->assertTrue( $found, 'Lock should be released via RELEASE_LOCK query' );
+		$this->assertTrue( $found, 'Lock should be released via RELEASE_LOCK get_var' );
 	}
 
 	private function get_last_call( string $method ): ?array {

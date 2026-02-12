@@ -83,10 +83,15 @@ class CRM_Module extends Module_Base {
 
 	/**
 	 * Constructor.
+	 *
+	 * Handlers are initialized here (not in boot()) because Sync_Engine
+	 * can call push_to_odoo / pull_from_odoo on non-booted modules for
+	 * residual queue jobs.
 	 */
 	public function __construct( \Closure $client_provider, \WP4Odoo\Entity_Map_Repository $entity_map, \WP4Odoo\Settings_Repository $settings ) {
 		parent::__construct( 'crm', 'CRM', $client_provider, $entity_map, $settings );
 		$this->contact_manager = new Contact_Manager( $this->logger, fn() => $this->get_settings() );
+		$this->lead_manager    = new Lead_Manager( $this->logger, fn() => $this->get_settings() );
 	}
 
 	/**
@@ -95,7 +100,6 @@ class CRM_Module extends Module_Base {
 	 * @return void
 	 */
 	public function boot(): void {
-		$this->lead_manager    = new Lead_Manager( $this->logger, fn() => $this->get_settings() );
 		$this->contact_refiner = new Contact_Refiner( fn() => $this->client() );
 
 		// User hooks for contact sync.

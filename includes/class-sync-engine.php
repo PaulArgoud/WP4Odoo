@@ -367,13 +367,23 @@ class Sync_Engine {
 	/**
 	 * Release the processing lock.
 	 *
+	 * Logs a warning if the lock was not held or could not be released
+	 * (e.g. database connection dropped after processing).
+	 *
 	 * @return void
 	 */
 	private function release_lock(): void {
 		global $wpdb;
 
-		$wpdb->query(
+		$result = $wpdb->get_var(
 			$wpdb->prepare( 'SELECT RELEASE_LOCK( %s )', self::LOCK_NAME )
 		);
+
+		if ( '1' !== (string) $result ) {
+			$this->logger->warning(
+				'Advisory lock release returned unexpected value.',
+				[ 'result' => $result ]
+			);
+		}
 	}
 }

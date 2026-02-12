@@ -47,6 +47,18 @@ class Circuit_Breaker {
 	private const KEY_OPENED_AT = 'wp4odoo_cb_opened_at';
 
 	/**
+	 * Transient key for the half-open probe mutex.
+	 *
+	 * Prevents multiple concurrent processes from all sending probe batches.
+	 */
+	private const KEY_PROBE = 'wp4odoo_cb_probe';
+
+	/**
+	 * TTL for the probe mutex transient (seconds).
+	 */
+	private const PROBE_TTL = 60;
+
+	/**
 	 * Logger instance.
 	 *
 	 * @var Logger
@@ -79,6 +91,12 @@ class Circuit_Breaker {
 		}
 
 		if ( ( time() - $opened_at ) >= self::RECOVERY_DELAY ) {
+			// Only allow one probe batch at a time to avoid overwhelming Odoo during recovery.
+			if ( false !== get_transient( self::KEY_PROBE ) ) {
+				return false;
+			}
+			set_transient( self::KEY_PROBE, 1, self::PROBE_TTL );
+
 			$this->logger->info( 'Circuit breaker half-open: allowing probe batch.' );
 			return true;
 		}
@@ -100,6 +118,7 @@ class Circuit_Breaker {
 
 		delete_transient( self::KEY_FAILURES );
 		delete_transient( self::KEY_OPENED_AT );
+		delete_transient( self::KEY_PROBE );
 	}
 
 	/**
