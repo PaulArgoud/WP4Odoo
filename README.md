@@ -130,35 +130,11 @@ wp wp4odoo module enable crm         # Enable a module
 wp wp4odoo module disable crm        # Disable a module
 ```
 
-## REST API
+## REST API & Hooks
 
-Namespace: `wp-json/wp4odoo/v1/`
+The plugin exposes 3 REST endpoints under `wp-json/wp4odoo/v1/` (webhook receiver, health check, manual sync trigger) and 6 action hooks + 20 data filters for customization.
 
-| Endpoint                  | Method  | Auth               | Description                                |
-|---------------------------|---------|--------------------|--------------------------------------------|
-| `/webhook`                | POST    | Token + rate limit | Receives change notifications from Odoo    |
-| `/webhook/test`           | GET     | Token              | Health check                               |
-| `/sync/{module}/{entity}` | POST    | WP Auth            | Triggers sync for a specific module/entity |
-
-## Hooks
-
-### Actions
-
-| Hook                       | Description                                       |
-|----------------------------|---------------------------------------------------|
-| `wp4odoo_init`             | Plugin initialized                                |
-| `wp4odoo_loaded`           | All plugins loaded                                |
-| `wp4odoo_register_modules` | Register custom modules                           |
-| `wp4odoo_lead_created`     | Lead form submitted                               |
-| `wp4odoo_api_call`         | Every Odoo API call (model, method, args, result) |
-
-### Filters
-
-| Filter                                    | Description                       |
-|-------------------------------------------|-----------------------------------|
-| `wp4odoo_map_to_odoo_{module}_{entity}`   | Modify data before push to Odoo   |
-| `wp4odoo_map_from_odoo_{module}_{entity}` | Modify data during pull from Odoo |
-Each module also provides `wp4odoo_{module}_*_status_map` filters for customizing status mappings (e.g., `wp4odoo_mepr_txn_status_map`, `wp4odoo_wcs_status_map`). See [ARCHITECTURE.md](ARCHITECTURE.md#hooks--filters) for the full list.
+See [ARCHITECTURE.md — REST API](ARCHITECTURE.md#rest-api) for endpoints, authentication, and rate limiting details, and [Hooks & Filters](ARCHITECTURE.md#hooks--filters) for the complete reference with parameters and naming conventions.
 
 ## Architecture
 
