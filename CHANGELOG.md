@@ -5,7 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.8.5] - Unreleased
+## [2.9.0] - Unreleased
+
+### Changed
+- **Amelia Module** — Now bidirectional: services support pull from Odoo (create/update/delete). Appointments remain push-only (originate in WordPress). `Amelia_Handler` gains `parse_service_from_odoo()`, `save_service()`, `delete_service()` methods. New setting: `pull_services`
+- **Bookly Module** — Now bidirectional: services support pull from Odoo (create/update/delete). Bookings remain push-only (originate in WordPress). `Bookly_Handler` gains `parse_service_from_odoo()`, `save_service()`, `delete_service()` methods. New setting: `pull_services`
+- **Booking_Module_Base** — Extended with pull infrastructure: 3 new abstract methods (`handler_parse_service_from_odoo()`, `handler_save_service()`, `handler_delete_service()`), `pull_from_odoo()` override with `pull_services` gate, `map_from_odoo()`, `save_wp_data()`, `delete_wp_data()` overrides. Sync direction changed from `wp_to_odoo` to `bidirectional`
+- **WC Memberships Module** — Now bidirectional: plans support full pull (create/update/delete), memberships support status/date updates from Odoo (no create/delete — memberships originate in WooCommerce). `Membership_Handler` gains reverse status map, `map_odoo_status_to_wc()`, `parse_plan_from_odoo()`, `save_plan()`, `parse_membership_from_odoo()`, `save_membership_from_odoo()` methods. New settings: `pull_plans`, `pull_memberships`
+
+### Added
+- 35 new unit tests for Amelia, Bookly, and WC Memberships pull support (1823 total)
+
+## [2.8.5] - 2026-02-12
 
 ### Changed
 - **Events Calendar Module** — Now bidirectional: events and tickets support pull from Odoo (create/update/delete). Attendees remain push-only (originate in WordPress RSVP). `Events_Calendar_Handler` gains `parse_event_from_odoo()`, `save_event()`, `save_ticket()` methods. New settings: `pull_events`, `pull_tickets`
@@ -19,7 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 93 new unit tests for Events Calendar, WC Subscriptions, LearnDash, LifterLMS, and Sprout Invoices pull support (1788 total)
 - **`composer check` script** — Runs PHPCS, PHPUnit, and PHPStan (with cache clearing) in sequence, reproducing CI conditions locally to catch errors before push
 
-## [2.8.0] - Unreleased
+## [2.8.0] - 2026-02-11
 
 ### Changed
 - **Module_Helpers trait** — Extracted 9 helper methods from `Module_Base` into `Module_Helpers` trait: `auto_post_invoice()`, `ensure_entity_synced()`, `encode_synthetic_id()`, `decode_synthetic_id()`, `delete_wp_post()`, `log_unsupported_entity()`, `resolve_many2one_field()`, `partner_service()`, `check_dependency()`. Reduces `Module_Base` from 889 to 695 lines, keeping the base class focused on push/pull orchestration, entity mapping, and field mapping
@@ -44,7 +55,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Backoff timing test** — New `test_backoff_delay_is_exponential()` in SyncEngineTest verifies exponential delay growth (2^n × 60s) across retry attempts
 - **Module_Test_Case centralized reset** — `GLOBAL_STORES` constant and `reset_globals()` static method centralize global store initialization for all 23 test stores, eliminating copy-paste in individual test setUp() methods
 
-## [2.7.5] - Unreleased
+## [2.7.5] - 2026-02-11
 
 ### Added
 - **Sprout Invoices Module** — Sprout Invoices → Odoo push sync: invoices (`sa_invoice` CPT) as Odoo invoices (`account.move` with `invoice_line_ids` One2many tuples), payments (`sa_payment` CPT) as Odoo payments (`account.payment`). SI status mapping (temp/publish→draft, complete→posted, write-off→cancel), auto-posting for completed invoices, partner resolution via client→user chain, invoice auto-sync before payment push. Exclusive group `invoicing` (priority 10). `Sprout_Invoices_Handler`, `Sprout_Invoices_Hooks` trait, 46 new unit tests

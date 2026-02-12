@@ -160,4 +160,108 @@ class MembershipHandlerTest extends TestCase {
 		$result = $this->handler->map_status_to_odoo( 'wcm-active' );
 		$this->assertSame( 'paid', $result );
 	}
+
+	// ─── Reverse status mapping ────────────────────────────
+
+	public function test_map_odoo_status_paid_to_active(): void {
+		$this->assertSame( 'wcm-active', $this->handler->map_odoo_status_to_wc( 'paid' ) );
+	}
+
+	public function test_map_odoo_status_free_to_complimentary(): void {
+		$this->assertSame( 'wcm-complimentary', $this->handler->map_odoo_status_to_wc( 'free' ) );
+	}
+
+	public function test_map_odoo_status_waiting_to_delayed(): void {
+		$this->assertSame( 'wcm-delayed', $this->handler->map_odoo_status_to_wc( 'waiting' ) );
+	}
+
+	public function test_map_odoo_status_cancelled_to_cancelled(): void {
+		$this->assertSame( 'wcm-cancelled', $this->handler->map_odoo_status_to_wc( 'cancelled' ) );
+	}
+
+	public function test_map_odoo_status_none_to_expired(): void {
+		$this->assertSame( 'wcm-expired', $this->handler->map_odoo_status_to_wc( 'none' ) );
+	}
+
+	public function test_map_odoo_status_unknown_defaults_to_expired(): void {
+		$this->assertSame( 'wcm-expired', $this->handler->map_odoo_status_to_wc( 'xyz' ) );
+	}
+
+	// ─── Pull: parse_plan_from_odoo ────────────────────────
+
+	public function test_parse_plan_from_odoo(): void {
+		$data = $this->handler->parse_plan_from_odoo( [
+			'name'       => 'Silver Plan',
+			'list_price' => 29.99,
+		] );
+
+		$this->assertSame( 'Silver Plan', $data['plan_name'] );
+		$this->assertSame( 29.99, $data['list_price'] );
+	}
+
+	public function test_parse_plan_from_odoo_handles_missing_fields(): void {
+		$data = $this->handler->parse_plan_from_odoo( [] );
+
+		$this->assertSame( '', $data['plan_name'] );
+		$this->assertSame( 0.0, $data['list_price'] );
+	}
+
+	// ─── Pull: save_plan ──────────────────────────────────
+
+	public function test_save_plan_creates_new_post(): void {
+		$id = $this->handler->save_plan( [ 'plan_name' => 'Bronze Plan' ] );
+		$this->assertGreaterThan( 0, $id );
+	}
+
+	public function test_save_plan_updates_existing_post(): void {
+		// Create first, then update.
+		$created_id = $this->handler->save_plan( [ 'plan_name' => 'Bronze Plan' ] );
+		$updated_id = $this->handler->save_plan( [ 'plan_name' => 'Bronze Updated' ], $created_id );
+		$this->assertSame( $created_id, $updated_id );
+	}
+
+	// ─── Pull: parse_membership_from_odoo ──────────────────
+
+	public function test_parse_membership_from_odoo(): void {
+		$data = $this->handler->parse_membership_from_odoo( [
+			'state'       => 'paid',
+			'date_from'   => '2026-01-01',
+			'date_to'     => '2027-01-01',
+			'date_cancel' => false,
+		] );
+
+		$this->assertSame( 'wcm-active', $data['state'] );
+		$this->assertSame( '2026-01-01', $data['date_from'] );
+		$this->assertSame( '2027-01-01', $data['date_to'] );
+		$this->assertFalse( $data['date_cancel'] );
+	}
+
+	public function test_parse_membership_from_odoo_handles_missing_state(): void {
+		$data = $this->handler->parse_membership_from_odoo( [] );
+		$this->assertSame( 'wcm-expired', $data['state'] );
+	}
+
+	// ─── Pull: save_membership_from_odoo ───────────────────
+
+	public function test_save_membership_from_odoo_updates_existing(): void {
+		// Create a post first to update.
+		$post_id = \wp_insert_post( [
+			'post_title'  => 'Test Membership',
+			'post_type'   => 'wc_user_membership',
+			'post_status' => 'wcm-active',
+		] );
+
+		$result = $this->handler->save_membership_from_odoo( [
+			'state'     => 'wcm-cancelled',
+			'date_from' => '2026-01-01',
+			'date_to'   => '2027-01-01',
+		], $post_id );
+
+		$this->assertSame( $post_id, $result );
+	}
+
+	public function test_save_membership_from_odoo_rejects_create(): void {
+		$result = $this->handler->save_membership_from_odoo( [ 'state' => 'wcm-active' ], 0 );
+		$this->assertSame( 0, $result );
+	}
 }

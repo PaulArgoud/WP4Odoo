@@ -161,4 +161,68 @@ class Amelia_Handler {
 			$wpdb->prepare( "SELECT serviceId FROM {$table} WHERE id = %d", $appointment_id )
 		);
 	}
+
+	// ─── Pull: parse from Odoo ─────────────────────────────
+
+	/**
+	 * Parse Odoo product data into Amelia service format.
+	 *
+	 * Reverse of load_service() + map_to_odoo(). Extracts name,
+	 * description, and price from Odoo product.product data.
+	 *
+	 * @param array<string, mixed> $odoo_data Odoo record data.
+	 * @return array<string, mixed> Amelia service data.
+	 */
+	public function parse_service_from_odoo( array $odoo_data ): array {
+		return [
+			'name'        => $odoo_data['name'] ?? '',
+			'description' => $odoo_data['description_sale'] ?? '',
+			'price'       => (float) ( $odoo_data['list_price'] ?? 0 ),
+		];
+	}
+
+	// ─── Pull: save service ────────────────────────────────
+
+	/**
+	 * Save a service pulled from Odoo to Amelia's custom table.
+	 *
+	 * Creates a new row when $wp_id is 0, updates an existing one otherwise.
+	 *
+	 * @param array<string, mixed> $data  Parsed service data.
+	 * @param int                  $wp_id Existing Amelia service ID (0 to create new).
+	 * @return int The service ID, or 0 on failure.
+	 */
+	public function save_service( array $data, int $wp_id = 0 ): int {
+		global $wpdb;
+
+		$table = $wpdb->prefix . 'amelia_services';
+		$row   = [
+			'name'        => $data['name'] ?? '',
+			'description' => $data['description'] ?? '',
+			'price'       => $data['price'] ?? 0,
+		];
+
+		if ( $wp_id > 0 ) {
+			$result = $wpdb->update( $table, $row, [ 'id' => $wp_id ] );
+			return false !== $result ? $wp_id : 0;
+		}
+
+		$result = $wpdb->insert( $table, $row );
+		return false !== $result ? (int) $wpdb->insert_id : 0;
+	}
+
+	// ─── Pull: delete service ──────────────────────────────
+
+	/**
+	 * Delete a service from Amelia's custom table.
+	 *
+	 * @param int $service_id Amelia service ID.
+	 * @return bool True on success.
+	 */
+	public function delete_service( int $service_id ): bool {
+		global $wpdb;
+
+		$table = $wpdb->prefix . 'amelia_services';
+		return false !== $wpdb->delete( $table, [ 'id' => $service_id ] );
+	}
 }

@@ -16,7 +16,7 @@ Ships in **3 languages** (English, French, Spanish) and is fully translation-rea
 
 - **Admin Dashboard** — 5-tab settings interface: Connection, Sync, Modules, Queue, Logs
 - **Async Queue** — No API calls during user requests; all sync jobs go through a persistent database queue with exponential backoff, deduplication, and configurable batch size
-- **Code Quality** — WordPress Coding Standards (PHPCS), PHPStan level 5 static analysis, 1788 unit tests + 26 integration tests, CI/CD with GitHub Actions
+- **Code Quality** — WordPress Coding Standards (PHPCS), PHPStan level 5 static analysis, 1823 unit tests + 26 integration tests, CI/CD with GitHub Actions
 - **Dual Transport** — JSON-RPC 2.0 (default for Odoo 17+) and XML-RPC (legacy), swappable via settings, shared retry logic via `Retryable_Http` trait (3 attempts, exponential backoff + jitter)
 - **Encrypted Credentials** — API keys encrypted at rest with libsodium (OpenSSL fallback)
 - **Extensible** — Register custom modules via `wp4odoo_register_modules` action hook; filter data with `wp4odoo_map_to_odoo_*` / `wp4odoo_map_from_odoo_*`
@@ -70,8 +70,8 @@ Each Odoo domain is encapsulated in an independent module extending `Module_Base
 |-------------------------------|:------:|---------------------------------------|:-----:|-------------------------------------------------------------------------------|
 | **CRM**                       |   ↔️   | Contacts, CRM                         |  ⚠️  | Contact sync, lead form shortcode, email dedup, archive-on-delete              |
 | **Sales**                     |   ⬅️   | Contacts, Sales, Invoicing            |  ❌  | Order/invoice CPTs, customer portal shortcode, currency display                |
-| **Amelia Booking**            |   ➡️   | Contacts, Calendar                    |  ⚠️  | Service/appointment sync, calendar events, customer-to-partner resolution      |
-| **Bookly Booking**            |   ➡️   | Contacts, Calendar                    |  ⚠️  | Service/booking sync via WP-Cron polling, hash-based change detection          |
+| **Amelia Booking**            |   ↔️   | Contacts, Calendar                    |  ⚠️  | Service sync (bidirectional), appointment sync (push), customer-to-partner     |
+| **Bookly Booking**            |   ↔️   | Contacts, Calendar                    |  ⚠️  | Service sync (bidirectional), booking sync (push) via WP-Cron, hash detection  |
 | **Easy Digital Downloads**    |   ↔️   | Contacts, Sales, Invoicing            |  ❌  | Download/order sync, status mapping, invoice pull                              |
 | **Events Calendar**           |   ↔️   | Contacts, Events (+ Calendar)         |  ⚠️  | Event/ticket/attendee sync, dual-model (event.event or calendar.event)         |
 | **Forms (7 plugins)**         |   ➡️   | Contacts, CRM                         |  ⚠️  | GF, WPForms, CF7, Fluent, Formidable, Ninja, Forminator — lead auto-detection  |
@@ -85,7 +85,7 @@ Each Odoo domain is encapsulated in an independent module extending `Module_Base
 | **WP Recipe Maker**           |   ➡️   | Products                              |  ❌  | Recipe sync as service products, structured descriptions, push-only            |
 | **WP Simple Pay**             |   ➡️   | Contacts, Invoicing (+ OCA Donation)  |  ⚠️  | Stripe payment sync, webhook capture, dual-model, auto-validate, recurring     |
 | **WooCommerce**               |   ↔️   | Contacts, Sales, Inventory, Invoicing |  ❌  | Product/order/stock sync, variants, image pull, exchange rates, bulk ops       |
-| **WooCommerce Memberships**   |   ➡️   | Contacts, Members                     |  ❌  | Plan auto-sync, status mapping, filterable via `wp4odoo_membership_status_map` |
+| **WooCommerce Memberships**   |   ↔️   | Contacts, Members                     |  ❌  | Plan sync (bidirectional), membership status/date pull, reverse status mapping  |
 | **WooCommerce Subscriptions** |   ↔️   | Contacts, Subscriptions, Invoicing    |  ❌  | Subscription/renewal sync, dual-model (sale.subscription / account.move)       |
 | **Sprout Invoices**           |   ↔️   | Contacts, Invoicing                   |  ⚠️  | Invoice/payment sync, status mapping, auto-posting, One2many line items, pull  |
 | **WP-Invoice**                |   ➡️   | Contacts, Invoicing                   |  ⚠️  | Invoice sync, auto-posting for paid invoices, One2many line items              |

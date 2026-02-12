@@ -76,9 +76,19 @@ class MembershipsModuleTest extends TestCase {
 		$this->assertTrue( $settings['sync_memberships'] );
 	}
 
-	public function test_default_settings_has_exactly_two_keys(): void {
+	public function test_default_settings_has_pull_plans(): void {
 		$settings = $this->module->get_default_settings();
-		$this->assertCount( 2, $settings );
+		$this->assertTrue( $settings['pull_plans'] );
+	}
+
+	public function test_default_settings_has_pull_memberships(): void {
+		$settings = $this->module->get_default_settings();
+		$this->assertTrue( $settings['pull_memberships'] );
+	}
+
+	public function test_default_settings_has_exactly_four_keys(): void {
+		$settings = $this->module->get_default_settings();
+		$this->assertCount( 4, $settings );
 	}
 
 	// ─── Settings Fields ───────────────────────────────────
@@ -161,6 +171,47 @@ class MembershipsModuleTest extends TestCase {
 	// ─── Sync Direction ─────────────────────────────────
 
 	public function test_sync_direction(): void {
-		$this->assertSame( 'wp_to_odoo', $this->module->get_sync_direction() );
+		$this->assertSame( 'bidirectional', $this->module->get_sync_direction() );
+	}
+
+	// ─── Pull Settings Fields ───────────────────────────
+
+	public function test_settings_fields_has_pull_plans(): void {
+		$fields = $this->module->get_settings_fields();
+		$this->assertArrayHasKey( 'pull_plans', $fields );
+		$this->assertSame( 'checkbox', $fields['pull_plans']['type'] );
+	}
+
+	public function test_settings_fields_has_pull_memberships(): void {
+		$fields = $this->module->get_settings_fields();
+		$this->assertArrayHasKey( 'pull_memberships', $fields );
+		$this->assertSame( 'checkbox', $fields['pull_memberships']['type'] );
+	}
+
+	public function test_settings_fields_has_exactly_four_entries(): void {
+		$this->assertCount( 4, $this->module->get_settings_fields() );
+	}
+
+	// ─── map_from_odoo ──────────────────────────────────
+
+	public function test_map_from_odoo_plan(): void {
+		$data = $this->module->map_from_odoo( 'plan', [
+			'name'       => 'Gold Plan',
+			'list_price' => 49.99,
+		] );
+
+		$this->assertSame( 'Gold Plan', $data['plan_name'] );
+		$this->assertSame( 49.99, $data['list_price'] );
+	}
+
+	public function test_map_from_odoo_membership(): void {
+		$data = $this->module->map_from_odoo( 'membership', [
+			'state'     => 'paid',
+			'date_from' => '2026-01-01',
+			'date_to'   => '2027-01-01',
+		] );
+
+		$this->assertSame( 'wcm-active', $data['state'] );
+		$this->assertSame( '2026-01-01', $data['date_from'] );
 	}
 }

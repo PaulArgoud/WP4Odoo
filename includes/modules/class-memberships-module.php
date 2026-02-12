@@ -10,10 +10,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Memberships Module — push WooCommerce Memberships to Odoo membership module.
+ * Memberships Module — sync WooCommerce Memberships with Odoo membership module.
  *
  * Syncs membership plans as Odoo products (membership: True) and user memberships
- * as membership.membership_line records. Push-only (WC → Odoo).
+ * as membership.membership_line records. Bidirectional: plans ↔ Odoo, memberships
+ * push + status/date updates from Odoo.
  *
  * Requires the WooCommerce Memberships plugin (SkyVerge/Woo) to be active.
  * Can coexist with the WooCommerce and CRM modules.
@@ -30,12 +31,12 @@ class Memberships_Module extends Module_Base {
 	protected int $exclusive_priority = 20;
 
 	/**
-	 * Sync direction: Memberships module only pushes to Odoo.
+	 * Sync direction: bidirectional (plans ↔, memberships ↔ status updates).
 	 *
 	 * @return string
 	 */
 	public function get_sync_direction(): string {
-		return 'wp_to_odoo';
+		return 'bidirectional';
 	}
 
 	/**
@@ -125,6 +126,8 @@ class Memberships_Module extends Module_Base {
 		return [
 			'sync_plans'       => true,
 			'sync_memberships' => true,
+			'pull_plans'       => true,
+			'pull_memberships' => true,
 		];
 	}
 
@@ -145,6 +148,16 @@ class Memberships_Module extends Module_Base {
 				'type'        => 'checkbox',
 				'description' => __( 'Push user memberships to Odoo membership lines.', 'wp4odoo' ),
 			],
+			'pull_plans'       => [
+				'label'       => __( 'Pull membership plans', 'wp4odoo' ),
+				'type'        => 'checkbox',
+				'description' => __( 'Pull Odoo membership products into WooCommerce plans.', 'wp4odoo' ),
+			],
+			'pull_memberships' => [
+				'label'       => __( 'Pull membership updates', 'wp4odoo' ),
+				'type'        => 'checkbox',
+				'description' => __( 'Pull Odoo membership line status/date updates into WooCommerce.', 'wp4odoo' ),
+			],
 		];
 	}
 
@@ -155,6 +168,89 @@ class Memberships_Module extends Module_Base {
 	 */
 	public function get_dependency_status(): array {
 		return $this->check_dependency( function_exists( 'wc_memberships' ), 'WooCommerce Memberships' );
+	}
+
+	// ─── Pull override ──────────────────────────────────────
+
+	/**
+	 * Pull an Odoo entity to WordPress.
+	 *
+	 * Plans are fully pulled. Memberships support status/date updates
+	 * only — deletion is not supported (memberships originate in WC).
+	 *
+	 * @param string $entity_type Entity type.
+	 * @param string $action      'create', 'update', or 'delete'.
+	 * @param int    $odoo_id     Odoo record ID.
+	 * @param int    $wp_id       WordPress entity ID (0 if unknown).
+	 * @param array  $payload     Additional data.
+	 * @return \WP4Odoo\Sync_Result
+	 */
+	public function pull_from_odoo( string $entity_type, string $action, int $odoo_id, int $wp_id = 0, array $payload = [] ): \WP4Odoo\Sync_Result {
+		$settings = $this->get_settings();
+
+		if ( 'plan' === $entity_type && empty( $settings['pull_plans'] ) ) {
+			return \WP4Odoo\Sync_Result::success( 0 );
+		}
+
+		if ( 'membership' === $entity_type ) {
+			if ( empty( $settings['pull_memberships'] ) ) {
+				return \WP4Odoo\Sync_Result::success( 0 );
+			}
+			if ( 'delete' === $action ) {
+				$this->logger->info( 'Membership deletion from Odoo not supported — memberships originate in WooCommerce.', [ 'odoo_id' => $odoo_id ] );
+				return \WP4Odoo\Sync_Result::success( 0 );
+			}
+		}
+
+		return parent::pull_from_odoo( $entity_type, $action, $odoo_id, $wp_id, $payload );
+	}
+
+	/**
+	 * Map Odoo data to WordPress format for pull.
+	 *
+	 * @param string $entity_type Entity type.
+	 * @param array  $odoo_data   Raw Odoo record data.
+	 * @return array<string, mixed>
+	 */
+	public function map_from_odoo( string $entity_type, array $odoo_data ): array {
+		return match ( $entity_type ) {
+			'plan'       => $this->membership_handler->parse_plan_from_odoo( $odoo_data ),
+			'membership' => $this->membership_handler->parse_membership_from_odoo( $odoo_data ),
+			default      => parent::map_from_odoo( $entity_type, $odoo_data ),
+		};
+	}
+
+	/**
+	 * Save pulled data to WordPress.
+	 *
+	 * @param string $entity_type Entity type.
+	 * @param array  $data        Mapped data.
+	 * @param int    $wp_id       Existing WP ID (0 if new).
+	 * @return int The WordPress entity ID (0 on failure).
+	 */
+	protected function save_wp_data( string $entity_type, array $data, int $wp_id = 0 ): int {
+		return match ( $entity_type ) {
+			'plan'       => $this->membership_handler->save_plan( $data, $wp_id ),
+			'membership' => $this->membership_handler->save_membership_from_odoo( $data, $wp_id ),
+			default      => 0,
+		};
+	}
+
+	/**
+	 * Delete a WordPress entity during pull.
+	 *
+	 * Plans can be deleted. Memberships cannot (they originate in WC).
+	 *
+	 * @param string $entity_type Entity type.
+	 * @param int    $wp_id       WordPress post ID.
+	 * @return bool
+	 */
+	protected function delete_wp_data( string $entity_type, int $wp_id ): bool {
+		if ( 'plan' === $entity_type ) {
+			return $this->delete_wp_post( $wp_id );
+		}
+
+		return false;
 	}
 
 	// ─── Push override ──────────────────────────────────────

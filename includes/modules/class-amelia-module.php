@@ -8,7 +8,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Amelia Module — push booking services and appointments to Odoo.
+ * Amelia Module — sync booking services and appointments with Odoo.
  *
  * Syncs Amelia services as Odoo service products (product.product)
  * and appointments as Odoo calendar events (calendar.event), with
@@ -17,7 +17,8 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Unlike WooCommerce or EDD, Amelia stores data in its own custom
  * tables — the handler queries them directly via $wpdb.
  *
- * Push-only (WP → Odoo). No mutual exclusivity with other modules.
+ * Bidirectional: services ↔ Odoo, appointments → Odoo only.
+ * No mutual exclusivity with other modules.
  *
  * Requires the Amelia Booking plugin to be active.
  *
@@ -101,6 +102,7 @@ class Amelia_Module extends Booking_Module_Base {
 		return [
 			'sync_services'     => true,
 			'sync_appointments' => true,
+			'pull_services'     => true,
 		];
 	}
 
@@ -120,6 +122,11 @@ class Amelia_Module extends Booking_Module_Base {
 				'label'       => __( 'Sync appointments', 'wp4odoo' ),
 				'type'        => 'checkbox',
 				'description' => __( 'Push Amelia appointments to Odoo as calendar events.', 'wp4odoo' ),
+			],
+			'pull_services'     => [
+				'label'       => __( 'Pull services', 'wp4odoo' ),
+				'type'        => 'checkbox',
+				'description' => __( 'Pull Odoo service products into Amelia services.', 'wp4odoo' ),
 			],
 		];
 	}
@@ -210,5 +217,28 @@ class Amelia_Module extends Booking_Module_Base {
 	 */
 	protected function get_booking_notes( array $data ): string {
 		return $data['internalNotes'] ?? '';
+	}
+
+	// ─── Pull: handler delegation ───────────────────────────
+
+	/**
+	 * {@inheritDoc}
+	 */
+	protected function handler_parse_service_from_odoo( array $odoo_data ): array {
+		return $this->handler->parse_service_from_odoo( $odoo_data );
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	protected function handler_save_service( array $data, int $wp_id ): int {
+		return $this->handler->save_service( $data, $wp_id );
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	protected function handler_delete_service( int $service_id ): bool {
+		return $this->handler->delete_service( $service_id );
 	}
 }

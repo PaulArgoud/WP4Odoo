@@ -8,7 +8,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Bookly Module — push booking services and appointments to Odoo.
+ * Bookly Module — sync booking services and appointments with Odoo.
  *
  * Syncs Bookly services as Odoo service products (product.product)
  * and customer_appointments as Odoo calendar events (calendar.event),
@@ -18,7 +18,8 @@ if ( ! defined( 'ABSPATH' ) ) {
  * booking lifecycle events. This module uses WP-Cron polling to detect
  * changes every 5 minutes via hash comparison.
  *
- * Push-only (WP → Odoo). No mutual exclusivity with other modules.
+ * Bidirectional: services ↔ Odoo, bookings → Odoo only.
+ * No mutual exclusivity with other modules.
  *
  * Requires the Bookly plugin to be active.
  *
@@ -102,6 +103,7 @@ class Bookly_Module extends Booking_Module_Base {
 		return [
 			'sync_services' => true,
 			'sync_bookings' => true,
+			'pull_services' => true,
 		];
 	}
 
@@ -121,6 +123,11 @@ class Bookly_Module extends Booking_Module_Base {
 				'label'       => __( 'Sync bookings', 'wp4odoo' ),
 				'type'        => 'checkbox',
 				'description' => __( 'Push Bookly bookings to Odoo as calendar events.', 'wp4odoo' ),
+			],
+			'pull_services' => [
+				'label'       => __( 'Pull services', 'wp4odoo' ),
+				'type'        => 'checkbox',
+				'description' => __( 'Pull Odoo service products into Bookly services.', 'wp4odoo' ),
 			],
 		];
 	}
@@ -215,5 +222,28 @@ class Bookly_Module extends Booking_Module_Base {
 	 */
 	protected function get_booking_notes( array $data ): string {
 		return $data['internal_note'] ?? '';
+	}
+
+	// ─── Pull: handler delegation ───────────────────────────
+
+	/**
+	 * {@inheritDoc}
+	 */
+	protected function handler_parse_service_from_odoo( array $odoo_data ): array {
+		return $this->handler->parse_service_from_odoo( $odoo_data );
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	protected function handler_save_service( array $data, int $wp_id ): int {
+		return $this->handler->save_service( $data, $wp_id );
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	protected function handler_delete_service( int $service_id ): bool {
+		return $this->handler->delete_service( $service_id );
 	}
 }

@@ -129,4 +129,141 @@ class Membership_Handler {
 
 		return $map[ $wc_status ] ?? 'none';
 	}
+
+	// ─── Reverse status mapping ────────────────────────────
+
+	/**
+	 * Reverse status mapping: Odoo membership_line state → WC membership status.
+	 *
+	 * @var array<string, string>
+	 */
+	private const REVERSE_STATUS_MAP = [
+		'paid'      => 'wcm-active',
+		'free'      => 'wcm-complimentary',
+		'waiting'   => 'wcm-delayed',
+		'cancelled' => 'wcm-cancelled',
+		'none'      => 'wcm-expired',
+	];
+
+	/**
+	 * Map an Odoo membership_line state to a WC membership status.
+	 *
+	 * @param string $odoo_state Odoo membership_line state.
+	 * @return string WC membership status (e.g. 'wcm-active').
+	 */
+	public function map_odoo_status_to_wc( string $odoo_state ): string {
+		$map = apply_filters( 'wp4odoo_membership_reverse_status_map', self::REVERSE_STATUS_MAP );
+
+		return $map[ $odoo_state ] ?? 'wcm-expired';
+	}
+
+	// ─── Pull: parse plan from Odoo ────────────────────────
+
+	/**
+	 * Parse Odoo product data into WC membership plan format.
+	 *
+	 * @param array<string, mixed> $odoo_data Odoo record data.
+	 * @return array<string, mixed> Plan data for save_plan().
+	 */
+	public function parse_plan_from_odoo( array $odoo_data ): array {
+		return [
+			'plan_name'  => $odoo_data['name'] ?? '',
+			'list_price' => (float) ( $odoo_data['list_price'] ?? 0 ),
+		];
+	}
+
+	// ─── Pull: save plan ───────────────────────────────────
+
+	/**
+	 * Save a membership plan pulled from Odoo as a wc_membership_plan CPT post.
+	 *
+	 * Creates a new post when $wp_id is 0, updates an existing one otherwise.
+	 *
+	 * @param array<string, mixed> $data  Parsed plan data.
+	 * @param int                  $wp_id Existing post ID (0 to create new).
+	 * @return int The post ID, or 0 on failure.
+	 */
+	public function save_plan( array $data, int $wp_id = 0 ): int {
+		$post_args = [
+			'post_title'  => $data['plan_name'] ?? '',
+			'post_type'   => 'wc_membership_plan',
+			'post_status' => 'publish',
+		];
+
+		if ( $wp_id > 0 ) {
+			$post_args['ID'] = $wp_id;
+			$result          = \wp_update_post( $post_args, true );
+		} else {
+			$result = \wp_insert_post( $post_args, true );
+		}
+
+		if ( \is_wp_error( $result ) ) {
+			$this->logger->error( 'Failed to save membership plan post.', [ 'wp_id' => $wp_id ] );
+			return 0;
+		}
+
+		return $result;
+	}
+
+	// ─── Pull: parse membership from Odoo ──────────────────
+
+	/**
+	 * Parse Odoo membership_line data into WC membership format.
+	 *
+	 * Reverses the state to a WC status and extracts date fields.
+	 *
+	 * @param array<string, mixed> $odoo_data Odoo record data.
+	 * @return array<string, mixed> Membership data for save_membership_from_odoo().
+	 */
+	public function parse_membership_from_odoo( array $odoo_data ): array {
+		return [
+			'state'       => $this->map_odoo_status_to_wc( $odoo_data['state'] ?? 'none' ),
+			'date_from'   => $odoo_data['date_from'] ?? '',
+			'date_to'     => $odoo_data['date_to'] ?? false,
+			'date_cancel' => $odoo_data['date_cancel'] ?? false,
+		];
+	}
+
+	// ─── Pull: save membership ─────────────────────────────
+
+	/**
+	 * Update an existing WC user membership with pulled Odoo data.
+	 *
+	 * Only updates existing memberships — cannot create from Odoo
+	 * (memberships originate in WooCommerce checkout).
+	 *
+	 * @param array<string, mixed> $data  Parsed membership data.
+	 * @param int                  $wp_id Existing user membership ID.
+	 * @return int The membership ID on success, 0 on failure.
+	 */
+	public function save_membership_from_odoo( array $data, int $wp_id ): int {
+		if ( $wp_id <= 0 ) {
+			$this->logger->warning( 'Cannot create membership from Odoo — memberships originate in WooCommerce.' );
+			return 0;
+		}
+
+		$args = [ 'ID' => $wp_id ];
+
+		if ( isset( $data['state'] ) ) {
+			$args['post_status'] = $data['state'];
+		}
+
+		$result = \wp_update_post( $args, true );
+		if ( \is_wp_error( $result ) ) {
+			$this->logger->error( 'Failed to update membership from Odoo.', [ 'wp_id' => $wp_id ] );
+			return 0;
+		}
+
+		if ( ! empty( $data['date_from'] ) ) {
+			\update_post_meta( $wp_id, '_start_date', $data['date_from'] );
+		}
+		if ( ! empty( $data['date_to'] ) ) {
+			\update_post_meta( $wp_id, '_end_date', $data['date_to'] );
+		}
+		if ( ! empty( $data['date_cancel'] ) ) {
+			\update_post_meta( $wp_id, '_cancelled_date', $data['date_cancel'] );
+		}
+
+		return $wp_id;
+	}
 }

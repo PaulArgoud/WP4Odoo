@@ -245,4 +245,68 @@ class Bookly_Handler {
 			)
 		);
 	}
+
+	// ─── Pull: parse from Odoo ─────────────────────────────
+
+	/**
+	 * Parse Odoo product data into Bookly service format.
+	 *
+	 * Reverse of load_service() + map_to_odoo(). Extracts title,
+	 * info, and price from Odoo product.product data.
+	 *
+	 * @param array<string, mixed> $odoo_data Odoo record data.
+	 * @return array<string, mixed> Bookly service data.
+	 */
+	public function parse_service_from_odoo( array $odoo_data ): array {
+		return [
+			'title' => $odoo_data['name'] ?? '',
+			'info'  => $odoo_data['description_sale'] ?? '',
+			'price' => (float) ( $odoo_data['list_price'] ?? 0 ),
+		];
+	}
+
+	// ─── Pull: save service ────────────────────────────────
+
+	/**
+	 * Save a service pulled from Odoo to Bookly's custom table.
+	 *
+	 * Creates a new row when $wp_id is 0, updates an existing one otherwise.
+	 *
+	 * @param array<string, mixed> $data  Parsed service data.
+	 * @param int                  $wp_id Existing Bookly service ID (0 to create new).
+	 * @return int The service ID, or 0 on failure.
+	 */
+	public function save_service( array $data, int $wp_id = 0 ): int {
+		global $wpdb;
+
+		$table = $wpdb->prefix . 'bookly_services';
+		$row   = [
+			'title' => $data['title'] ?? '',
+			'info'  => $data['info'] ?? '',
+			'price' => $data['price'] ?? 0,
+		];
+
+		if ( $wp_id > 0 ) {
+			$result = $wpdb->update( $table, $row, [ 'id' => $wp_id ] );
+			return false !== $result ? $wp_id : 0;
+		}
+
+		$result = $wpdb->insert( $table, $row );
+		return false !== $result ? (int) $wpdb->insert_id : 0;
+	}
+
+	// ─── Pull: delete service ──────────────────────────────
+
+	/**
+	 * Delete a service from Bookly's custom table.
+	 *
+	 * @param int $service_id Bookly service ID.
+	 * @return bool True on success.
+	 */
+	public function delete_service( int $service_id ): bool {
+		global $wpdb;
+
+		$table = $wpdb->prefix . 'bookly_services';
+		return false !== $wpdb->delete( $table, [ 'id' => $service_id ] );
+	}
 }

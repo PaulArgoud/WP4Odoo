@@ -12,10 +12,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Abstract base class for booking/appointment modules (Amelia, Bookly).
  *
- * Provides shared sync logic for modules that push booking services
+ * Provides shared sync logic for modules that sync booking services
  * as Odoo products (product.product) and appointments/bookings as
  * Odoo calendar events (calendar.event), with customer resolution
  * via Partner_Service.
+ *
+ * Bidirectional: services are synced both ways (Odoo ↔ WP),
+ * bookings/appointments are push-only (they originate in WordPress).
  *
  * Subclasses provide plugin-specific handler delegation and field
  * extraction via abstract methods. All are one-liners.
@@ -124,15 +127,45 @@ abstract class Booking_Module_Base extends Module_Base {
 	 */
 	abstract protected function get_booking_notes( array $data ): string;
 
+	// ─── Handler delegation: pull ───────────────────────────
+
+	/**
+	 * Parse Odoo product data into plugin-native service format.
+	 *
+	 * Reverse of handler_load_service() + map_to_odoo(). Subclasses
+	 * delegate to their handler's parse method.
+	 *
+	 * @param array<string, mixed> $odoo_data Odoo record data.
+	 * @return array<string, mixed> Plugin-native service data.
+	 */
+	abstract protected function handler_parse_service_from_odoo( array $odoo_data ): array;
+
+	/**
+	 * Save a service pulled from Odoo to the plugin's data store.
+	 *
+	 * @param array<string, mixed> $data  Parsed service data.
+	 * @param int                  $wp_id Existing service ID (0 to create new).
+	 * @return int The service ID, or 0 on failure.
+	 */
+	abstract protected function handler_save_service( array $data, int $wp_id ): int;
+
+	/**
+	 * Delete a service from the plugin's data store.
+	 *
+	 * @param int $service_id Plugin-native service ID.
+	 * @return bool True on success.
+	 */
+	abstract protected function handler_delete_service( int $service_id ): bool;
+
 	// ─── Shared sync direction ──────────────────────────────
 
 	/**
-	 * Sync direction: push-only (WP → Odoo).
+	 * Sync direction: bidirectional (services ↔, bookings →).
 	 *
 	 * @return string
 	 */
 	public function get_sync_direction(): string {
-		return 'wp_to_odoo';
+		return 'bidirectional';
 	}
 
 	// ─── Push override ──────────────────────────────────────
@@ -180,6 +213,85 @@ abstract class Booking_Module_Base extends Module_Base {
 		}
 
 		return $mapped;
+	}
+
+	// ─── Pull override ─────────────────────────────────────
+
+	/**
+	 * Pull an Odoo entity to WordPress.
+	 *
+	 * Only services are pulled — bookings/appointments originate in WordPress.
+	 * Gated on the pull_services setting.
+	 *
+	 * @param string $entity_type Entity type.
+	 * @param string $action      'create', 'update', or 'delete'.
+	 * @param int    $odoo_id     Odoo record ID.
+	 * @param int    $wp_id       WordPress entity ID (0 if unknown).
+	 * @param array  $payload     Additional data.
+	 * @return \WP4Odoo\Sync_Result
+	 */
+	public function pull_from_odoo( string $entity_type, string $action, int $odoo_id, int $wp_id = 0, array $payload = [] ): \WP4Odoo\Sync_Result {
+		if ( $this->get_booking_entity_type() === $entity_type ) {
+			$this->logger->info( "{$entity_type} pull not supported — {$entity_type}s originate in WordPress.", [ 'odoo_id' => $odoo_id ] );
+			return \WP4Odoo\Sync_Result::success( 0 );
+		}
+
+		if ( 'service' === $entity_type ) {
+			$settings = $this->get_settings();
+			if ( empty( $settings['pull_services'] ) ) {
+				return \WP4Odoo\Sync_Result::success( 0 );
+			}
+		}
+
+		return parent::pull_from_odoo( $entity_type, $action, $odoo_id, $wp_id, $payload );
+	}
+
+	/**
+	 * Map Odoo data to WordPress format for pull.
+	 *
+	 * Services delegate to the handler's parse method.
+	 *
+	 * @param string $entity_type Entity type.
+	 * @param array  $odoo_data   Raw Odoo record data.
+	 * @return array<string, mixed>
+	 */
+	public function map_from_odoo( string $entity_type, array $odoo_data ): array {
+		if ( 'service' === $entity_type ) {
+			return $this->handler_parse_service_from_odoo( $odoo_data );
+		}
+
+		return parent::map_from_odoo( $entity_type, $odoo_data );
+	}
+
+	/**
+	 * Save pulled data to WordPress.
+	 *
+	 * @param string $entity_type Entity type.
+	 * @param array  $data        Mapped data.
+	 * @param int    $wp_id       Existing WP ID (0 if new).
+	 * @return int The WordPress entity ID (0 on failure).
+	 */
+	protected function save_wp_data( string $entity_type, array $data, int $wp_id = 0 ): int {
+		if ( 'service' === $entity_type ) {
+			return $this->handler_save_service( $data, $wp_id );
+		}
+
+		return 0;
+	}
+
+	/**
+	 * Delete a WordPress entity during pull.
+	 *
+	 * @param string $entity_type Entity type.
+	 * @param int    $wp_id       WordPress entity ID.
+	 * @return bool
+	 */
+	protected function delete_wp_data( string $entity_type, int $wp_id ): bool {
+		if ( 'service' === $entity_type ) {
+			return $this->handler_delete_service( $wp_id );
+		}
+
+		return false;
 	}
 
 	// ─── Data access ────────────────────────────────────────

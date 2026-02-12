@@ -282,4 +282,80 @@ class BooklyHandlerTest extends TestCase {
 		$this->assertStringContainsString( 'wp_bookly_appointments', $query );
 		$this->assertStringContainsString( "IN ('approved', 'done')", $query );
 	}
+
+	// ─── Pull: parse_service_from_odoo ────────────────────
+
+	public function test_parse_service_from_odoo_maps_fields(): void {
+		$odoo_data = [
+			'name'             => 'Deep Tissue',
+			'description_sale' => 'Intensive massage',
+			'list_price'       => 90.0,
+		];
+
+		$data = $this->handler->parse_service_from_odoo( $odoo_data );
+
+		$this->assertSame( 'Deep Tissue', $data['title'] );
+		$this->assertSame( 'Intensive massage', $data['info'] );
+		$this->assertSame( 90.0, $data['price'] );
+	}
+
+	public function test_parse_service_from_odoo_handles_missing_fields(): void {
+		$data = $this->handler->parse_service_from_odoo( [] );
+
+		$this->assertSame( '', $data['title'] );
+		$this->assertSame( '', $data['info'] );
+		$this->assertSame( 0.0, $data['price'] );
+	}
+
+	// ─── Pull: save_service ───────────────────────────────
+
+	public function test_save_service_creates_new_row(): void {
+		$this->wpdb->insert_id = 42;
+
+		$id = $this->handler->save_service( [
+			'title' => 'Yoga',
+			'info'  => 'Hatha yoga',
+			'price' => 50.0,
+		] );
+
+		$this->assertSame( 42, $id );
+
+		$insert_call = array_values( array_filter(
+			$this->wpdb->calls,
+			fn( $c ) => $c['method'] === 'insert'
+		) );
+		$this->assertNotEmpty( $insert_call );
+		$this->assertStringContainsString( 'bookly_services', $insert_call[0]['args'][0] );
+	}
+
+	public function test_save_service_updates_existing_row(): void {
+		$id = $this->handler->save_service( [
+			'title' => 'Yoga Updated',
+			'info'  => 'Updated',
+			'price' => 55.0,
+		], 10 );
+
+		$this->assertSame( 10, $id );
+
+		$update_call = array_values( array_filter(
+			$this->wpdb->calls,
+			fn( $c ) => $c['method'] === 'update'
+		) );
+		$this->assertNotEmpty( $update_call );
+		$this->assertStringContainsString( 'bookly_services', $update_call[0]['args'][0] );
+	}
+
+	// ─── Pull: delete_service ─────────────────────────────
+
+	public function test_delete_service_returns_true(): void {
+		$result = $this->handler->delete_service( 5 );
+		$this->assertTrue( $result );
+
+		$delete_call = array_values( array_filter(
+			$this->wpdb->calls,
+			fn( $c ) => $c['method'] === 'delete'
+		) );
+		$this->assertNotEmpty( $delete_call );
+		$this->assertStringContainsString( 'bookly_services', $delete_call[0]['args'][0] );
+	}
 }

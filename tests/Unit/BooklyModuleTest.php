@@ -44,8 +44,8 @@ class BooklyModuleTest extends TestCase {
 		$this->assertSame( 0, $this->module->get_exclusive_priority() );
 	}
 
-	public function test_sync_direction_is_wp_to_odoo(): void {
-		$this->assertSame( 'wp_to_odoo', $this->module->get_sync_direction() );
+	public function test_sync_direction_is_bidirectional(): void {
+		$this->assertSame( 'bidirectional', $this->module->get_sync_direction() );
 	}
 
 	// ─── Odoo Models ────────────────────────────────────────
@@ -75,8 +75,12 @@ class BooklyModuleTest extends TestCase {
 		$this->assertTrue( $this->module->get_default_settings()['sync_bookings'] );
 	}
 
-	public function test_default_settings_has_exactly_two_keys(): void {
-		$this->assertCount( 2, $this->module->get_default_settings() );
+	public function test_default_settings_has_pull_services(): void {
+		$this->assertTrue( $this->module->get_default_settings()['pull_services'] );
+	}
+
+	public function test_default_settings_has_exactly_three_keys(): void {
+		$this->assertCount( 3, $this->module->get_default_settings() );
 	}
 
 	// ─── Settings Fields ────────────────────────────────────
@@ -93,8 +97,14 @@ class BooklyModuleTest extends TestCase {
 		$this->assertSame( 'checkbox', $fields['sync_bookings']['type'] );
 	}
 
-	public function test_settings_fields_has_exactly_two_entries(): void {
-		$this->assertCount( 2, $this->module->get_settings_fields() );
+	public function test_settings_fields_has_pull_services(): void {
+		$fields = $this->module->get_settings_fields();
+		$this->assertArrayHasKey( 'pull_services', $fields );
+		$this->assertSame( 'checkbox', $fields['pull_services']['type'] );
+	}
+
+	public function test_settings_fields_has_exactly_three_entries(): void {
+		$this->assertCount( 3, $this->module->get_settings_fields() );
 	}
 
 	// ─── Field Mappings ─────────────────────────────────────
