@@ -206,26 +206,14 @@ class WP_Invoice_Module extends Module_Base {
 	private function load_invoice_data( int $wp_id ): array {
 		$user_data = $this->handler->get_user_data( $wp_id );
 
-		$partner_id = 0;
+		// Resolve partner from WP user, fallback to invoice email.
+		$partner_id = $this->resolve_partner_from_user( $user_data['user_id'] );
 
-		// Resolve partner from WP user.
-		if ( $user_data['user_id'] > 0 ) {
-			$user = get_userdata( $user_data['user_id'] );
-			if ( $user ) {
-				$partner_id = $this->partner_service()->get_or_create(
-					$user->user_email,
-					[ 'name' => $user->display_name ],
-					$user_data['user_id']
-				) ?? 0;
-			}
-		}
-
-		// Fallback: use email from invoice data.
 		if ( ! $partner_id && $user_data['email'] ) {
-			$partner_id = $this->partner_service()->get_or_create(
+			$partner_id = $this->resolve_partner_from_email(
 				$user_data['email'],
-				[ 'name' => $user_data['name'] ?: $user_data['email'] ]
-			) ?? 0;
+				$user_data['name'] ?: $user_data['email']
+			);
 		}
 
 		if ( ! $partner_id ) {

@@ -205,28 +205,7 @@ abstract class Membership_Module_Base extends Module_Base {
 	private function load_payment_data( int $wp_id ): array {
 		[ $user_id, $level_id ] = $this->get_payment_user_and_level( $wp_id );
 
-		if ( $user_id <= 0 ) {
-			$this->logger->warning( 'Payment entity has no user.', [ 'wp_id' => $wp_id ] );
-			return [];
-		}
-
-		$user = get_userdata( $user_id );
-		if ( ! $user ) {
-			$this->logger->warning(
-				'Cannot find user for payment entity.',
-				[
-					'wp_id'   => $wp_id,
-					'user_id' => $user_id,
-				]
-			);
-			return [];
-		}
-
-		$partner_id = $this->partner_service()->get_or_create(
-			$user->user_email,
-			[ 'name' => $user->display_name ],
-			$user_id
-		);
+		$partner_id = $this->resolve_partner_from_user( $user_id );
 
 		if ( ! $partner_id ) {
 			$this->logger->warning( 'Cannot resolve partner for payment entity.', [ 'wp_id' => $wp_id ] );
@@ -269,16 +248,7 @@ abstract class Membership_Module_Base extends Module_Base {
 		$user_id = $data['user_id'] ?? 0;
 		unset( $data['user_id'] );
 
-		if ( $user_id > 0 ) {
-			$user = get_userdata( $user_id );
-			if ( $user ) {
-				$data['partner_id'] = $this->partner_service()->get_or_create(
-					$user->user_email,
-					[ 'name' => $user->display_name ],
-					$user_id
-				);
-			}
-		}
+		$data['partner_id'] = $this->resolve_partner_from_user( $user_id );
 
 		if ( empty( $data['partner_id'] ) ) {
 			$this->logger->warning( 'Cannot resolve partner for membership entity.', [ 'wp_id' => $wp_id ] );

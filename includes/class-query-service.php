@@ -13,6 +13,9 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Provides paginated data retrieval, decoupling data access
  * from the admin UI layer. Instantiated and injected where needed.
  *
+ * Uses a single query with SQL_CALC_FOUND_ROWS to retrieve both
+ * results and total count, avoiding the double-query overhead.
+ *
  * @package WP4Odoo
  * @since   1.0.0
  */
@@ -37,15 +40,17 @@ class Query_Service {
 			$where = $wpdb->prepare( 'WHERE status = %s', $status );
 		}
 
-		$total = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table} {$where}" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 		$items = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT * FROM {$table} {$where} ORDER BY id DESC LIMIT %d OFFSET %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				"SELECT SQL_CALC_FOUND_ROWS * FROM {$table} {$where} ORDER BY id DESC LIMIT %d OFFSET %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 				$per_page,
 				$offset
 			)
 		);
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+		$total = (int) $wpdb->get_var( 'SELECT FOUND_ROWS()' );
 
 		return [
 			'items' => $items ?: [],
@@ -100,18 +105,19 @@ class Query_Service {
 			$where_sql = 'WHERE ' . implode( ' AND ', $where );
 		}
 
-		$count_query = "SELECT COUNT(*) FROM {$table} {$where_sql}";
-		$data_query  = "SELECT * FROM {$table} {$where_sql} ORDER BY id DESC LIMIT %d OFFSET %d";
-
+		$data_query        = "SELECT SQL_CALC_FOUND_ROWS * FROM {$table} {$where_sql} ORDER BY id DESC LIMIT %d OFFSET %d"; // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 		$params_with_limit = array_merge( $params, [ $per_page, $offset ] );
 
 		if ( ! empty( $params ) ) {
-			$total = (int) $wpdb->get_var( $wpdb->prepare( $count_query, $params ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-			$items = $wpdb->get_results( $wpdb->prepare( $data_query, $params_with_limit ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+			$items = $wpdb->get_results( $wpdb->prepare( $data_query, $params_with_limit ) );
 		} else {
-			$total = (int) $wpdb->get_var( $count_query ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-			$items = $wpdb->get_results( $wpdb->prepare( $data_query, [ $per_page, $offset ] ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+			$items = $wpdb->get_results( $wpdb->prepare( $data_query, [ $per_page, $offset ] ) );
 		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+		$total = (int) $wpdb->get_var( 'SELECT FOUND_ROWS()' );
 
 		return [
 			'items' => $items ?: [],

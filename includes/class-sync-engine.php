@@ -286,7 +286,21 @@ class Sync_Engine {
 			);
 		}
 
-		$payload = ! empty( $job->payload ) ? json_decode( $job->payload, true ) : [];
+		$payload = [];
+		if ( ! empty( $job->payload ) ) {
+			$decoded = json_decode( $job->payload, true );
+			if ( null === $decoded && JSON_ERROR_NONE !== json_last_error() ) {
+				throw new \RuntimeException(
+					sprintf(
+						/* translators: %d: job ID */
+						__( 'Invalid JSON payload in job #%d.', 'wp4odoo' ),
+						(int) $job->id
+					)
+				);
+			}
+			$payload = is_array( $decoded ) ? $decoded : [];
+		}
+
 		$wp_id   = (int) ( $job->wp_id ?? 0 );
 		$odoo_id = (int) ( $job->odoo_id ?? 0 );
 
@@ -310,7 +324,18 @@ class Sync_Engine {
 			return $module->push_to_odoo( $job->entity_type, $job->action, $wp_id, $odoo_id, $payload );
 		}
 
-		return $module->pull_from_odoo( $job->entity_type, $job->action, $odoo_id, $wp_id, $payload );
+		if ( 'odoo_to_wp' === $job->direction ) {
+			return $module->pull_from_odoo( $job->entity_type, $job->action, $odoo_id, $wp_id, $payload );
+		}
+
+		throw new \RuntimeException(
+			sprintf(
+				/* translators: 1: direction value, 2: job ID */
+				__( 'Invalid sync direction "%1$s" in job #%2$d.', 'wp4odoo' ),
+				$job->direction,
+				(int) $job->id
+			)
+		);
 	}
 
 	/**

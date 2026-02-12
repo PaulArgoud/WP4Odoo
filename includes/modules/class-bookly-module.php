@@ -160,17 +160,6 @@ class Bookly_Module extends Booking_Module_Base {
 	/**
 	 * {@inheritDoc}
 	 */
-	protected function resolve_customer_name( array $customer ): string {
-		if ( ! empty( $customer['full_name'] ) ) {
-			return $customer['full_name'];
-		}
-
-		return trim( ( $customer['first_name'] ?? '' ) . ' ' . ( $customer['last_name'] ?? '' ) );
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
 	protected function handler_load_service( int $service_id ): array {
 		return $this->handler->load_service( $service_id );
 	}
@@ -178,15 +167,34 @@ class Bookly_Module extends Booking_Module_Base {
 	/**
 	 * {@inheritDoc}
 	 */
-	protected function handler_load_booking( int $booking_id ): array {
-		return $this->handler->load_booking( $booking_id );
-	}
+	protected function handler_extract_booking_fields( int $booking_id ): array {
+		$data = $this->handler->load_booking( $booking_id );
+		if ( empty( $data ) ) {
+			return [];
+		}
 
-	/**
-	 * {@inheritDoc}
-	 */
-	protected function handler_get_customer_data( int $customer_id ): array {
-		return $this->handler->get_customer_data( $customer_id );
+		$service_id   = (int) ( $data['service_id'] ?? 0 );
+		$service_data = $service_id > 0 ? $this->handler->load_service( $service_id ) : [];
+		$service_name = $service_data['title'] ?? '';
+
+		$customer_id = (int) ( $data['customer_id'] ?? 0 );
+		$customer    = $customer_id > 0 ? $this->handler->get_customer_data( $customer_id ) : [];
+
+		if ( ! empty( $customer['full_name'] ) ) {
+			$customer_name = $customer['full_name'];
+		} else {
+			$customer_name = trim( ( $customer['first_name'] ?? '' ) . ' ' . ( $customer['last_name'] ?? '' ) );
+		}
+
+		return [
+			'service_id'     => $service_id,
+			'customer_email' => $customer['email'] ?? '',
+			'customer_name'  => $customer_name,
+			'service_name'   => $service_name,
+			'start'          => $data['start_date'] ?? '',
+			'stop'           => $data['end_date'] ?? '',
+			'description'    => $data['internal_note'] ?? '',
+		];
 	}
 
 	/**
@@ -194,34 +202,6 @@ class Bookly_Module extends Booking_Module_Base {
 	 */
 	protected function handler_get_service_id( int $booking_id ): int {
 		return $this->handler->get_service_id_for_booking( $booking_id );
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	protected function get_service_name( array $service_data ): string {
-		return $service_data['title'] ?? '';
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	protected function get_booking_start( array $data ): string {
-		return $data['start_date'] ?? '';
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	protected function get_booking_end( array $data ): string {
-		return $data['end_date'] ?? '';
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	protected function get_booking_notes( array $data ): string {
-		return $data['internal_note'] ?? '';
 	}
 
 	// ─── Pull: handler delegation ───────────────────────────

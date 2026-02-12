@@ -471,14 +471,14 @@ class LearnDashModuleTest extends TestCase {
 		// Simulate importing.
 		$reflection = new \ReflectionClass( \WP4Odoo\Module_Base::class );
 		$prop       = $reflection->getProperty( 'importing' );
-		$prop->setValue( null, true );
+		$prop->setValue( null, [ 'learndash' => true ] );
 
 		$this->module->on_course_save( 100 );
 
 		$this->assertQueueEmpty();
 
 		// Clean up.
-		$prop->setValue( null, false );
+		$prop->setValue( null, [] );
 	}
 
 	public function test_on_course_save_skips_wrong_post_type(): void {
@@ -551,13 +551,13 @@ class LearnDashModuleTest extends TestCase {
 
 		$reflection = new \ReflectionClass( \WP4Odoo\Module_Base::class );
 		$prop       = $reflection->getProperty( 'importing' );
-		$prop->setValue( null, true );
+		$prop->setValue( null, [ 'learndash' => true ] );
 
 		$this->module->on_transaction_created( 300 );
 
 		$this->assertQueueEmpty();
 
-		$prop->setValue( null, false );
+		$prop->setValue( null, [] );
 	}
 
 	// ─── Hooks: on_enrollment_change ──────────────────────

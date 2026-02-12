@@ -95,16 +95,15 @@ abstract class Module_Base {
 	private array $mapping_cache = [];
 
 	/**
-	 * Global anti-loop flag: true while any module is importing from Odoo.
+	 * Per-module anti-loop flags: tracks which modules are currently importing.
 	 *
-	 * Static so all module instances share the same flag.
-	 * Unlike the previous `define('WP4ODOO_IMPORTING')` approach, this
-	 * can be cleared after each pull operation, allowing subsequent
-	 * operations in the same request (webhooks, WP-CLI) to proceed.
+	 * Unlike a single global bool, this allows module A to import without
+	 * blocking hook callbacks on unrelated module B. Each module sets its
+	 * own flag via mark_importing() / clear_importing().
 	 *
-	 * @var bool
+	 * @var array<string, bool>
 	 */
-	private static bool $importing = false;
+	private static array $importing = [];
 
 	/**
 	 * Closure that returns the Odoo_Client instance (lazy, injected by Module_Registry).
@@ -234,7 +233,7 @@ abstract class Module_Base {
 	 * @return Sync_Result
 	 */
 	public function pull_from_odoo( string $entity_type, string $action, int $odoo_id, int $wp_id = 0, array $payload = [] ): Sync_Result {
-		self::mark_importing();
+		$this->mark_importing();
 
 		try {
 			$model = $this->get_odoo_model( $entity_type );
@@ -290,7 +289,7 @@ abstract class Module_Base {
 			$this->logger->error( 'Failed to save WP data during pull.', compact( 'entity_type', 'odoo_id' ) );
 			return Sync_Result::failure( 'Failed to save WP data during pull.', Error_Type::Permanent );
 		} finally {
-			self::clear_importing();
+			$this->clear_importing();
 		}
 	}
 
@@ -463,33 +462,33 @@ abstract class Module_Base {
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Check if an import operation is in progress.
+	 * Check if this module is currently importing from Odoo.
 	 *
 	 * Modules should call this at the top of every WP hook callback
 	 * to prevent re-enqueuing during a pull operation (anti-loop).
 	 *
-	 * @return bool True if a pull/import is in progress.
+	 * @return bool True if this module has a pull/import in progress.
 	 */
 	protected function is_importing(): bool {
-		return self::$importing;
+		return ! empty( self::$importing[ $this->id ] );
 	}
 
 	/**
-	 * Set the anti-loop flag to prevent hook re-entry during import.
+	 * Set the anti-loop flag for this module to prevent hook re-entry during import.
 	 *
 	 * @return void
 	 */
-	protected static function mark_importing(): void {
-		self::$importing = true;
+	protected function mark_importing(): void {
+		self::$importing[ $this->id ] = true;
 	}
 
 	/**
-	 * Clear the anti-loop flag after import completes.
+	 * Clear the anti-loop flag for this module after import completes.
 	 *
 	 * @return void
 	 */
-	protected static function clear_importing(): void {
-		self::$importing = false;
+	protected function clear_importing(): void {
+		unset( self::$importing[ $this->id ] );
 	}
 
 	// -------------------------------------------------------------------------

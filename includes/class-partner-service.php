@@ -43,11 +43,12 @@ class Partner_Service {
 	/**
 	 * Constructor.
 	 *
-	 * @param \Closure              $client_getter Returns the Odoo_Client instance.
-	 * @param Entity_Map_Repository $entity_map    Entity map repository.
+	 * @param \Closure                 $client_getter Returns the Odoo_Client instance.
+	 * @param Entity_Map_Repository    $entity_map    Entity map repository.
+	 * @param Settings_Repository|null $settings      Settings repository (null uses default).
 	 */
-	public function __construct( \Closure $client_getter, Entity_Map_Repository $entity_map ) {
-		$this->logger        = new Logger( 'partner' );
+	public function __construct( \Closure $client_getter, Entity_Map_Repository $entity_map, ?Settings_Repository $settings = null ) {
+		$this->logger        = new Logger( 'partner', $settings );
 		$this->client_getter = $client_getter;
 		$this->entity_map    = $entity_map;
 	}
@@ -85,15 +86,25 @@ class Partner_Service {
 		$results  = [];
 		$to_fetch = [];
 
-		// 1. Check entity_map for known WP user mappings.
+		// 1. Batch-check entity_map for known WP user mappings (single query).
+		$wp_ids_by_email = [];
 		foreach ( $entries as $email => $entry ) {
 			$wp_id = $entry['wp_id'] ?? 0;
 			if ( $wp_id > 0 ) {
-				$existing = $this->get_partner_id_for_user( $wp_id );
-				if ( $existing ) {
-					$results[ $email ] = $existing;
-					continue;
-				}
+				$wp_ids_by_email[ $email ] = $wp_id;
+			}
+		}
+
+		$known_partners = [];
+		if ( ! empty( $wp_ids_by_email ) ) {
+			$known_partners = $this->entity_map->get_odoo_ids_batch( 'crm', 'contact', array_values( $wp_ids_by_email ) );
+		}
+
+		foreach ( $entries as $email => $entry ) {
+			$wp_id = $wp_ids_by_email[ $email ] ?? 0;
+			if ( $wp_id > 0 && isset( $known_partners[ $wp_id ] ) ) {
+				$results[ $email ] = $known_partners[ $wp_id ];
+				continue;
 			}
 			$to_fetch[ $email ] = $entry;
 		}

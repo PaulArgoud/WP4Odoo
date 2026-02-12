@@ -44,17 +44,6 @@ abstract class Booking_Module_Base extends Module_Base {
 	 */
 	abstract protected function get_fallback_label(): string;
 
-	/**
-	 * Resolve a customer display name from customer data.
-	 *
-	 * Returns the best available name from the plugin's customer record.
-	 * Empty string means no customer name is available.
-	 *
-	 * @param array $customer Customer data from handler_get_customer_data().
-	 * @return string Customer display name, or empty string.
-	 */
-	abstract protected function resolve_customer_name( array $customer ): string;
-
 	// ─── Handler delegation ─────────────────────────────────
 
 	/**
@@ -66,24 +55,21 @@ abstract class Booking_Module_Base extends Module_Base {
 	abstract protected function handler_load_service( int $service_id ): array;
 
 	/**
-	 * Load a booking/appointment from the plugin's handler.
+	 * Load and extract booking fields from the plugin's handler.
 	 *
-	 * The returned array must include 'service_id' and 'customer_id' keys.
+	 * The returned array must include:
+	 * - 'service_id'     (int)    Plugin-native service ID.
+	 * - 'customer_email' (string) Customer email address.
+	 * - 'customer_name'  (string) Customer display name.
+	 * - 'service_name'   (string) Service display name.
+	 * - 'start'          (string) Booking start datetime.
+	 * - 'stop'           (string) Booking end datetime.
+	 * - 'description'    (string) Internal notes.
 	 *
 	 * @param int $booking_id Plugin-native booking/appointment ID.
-	 * @return array<string, mixed> Booking data, or empty if not found.
+	 * @return array<string, mixed> Extracted booking fields, or empty if not found.
 	 */
-	abstract protected function handler_load_booking( int $booking_id ): array;
-
-	/**
-	 * Get customer data from the plugin's handler.
-	 *
-	 * The returned array must include an 'email' key.
-	 *
-	 * @param int $customer_id Plugin-native customer ID.
-	 * @return array<string, mixed> Customer data, or empty if not found.
-	 */
-	abstract protected function handler_get_customer_data( int $customer_id ): array;
+	abstract protected function handler_extract_booking_fields( int $booking_id ): array;
 
 	/**
 	 * Get the service ID associated with a booking.
@@ -92,40 +78,6 @@ abstract class Booking_Module_Base extends Module_Base {
 	 * @return int Service ID, or 0 if not found.
 	 */
 	abstract protected function handler_get_service_id( int $booking_id ): int;
-
-	// ─── Data extraction (plugin-specific field names) ──────
-
-	/**
-	 * Extract the service display name from loaded service data.
-	 *
-	 * @param array $service_data Data from handler_load_service().
-	 * @return string Service name.
-	 */
-	abstract protected function get_service_name( array $service_data ): string;
-
-	/**
-	 * Extract the booking start datetime from loaded booking data.
-	 *
-	 * @param array $data Data from handler_load_booking().
-	 * @return string Start datetime string.
-	 */
-	abstract protected function get_booking_start( array $data ): string;
-
-	/**
-	 * Extract the booking end datetime from loaded booking data.
-	 *
-	 * @param array $data Data from handler_load_booking().
-	 * @return string End datetime string.
-	 */
-	abstract protected function get_booking_end( array $data ): string;
-
-	/**
-	 * Extract internal notes from loaded booking data.
-	 *
-	 * @param array $data Data from handler_load_booking().
-	 * @return string Notes.
-	 */
-	abstract protected function get_booking_notes( array $data ): string;
 
 	// ─── Handler delegation: pull ───────────────────────────
 
@@ -314,47 +266,33 @@ abstract class Booking_Module_Base extends Module_Base {
 	/**
 	 * Load and resolve a booking with Odoo references.
 	 *
-	 * Reads booking data from plugin tables, resolves the customer
-	 * to an Odoo partner, and formats as calendar.event data.
+	 * Delegates field extraction to handler_extract_booking_fields(),
+	 * resolves the customer to an Odoo partner, and formats as
+	 * calendar.event data.
 	 *
 	 * @param int $booking_id Plugin booking/appointment ID.
 	 * @return array<string, mixed>
 	 */
 	private function load_booking_data( int $booking_id ): array {
-		$data = $this->handler_load_booking( $booking_id );
-		if ( empty( $data ) ) {
+		$fields = $this->handler_extract_booking_fields( $booking_id );
+		if ( empty( $fields ) ) {
 			return [];
 		}
 
-		// Load service name for the event title.
-		$service_id   = $data['service_id'] ?? 0;
-		$service_data = $service_id > 0 ? $this->handler_load_service( $service_id ) : [];
-		$service_name = ! empty( $service_data )
-			? ( $this->get_service_name( $service_data ) ?: $this->get_fallback_label() )
-			: $this->get_fallback_label();
+		$service_name   = $fields['service_name'] ?: $this->get_fallback_label();
+		$customer_name  = $fields['customer_name'] ?? '';
+		$customer_email = $fields['customer_email'] ?? '';
 
 		// Resolve customer → Odoo partner.
 		$partner_ids = [];
-		$customer_id = $data['customer_id'] ?? 0;
-		$customer    = [];
-		if ( $customer_id > 0 ) {
-			$customer = $this->handler_get_customer_data( $customer_id );
-			if ( ! empty( $customer['email'] ) ) {
-				$name       = $this->resolve_customer_name( $customer );
-				$partner_id = $this->partner_service()->get_or_create(
-					$customer['email'],
-					[ 'name' => $name ?: $customer['email'] ],
-					0
-				);
-				if ( $partner_id ) {
-					$partner_ids = [ [ 4, $partner_id, 0 ] ];
-				}
+		if ( ! empty( $customer_email ) ) {
+			$partner_id = $this->resolve_partner_from_email( $customer_email, $customer_name ?: $customer_email );
+			if ( $partner_id ) {
+				$partner_ids = [ [ 4, $partner_id, 0 ] ];
 			}
 		}
 
 		// Compose event name: "Service — Customer".
-		$customer_name = ! empty( $customer ) ? $this->resolve_customer_name( $customer ) : '';
-
 		$event_name = $customer_name
 			/* translators: %1$s: service name, %2$s: customer name */
 			? sprintf( __( '%1$s — %2$s', 'wp4odoo' ), $service_name, $customer_name )
@@ -362,10 +300,10 @@ abstract class Booking_Module_Base extends Module_Base {
 
 		return [
 			'name'        => $event_name,
-			'start'       => $this->get_booking_start( $data ),
-			'stop'        => $this->get_booking_end( $data ),
+			'start'       => $fields['start'] ?? '',
+			'stop'        => $fields['stop'] ?? '',
 			'partner_ids' => $partner_ids,
-			'description' => $this->get_booking_notes( $data ),
+			'description' => $fields['description'] ?? '',
 		];
 	}
 

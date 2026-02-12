@@ -139,6 +139,7 @@ final class Database_Migration {
 	private static function get_migrations(): array {
 		return [
 			1 => [ self::class, 'migration_1' ],
+			2 => [ self::class, 'migration_2' ],
 		];
 	}
 
@@ -167,6 +168,33 @@ final class Database_Migration {
 		if ( ! in_array( 'correlation_id', $cols, true ) ) {
 			$wpdb->query( "ALTER TABLE {$logs_table} ADD COLUMN correlation_id CHAR(36) DEFAULT NULL AFTER id" );
 			$wpdb->query( "ALTER TABLE {$logs_table} ADD KEY idx_correlation (correlation_id)" );
+		}
+		// phpcs:enable
+	}
+
+	/**
+	 * Migration 2: Add missing indexes for retry and cleanup operations.
+	 *
+	 * - idx_status_attempts: speeds up retry_failed() and cleanup queries
+	 * - idx_created_at: speeds up time-range cleanup operations
+	 *
+	 * @return void
+	 */
+	private static function migration_2(): void {
+		global $wpdb;
+
+		$queue_table = $wpdb->prefix . 'wp4odoo_sync_queue';
+
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.SchemaChange
+		$indexes = $wpdb->get_results( "SHOW INDEX FROM {$queue_table}" );
+		$names   = array_column( $indexes, 'Key_name' );
+
+		if ( ! in_array( 'idx_status_attempts', $names, true ) ) {
+			$wpdb->query( "ALTER TABLE {$queue_table} ADD KEY idx_status_attempts (status, attempts)" );
+		}
+
+		if ( ! in_array( 'idx_created_at', $names, true ) ) {
+			$wpdb->query( "ALTER TABLE {$queue_table} ADD KEY idx_created_at (created_at)" );
 		}
 		// phpcs:enable
 	}

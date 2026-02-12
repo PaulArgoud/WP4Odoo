@@ -56,6 +56,18 @@ class SimplePay_Handler {
 		$this->logger = $logger;
 	}
 
+	// ─── Donor name extraction ────────────────────────────
+
+	/**
+	 * Extract the payer display name for a payment.
+	 *
+	 * @param int $wp_id Tracking post ID (wp4odoo_spay).
+	 * @return string Payer name, or empty string.
+	 */
+	public function get_donor_name( int $wp_id ): string {
+		return (string) get_post_meta( $wp_id, '_spay_name', true );
+	}
+
 	// ─── CPT registration ─────────────────────────────────
 
 	/**

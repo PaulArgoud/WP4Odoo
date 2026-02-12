@@ -10,11 +10,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - **Amelia Module** — Now bidirectional: services support pull from Odoo (create/update/delete). Appointments remain push-only (originate in WordPress). `Amelia_Handler` gains `parse_service_from_odoo()`, `save_service()`, `delete_service()` methods. New setting: `pull_services`
 - **Bookly Module** — Now bidirectional: services support pull from Odoo (create/update/delete). Bookings remain push-only (originate in WordPress). `Bookly_Handler` gains `parse_service_from_odoo()`, `save_service()`, `delete_service()` methods. New setting: `pull_services`
-- **Booking_Module_Base** — Extended with pull infrastructure: 3 new abstract methods (`handler_parse_service_from_odoo()`, `handler_save_service()`, `handler_delete_service()`), `pull_from_odoo()` override with `pull_services` gate, `map_from_odoo()`, `save_wp_data()`, `delete_wp_data()` overrides. Sync direction changed from `wp_to_odoo` to `bidirectional`
+- **Booking_Module_Base** — Extended with pull infrastructure: 3 new abstract methods (`handler_parse_service_from_odoo()`, `handler_save_service()`, `handler_delete_service()`), `pull_from_odoo()` override with `pull_services` gate, `map_from_odoo()`, `save_wp_data()`, `delete_wp_data()` overrides. Sync direction changed from `wp_to_odoo` to `bidirectional`. Reduced abstract methods from 14 to 9 by consolidating 7 data extractors into `handler_extract_booking_fields()`
 - **WC Memberships Module** — Now bidirectional: plans support full pull (create/update/delete), memberships support status/date updates from Odoo (no create/delete — memberships originate in WooCommerce). `Membership_Handler` gains reverse status map, `map_odoo_status_to_wc()`, `parse_plan_from_odoo()`, `save_plan()`, `parse_membership_from_odoo()`, `save_membership_from_odoo()` methods. New settings: `pull_plans`, `pull_memberships`
+- **Anti-loop flag** — `Module_Base::$importing` changed from global `static bool` to per-module `static array` keyed by module ID, preventing cross-module interference when processing parallel sync operations
+- **Retryable_Http** — Removed blocking `usleep()` retry loop; single HTTP attempt with immediate throw on error. Retry orchestration delegated to `Sync_Engine` at queue level (exponential backoff via `scheduled_at`)
+- **SSL verification** — Replaced `apply_filters('wp4odoo_ssl_verify')` with `WP4ODOO_DISABLE_SSL_VERIFY` constant in both JSON-RPC and XML-RPC transports, preventing user-land code from silently disabling SSL
+- **JSON-RPC request ID** — Replaced sequential counter with `bin2hex(random_bytes(8))` for multi-process-safe unique request IDs
+- **Sync_Engine validation** — Added `json_last_error()` payload validation; invalid sync direction now throws `RuntimeException` instead of silently falling through to pull
+- **Query_Service** — Replaced double COUNT+SELECT with `SQL_CALC_FOUND_ROWS` + `FOUND_ROWS()` for paginated queries, halving database round-trips
+- **Partner_Service** — `get_or_create_batch()` now uses single `get_odoo_ids_batch()` query instead of N individual `get_odoo_id()` calls, eliminating N+1 entity map lookups. Constructor now accepts optional `Settings_Repository` for log level filtering
+- **Dual_Accounting_Module_Base** — Moved `get_donor_name()` to handler delegation pattern (`handler_get_donor_name()`), keeping data extraction in handler classes
+- **Module_Helpers** — Added `resolve_partner_from_user()` and `resolve_partner_from_email()` helpers, reducing ~15 duplicate partner resolution patterns across 11 modules to single-line calls
+- **i18n** — Regenerated `.pot` template from all source files (328 → 443 msgid), translated 3 new strings in FR and ES, removed 65 obsolete entries, recompiled `.mo` — 442 translated strings (was 417)
 
 ### Added
 - 35 new unit tests for Amelia, Bookly, and WC Memberships pull support (1823 total)
+- **Credential caching** — `Odoo_Auth::get_credentials()` now caches decrypted credentials per-request, with `flush_credentials_cache()` for invalidation after saves
+- **Database migration 2** — `idx_status_attempts` and `idx_created_at` indexes on `wp4odoo_sync_queue` for faster retry and cleanup queries
+
+### Fixed
+- **Webhook test endpoint** — `/webhook/test` now requires token authentication (was open with `__return_true`)
+- **uninstall.php** — Options cleanup now uses `$wpdb->prepare()` for the DELETE query
+- **Test bootstrap** — Fixed `WP4ODOO_VERSION` mismatch (`2.8.0` → `2.9.0`)
 
 ## [2.8.5] - 2026-02-12
 

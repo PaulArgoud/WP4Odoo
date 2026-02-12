@@ -21,7 +21,8 @@ $wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}wp4odoo_entity_map" );
 $wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}wp4odoo_logs" );
 
 // Remove all plugin options.
-$wpdb->query( "DELETE FROM {$wpdb->options} WHERE option_name LIKE 'wp4odoo\_%'" );
+// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", 'wp4odoo\_%' ) );
 
 // Delete custom post type posts (leads, orders, invoices).
 $cpt_types = [ 'wp4odoo_lead', 'wp4odoo_order', 'wp4odoo_invoice', 'wp4odoo_spay' ];

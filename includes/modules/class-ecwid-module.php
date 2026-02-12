@@ -196,10 +196,7 @@ class Ecwid_Module extends Module_Base {
 					$email = (string) ( $order['email'] ?? '' );
 					$name  = (string) ( $order['billingPerson']['name'] ?? $email );
 
-					$partner_id = 0;
-					if ( $email ) {
-						$partner_id = $this->partner_service()->get_or_create( $email, [ 'name' => $name ] ) ?? 0;
-					}
+					$partner_id = $email ? ( $this->resolve_partner_from_email( $email, $name ) ?? 0 ) : 0;
 
 					if ( ! $partner_id ) {
 						$this->logger->warning( 'Cannot resolve partner for Ecwid order.', [ 'order_number' => $wp_id ] );

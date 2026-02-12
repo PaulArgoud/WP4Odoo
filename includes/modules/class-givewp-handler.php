@@ -49,6 +49,18 @@ class GiveWP_Handler {
 		$this->logger = $logger;
 	}
 
+	// ─── Donor name extraction ────────────────────────────
+
+	/**
+	 * Extract the donor display name for a donation.
+	 *
+	 * @param int $wp_id GiveWP payment post ID.
+	 * @return string Donor name, or empty string.
+	 */
+	public function get_donor_name( int $wp_id ): string {
+		return (string) get_post_meta( $wp_id, '_give_payment_donor_name', true );
+	}
+
 	// ─── Load form ─────────────────────────────────────────
 
 	/**

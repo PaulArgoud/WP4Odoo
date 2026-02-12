@@ -213,15 +213,15 @@ class SimplePay_Module extends Dual_Accounting_Module_Base {
 	/**
 	 * {@inheritDoc}
 	 */
-	protected function get_donor_name( int $wp_id ): string {
-		return (string) get_post_meta( $wp_id, '_spay_name', true );
+	protected function handler_load_parent( int $wp_id ): array {
+		return $this->handler->load_form( $wp_id );
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
-	protected function handler_load_parent( int $wp_id ): array {
-		return $this->handler->load_form( $wp_id );
+	protected function handler_get_donor_name( int $wp_id ): string {
+		return $this->handler->get_donor_name( $wp_id );
 	}
 
 	/**

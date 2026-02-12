@@ -17,10 +17,10 @@ Ships in **3 languages** (English, French, Spanish) and is fully translation-rea
 - **Admin Dashboard** — 5-tab settings interface: Connection, Sync, Modules, Queue, Logs
 - **Async Queue** — No API calls during user requests; all sync jobs go through a persistent database queue with exponential backoff, deduplication, and configurable batch size
 - **Code Quality** — WordPress Coding Standards (PHPCS), PHPStan level 5 static analysis, 1823 unit tests + 26 integration tests, CI/CD with GitHub Actions
-- **Dual Transport** — JSON-RPC 2.0 (default for Odoo 17+) and XML-RPC (legacy), swappable via settings, shared retry logic via `Retryable_Http` trait (3 attempts, exponential backoff + jitter)
+- **Dual Transport** — JSON-RPC 2.0 (default for Odoo 17+) and XML-RPC (legacy), swappable via settings, shared HTTP layer via `Retryable_Http` trait. Retry orchestration at queue level (exponential backoff via `Sync_Engine`)
 - **Encrypted Credentials** — API keys encrypted at rest with libsodium (OpenSSL fallback)
 - **Extensible** — Register custom modules via `wp4odoo_register_modules` action hook; filter data with `wp4odoo_map_to_odoo_*` / `wp4odoo_map_from_odoo_*`
-- **Multilingual (3 languages)** — Fully internationalized with WordPress standard Gettext i18n. Ships with English (source), French, and Spanish translations (417 strings). Translation-ready for additional languages via `.po`/`.mo` files
+- **Multilingual (3 languages)** — Fully internationalized with WordPress standard Gettext i18n. Ships with English (source), French, and Spanish translations (442 strings). Translation-ready for additional languages via `.po`/`.mo` files
 - **Onboarding** — Post-activation redirect, setup notice, 3-step checklist with progress bar, inline Odoo documentation (API keys, webhooks)
 - **Webhooks** — REST API endpoints for real-time notifications from Odoo, with per-IP rate limiting
 - **WP-CLI** — Full command suite: `wp wp4odoo status|test|sync|queue|module` for headless management
@@ -136,7 +136,7 @@ Namespace: `wp-json/wp4odoo/v1/`
 | Endpoint                  | Method  | Auth               | Description                                |
 |---------------------------|---------|--------------------|--------------------------------------------|
 | `/webhook`                | POST    | Token + rate limit | Receives change notifications from Odoo    |
-| `/webhook/test`           | GET     | Public             | Health check                               |
+| `/webhook/test`           | GET     | Token              | Health check                               |
 | `/sync/{module}/{entity}` | POST    | WP Auth            | Triggers sync for a specific module/entity |
 
 ## Hooks
@@ -157,8 +157,6 @@ Namespace: `wp-json/wp4odoo/v1/`
 |-------------------------------------------|-----------------------------------|
 | `wp4odoo_map_to_odoo_{module}_{entity}`   | Modify data before push to Odoo   |
 | `wp4odoo_map_from_odoo_{module}_{entity}` | Modify data during pull from Odoo |
-| `wp4odoo_ssl_verify`                      | Enable/disable SSL verification   |
-
 Each module also provides `wp4odoo_{module}_*_status_map` filters for customizing status mappings (e.g., `wp4odoo_mepr_txn_status_map`, `wp4odoo_wcs_status_map`). See [ARCHITECTURE.md](ARCHITECTURE.md#hooks--filters) for the full list.
 
 ## Architecture
@@ -187,53 +185,18 @@ All synchronization goes through a persistent database queue — no Odoo API cal
 
 For detailed architecture, class diagrams, and data flows, see [ARCHITECTURE.md](ARCHITECTURE.md). For version history, see [CHANGELOG.md](CHANGELOG.md).
 
-### Testing
+### Quick Check
 
 ```bash
-# Install dependencies
 composer install
-
-# Run all checks at once (mirrors CI — recommended before pushing)
-composer check
-
-# Or run individually:
-composer phpcs                # Coding standards (PHPCS — WordPress-Extra)
-composer test                 # Unit tests (PHPUnit)
-composer phpstan              # Static analysis (PHPStan level 5)
-
-# Integration tests (requires Docker)
-npm install
-npx wp-env start
-npm run test:integration
-npx wp-env stop
+composer check          # Runs PHPCS + PHPUnit + PHPStan (mirrors CI)
 ```
+
+Integration tests require Docker — see [CONTRIBUTING.md](CONTRIBUTING.md#testing) for the full setup.
 
 ### Contributing
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/my-feature`)
-3. Ensure all checks pass: `composer check`
-4. Commit and open a Pull Request
-
-### Translations
-
-After adding or changing user-facing strings:
-
-```bash
-# Extract strings
-xgettext --language=PHP --keyword=__ --keyword=_e --keyword=esc_html__ \
-    --keyword=esc_html_e --keyword=esc_attr__ --keyword=esc_attr_e \
-    --from-code=UTF-8 -o languages/wp4odoo.pot \
-    wp4odoo.php includes/**/*.php admin/views/*.php templates/*.php
-
-# Update translations
-msgmerge --update languages/wp4odoo-fr_FR.po languages/wp4odoo.pot
-msgmerge --update languages/wp4odoo-es_ES.po languages/wp4odoo.pot
-
-# Compile
-msgfmt -o languages/wp4odoo-fr_FR.mo languages/wp4odoo-fr_FR.po
-msgfmt -o languages/wp4odoo-es_ES.mo languages/wp4odoo-es_ES.po
-```
+We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for everything you need: development setup, coding standards, testing guidelines, translation workflow, commit conventions, and PR checklist.
 
 ## License
 

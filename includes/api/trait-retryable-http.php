@@ -8,10 +8,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Retryable HTTP POST requests with exponential backoff and jitter.
+ * HTTP POST helper for Odoo transports.
  *
  * Shared by Odoo_JsonRPC and Odoo_XmlRPC transports.
  * Requires the using class to have a `Logger $logger` property.
+ *
+ * Fails immediately on transient errors (WP_Error, HTTP 5xx) and lets
+ * the Sync_Engine handle retry via queue-level exponential backoff.
+ * This avoids blocking the queue processor with in-process usleep().
  *
  * @package WP4Odoo
  * @since   1.9.2
@@ -19,97 +23,58 @@ if ( ! defined( 'ABSPATH' ) ) {
 trait Retryable_Http {
 
 	/**
-	 * Maximum retry attempts for transient HTTP errors.
-	 */
-	private const MAX_RETRIES = 3;
-
-	/**
-	 * Send an HTTP POST with automatic retry on transient failures.
-	 *
-	 * Uses exponential backoff (2^attempt * 500ms) with random jitter (0-1000ms).
+	 * Send an HTTP POST request.
 	 *
 	 * @param string               $url           Full URL.
 	 * @param array<string, mixed> $request_args  Arguments for wp_remote_post().
 	 * @param string               $endpoint      Endpoint label for log context.
 	 * @return array The successful wp_remote_post() response.
-	 * @throws \RuntimeException After all retries exhausted.
+	 * @throws \RuntimeException On HTTP error or server error (5xx).
 	 */
 	protected function http_post_with_retry( string $url, array $request_args, string $endpoint ): array {
-		$response = null;
-
 		// Enable TCP connection reuse across batch calls.
 		if ( ! isset( $request_args['headers']['Connection'] ) ) {
 			$request_args['headers']['Connection'] = 'keep-alive';
 		}
 
-		for ( $attempt = 1; $attempt <= self::MAX_RETRIES; $attempt++ ) {
-			$response = wp_remote_post( $url, $request_args );
+		$response = wp_remote_post( $url, $request_args );
 
-			if ( ! is_wp_error( $response ) ) {
-				$status_code = wp_remote_retrieve_response_code( $response );
-				if ( $status_code >= 500 ) {
-					if ( $attempt < self::MAX_RETRIES ) {
-						$delay_us = (int) ( pow( 2, $attempt ) * 500 + wp_rand( 0, 1000 ) ) * 1000;
-						usleep( $delay_us );
+		if ( is_wp_error( $response ) ) {
+			$error_msg = sprintf(
+				/* translators: %s: error message from HTTP request */
+				__( 'HTTP error: %s', 'wp4odoo' ),
+				$response->get_error_message()
+			);
+			$this->logger->error(
+				$error_msg,
+				[
+					'endpoint' => $endpoint,
+				]
+			);
 
-						$this->logger->warning(
-							'Server error, retrying.',
-							[
-								'endpoint' => $endpoint,
-								'status'   => $status_code,
-								'attempt'  => $attempt,
-							]
-						);
-						continue;
-					}
-
-					$error_msg = sprintf(
-						/* translators: 1: HTTP status code, 2: endpoint, 3: number of attempts */
-						__( 'Server error HTTP %1$d on %2$s after %3$d attempts.', 'wp4odoo' ),
-						$status_code,
-						$endpoint,
-						self::MAX_RETRIES
-					);
-					$this->logger->error(
-						$error_msg,
-						[
-							'endpoint' => $endpoint,
-							'status'   => $status_code,
-						]
-					);
-					throw new \RuntimeException( $error_msg );
-				}
-				return $response;
-			}
-
-			if ( $attempt < self::MAX_RETRIES ) {
-				$delay_us = (int) ( pow( 2, $attempt ) * 500 + wp_rand( 0, 1000 ) ) * 1000;
-				usleep( $delay_us );
-
-				$this->logger->warning(
-					'HTTP request failed, retrying.',
-					[
-						'endpoint' => $endpoint,
-						'attempt'  => $attempt,
-						'error'    => $response->get_error_message(),
-					]
-				);
-			}
+			throw new \RuntimeException( $error_msg );
 		}
 
-		$error_msg = sprintf(
-			/* translators: %s: error message from HTTP request */
-			__( 'HTTP error: %s', 'wp4odoo' ),
-			$response->get_error_message()
-		);
-		$this->logger->error(
-			$error_msg,
-			[
-				'endpoint' => $endpoint,
-				'attempts' => self::MAX_RETRIES,
-			]
-		);
+		$status_code = wp_remote_retrieve_response_code( $response );
 
-		throw new \RuntimeException( $error_msg );
+		if ( $status_code >= 500 ) {
+			$error_msg = sprintf(
+				/* translators: 1: HTTP status code, 2: endpoint */
+				__( 'Server error HTTP %1$d on %2$s.', 'wp4odoo' ),
+				$status_code,
+				$endpoint
+			);
+			$this->logger->error(
+				$error_msg,
+				[
+					'endpoint' => $endpoint,
+					'status'   => $status_code,
+				]
+			);
+
+			throw new \RuntimeException( $error_msg );
+		}
+
+		return $response;
 	}
 }

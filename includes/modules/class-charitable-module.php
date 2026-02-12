@@ -210,17 +210,15 @@ class Charitable_Module extends Dual_Accounting_Module_Base {
 	/**
 	 * {@inheritDoc}
 	 */
-	protected function get_donor_name( int $wp_id ): string {
-		$first_name = (string) get_post_meta( $wp_id, '_charitable_donor_first_name', true );
-		$last_name  = (string) get_post_meta( $wp_id, '_charitable_donor_last_name', true );
-		return trim( $first_name . ' ' . $last_name );
+	protected function handler_load_parent( int $wp_id ): array {
+		return $this->handler->load_campaign( $wp_id );
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
-	protected function handler_load_parent( int $wp_id ): array {
-		return $this->handler->load_campaign( $wp_id );
+	protected function handler_get_donor_name( int $wp_id ): string {
+		return $this->handler->get_donor_name( $wp_id );
 	}
 
 	/**

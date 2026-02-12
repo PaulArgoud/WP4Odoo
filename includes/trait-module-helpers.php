@@ -232,6 +232,62 @@ trait Module_Helpers {
 	}
 
 	/**
+	 * Resolve a WordPress user ID to an Odoo partner ID.
+	 *
+	 * Loads the user, extracts email + display name, then delegates to
+	 * Partner_Service::get_or_create(). Returns null if the user does
+	 * not exist or partner resolution fails.
+	 *
+	 * @param int $user_id WordPress user ID.
+	 * @return int|null Odoo partner ID, or null on failure.
+	 */
+	protected function resolve_partner_from_user( int $user_id ): ?int {
+		if ( $user_id <= 0 ) {
+			return null;
+		}
+
+		$user = get_userdata( $user_id );
+		if ( ! $user ) {
+			$this->logger->warning(
+				'Cannot find WordPress user for partner resolution.',
+				[ 'user_id' => $user_id ]
+			);
+			return null;
+		}
+
+		return $this->partner_service()->get_or_create(
+			$user->user_email,
+			[ 'name' => $user->display_name ],
+			$user_id
+		);
+	}
+
+	/**
+	 * Resolve an email address to an Odoo partner ID.
+	 *
+	 * Delegates directly to Partner_Service::get_or_create().
+	 * Suitable for guest users (no WP account) or when email
+	 * is already available without user lookup.
+	 *
+	 * @param string $email Partner email address.
+	 * @param string $name  Partner display name (falls back to email in Partner_Service).
+	 * @param int    $wp_id Optional WordPress user ID to link (0 if guest).
+	 * @return int|null Odoo partner ID, or null on failure.
+	 */
+	protected function resolve_partner_from_email( string $email, string $name = '', int $wp_id = 0 ): ?int {
+		if ( empty( $email ) ) {
+			return null;
+		}
+
+		$data = [];
+		if ( '' !== $name ) {
+			$data['name'] = $name;
+		}
+
+		return $this->partner_service()->get_or_create( $email, $data, $wp_id );
+	}
+
+	/**
 	 * In-memory cache for has_odoo_model() results.
 	 *
 	 * Keyed by transient name → bool.

@@ -110,7 +110,7 @@ class Webhook_Handler {
 			[
 				'methods'             => 'GET',
 				'callback'            => [ $this, 'handle_test' ],
-				'permission_callback' => '__return_true',
+				'permission_callback' => [ $this, 'validate_webhook_token' ],
 			]
 		);
 

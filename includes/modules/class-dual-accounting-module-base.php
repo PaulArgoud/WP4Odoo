@@ -191,17 +191,6 @@ abstract class Dual_Accounting_Module_Base extends Module_Base {
 	 */
 	abstract protected function get_validate_status(): ?string;
 
-	/**
-	 * Extract the donor/payer display name for a child entity.
-	 *
-	 * Reads from post meta — the extraction logic differs per plugin
-	 * (single meta vs first/last name metas).
-	 *
-	 * @param int $wp_id Child entity WordPress ID.
-	 * @return string Donor/payer name, or empty string.
-	 */
-	abstract protected function get_donor_name( int $wp_id ): string;
-
 	// ─── Handler delegation ─────────────────────────────────
 
 	/**
@@ -211,6 +200,17 @@ abstract class Dual_Accounting_Module_Base extends Module_Base {
 	 * @return array<string, mixed> Parent data, or empty if not found.
 	 */
 	abstract protected function handler_load_parent( int $wp_id ): array;
+
+	/**
+	 * Extract the donor/payer display name for a child entity.
+	 *
+	 * Delegates to the plugin's handler — extraction logic differs
+	 * per plugin (single meta vs first/last name metas).
+	 *
+	 * @param int $wp_id Child entity WordPress ID.
+	 * @return string Donor/payer name, or empty string.
+	 */
+	abstract protected function handler_get_donor_name( int $wp_id ): string;
 
 	/**
 	 * Load the child entity (donation/payment) from the plugin's handler.
@@ -326,12 +326,8 @@ abstract class Dual_Accounting_Module_Base extends Module_Base {
 			return [];
 		}
 
-		$name       = $this->get_donor_name( $wp_id );
-		$partner_id = $this->partner_service()->get_or_create(
-			$email,
-			[ 'name' => $name ?: $email ],
-			0
-		);
+		$name       = $this->handler_get_donor_name( $wp_id );
+		$partner_id = $this->resolve_partner_from_email( $email, $name ?: $email );
 
 		if ( ! $partner_id ) {
 			$this->logger->warning(

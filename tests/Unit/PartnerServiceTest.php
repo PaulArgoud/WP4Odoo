@@ -193,8 +193,8 @@ class PartnerServiceTest extends TestCase {
 	// ─── get_or_create_batch() ────────────────────────────
 
 	public function test_batch_returns_cached_mapping_without_odoo_call(): void {
-		// Simulate existing mapping for wp_id=10 → odoo_id=42.
-		$this->wpdb->get_var_return = '42';
+		// Simulate existing batch mapping for wp_id=10 → odoo_id=42 via get_odoo_ids_batch().
+		$this->wpdb->get_results_return = [ (object) [ 'wp_id' => 10, 'odoo_id' => 42 ] ];
 
 		$entries = [
 			'alice@example.com' => [ 'data' => [ 'name' => 'Alice' ], 'wp_id' => 10 ],

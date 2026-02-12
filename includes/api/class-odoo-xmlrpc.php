@@ -109,14 +109,7 @@ class Odoo_XmlRPC extends Odoo_Transport_Base {
 		$request = new \IXR_Request( $method, $params );
 		$xml     = $request->getXml();
 
-		/**
-		 * Filters whether SSL verification is enabled for Odoo API calls.
-		 *
-		 * @since 1.0.0
-		 *
-		 * @param bool $verify Whether to verify SSL. Default true.
-		 */
-		$ssl_verify = apply_filters( 'wp4odoo_ssl_verify', true );
+		$ssl_verify = ! defined( 'WP4ODOO_DISABLE_SSL_VERIFY' ) || ! WP4ODOO_DISABLE_SSL_VERIFY;
 
 		$request_args = [
 			'timeout'   => $this->timeout,

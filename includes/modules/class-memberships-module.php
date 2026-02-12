@@ -313,16 +313,7 @@ class Memberships_Module extends Module_Base {
 		$user_id = $data['user_id'] ?? 0;
 		unset( $data['user_id'] );
 
-		if ( $user_id > 0 ) {
-			$user = get_userdata( $user_id );
-			if ( $user ) {
-				$data['partner_id'] = $this->partner_service()->get_or_create(
-					$user->user_email,
-					[ 'name' => $user->display_name ],
-					$user_id
-				);
-			}
-		}
+		$data['partner_id'] = $this->resolve_partner_from_user( $user_id );
 
 		if ( empty( $data['partner_id'] ) ) {
 			$this->logger->warning( 'Cannot resolve partner for membership.', [ 'membership_id' => $membership_id ] );

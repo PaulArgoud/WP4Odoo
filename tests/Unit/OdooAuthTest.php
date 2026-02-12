@@ -23,6 +23,7 @@ class OdooAuthTest extends TestCase {
 		global $wpdb;
 		$wpdb = new \WP_DB_Stub();
 		$GLOBALS['_wp_options'] = [];
+		Odoo_Auth::flush_credentials_cache();
 	}
 
 	/**

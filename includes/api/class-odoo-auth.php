@@ -85,11 +85,25 @@ class Odoo_Auth {
 	}
 
 	/**
+	 * Per-request credential cache to avoid repeated decryption.
+	 *
+	 * @var array|null
+	 */
+	private static ?array $credentials_cache = null;
+
+	/**
 	 * Get decrypted Odoo credentials from wp_options.
+	 *
+	 * Caches the result within the current request to avoid repeated
+	 * option reads and sodium/OpenSSL decryption on batch operations.
 	 *
 	 * @return array{url: string, database: string, username: string, api_key: string, protocol: string, timeout: int}
 	 */
 	public static function get_credentials(): array {
+		if ( null !== self::$credentials_cache ) {
+			return self::$credentials_cache;
+		}
+
 		$connection = get_option( Settings_Repository::OPT_CONNECTION, [] );
 
 		$credentials = [
@@ -108,7 +122,18 @@ class Odoo_Auth {
 			}
 		}
 
+		self::$credentials_cache = $credentials;
+
 		return $credentials;
+	}
+
+	/**
+	 * Clear the credential cache (e.g. after saving new credentials).
+	 *
+	 * @return void
+	 */
+	public static function flush_credentials_cache(): void {
+		self::$credentials_cache = null;
 	}
 
 	/**
@@ -132,6 +157,8 @@ class Odoo_Auth {
 		if ( ! empty( $credentials['api_key'] ) ) {
 			$sanitized['api_key'] = self::encrypt( $credentials['api_key'] );
 		}
+
+		self::flush_credentials_cache();
 
 		return update_option( Settings_Repository::OPT_CONNECTION, $sanitized );
 	}

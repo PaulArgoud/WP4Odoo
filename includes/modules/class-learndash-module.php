@@ -348,29 +348,8 @@ class LearnDash_Module extends Module_Base {
 		}
 
 		// Resolve user → partner.
-		$user_id = $data['user_id'] ?? 0;
-		if ( $user_id <= 0 ) {
-			$this->logger->warning( 'Transaction has no user.', [ 'transaction_id' => $transaction_id ] );
-			return [];
-		}
-
-		$user = get_userdata( $user_id );
-		if ( ! $user ) {
-			$this->logger->warning(
-				'Cannot find user for transaction.',
-				[
-					'transaction_id' => $transaction_id,
-					'user_id'        => $user_id,
-				]
-			);
-			return [];
-		}
-
-		$partner_id = $this->partner_service()->get_or_create(
-			$user->user_email,
-			[ 'name' => $user->display_name ],
-			$user_id
-		);
+		$user_id    = $data['user_id'] ?? 0;
+		$partner_id = $this->resolve_partner_from_user( $user_id );
 
 		if ( ! $partner_id ) {
 			$this->logger->warning( 'Cannot resolve partner for transaction.', [ 'transaction_id' => $transaction_id ] );
@@ -413,11 +392,7 @@ class LearnDash_Module extends Module_Base {
 		}
 
 		// Resolve user → partner.
-		$partner_id = $this->partner_service()->get_or_create(
-			$data['user_email'],
-			[ 'name' => $data['user_name'] ],
-			$user_id
-		);
+		$partner_id = $this->resolve_partner_from_email( $data['user_email'], $data['user_name'], $user_id );
 
 		if ( ! $partner_id ) {
 			$this->logger->warning(

@@ -52,6 +52,20 @@ class Charitable_Handler {
 		$this->logger = $logger;
 	}
 
+	// ─── Donor name extraction ────────────────────────────
+
+	/**
+	 * Extract the donor display name for a donation.
+	 *
+	 * @param int $wp_id Charitable donation post ID.
+	 * @return string Donor name, or empty string.
+	 */
+	public function get_donor_name( int $wp_id ): string {
+		$first_name = (string) get_post_meta( $wp_id, '_charitable_donor_first_name', true );
+		$last_name  = (string) get_post_meta( $wp_id, '_charitable_donor_last_name', true );
+		return trim( $first_name . ' ' . $last_name );
+	}
+
 	// ─── Load campaign ────────────────────────────────────
 
 	/**

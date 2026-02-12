@@ -358,22 +358,14 @@ class Sprout_Invoices_Module extends Module_Base {
 			return 0;
 		}
 
-		$user_id = (int) get_post_meta( $client_id, '_user_id', true );
-		if ( $user_id > 0 ) {
-			$user = get_userdata( $user_id );
-			if ( $user ) {
-				$partner_id = $this->partner_service()->get_or_create(
-					$user->user_email,
-					[ 'name' => $user->display_name ],
-					$user_id
-				);
-				if ( $partner_id ) {
-					return $partner_id;
-				}
-			}
+		$user_id    = (int) get_post_meta( $client_id, '_user_id', true );
+		$partner_id = $this->resolve_partner_from_user( $user_id );
+
+		if ( ! $partner_id ) {
+			$this->logger->warning( 'Cannot resolve partner for invoice client.', [ 'client_id' => $client_id ] );
+			return 0;
 		}
 
-		$this->logger->warning( 'Cannot resolve partner for invoice client.', [ 'client_id' => $client_id ] );
-		return 0;
+		return $partner_id;
 	}
 }

@@ -18,13 +18,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Odoo_JsonRPC extends Odoo_Transport_Base {
 
 	/**
-	 * Request counter for JSON-RPC ID.
-	 *
-	 * @var int
-	 */
-	private int $request_id = 0;
-
-	/**
 	 * Return the protocol name used for logging context.
 	 *
 	 * @return string
@@ -109,17 +102,14 @@ class Odoo_JsonRPC extends Odoo_Transport_Base {
 	 * @throws \RuntimeException On HTTP or RPC error.
 	 */
 	private function rpc_call( string $endpoint, array $params ): mixed {
-		++$this->request_id;
-
 		$payload = [
 			'jsonrpc' => '2.0',
 			'method'  => 'call',
 			'params'  => $params,
-			'id'      => $this->request_id,
+			'id'      => bin2hex( random_bytes( 8 ) ),
 		];
 
-		/** This filter is documented in includes/api/class-odoo-xmlrpc.php */
-		$ssl_verify = apply_filters( 'wp4odoo_ssl_verify', true );
+		$ssl_verify = ! defined( 'WP4ODOO_DISABLE_SSL_VERIFY' ) || ! WP4ODOO_DISABLE_SSL_VERIFY;
 
 		$request_args = [
 			'timeout'   => $this->timeout,

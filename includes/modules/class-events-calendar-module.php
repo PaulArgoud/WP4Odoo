@@ -418,11 +418,7 @@ class Events_Calendar_Module extends Module_Base {
 			return [];
 		}
 
-		$partner_id = $this->partner_service()->get_or_create(
-			$email,
-			[ 'name' => $name ?: $email ],
-			0
-		);
+		$partner_id = $this->resolve_partner_from_email( $email, $name ?: $email );
 
 		if ( ! $partner_id ) {
 			$this->logger->warning( 'Cannot resolve partner for attendee.', [ 'attendee_id' => $attendee_id ] );

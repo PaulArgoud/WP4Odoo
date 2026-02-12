@@ -82,11 +82,11 @@ WordPress For Odoo/
 │   ├── api/
 │   │   ├── interface-transport.php         # Transport interface (authenticate, execute_kw, get_uid)
 │   │   ├── class-odoo-transport-base.php  # Abstract base: shared properties, constructor, ensure_authenticated()
-│   │   ├── trait-retryable-http.php       # Retryable_Http trait (retry + backoff + jitter, WP_Error + HTTP 5xx)
+│   │   ├── trait-retryable-http.php       # Retryable_Http trait (single-attempt HTTP POST, fail-fast for queue-level retry)
 │   │   ├── class-odoo-client.php          # High-level client (CRUD, search, fields_get, reset())
 │   │   ├── class-odoo-jsonrpc.php         # JSON-RPC 2.0 transport (Odoo 17+) extends Odoo_Transport_Base
 │   │   ├── class-odoo-xmlrpc.php          # XML-RPC transport (legacy) extends Odoo_Transport_Base
-│   │   └── class-odoo-auth.php            # Auth, API key encryption, connection testing
+│   │   └── class-odoo-auth.php            # Auth, API key encryption (+ credential cache), connection testing
 │   │
 │   ├── modules/
 │   │   ├── # ─── CRM ──────────────────────────────────────────
@@ -225,11 +225,11 @@ WordPress For Odoo/
 │   │
 │   ├── class-sync-result.php          # Value object: success/fail, odoo_id, error message, Error_Type
 │   ├── class-error-type.php           # Backed enum: Transient, Permanent (retry strategy)
-│   ├── class-database-migration.php   # Table creation (dbDelta) and default options
+│   ├── class-database-migration.php   # Table creation (dbDelta), default options, versioned migrations (schema_version)
 │   ├── class-settings-repository.php  # Centralized option access: keys, defaults, typed accessors (DI)
 │   ├── class-module-registry.php      # Module registration, mutual exclusivity, lifecycle
 │   ├── class-module-base.php          # Abstract base class for modules (push/pull, mapping, anti-loop)
-│   ├── trait-module-helpers.php       # Shared helpers: auto_post_invoice, ensure_entity_synced, synthetic IDs, partner_service, check_dependency
+│   ├── trait-module-helpers.php       # Shared helpers: auto_post_invoice, ensure_entity_synced, synthetic IDs, partner_service, resolve_partner_from_user/email, check_dependency
 │   ├── class-entity-map-repository.php # DB access for wp4odoo_entity_map (incl. batch lookups)
 │   ├── class-sync-queue-repository.php # DB access for wp4odoo_sync_queue (atomic dedup via transaction)
 │   ├── class-partner-service.php       # Shared res.partner lookup/creation service
@@ -268,7 +268,7 @@ WordPress For Odoo/
 ├── templates/
 │   └── customer-portal.php           #   Customer portal HTML template (orders/invoices tabs)
 │
-├── tests/                             # 1696 unit tests (2606 assertions) + 26 integration tests (wp-env)
+├── tests/                             # 1823 unit tests (2838 assertions) + 26 integration tests (wp-env)
 │   ├── bootstrap.php                 #   Unit test bootstrap: constants, stub loading, plugin class requires
 │   ├── bootstrap-integration.php     #   Integration test bootstrap: loads WP test framework (wp-env)
 │   ├── stubs/
@@ -454,7 +454,7 @@ Module_Base (abstract)
 - Entity mapping CRUD: `get_mapping()`, `save_mapping()`, `get_wp_mapping()`, `remove_mapping()` (delegates to `Entity_Map_Repository`)
 - Data transformation: `map_to_odoo()`, `map_from_odoo()`, `generate_sync_hash()`
 - Settings: `get_settings()`, `get_settings_fields()`, `get_default_settings()`, `get_dependency_status()` (external dependency check for admin UI) — delegates to injected `Settings_Repository`
-- Helpers: `is_importing()` (anti-loop guard, resettable static flag), `mark_importing()`, `clear_importing()` (try/finally in pull), `resolve_many2one_field()` (Many2one → scalar), `delete_wp_post()` (safe post deletion), `log_unsupported_entity()` (centralized warning), `partner_service()` (lazy `Partner_Service` factory), `check_dependency()` (one-liner dependency status), `client()`, `auto_post_invoice()` (setting check + mapping lookup + `action_post`), `ensure_entity_synced()` (mapping check + auto-push if missing), `encode_synthetic_id()` / `decode_synthetic_id()` (static, with overflow guard — used by LMS modules for enrollment IDs)
+- Helpers: `is_importing()` (anti-loop guard, per-module static array keyed by module ID), `mark_importing()`, `clear_importing()` (try/finally in pull), `resolve_many2one_field()` (Many2one → scalar), `delete_wp_post()` (safe post deletion), `log_unsupported_entity()` (centralized warning), `partner_service()` (lazy `Partner_Service` factory), `resolve_partner_from_user()` (WP user → Odoo partner via Partner_Service), `resolve_partner_from_email()` (email → Odoo partner via Partner_Service), `check_dependency()` (one-liner dependency status), `client()`, `auto_post_invoice()` (setting check + mapping lookup + `action_post`), `ensure_entity_synced()` (mapping check + auto-push if missing), `encode_synthetic_id()` / `decode_synthetic_id()` (static, with overflow guard — used by LMS modules for enrollment IDs)
 - Subclass hooks: `boot()`, `load_wp_data()`, `save_wp_data()`, `delete_wp_data()`
 
 **Module lifecycle:**
@@ -526,7 +526,7 @@ WP Event               Sync Engine (cron)           Odoo
 
 ### 4. Interchangeable Transport (Strategy Pattern)
 
-Both transports implement the `Transport` interface and share HTTP retry logic via the `Retryable_Http` trait:
+Both transports implement the `Transport` interface and share HTTP handling via the `Retryable_Http` trait:
 
 ```php
 interface Transport {
@@ -536,7 +536,7 @@ interface Transport {
 }
 
 trait Retryable_Http {
-    private function http_post_with_retry( string $url, array $request_args, string $endpoint ): array;
+    protected function http_post_with_retry( string $url, array $request_args, string $endpoint ): array;
 }
 ```
 
@@ -551,7 +551,7 @@ POST /jsonrpc           POST /xmlrpc/2/common (auth)
     └──── both use Retryable_Http trait ──────────┘
 ```
 
-`Retryable_Http` provides `http_post_with_retry()` — 3 attempts with exponential backoff (2^attempt × 500ms) + random jitter (0-1000ms). Extracted from duplicated retry loops in both transports.
+`Retryable_Http` provides `http_post_with_retry()` — single-attempt HTTP POST with TCP keep-alive. Fails immediately on WP_Error or HTTP 5xx, letting the `Sync_Engine` handle retry via queue-level exponential backoff. This avoids blocking the queue processor with in-process `usleep()`.
 
 The protocol is configurable in options (`wp4odoo_connection.protocol`). JSON-RPC is the default for Odoo 17+.
 
@@ -587,7 +587,7 @@ $qs->get_queue_jobs( $page, $per_page, $status );
 $qs->get_log_entries( $filters, $page, $per_page );
 ```
 
-Injected into consumers (`Admin_Ajax`, `CLI`) via constructor. Testable without global state.
+Uses `SQL_CALC_FOUND_ROWS` to retrieve both results and total count in a single query, avoiding double-query overhead. Injected into consumers (`Admin_Ajax`, `CLI`) via constructor. Testable without global state.
 
 ### 7. Error Handling Convention
 
@@ -621,7 +621,7 @@ Three donation/payment modules (GiveWP, Charitable, SimplePay) share a common du
 - Shared `push_to_odoo()`: resolves accounting model, ensures parent synced, delegates to parent, then auto-validates
 - Shared `map_to_odoo()`: child entities bypass field mapping (handler pre-formats for target model)
 - Shared `load_wp_data()` / `load_child_data()`: CPT validation, email→partner resolution, parent→Odoo product resolution
-- 10 abstract methods for subclass configuration: `get_child_entity_type()`, `get_parent_entity_type()`, `get_child_cpt()`, `get_email_meta_key()`, `get_parent_meta_key()`, `get_validate_setting_key()`, `get_validate_status()`, `get_donor_name()`, `handler_load_parent()`, `handler_load_child()`
+- 10 abstract methods for subclass configuration: `get_child_entity_type()`, `get_parent_entity_type()`, `get_child_cpt()`, `get_email_meta_key()`, `get_parent_meta_key()`, `get_validate_setting_key()`, `get_validate_status()`, `handler_get_donor_name()`, `handler_load_parent()`, `handler_load_child()`
 
 **`Odoo_Accounting_Formatter`** (`class-odoo-accounting-formatter.php`):
 - `for_donation_model(partner_id, product_id, amount, date, ref)` — OCA `donation.donation` format with `line_ids`
@@ -652,16 +652,19 @@ Two booking modules (Amelia, Bookly) share a common service/appointment sync pat
 - Shared `map_to_odoo()`: bookings bypass field mapping (pre-formatted for `calendar.event`), services get hardcoded `type=service`
 - Shared `load_wp_data()` / `load_booking_data()`: loads booking via handler, resolves service name for event title, resolves customer→Odoo partner, composes event name "Service — Customer"
 - Shared `ensure_service_synced()`: auto-pushes service to Odoo before dependent booking
-- 11 abstract methods for subclass configuration: `get_booking_entity_type()`, `get_fallback_label()`, `resolve_customer_name()`, `handler_load_service()`, `handler_load_booking()`, `handler_get_customer_data()`, `handler_get_service_id()`, `get_service_name()`, `get_booking_start()`, `get_booking_end()`, `get_booking_notes()`
+- 8 abstract methods for subclass configuration: `get_booking_entity_type()`, `get_fallback_label()`, `handler_load_service()`, `handler_extract_booking_fields()` (consolidated: returns service_id, customer email/name, start/end/notes in one call), `handler_get_service_id()`, `handler_parse_service_from_odoo()`, `handler_save_service()`, `handler_delete_service()`
 
 ## Database
 
 ### Tables Created on Activation
 
-Managed via `dbDelta()` in `Database_Migration::create_tables()`:
+Managed via `dbDelta()` in `Database_Migration::create_tables()`. Schema upgrades use versioned migrations (`run_migrations()` with `schema_version` tracking):
 
 **`{prefix}wp4odoo_sync_queue`** — Sync queue
 - Primary index: `(status, priority, scheduled_at)` for efficient polling
+- Retry/cleanup index: `(status, attempts)` — added by migration_2
+- Time-range index: `(created_at)` — added by migration_2
+- Correlation index: `(correlation_id)` — added by migration_1
 
 **`{prefix}wp4odoo_entity_map`** — WP ↔ Odoo mapping
 - Unique: `(module, entity_type, wp_id, odoo_id)`
@@ -669,7 +672,7 @@ Managed via `dbDelta()` in `Database_Migration::create_tables()`:
 - Odoo lookup: `(odoo_model, odoo_id)`
 
 **`{prefix}wp4odoo_logs`** — Structured logs
-- Indexes: `(level, created_at)` and `(module)`
+- Indexes: `(level, created_at)`, `(module)`, `(correlation_id)` — correlation added by migration_1
 - `context` field stores JSON contextual data (truncated to 4KB)
 
 ### WordPress Options (`wp_options`)
@@ -699,7 +702,7 @@ Namespace: `wp-json/wp4odoo/v1/`
 | Endpoint | Method | Auth | Description |
 |----------|--------|------|-------------|
 | `/webhook` | `POST` | Token | Receives change notifications from Odoo |
-| `/webhook/test` | `GET` | Public | Health check |
+| `/webhook/test` | `GET` | Token | Health check |
 | `/sync/{module}/{entity}` | `POST` | WP Auth | Triggers sync for a specific module/entity |
 
 The webhook is authenticated via an `X-Odoo-Token` header compared against `wp4odoo_webhook_token`. Rate limiting: 100 requests per IP per 60-second window (returns HTTP 429 when exceeded).
@@ -729,7 +732,7 @@ The webhook is authenticated via an `X-Odoo-Token` header compared against `wp4o
 5. Module::pull_from_odoo() called
 6. Data fetched via Odoo_Client::read()
 7. Transformed via map_from_odoo() + Field_Mapper
-8. Resettable static importing flag set (anti-loop, cleared via try/finally)
+8. Per-module importing flag set in static array (anti-loop, cleared via try/finally)
 9. WP entity created/updated
 10. Mapping and hash saved
 ```
@@ -746,6 +749,8 @@ Reading:  wp_options → sodium_crypto_secretbox_open() → API key (plaintext)
 - Derivation key based on WordPress salts (`AUTH_KEY`, `SECURE_AUTH_KEY`)
 - Optional dedicated key via `WP4ODOO_ENCRYPTION_KEY` in `wp-config.php`
 - OpenSSL fallback if libsodium is unavailable
+- Per-request credential cache (`$credentials_cache`) avoids repeated decryption in batch operations
+- SSL verification enabled by default; opt-out via `WP4ODOO_DISABLE_SSL_VERIFY` constant (not a filter — prevents runtime injection)
 
 ### Request Authentication
 
@@ -1206,7 +1211,7 @@ All user inputs are sanitized with:
 
 **File:** `class-partner-service.php`
 
-Shared service for managing WP user ↔ Odoo `res.partner` relationships. Accessible in all modules via `Module_Base::partner_service()` (lazy factory). Used by `Portal_Manager`, `WooCommerce_Module`, `EDD_Module`, `Memberships_Module`, `MemberPress_Module`, `PMPro_Module`, `RCP_Module`, `Dual_Accounting_Module_Base` (GiveWP, Charitable, SimplePay), `Booking_Module_Base` (Amelia, Bookly), `LearnDash_Module`, `LifterLMS_Module`, `WC_Subscriptions_Module`, `Events_Calendar_Module`, `Sprout_Invoices_Module`, `WP_Invoice_Module`, and `Ecwid_Module`.
+Shared service for managing WP user ↔ Odoo `res.partner` relationships. Accessible in all modules via `Module_Base::partner_service()` (lazy factory), with convenience wrappers `resolve_partner_from_user()` and `resolve_partner_from_email()` in `Module_Helpers` trait. Used by all modules requiring partner resolution.
 
 **Resolution flow (3-step):**
 1. Check `wp4odoo_entity_map` for existing mapping
@@ -1216,6 +1221,7 @@ Shared service for managing WP user ↔ Odoo `res.partner` relationships. Access
 **Key methods:**
 - `get_partner_id_for_user(int $user_id)` — Get Odoo partner ID for a WP user
 - `get_or_create(string $email, array $data, ?int $user_id)` — Get existing or create new partner
+- `get_or_create_batch(array $entries)` — Batch partner resolution (single query for entity_map lookups)
 - `get_user_for_partner(int $partner_id)` — Reverse lookup: Odoo partner → WP user
 
 ### WP-CLI
@@ -1274,7 +1280,6 @@ Auto-dismissed when all steps completed. Dismiss via × button persisted in `wp4
 |--------|-------|
 | `wp4odoo_map_to_odoo_{module}_{entity}` | Modify mapped Odoo values before push |
 | `wp4odoo_map_from_odoo_{module}_{entity}` | Modify mapped WP data during pull |
-| `wp4odoo_ssl_verify` | Enable/disable SSL verification |
 | `wp4odoo_order_status_map` | Customize WC Odoo → WC status mapping |
 | `wp4odoo_edd_order_status_map` | Customize EDD → Odoo status mapping |
 | `wp4odoo_edd_odoo_status_map` | Customize Odoo → EDD status mapping |
