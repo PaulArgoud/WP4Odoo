@@ -220,30 +220,33 @@ class Portal_Manager {
 	private function query_cpt( string $post_type, int $partner_id, int $page, int $per_page, array $meta_keys ): array {
 		$query = new \WP_Query(
 			[
-				'post_type'      => $post_type,
-				'post_status'    => 'publish',
-				'posts_per_page' => $per_page,
-				'paged'          => $page,
-				'meta_query'     => [ // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+				'post_type'              => $post_type,
+				'post_status'            => 'publish',
+				'posts_per_page'         => $per_page,
+				'paged'                  => $page,
+				'meta_query'             => [ // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
 					[
 						'key'   => '_wp4odoo_partner_id',
 						'value' => $partner_id,
 						'type'  => 'NUMERIC',
 					],
 				],
-				'orderby'        => 'date',
-				'order'          => 'DESC',
+				'orderby'                => 'date',
+				'order'                  => 'DESC',
+				'update_post_meta_cache' => true,
 			]
 		);
 
 		$items = [];
+		// Post meta cache is primed by WP_Query — get_post_meta() below are cache hits.
 		foreach ( $query->posts as $post ) {
-			$item = [
+			$all_meta = get_post_meta( $post->ID );
+			$item     = [
 				'id'    => $post->ID,
 				'title' => $post->post_title,
 			];
 			foreach ( $meta_keys as $data_key => $meta_key ) {
-				$item[ $data_key ] = get_post_meta( $post->ID, $meta_key, true );
+				$item[ $data_key ] = $all_meta[ $meta_key ][0] ?? '';
 			}
 			$items[] = $item;
 		}

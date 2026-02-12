@@ -204,24 +204,15 @@ class LifterLMS_Handler {
 			}
 		}
 
-		$invoice = [
-			'move_type'        => 'out_invoice',
-			'partner_id'       => $partner_id,
-			'invoice_date'     => substr( $data['date'] ?? '', 0, 10 ),
-			'ref'              => sprintf( 'LLMS-ORD-%d', $data['order_id'] ?? 0 ),
-			'invoice_line_ids' => [
-				[
-					0,
-					0,
-					[
-						'product_id' => $product_odoo_id,
-						'quantity'   => 1,
-						'price_unit' => (float) ( $data['total'] ?? 0 ),
-						'name'       => $product_name ?: __( 'LifterLMS course', 'wp4odoo' ),
-					],
-				],
-			],
-		];
+		$invoice = Odoo_Accounting_Formatter::for_account_move(
+			$partner_id,
+			$product_odoo_id,
+			(float) ( $data['total'] ?? 0 ),
+			substr( $data['date'] ?? '', 0, 10 ),
+			sprintf( 'LLMS-ORD-%d', $data['order_id'] ?? 0 ),
+			$product_name,
+			__( 'LifterLMS course', 'wp4odoo' )
+		);
 
 		if ( $auto_post ) {
 			$invoice['_auto_validate'] = true;
@@ -408,9 +399,7 @@ class LifterLMS_Handler {
 	 * @return string LifterLMS order status.
 	 */
 	public function map_odoo_status_to_llms( string $odoo_state ): string {
-		$map = \apply_filters( 'wp4odoo_lifterlms_reverse_order_status_map', self::REVERSE_ORDER_STATUS_MAP );
-
-		return $map[ $odoo_state ] ?? 'llms-pending';
+		return Status_Mapper::resolve( $odoo_state, self::REVERSE_ORDER_STATUS_MAP, 'wp4odoo_lifterlms_reverse_order_status_map', 'llms-pending' );
 	}
 
 	// ─── Status mapping ────────────────────────────────────
@@ -422,8 +411,6 @@ class LifterLMS_Handler {
 	 * @return string Odoo account.move state.
 	 */
 	public function map_order_status_to_odoo( string $status ): string {
-		$map = apply_filters( 'wp4odoo_lifterlms_order_status_map', self::ORDER_STATUS_MAP );
-
-		return $map[ $status ] ?? 'draft';
+		return Status_Mapper::resolve( $status, self::ORDER_STATUS_MAP, 'wp4odoo_lifterlms_order_status_map', 'draft' );
 	}
 }

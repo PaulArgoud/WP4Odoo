@@ -225,20 +225,22 @@ class WebhookHandlerTest extends TestCase {
 
 	// ─── ensure_webhook_token ───────────────────────────────
 
-	public function test_constructor_generates_token_when_none_exists(): void {
+	public function test_register_routes_generates_token_when_none_exists(): void {
 		unset( $GLOBALS['_wp_options']['wp4odoo_webhook_token'] );
 
-		new Webhook_Handler( wp4odoo_test_settings() );
+		$handler = new Webhook_Handler( wp4odoo_test_settings() );
+		$handler->register_routes();
 
 		$token = $GLOBALS['_wp_options']['wp4odoo_webhook_token'] ?? '';
 		$this->assertNotEmpty( $token );
 		$this->assertSame( 48, strlen( $token ) );
 	}
 
-	public function test_constructor_preserves_existing_token(): void {
+	public function test_register_routes_preserves_existing_token(): void {
 		$GLOBALS['_wp_options']['wp4odoo_webhook_token'] = 'existing-token';
 
-		new Webhook_Handler( wp4odoo_test_settings() );
+		$handler = new Webhook_Handler( wp4odoo_test_settings() );
+		$handler->register_routes();
 
 		$this->assertSame( 'existing-token', $GLOBALS['_wp_options']['wp4odoo_webhook_token'] );
 	}

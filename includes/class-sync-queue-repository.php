@@ -308,16 +308,18 @@ class Sync_Queue_Repository {
 	}
 
 	/**
-	 * Get all pending jobs for a module.
+	 * Get pending jobs for a module.
 	 *
 	 * @param string      $module      Module identifier.
 	 * @param string|null $entity_type Optional entity type filter.
+	 * @param int         $limit       Maximum number of jobs to return (0 = no limit).
 	 * @return array Array of job objects.
 	 */
-	public function get_pending( string $module, ?string $entity_type = null ): array {
+	public function get_pending( string $module, ?string $entity_type = null, int $limit = 1000 ): array {
 		global $wpdb;
 
-		$table = $this->table();
+		$table     = $this->table();
+		$limit_sql = $limit > 0 ? sprintf( ' LIMIT %d', $limit ) : ''; // $limit is typed int — no injection risk.
 
 		if ( null !== $entity_type ) {
 			return $wpdb->get_results(
@@ -325,7 +327,7 @@ class Sync_Queue_Repository {
 					"SELECT * FROM {$table} WHERE module = %s AND entity_type = %s AND status = 'pending' ORDER BY priority ASC, created_at ASC", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is from $wpdb->prefix, safe.
 					$module,
 					$entity_type
-				)
+				) . $limit_sql
 			);
 		}
 
@@ -333,7 +335,7 @@ class Sync_Queue_Repository {
 			$wpdb->prepare(
 				"SELECT * FROM {$table} WHERE module = %s AND status = 'pending' ORDER BY priority ASC, created_at ASC", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is from $wpdb->prefix, safe.
 				$module
-			)
+			) . $limit_sql
 		);
 	}
 

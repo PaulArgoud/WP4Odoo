@@ -85,11 +85,14 @@ class Contact_Manager {
 			'user_url'     => $user->user_url,
 		];
 
+		// Fetch all user meta in one call; WP caches it per-request.
+		$all_meta = get_user_meta( $wp_id );
+
 		// WooCommerce billing fields (fallback to generic meta).
 		foreach ( self::CONTACT_META_FIELDS as $key => $meta_keys ) {
 			$value = '';
 			foreach ( $meta_keys as $meta_key ) {
-				$value = get_user_meta( $wp_id, $meta_key, true );
+				$value = (string) ( $all_meta[ $meta_key ][0] ?? '' );
 				if ( '' !== $value ) {
 					break;
 				}

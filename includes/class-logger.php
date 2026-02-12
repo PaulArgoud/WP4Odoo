@@ -60,13 +60,6 @@ class Logger {
 	private ?Settings_Repository $settings;
 
 	/**
-	 * Cached log settings (fallback when no Settings_Repository injected).
-	 *
-	 * @var array|null
-	 */
-	private static ?array $settings_cache = null;
-
-	/**
 	 * Constructor.
 	 *
 	 * @param string|null              $module   Optional module identifier to tag all log entries.
@@ -268,20 +261,19 @@ class Logger {
 			return $this->settings->get_log_settings();
 		}
 
-		if ( null === self::$settings_cache ) {
-			self::$settings_cache = get_option( Settings_Repository::OPT_LOG_SETTINGS, [] );
-		}
-		return self::$settings_cache;
+		// Fallback: read directly from wp_options (WP object cache handles caching).
+		return get_option( Settings_Repository::OPT_LOG_SETTINGS, [] );
 	}
 
 	/**
 	 * Reset the in-memory settings cache.
 	 *
-	 * Useful in tests or when options change at runtime.
+	 * No-op since settings are read directly from wp_options (WP object cache
+	 * handles caching). Kept for backward compatibility with Module_Test_Case.
 	 *
 	 * @return void
 	 */
 	public static function reset_cache(): void {
-		self::$settings_cache = null;
+		// No-op.
 	}
 }

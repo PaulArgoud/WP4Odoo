@@ -23,6 +23,9 @@ class EcwidModuleTest extends Module_Test_Case {
 		$GLOBALS['_wp_options']         = [];
 		$GLOBALS['_wp_remote_response'] = null;
 
+		// Advisory lock returns '1' (acquired) so poll() proceeds past the lock.
+		$this->wpdb->get_var_return = '1';
+
 		$this->module  = new Ecwid_Module( wp4odoo_test_client_provider(), wp4odoo_test_entity_map(), wp4odoo_test_settings() );
 		$this->handler = new Ecwid_Handler( new Logger( 'test', wp4odoo_test_settings() ) );
 	}
@@ -166,7 +169,10 @@ class EcwidModuleTest extends Module_Test_Case {
 
 	public function test_poll_skips_when_no_credentials(): void {
 		$this->module->poll();
-		$this->assertEmpty( $this->wpdb->calls );
+
+		// Only advisory lock queries should be made — no entity queries.
+		$get_results = array_filter( $this->wpdb->calls, fn( $c ) => 'get_results' === $c['method'] );
+		$this->assertEmpty( $get_results );
 	}
 
 	// ─── map_to_odoo ────────────────────────────────────────

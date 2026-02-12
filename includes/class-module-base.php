@@ -458,6 +458,28 @@ abstract class Module_Base {
 	}
 
 	// -------------------------------------------------------------------------
+	// Queue helpers
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Enqueue a push (create or update) for a WordPress entity.
+	 *
+	 * Shorthand for the 3-line pattern repeated in hooks traits:
+	 *   $odoo_id = $this->get_mapping( $entity_type, $wp_id ) ?? 0;
+	 *   $action  = $odoo_id ? 'update' : 'create';
+	 *   Queue_Manager::push( $this->id, $entity_type, $action, $wp_id, $odoo_id );
+	 *
+	 * @param string $entity_type Entity type (e.g. 'product', 'order').
+	 * @param int    $wp_id       WordPress entity ID.
+	 * @return void
+	 */
+	protected function enqueue_push( string $entity_type, int $wp_id ): void {
+		$odoo_id = $this->get_mapping( $entity_type, $wp_id ) ?? 0;
+		$action  = $odoo_id ? 'update' : 'create';
+		Queue_Manager::push( $this->id, $entity_type, $action, $wp_id, $odoo_id );
+	}
+
+	// -------------------------------------------------------------------------
 	// Anti-loop
 	// -------------------------------------------------------------------------
 

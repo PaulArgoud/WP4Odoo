@@ -128,24 +128,15 @@ class PMPro_Handler {
 			$level_name = $level->name;
 		}
 
-		return [
-			'move_type'        => 'out_invoice',
-			'partner_id'       => $partner_id,
-			'invoice_date'     => substr( $order->timestamp, 0, 10 ),
-			'ref'              => $order->code,
-			'invoice_line_ids' => [
-				[
-					0,
-					0,
-					[
-						'product_id' => $level_odoo_id,
-						'quantity'   => 1,
-						'price_unit' => (float) $order->total,
-						'name'       => $level_name ?: __( 'PMPro membership', 'wp4odoo' ),
-					],
-				],
-			],
-		];
+		return Odoo_Accounting_Formatter::for_account_move(
+			$partner_id,
+			$level_odoo_id,
+			(float) $order->total,
+			substr( $order->timestamp, 0, 10 ),
+			$order->code,
+			$level_name,
+			__( 'PMPro membership', 'wp4odoo' )
+		);
 	}
 
 	// ─── Load membership ───────────────────────────────────
@@ -228,9 +219,7 @@ class PMPro_Handler {
 	 * @return string Odoo account.move state.
 	 */
 	public function map_order_status_to_odoo( string $status ): string {
-		$map = apply_filters( 'wp4odoo_pmpro_order_status_map', self::ORDER_STATUS_MAP );
-
-		return $map[ $status ] ?? 'draft';
+		return Status_Mapper::resolve( $status, self::ORDER_STATUS_MAP, 'wp4odoo_pmpro_order_status_map', 'draft' );
 	}
 
 	/**
@@ -240,8 +229,6 @@ class PMPro_Handler {
 	 * @return string Odoo membership_line state.
 	 */
 	public function map_membership_status_to_odoo( string $status ): string {
-		$map = apply_filters( 'wp4odoo_pmpro_membership_status_map', self::MEMBERSHIP_STATUS_MAP );
-
-		return $map[ $status ] ?? 'none';
+		return Status_Mapper::resolve( $status, self::MEMBERSHIP_STATUS_MAP, 'wp4odoo_pmpro_membership_status_map', 'none' );
 	}
 }

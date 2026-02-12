@@ -146,14 +146,7 @@ class Sprout_Invoices_Handler {
 	 * @return string Odoo account.move state.
 	 */
 	public function map_status( string $post_status ): string {
-		/**
-		 * Filters the Sprout Invoices → Odoo invoice status map.
-		 *
-		 * @param array<string, string> $map Status mapping.
-		 */
-		$map = \apply_filters( 'wp4odoo_si_invoice_status_map', self::STATUS_MAP );
-
-		return $map[ $post_status ] ?? 'draft';
+		return Status_Mapper::resolve( $post_status, self::STATUS_MAP, 'wp4odoo_si_invoice_status_map', 'draft' );
 	}
 
 	// ─── Parse invoice from Odoo ─────────────────────────
@@ -176,14 +169,7 @@ class Sprout_Invoices_Handler {
 	 * @return string SI post status.
 	 */
 	public function map_odoo_status_to_si( string $odoo_state ): string {
-		/**
-		 * Filters the Odoo → Sprout Invoices reverse invoice status map.
-		 *
-		 * @param array<string, string> $map Status mapping.
-		 */
-		$map = \apply_filters( 'wp4odoo_si_reverse_invoice_status_map', self::REVERSE_STATUS_MAP );
-
-		return $map[ $odoo_state ] ?? 'publish';
+		return Status_Mapper::resolve( $odoo_state, self::REVERSE_STATUS_MAP, 'wp4odoo_si_reverse_invoice_status_map', 'publish' );
 	}
 
 	/**

@@ -125,9 +125,7 @@ class Membership_Handler {
 	 * @return string Odoo membership_line state.
 	 */
 	public function map_status_to_odoo( string $wc_status ): string {
-		$map = apply_filters( 'wp4odoo_membership_status_map', self::STATUS_MAP );
-
-		return $map[ $wc_status ] ?? 'none';
+		return Status_Mapper::resolve( $wc_status, self::STATUS_MAP, 'wp4odoo_membership_status_map', 'none' );
 	}
 
 	// ─── Reverse status mapping ────────────────────────────
@@ -152,9 +150,7 @@ class Membership_Handler {
 	 * @return string WC membership status (e.g. 'wcm-active').
 	 */
 	public function map_odoo_status_to_wc( string $odoo_state ): string {
-		$map = apply_filters( 'wp4odoo_membership_reverse_status_map', self::REVERSE_STATUS_MAP );
-
-		return $map[ $odoo_state ] ?? 'wcm-expired';
+		return Status_Mapper::resolve( $odoo_state, self::REVERSE_STATUS_MAP, 'wp4odoo_membership_reverse_status_map', 'wcm-expired' );
 	}
 
 	// ─── Pull: parse plan from Odoo ────────────────────────

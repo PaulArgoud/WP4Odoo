@@ -124,24 +124,15 @@ class RCP_Handler {
 			}
 		}
 
-		return [
-			'move_type'        => 'out_invoice',
-			'partner_id'       => $partner_id,
-			'invoice_date'     => substr( $payment->date ?? '', 0, 10 ),
-			'ref'              => sprintf( 'RCP-%d', $payment_id ),
-			'invoice_line_ids' => [
-				[
-					0,
-					0,
-					[
-						'product_id' => $level_odoo_id,
-						'quantity'   => 1,
-						'price_unit' => (float) ( $payment->amount ?? 0 ),
-						'name'       => $level_name ?: __( 'RCP membership', 'wp4odoo' ),
-					],
-				],
-			],
-		];
+		return Odoo_Accounting_Formatter::for_account_move(
+			$partner_id,
+			$level_odoo_id,
+			(float) ( $payment->amount ?? 0 ),
+			substr( $payment->date ?? '', 0, 10 ),
+			sprintf( 'RCP-%d', $payment_id ),
+			$level_name,
+			__( 'RCP membership', 'wp4odoo' )
+		);
 	}
 
 	// ─── Load membership ───────────────────────────────────
@@ -216,9 +207,7 @@ class RCP_Handler {
 	 * @return string Odoo account.move state.
 	 */
 	public function map_payment_status_to_odoo( string $status ): string {
-		$map = apply_filters( 'wp4odoo_rcp_payment_status_map', self::PAYMENT_STATUS_MAP );
-
-		return $map[ $status ] ?? 'draft';
+		return Status_Mapper::resolve( $status, self::PAYMENT_STATUS_MAP, 'wp4odoo_rcp_payment_status_map', 'draft' );
 	}
 
 	/**
@@ -228,8 +217,6 @@ class RCP_Handler {
 	 * @return string Odoo membership_line state.
 	 */
 	public function map_membership_status_to_odoo( string $status ): string {
-		$map = apply_filters( 'wp4odoo_rcp_membership_status_map', self::MEMBERSHIP_STATUS_MAP );
-
-		return $map[ $status ] ?? 'none';
+		return Status_Mapper::resolve( $status, self::MEMBERSHIP_STATUS_MAP, 'wp4odoo_rcp_membership_status_map', 'none' );
 	}
 }

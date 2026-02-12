@@ -130,6 +130,9 @@ WordPress For Odoo/
 │   │   ├── class-memberpress-handler.php     # MemberPress: plan/transaction/subscription data load, status mapping
 │   │   ├── class-memberpress-module.php      # MemberPress: extends Membership_Module_Base (uses MemberPress_Hooks trait)
 │   │   │
+│   │   ├── # ─── Shared Utilities ────────────────────────────────
+│   │   ├── class-status-mapper.php             # Shared: centralized filterable status mapping (resolve + apply_filters)
+│   │   │
 │   │   ├── # ─── Shared Accounting (GiveWP + Charitable + SimplePay) ─
 │   │   ├── class-odoo-accounting-formatter.php # Shared: static formatting for donation.donation / account.move
 │   │   ├── class-dual-accounting-module-base.php # Shared: abstract base class for donation/payment modules (OCA detection, auto-validate, parent sync)

@@ -21,6 +21,9 @@ class BooklyModuleTest extends TestCase {
 
 		$GLOBALS['_wp_options'] = [];
 
+		// Advisory lock returns '1' (acquired) so poll() proceeds past the lock.
+		$wpdb->get_var_return = '1';
+
 		$this->module = new Bookly_Module( wp4odoo_test_client_provider(), wp4odoo_test_entity_map(), wp4odoo_test_settings() );
 	}
 

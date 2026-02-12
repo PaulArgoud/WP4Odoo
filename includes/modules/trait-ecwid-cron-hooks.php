@@ -58,20 +58,34 @@ trait Ecwid_Cron_Hooks {
 			return;
 		}
 
-		$settings = $this->get_settings();
-		$store_id = (string) ( $settings['ecwid_store_id'] ?? '' );
-		$token    = (string) ( $settings['ecwid_api_token'] ?? '' );
+		global $wpdb;
+		$lock_name = 'wp4odoo_ecwid_poll';
 
-		if ( '' === $store_id || '' === $token ) {
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$acquired = $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 0)', $lock_name ) );
+		if ( '1' !== $acquired ) {
 			return;
 		}
 
-		if ( ! empty( $settings['sync_products'] ) ) {
-			$this->poll_products( $store_id, $token );
-		}
+		try {
+			$settings = $this->get_settings();
+			$store_id = (string) ( $settings['ecwid_store_id'] ?? '' );
+			$token    = (string) ( $settings['ecwid_api_token'] ?? '' );
 
-		if ( ! empty( $settings['sync_orders'] ) ) {
-			$this->poll_orders( $store_id, $token );
+			if ( '' === $store_id || '' === $token ) {
+				return;
+			}
+
+			if ( ! empty( $settings['sync_products'] ) ) {
+				$this->poll_products( $store_id, $token );
+			}
+
+			if ( ! empty( $settings['sync_orders'] ) ) {
+				$this->poll_orders( $store_id, $token );
+			}
+		} finally {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock_name ) );
 		}
 	}
 

@@ -64,14 +64,28 @@ trait Bookly_Cron_Hooks {
 			return;
 		}
 
-		$settings = $this->get_settings();
+		global $wpdb;
+		$lock_name = 'wp4odoo_bookly_poll';
 
-		if ( ! empty( $settings['sync_services'] ) ) {
-			$this->poll_services();
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$acquired = $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 0)', $lock_name ) );
+		if ( '1' !== $acquired ) {
+			return;
 		}
 
-		if ( ! empty( $settings['sync_bookings'] ) ) {
-			$this->poll_bookings();
+		try {
+			$settings = $this->get_settings();
+
+			if ( ! empty( $settings['sync_services'] ) ) {
+				$this->poll_services();
+			}
+
+			if ( ! empty( $settings['sync_bookings'] ) ) {
+				$this->poll_bookings();
+			}
+		} finally {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock_name ) );
 		}
 	}
 

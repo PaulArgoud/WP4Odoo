@@ -125,8 +125,6 @@ class GiveWP_Handler {
 	 * @return string Odoo status.
 	 */
 	public function map_donation_status( string $status ): string {
-		$map = apply_filters( 'wp4odoo_givewp_donation_status_map', self::DONATION_STATUS_MAP );
-
-		return $map[ $status ] ?? 'draft';
+		return Status_Mapper::resolve( $status, self::DONATION_STATUS_MAP, 'wp4odoo_givewp_donation_status_map', 'draft' );
 	}
 }

@@ -124,14 +124,7 @@ class WP_Invoice_Handler {
 	 * @return string Odoo account.move state.
 	 */
 	public function map_status( string $status ): string {
-		/**
-		 * Filters the WP-Invoice → Odoo invoice status map.
-		 *
-		 * @param array<string, string> $map Status mapping.
-		 */
-		$map = apply_filters( 'wp4odoo_wpi_invoice_status_map', self::STATUS_MAP );
-
-		return $map[ $status ] ?? 'draft';
+		return Status_Mapper::resolve( $status, self::STATUS_MAP, 'wp4odoo_wpi_invoice_status_map', 'draft' );
 	}
 
 	// ─── Private ──────────────────────────────────────────

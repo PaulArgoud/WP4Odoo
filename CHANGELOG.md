@@ -18,12 +18,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Events_Calendar_Hooks** — Removed unnecessary `\` global function prefix for consistency with all other hook traits
 - **Retryable_Http** — Clarified docblock to explicitly state no internal retry
 - **CI** — Added Composer dependency caching (`actions/cache@v4`) to `test` and `coverage` jobs; Codecov `fail_ci_if_error` set to `true`
+- **Status mapping DRY** — Extracted repeated 2-line status mapping pattern (`apply_filters` + array lookup + default) into centralized `Status_Mapper::resolve()`, used by 20 methods across 10 handler files
+- **Ecwid_Handler** — `fetch_api()` now paginates Ecwid REST API responses with `offset`/`limit` parameters, safety-capped at 50 pages × 100 items (was single-page fetch limited to first 100 items)
+- **Bookly_Cron_Hooks / Ecwid_Cron_Hooks** — WP-Cron `poll()` methods now acquire a MySQL advisory lock (`GET_LOCK`) with try/finally release, preventing concurrent cron executions from double-processing data
 
 ### Added
 - `wp_cache_get()` / `wp_cache_set()` / `wp_cache_delete()` stubs for unit tests
 - MySQL 8.0+ / MariaDB 10.5+ added to README.md requirements
 - **Database migration 3** — `idx_dedup_composite (module, entity_type, direction, status)` index on `wp4odoo_sync_queue` for reliable InnoDB gap locking during dedup `SELECT … FOR UPDATE`
 - **Module_Base** — `flush_mapping_cache()` method to invalidate the in-memory field mapping cache after bulk operations or runtime mapping changes
+- **Module_Base** — `enqueue_push()` protected helper method for the common 3-line enqueue pattern (get mapping → determine action → `Queue_Manager::push`)
+- **Status_Mapper** — New shared utility class (`includes/modules/class-status-mapper.php`) centralizing filterable status mapping with `resolve(status, map, hook, default)`
 - **Settings_Repository** — `get_failure_threshold()` and `get_failure_cooldown()` typed accessors
 - 9 new unit tests (1832 total, 2855 assertions): circuit breaker probe mutex atomicity, entity map batch dedup/cache, configurable failure thresholds
 

@@ -153,7 +153,21 @@ class Ecwid_Handler {
 	// ─── Private ──────────────────────────────────────────
 
 	/**
-	 * Call the Ecwid REST API and return the items array.
+	 * Maximum items per API page.
+	 *
+	 * @var int
+	 */
+	private const API_PAGE_LIMIT = 100;
+
+	/**
+	 * Safety cap on pages to prevent runaway loops.
+	 *
+	 * @var int
+	 */
+	private const API_MAX_PAGES = 50;
+
+	/**
+	 * Call the Ecwid REST API with pagination and return all items.
 	 *
 	 * @param string $store_id  Store ID.
 	 * @param string $api_token API secret token.
@@ -165,44 +179,69 @@ class Ecwid_Handler {
 			return [];
 		}
 
-		$url = sprintf( 'https://app.ecwid.com/api/v3/%s/%s', $store_id, $endpoint );
+		$all_items = [];
+		$offset    = 0;
 
-		$response = wp_remote_get(
-			$url,
-			[
-				'headers' => [ 'Authorization' => 'Bearer ' . $api_token ],
-				'timeout' => 30,
-			]
-		);
+		for ( $page = 0; $page < self::API_MAX_PAGES; $page++ ) {
+			$url = sprintf(
+				'https://app.ecwid.com/api/v3/%s/%s?offset=%d&limit=%d',
+				$store_id,
+				$endpoint,
+				$offset,
+				self::API_PAGE_LIMIT
+			);
 
-		if ( is_wp_error( $response ) ) {
-			$this->logger->warning(
-				'Ecwid API request failed.',
+			$response = wp_remote_get(
+				$url,
 				[
-					'endpoint' => $endpoint,
-					'error'    => $response->get_error_message(),
+					'headers' => [ 'Authorization' => 'Bearer ' . $api_token ],
+					'timeout' => 30,
 				]
 			);
-			return [];
+
+			if ( is_wp_error( $response ) ) {
+				$this->logger->warning(
+					'Ecwid API request failed.',
+					[
+						'endpoint' => $endpoint,
+						'error'    => $response->get_error_message(),
+					]
+				);
+				break;
+			}
+
+			$code = wp_remote_retrieve_response_code( $response );
+			if ( 200 !== $code ) {
+				$this->logger->warning(
+					'Ecwid API returned non-200 status.',
+					[
+						'endpoint' => $endpoint,
+						'code'     => $code,
+					]
+				);
+				break;
+			}
+
+			$body = json_decode( wp_remote_retrieve_body( $response ), true );
+			if ( ! is_array( $body ) ) {
+				break;
+			}
+
+			$items = $body['items'] ?? [];
+			if ( empty( $items ) ) {
+				break;
+			}
+
+			$all_items = array_merge( $all_items, $items );
+
+			$total   = (int) ( $body['total'] ?? 0 );
+			$offset += self::API_PAGE_LIMIT;
+
+			if ( $offset >= $total ) {
+				break;
+			}
 		}
 
-		$code = wp_remote_retrieve_response_code( $response );
-		if ( 200 !== $code ) {
-			$this->logger->warning(
-				'Ecwid API returned non-200 status.',
-				[
-					'endpoint' => $endpoint,
-					'code'     => $code,
-				]
-			);
-			return [];
-		}
-
-		$body = json_decode( wp_remote_retrieve_body( $response ), true );
-		if ( ! is_array( $body ) ) {
-			return [];
-		}
-
-		return $body['items'] ?? [];
+		return $all_items;
 	}
 }

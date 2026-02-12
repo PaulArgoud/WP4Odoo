@@ -63,7 +63,6 @@ class Webhook_Handler {
 	public function __construct( Settings_Repository $settings ) {
 		$this->settings = $settings;
 		$this->logger   = new Logger( 'webhook', $settings );
-		$this->ensure_webhook_token();
 	}
 
 	/**
@@ -72,6 +71,8 @@ class Webhook_Handler {
 	 * @return void
 	 */
 	public function register_routes(): void {
+		$this->ensure_webhook_token();
+
 		register_rest_route(
 			self::API_NAMESPACE,
 			'/webhook',

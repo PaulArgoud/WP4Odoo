@@ -280,6 +280,11 @@ if ( ! function_exists( 'get_user_by' ) ) {
 
 if ( ! function_exists( 'get_user_meta' ) ) {
 	function get_user_meta( $user_id, $key = '', $single = false ) {
+		if ( '' === $key ) {
+			// No key: return all meta as ['key' => ['value'], ...] (WP format).
+			$all = $GLOBALS['_wp_user_meta'][ $user_id ] ?? [];
+			return array_map( function ( $v ) { return (array) $v; }, $all );
+		}
 		return $GLOBALS['_wp_user_meta'][ $user_id ][ $key ] ?? ( $single ? '' : [] );
 	}
 }

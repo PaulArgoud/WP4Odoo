@@ -255,9 +255,7 @@ class WC_Subscriptions_Handler {
 	 * @return string Odoo sale.subscription state.
 	 */
 	public function map_status_to_odoo( string $status ): string {
-		$map = \apply_filters( 'wp4odoo_wcs_status_map', self::STATUS_MAP );
-
-		return $map[ $status ] ?? 'draft';
+		return Status_Mapper::resolve( $status, self::STATUS_MAP, 'wp4odoo_wcs_status_map', 'draft' );
 	}
 
 	/**
@@ -267,9 +265,7 @@ class WC_Subscriptions_Handler {
 	 * @return string Odoo account.move state.
 	 */
 	public function map_renewal_status_to_odoo( string $status ): string {
-		$map = \apply_filters( 'wp4odoo_wcs_renewal_status_map', self::RENEWAL_STATUS_MAP );
-
-		return $map[ $status ] ?? 'draft';
+		return Status_Mapper::resolve( $status, self::RENEWAL_STATUS_MAP, 'wp4odoo_wcs_renewal_status_map', 'draft' );
 	}
 
 	// ─── Billing period mapping ────────────────────────────
@@ -281,9 +277,7 @@ class WC_Subscriptions_Handler {
 	 * @return string Odoo recurring_rule_type.
 	 */
 	public function map_billing_period( string $period ): string {
-		$map = \apply_filters( 'wp4odoo_wcs_billing_period_map', self::BILLING_PERIOD_MAP );
-
-		return $map[ $period ] ?? 'monthly';
+		return Status_Mapper::resolve( $period, self::BILLING_PERIOD_MAP, 'wp4odoo_wcs_billing_period_map', 'monthly' );
 	}
 
 	// ─── Reverse status mapping ───────────────────────────
@@ -295,9 +289,7 @@ class WC_Subscriptions_Handler {
 	 * @return string WCS subscription status.
 	 */
 	public function map_odoo_status_to_wcs( string $odoo_state ): string {
-		$map = \apply_filters( 'wp4odoo_wcs_reverse_status_map', self::REVERSE_STATUS_MAP );
-
-		return $map[ $odoo_state ] ?? 'pending';
+		return Status_Mapper::resolve( $odoo_state, self::REVERSE_STATUS_MAP, 'wp4odoo_wcs_reverse_status_map', 'pending' );
 	}
 
 	/**
@@ -307,9 +299,7 @@ class WC_Subscriptions_Handler {
 	 * @return string WCS billing period.
 	 */
 	public function map_odoo_billing_period_to_wcs( string $odoo_rule ): string {
-		$map = \apply_filters( 'wp4odoo_wcs_reverse_billing_period_map', self::REVERSE_BILLING_PERIOD_MAP );
-
-		return $map[ $odoo_rule ] ?? 'month';
+		return Status_Mapper::resolve( $odoo_rule, self::REVERSE_BILLING_PERIOD_MAP, 'wp4odoo_wcs_reverse_billing_period_map', 'month' );
 	}
 
 	// ─── Parse subscription from Odoo ─────────────────────

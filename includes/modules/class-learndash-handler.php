@@ -175,24 +175,15 @@ class LearnDash_Handler {
 			}
 		}
 
-		$invoice = [
-			'move_type'        => 'out_invoice',
-			'partner_id'       => $partner_id,
-			'invoice_date'     => substr( $data['created_at'] ?? '', 0, 10 ),
-			'ref'              => sprintf( 'LD-TXN-%d', $data['transaction_id'] ?? 0 ),
-			'invoice_line_ids' => [
-				[
-					0,
-					0,
-					[
-						'product_id' => $product_odoo_id,
-						'quantity'   => 1,
-						'price_unit' => (float) ( $data['amount'] ?? 0 ),
-						'name'       => $course_name ?: __( 'LearnDash course', 'wp4odoo' ),
-					],
-				],
-			],
-		];
+		$invoice = Odoo_Accounting_Formatter::for_account_move(
+			$partner_id,
+			$product_odoo_id,
+			(float) ( $data['amount'] ?? 0 ),
+			substr( $data['created_at'] ?? '', 0, 10 ),
+			sprintf( 'LD-TXN-%d', $data['transaction_id'] ?? 0 ),
+			$course_name,
+			__( 'LearnDash course', 'wp4odoo' )
+		);
 
 		if ( $auto_post ) {
 			$invoice['_auto_validate'] = true;

@@ -117,24 +117,15 @@ class MemberPress_Handler {
 			}
 		}
 
-		return [
-			'move_type'        => 'out_invoice',
-			'partner_id'       => $partner_id,
-			'invoice_date'     => substr( $txn->created_at, 0, 10 ),
-			'ref'              => $txn->trans_num,
-			'invoice_line_ids' => [
-				[
-					0,
-					0,
-					[
-						'product_id' => $plan_odoo_id,
-						'quantity'   => 1,
-						'price_unit' => $txn->amount,
-						'name'       => $plan_name ?: __( 'MemberPress subscription', 'wp4odoo' ),
-					],
-				],
-			],
-		];
+		return Odoo_Accounting_Formatter::for_account_move(
+			$partner_id,
+			$plan_odoo_id,
+			(float) $txn->amount,
+			substr( $txn->created_at, 0, 10 ),
+			$txn->trans_num,
+			$plan_name,
+			__( 'MemberPress subscription', 'wp4odoo' )
+		);
 	}
 
 	// ─── Load subscription ──────────────────────────────────
@@ -172,9 +163,7 @@ class MemberPress_Handler {
 	 * @return string Odoo account.move state.
 	 */
 	public function map_txn_status_to_odoo( string $status ): string {
-		$map = apply_filters( 'wp4odoo_mepr_txn_status_map', self::TXN_STATUS_MAP );
-
-		return $map[ $status ] ?? 'draft';
+		return Status_Mapper::resolve( $status, self::TXN_STATUS_MAP, 'wp4odoo_mepr_txn_status_map', 'draft' );
 	}
 
 	/**
@@ -184,8 +173,6 @@ class MemberPress_Handler {
 	 * @return string Odoo membership_line state.
 	 */
 	public function map_sub_status_to_odoo( string $status ): string {
-		$map = apply_filters( 'wp4odoo_mepr_sub_status_map', self::SUB_STATUS_MAP );
-
-		return $map[ $status ] ?? 'none';
+		return Status_Mapper::resolve( $status, self::SUB_STATUS_MAP, 'wp4odoo_mepr_sub_status_map', 'none' );
 	}
 }
