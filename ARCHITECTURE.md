@@ -224,7 +224,7 @@ WordPress For Odoo/
 │   │   └── class-settings-page.php    # Settings API, 5-tab rendering, setup checklist, sanitize callbacks
 │   │
 │   ├── class-sync-result.php          # Value object: success/fail, odoo_id, error message, Error_Type
-│   ├── class-error-type.php           # Backed enum: Transient, Permanent, Config (retry strategy)
+│   ├── class-error-type.php           # Backed enum: Transient, Permanent (retry strategy)
 │   ├── class-database-migration.php   # Table creation (dbDelta) and default options
 │   ├── class-settings-repository.php  # Centralized option access: keys, defaults, typed accessors (DI)
 │   ├── class-module-registry.php      # Module registration, mutual exclusivity, lifecycle
@@ -268,7 +268,7 @@ WordPress For Odoo/
 ├── templates/
 │   └── customer-portal.php           #   Customer portal HTML template (orders/invoices tabs)
 │
-├── tests/                             # 1692 unit tests (2590 assertions) + 26 integration tests (wp-env)
+├── tests/                             # 1695 unit tests (2597 assertions) + 26 integration tests (wp-env)
 │   ├── bootstrap.php                 #   Unit test bootstrap: constants, stub loading, plugin class requires
 │   ├── bootstrap-integration.php     #   Integration test bootstrap: loads WP test framework (wp-env)
 │   ├── stubs/

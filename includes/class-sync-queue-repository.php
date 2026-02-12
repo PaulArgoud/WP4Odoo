@@ -75,7 +75,15 @@ class Sync_Queue_Repository {
 		// cannot both see "no existing record" and insert duplicates.
 		// InnoDB's SELECT … FOR UPDATE takes a gap lock when no rows match,
 		// blocking other transactions until this one commits.
-		$wpdb->query( 'START TRANSACTION' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+		//
+		// If already in a transaction (e.g. WordPress test framework, or another
+		// plugin's transaction), use a SAVEPOINT to avoid implicit commit.
+		$use_savepoint = (bool) $wpdb->get_var( 'SELECT @@in_transaction' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+		if ( $use_savepoint ) {
+			$wpdb->query( 'SAVEPOINT wp4odoo_dedup' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+		} else {
+			$wpdb->query( 'START TRANSACTION' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+		}
 
 		// Deduplication: look for an existing pending job with same key fields.
 		$where_parts = [
@@ -104,7 +112,11 @@ class Sync_Queue_Repository {
 				],
 				[ 'id' => (int) $existing ]
 			);
-			$wpdb->query( 'COMMIT' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+			if ( $use_savepoint ) {
+				$wpdb->query( 'RELEASE SAVEPOINT wp4odoo_dedup' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+			} else {
+				$wpdb->query( 'COMMIT' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+			}
 			return (int) $existing;
 		}
 
@@ -129,11 +141,19 @@ class Sync_Queue_Repository {
 		$new_id = $wpdb->insert_id ? (int) $wpdb->insert_id : false;
 
 		if ( false === $new_id ) {
-			$wpdb->query( 'ROLLBACK' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+			if ( $use_savepoint ) {
+				$wpdb->query( 'ROLLBACK TO SAVEPOINT wp4odoo_dedup' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+			} else {
+				$wpdb->query( 'ROLLBACK' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+			}
 			return false;
 		}
 
-		$wpdb->query( 'COMMIT' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+		if ( $use_savepoint ) {
+			$wpdb->query( 'RELEASE SAVEPOINT wp4odoo_dedup' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+		} else {
+			$wpdb->query( 'COMMIT' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+		}
 		return $new_id;
 	}
 

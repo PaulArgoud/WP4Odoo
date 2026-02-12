@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - **Module_Helpers trait** — Extracted 9 helper methods from `Module_Base` into `Module_Helpers` trait: `auto_post_invoice()`, `ensure_entity_synced()`, `encode_synthetic_id()`, `decode_synthetic_id()`, `delete_wp_post()`, `log_unsupported_entity()`, `resolve_many2one_field()`, `partner_service()`, `check_dependency()`. Reduces `Module_Base` from 889 to 695 lines, keeping the base class focused on push/pull orchestration, entity mapping, and field mapping
-- **Atomic queue deduplication** — `Sync_Queue_Repository::enqueue()` now wraps the check-then-insert pattern in a MySQL transaction with `SELECT … FOR UPDATE`, preventing concurrent hook fires from inserting duplicate pending jobs. Added `idx_dedup_wp` composite index for efficient gap locking
+- **Atomic queue deduplication** — `Sync_Queue_Repository::enqueue()` now wraps the check-then-insert pattern in a MySQL transaction with `SELECT … FOR UPDATE`, preventing concurrent hook fires from inserting duplicate pending jobs. Added `idx_dedup_wp` composite index for efficient gap locking. Uses `@@in_transaction` detection with SAVEPOINT fallback when already inside an outer transaction (e.g. WordPress test framework), avoiding implicit commits
 
 ## [2.7.5] - Unreleased
 
@@ -358,7 +358,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Plugin version bumped from 1.9.8 to 2.0.0
 - PHPUnit: 952 unit tests, 1538 assertions — all green (was 915/1473)
 - PHPStan: 0 errors on 76 files (was 75 — added `class-settings-repository.php`)
-- Translations: 337 translated strings (FR + ES), 0 fuzzy, 0 untranslated
+- Translations: 417 translated strings (FR + ES), 0 fuzzy, 0 untranslated
 - `Dependency_Loader` — added 24 `require_once` (2 forms + 1 exchange rate + 4 EDD + 3 MemberPress + 3 GiveWP + 3 Charitable + 3 SimplePay + 3 WPRM + 2 shared accounting module files)
 - `Module_Registry` — registers `Forms_Module` when Gravity Forms or WPForms is active; extended mutual exclusivity from 2-way (WC/Sales) to 3-way (WC/EDD/Sales); registers `MemberPress_Module` when MemberPress is active (mutually exclusive with WC Memberships); registers `GiveWP_Module` when GiveWP is active; registers `Charitable_Module` when WP Charitable is active; registers `SimplePay_Module` when WP Simple Pay is active; registers `WPRM_Module` when WP Recipe Maker is active (no mutual exclusivity)
 - `tests/bootstrap.php` — added forms stubs and 2 new source file requires; added EDD stubs, global store, and 4 EDD source requires; added MemberPress stubs and 3 source requires; added GiveWP stubs and 3 source requires; added Charitable stubs and 3 source requires; added SimplePay stubs and 3 source requires; added WPRM stubs and 3 source requires

@@ -201,8 +201,8 @@ class SyncQueueRepositoryTest extends TestCase {
 		] );
 
 		$get_var = $this->get_calls( 'get_var' );
-		$this->assertNotEmpty( $get_var );
-		$this->assertStringContainsString( 'FOR UPDATE', $get_var[0]['args'][0] );
+		$this->assertGreaterThanOrEqual( 2, count( $get_var ), 'Expected @@in_transaction + dedup SELECT' );
+		$this->assertStringContainsString( 'FOR UPDATE', $get_var[1]['args'][0] );
 	}
 
 	// ─── enqueue() — Insert data ──────────────────────────
