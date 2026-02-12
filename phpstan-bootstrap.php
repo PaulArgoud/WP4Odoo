@@ -6,7 +6,7 @@
  * @package WP4Odoo
  */
 
-define( 'WP4ODOO_VERSION', '2.7.0' );
+define( 'WP4ODOO_VERSION', '2.7.5' );
 define( 'WP4ODOO_PLUGIN_FILE', __DIR__ . '/wp4odoo.php' );
 define( 'WP4ODOO_PLUGIN_DIR', __DIR__ . '/' );
 define( 'WP4ODOO_PLUGIN_URL', 'https://example.com/wp-content/plugins/wp4odoo/' );
@@ -521,6 +521,62 @@ if ( ! class_exists( 'Charitable' ) ) {
 
 if ( ! defined( 'SIMPLE_PAY_VERSION' ) ) {
 	define( 'SIMPLE_PAY_VERSION', '4.16.1' );
+}
+
+// ─── Sprout Invoices stubs ──────────────────────────────
+
+if ( ! class_exists( 'SI_Post_Type' ) ) {
+	class SI_Post_Type {
+		public int $id = 0;
+	}
+}
+
+if ( ! class_exists( 'SI_Invoice' ) ) {
+	class SI_Invoice extends SI_Post_Type {
+		public static function get_instance( int $id ): self {
+			$instance = new self();
+			$instance->id = $id;
+			return $instance;
+		}
+	}
+}
+
+if ( ! class_exists( 'SI_Payment' ) ) {
+	class SI_Payment extends SI_Post_Type {
+		public static function get_instance( int $id ): self {
+			$instance = new self();
+			$instance->id = $id;
+			return $instance;
+		}
+	}
+}
+
+// ─── WP-Invoice stubs ───────────────────────────────────
+
+if ( ! class_exists( 'WPI_Invoice' ) ) {
+	class WPI_Invoice {
+		/** @var array<string, mixed> */
+		public array $data = [];
+		public function load_invoice( string $args ): void {}
+	}
+}
+
+// ─── WP Crowdfunding stubs ──────────────────────────────
+
+if ( ! function_exists( 'wpneo_crowdfunding_init' ) ) {
+	function wpneo_crowdfunding_init(): void {}
+}
+
+// ─── Ecwid stubs ────────────────────────────────────────
+
+if ( ! defined( 'ECWID_PLUGIN_DIR' ) ) {
+	define( 'ECWID_PLUGIN_DIR', '/tmp/ecwid/' );
+}
+
+// ─── ShopWP stubs ───────────────────────────────────────
+
+if ( ! defined( 'SHOPWP_PLUGIN_DIR' ) ) {
+	define( 'SHOPWP_PLUGIN_DIR', '/tmp/shopwp/' );
 }
 
 // ─── WP Recipe Maker stubs ──────────────────────────────

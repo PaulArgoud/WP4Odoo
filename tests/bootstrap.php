@@ -23,7 +23,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 define( 'WP4ODOO_PLUGIN_DIR', dirname( __DIR__ ) . '/' );
-define( 'WP4ODOO_VERSION', '2.7.0' );
+define( 'WP4ODOO_VERSION', '2.7.5' );
 
 if ( ! defined( 'DAY_IN_SECONDS' ) ) {
 	define( 'DAY_IN_SECONDS', 86400 );
@@ -92,6 +92,11 @@ require_once __DIR__ . '/stubs/wprm-classes.php';
 require_once __DIR__ . '/stubs/form-classes.php';
 require_once __DIR__ . '/stubs/amelia-classes.php';
 require_once __DIR__ . '/stubs/bookly-classes.php';
+require_once __DIR__ . '/stubs/sprout-invoices-classes.php';
+require_once __DIR__ . '/stubs/wp-invoice-classes.php';
+require_once __DIR__ . '/stubs/crowdfunding-classes.php';
+require_once __DIR__ . '/stubs/ecwid-classes.php';
+require_once __DIR__ . '/stubs/shopwp-classes.php';
 require_once __DIR__ . '/stubs/learndash-classes.php';
 require_once __DIR__ . '/stubs/lifterlms-classes.php';
 require_once __DIR__ . '/stubs/wc-subscriptions-classes.php';

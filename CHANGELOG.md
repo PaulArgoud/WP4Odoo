@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.7.5] - Unreleased
+
+### Added
+- **Sprout Invoices Module** — Sprout Invoices → Odoo push sync: invoices (`sa_invoice` CPT) as Odoo invoices (`account.move` with `invoice_line_ids` One2many tuples), payments (`sa_payment` CPT) as Odoo payments (`account.payment`). SI status mapping (temp/publish→draft, complete→posted, write-off→cancel), auto-posting for completed invoices, partner resolution via client→user chain, invoice auto-sync before payment push. Exclusive group `invoicing` (priority 10). `Sprout_Invoices_Handler`, `Sprout_Invoices_Hooks` trait, 46 new unit tests
+- **WP-Invoice Module** — WP-Invoice → Odoo push sync: invoices (`wpi_object` CPT) as Odoo invoices (`account.move` with `invoice_line_ids` One2many tuples from `itemized_list`). WPI status mapping (active→draft, paid→posted, pending→draft), auto-posting for paid invoices, partner resolution from invoice user data. Exclusive group `invoicing` (priority 5, mutual exclusion with Sprout Invoices). `WP_Invoice_Handler`, `WP_Invoice_Hooks` trait, 32 new unit tests
+- **WP Crowdfunding Module** — WP Crowdfunding → Odoo push sync: crowdfunding campaigns (WC products with `wpneo_*` meta) as service products (`product.product`). Funding goal as list price, structured description with funding info (goal, end date, min pledge). Crowdfunding detection via `_wpneo_funding_goal` meta key. Independent module (coexists with WooCommerce). `Crowdfunding_Handler`, `Crowdfunding_Hooks` trait, 22 new unit tests
+- **Ecwid Module** — Ecwid → Odoo push sync via WP-Cron polling: products (`product.product`) and orders (`sale.order` with `order_line` One2many tuples) from Ecwid REST API. SHA-256 hash-based change detection (same pattern as Bookly), API credential settings (store ID + API token), partner resolution for orders via `Partner_Service`. Exclusive group `ecommerce` (priority 5). `Ecwid_Handler`, `Ecwid_Cron_Hooks` trait, 42 new unit tests
+- **ShopWP Module** — ShopWP → Odoo push sync: Shopify products synced by ShopWP (`wps_products` CPT + `shopwp_variants` custom table) as products (`product.product`). Variant price/SKU from custom table, hook-based sync on `save_post_wps_products`. Exclusive group `ecommerce` (priority 5). `ShopWP_Handler`, `ShopWP_Hooks` trait, 25 new unit tests
+
 ## [2.7.0] - 2026-02-11
 
 ### Added

@@ -2,7 +2,7 @@
 
 ## Overview
 
-Modular WordPress plugin providing bidirectional synchronization between WordPress/WooCommerce and Odoo ERP (v14+). The plugin covers 19 modules across 12 domains: CRM, Sales & Invoicing, WooCommerce, WooCommerce Subscriptions, Easy Digital Downloads, Memberships (WC Memberships + MemberPress + PMPro + RCP), Donations (GiveWP + WP Charitable + WP Simple Pay), Forms (7 plugins), WP Recipe Maker, LMS (LearnDash + LifterLMS), Booking (Amelia + Bookly), and Events (The Events Calendar + Event Tickets).
+Modular WordPress plugin providing bidirectional synchronization between WordPress/WooCommerce and Odoo ERP (v14+). The plugin covers 24 modules across 14 domains: CRM, Sales & Invoicing, WooCommerce, WooCommerce Subscriptions, Easy Digital Downloads, Memberships (WC Memberships + MemberPress + PMPro + RCP), Donations (GiveWP + WP Charitable + WP Simple Pay), Forms (7 plugins), WP Recipe Maker, LMS (LearnDash + LifterLMS), Booking (Amelia + Bookly), Events (The Events Calendar + Event Tickets), Invoicing (Sprout Invoices + WP-Invoice), and E-Commerce (WP Crowdfunding + Ecwid + ShopWP).
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────┐
@@ -28,11 +28,16 @@ Modular WordPress plugin providing bidirectional synchronization between WordPre
 │  │  Module   │ │  Module   │ │   Module   │ │  Module   │  Events      │
 │  └────┬──────┘ └────┬──────┘ └─────┬──────┘ └────┬──────┘              │
 │       │             │              │              │                     │
-│  ┌────┴──────┐ ┌────┴──────┐ ┌─────┴──────┐                            │
-│  │WC Subscr. │ │  Events   │ │    WPRM    │  Subscr., Events, Content  │
-│  │  Module   │ │ Calendar  │ │   Module   │                            │
-│  └────┬──────┘ └────┬──────┘ └─────┬──────┘                            │
-│       └─────────────┼──────────────┘                                   │
+│  ┌────┴──────┐ ┌────┴──────┐ ┌─────┴──────┐ ┌────┴──────┐              │
+│  │WC Subscr. │ │  Events   │ │    WPRM    │ │ Sprout   │  Subscr.,    │
+│  │  Module   │ │ Calendar  │ │   Module   │ │Invoices  │  Events,     │
+│  └────┬──────┘ └────┬──────┘ └─────┬──────┘ └────┬─────┘  Content,    │
+│       │             │              │              │        Invoicing   │
+│  ┌────┴──────┐ ┌────┴──────┐ ┌─────┴──────┐ ┌────┴──────┐  & More    │
+│  │WP-Invoice │ │Crowdfund. │ │   Ecwid    │ │  ShopWP   │  E-Commerce │
+│  │  Module   │ │  Module   │ │   Module   │ │  Module   │             │
+│  └────┬──────┘ └────┬──────┘ └─────┬──────┘ └────┬──────┘             │
+│       └─────────────┼──────────────┼─────────────┘                    │
 │                     ▼                                                  │
 │  ┌───────────────────────────────────────────────────────────────────┐  │
 │  │  Shared Infrastructure                                            │  │
@@ -188,7 +193,26 @@ WordPress For Odoo/
 │   │   ├── # ─── Events Calendar ──────────────────────────────
 │   │   ├── trait-events-calendar-hooks.php   # Events Calendar: hook callbacks (event save, ticket save, attendee created)
 │   │   ├── class-events-calendar-handler.php # Events Calendar: event/ticket/attendee data load + formatting
-│   │   └── class-events-calendar-module.php  # Events Calendar: push sync, dual-model (event.event / calendar.event)
+│   │   ├── class-events-calendar-module.php  # Events Calendar: push sync, dual-model (event.event / calendar.event)
+│   │   │
+│   │   ├── # ─── Invoicing (Sprout Invoices + WP-Invoice) ──
+│   │   ├── trait-sprout-invoices-hooks.php   # SI: hook callbacks (invoice save, payment)
+│   │   ├── class-sprout-invoices-handler.php # SI: invoice/payment data load, status mapping, One2many lines
+│   │   ├── class-sprout-invoices-module.php  # SI: invoicing exclusive group (priority 10), partner chain resolution
+│   │   ├── trait-wp-invoice-hooks.php        # WPI: hook callbacks (invoice save, payment success)
+│   │   ├── class-wp-invoice-handler.php      # WPI: invoice data load from WPI_Invoice, One2many lines
+│   │   ├── class-wp-invoice-module.php       # WPI: invoicing exclusive group (priority 5)
+│   │   │
+│   │   ├── # ─── E-Commerce (Crowdfunding + Ecwid + ShopWP) ─
+│   │   ├── trait-crowdfunding-hooks.php      # Crowdfunding: on_campaign_save (filters by wpneo_* meta)
+│   │   ├── class-crowdfunding-handler.php    # Crowdfunding: WC product + wpneo_* meta, funding description
+│   │   ├── class-crowdfunding-module.php     # Crowdfunding: independent (coexists with WC), single entity
+│   │   ├── trait-ecwid-cron-hooks.php        # Ecwid: WP-Cron polling, SHA-256 hash-based change detection
+│   │   ├── class-ecwid-handler.php           # Ecwid: REST API fetch, product/order data transformation
+│   │   ├── class-ecwid-module.php            # Ecwid: ecommerce exclusive group, cron-based
+│   │   ├── trait-shopwp-hooks.php            # ShopWP: on_product_save via save_post_wps_products
+│   │   ├── class-shopwp-handler.php          # ShopWP: CPT + shopwp_variants table via $wpdb
+│   │   └── class-shopwp-module.php           # ShopWP: ecommerce exclusive group, products only
 │   │
 │   ├── admin/
 │   │   ├── class-admin.php            # Admin menu, assets, activation redirect, setup notice
@@ -243,7 +267,7 @@ WordPress For Odoo/
 ├── templates/
 │   └── customer-portal.php           #   Customer portal HTML template (orders/invoices tabs)
 │
-├── tests/                             # 1525 unit tests (2359 assertions) + 26 integration tests (wp-env)
+├── tests/                             # 1692 unit tests (2590 assertions) + 26 integration tests (wp-env)
 │   ├── bootstrap.php                 #   Unit test bootstrap: constants, stub loading, plugin class requires
 │   ├── bootstrap-integration.php     #   Integration test bootstrap: loads WP test framework (wp-env)
 │   ├── stubs/
@@ -267,7 +291,12 @@ WordPress For Odoo/
 │   │   ├── pmpro-classes.php        #   PMPro_Membership_Level, MemberOrder, pmpro_getLevel
 │   │   ├── rcp-classes.php          #   RCP_Membership, RCP_Customer, RCP_Payments
 │   │   ├── wc-subscriptions-classes.php # WC_Subscriptions, WC_Subscription
-│   │   └── events-calendar-classes.php  # Tribe__Events__Main, Tribe__Tickets__Main
+│   │   ├── events-calendar-classes.php  # Tribe__Events__Main, Tribe__Tickets__Main
+│   │   ├── sprout-invoices-classes.php  # SI_Post_Type, SI_Invoice, SI_Payment
+│   │   ├── wp-invoice-classes.php       # WPI_Invoice
+│   │   ├── crowdfunding-classes.php     # wpneo_crowdfunding_init()
+│   │   ├── ecwid-classes.php            # ECWID_PLUGIN_DIR constant
+│   │   └── shopwp-classes.php           # SHOPWP_PLUGIN_DIR constant
 │   ├── Integration/                       #   wp-env integration tests (real WordPress + MySQL)
 │   │   ├── WP4Odoo_TestCase.php          #   Base test case for integration tests
 │   │   ├── DatabaseMigrationTest.php     #   7 tests for table creation, options seeding
@@ -338,7 +367,12 @@ WordPress For Odoo/
 │       ├── WCSubscriptionsModuleTest.php #  27 tests for WC_Subscriptions_Module
 │       ├── WCSubscriptionsHandlerTest.php # 40 tests for WC_Subscriptions_Handler
 │       ├── EventsCalendarModuleTest.php  # 23 tests for Events_Calendar_Module
-│       └── EventsCalendarHandlerTest.php # 30 tests for Events_Calendar_Handler
+│       ├── EventsCalendarHandlerTest.php # 30 tests for Events_Calendar_Handler
+│       ├── SproutInvoicesModuleTest.php  # 46 tests for Sprout_Invoices_Module
+│       ├── WPInvoiceModuleTest.php       # 32 tests for WP_Invoice_Module
+│       ├── CrowdfundingModuleTest.php    # 22 tests for Crowdfunding_Module
+│       ├── EcwidModuleTest.php           # 42 tests for Ecwid_Module
+│       └── ShopWPModuleTest.php          # 25 tests for ShopWP_Module
 │
 ├── uninstall.php                      # Cleanup on plugin uninstall
 │
@@ -400,13 +434,19 @@ Module_Base (abstract)
 ├── WC_Subscriptions_Module     → product.product, sale.subscription, account.move   [WP → Odoo]
 ├── Events_Calendar_Module      → event.event / calendar.event, product.product,     [WP → Odoo]
 │                                 event.registration
+├── Sprout_Invoices_Module      → account.move, account.payment                      [WP → Odoo]
+├── WP_Invoice_Module           → account.move                                       [WP → Odoo]
+├── Crowdfunding_Module         → product.product                                    [WP → Odoo]
+├── Ecwid_Module                → product.product, sale.order                        [WP → Odoo]
+├── ShopWP_Module               → product.product                                    [WP → Odoo]
 └── [Custom_Module]             → extensible via action hook
 ```
 
 **Mutual exclusivity rules:**
-- **Commerce**: WooCommerce, EDD, and Sales are mutually exclusive (all share `sale.order` + `product.template`). Priority: WC > EDD > Sales.
+- **Commerce**: WooCommerce, EDD, Sales, Ecwid, and ShopWP are mutually exclusive (all share `sale.order` / `product.product` for commerce). Priority: WC > EDD > Sales = Ecwid = ShopWP.
 - **Memberships**: WC Memberships, MemberPress, PMPro, and RCP are mutually exclusive (all target `membership.membership_line`). Priority: MemberPress (10) > RCP (12) > PMPro (15) > WC Memberships (20).
-- All other modules are independent and can coexist freely (LMS, Subscriptions, Events, Booking, Donations, Forms, WPRM).
+- **Invoicing**: Sprout Invoices and WP-Invoice are mutually exclusive (both target `account.move` for invoicing). Priority: WP-Invoice (5) > Sprout Invoices (10).
+- All other modules are independent and can coexist freely (LMS, Subscriptions, Events, Booking, Donations, Forms, WPRM, Crowdfunding).
 
 **Module_Base provides:**
 - Push/Pull orchestration: `push_to_odoo()` returns `Sync_Result` (value object with success, odoo_id, error, Error_Type), `pull_from_odoo()` returns `Sync_Result`
@@ -1077,11 +1117,94 @@ All user inputs are sanitized with:
 
 **Settings:** `sync_events`, `sync_tickets`, `sync_attendees`
 
+### Sprout Invoices — COMPLETE
+
+**Files:** `class-sprout-invoices-module.php` (push sync coordinator, uses `Sprout_Invoices_Hooks` trait), `trait-sprout-invoices-hooks.php` (hook callbacks), `class-sprout-invoices-handler.php` (invoice/payment data load, status mapping, One2many line items)
+
+**Odoo models:** `account.move` (invoices), `account.payment` (payments)
+
+**Key features:**
+- Push-only (WP → Odoo) — invoices and payments
+- Requires Sprout Invoices; `boot()` guards with `class_exists('SI_Invoice')`
+- Exclusive group `invoicing` (priority 10) — mutually exclusive with WP-Invoice
+- SI status mapping: temp/publish→draft, complete→posted, write-off→cancel
+- Auto-posting: completed invoices automatically posted via `action_post`
+- Invoice auto-sync: `ensure_entity_synced()` pushes invoice before dependent payment
+- Partner resolution chain: invoice → `_client_id` meta → client post → `_user_id` meta → WP user → `Partner_Service`
+- One2many line items from `_doc_line_items` meta with fallback to single line
+
+**Settings:** `sync_invoices`, `sync_payments`
+
+### WP-Invoice — COMPLETE
+
+**Files:** `class-wp-invoice-module.php` (push sync coordinator, uses `WP_Invoice_Hooks` trait), `trait-wp-invoice-hooks.php` (hook callbacks), `class-wp-invoice-handler.php` (invoice data load, One2many line items)
+
+**Odoo models:** `account.move` (invoices)
+
+**Key features:**
+- Push-only (WP → Odoo) — invoices
+- Requires WP-Invoice; `boot()` guards with `class_exists('WPI_Invoice')`
+- Exclusive group `invoicing` (priority 5) — mutually exclusive with Sprout Invoices
+- WPI status mapping: active→draft, paid→posted, pending→draft
+- Auto-posting: paid invoices automatically posted via `action_post`
+- Partner resolution from invoice `user_data` (user_id → WP user, fallback to email)
+- One2many line items from `itemized_list` array
+
+**Settings:** `sync_invoices`
+
+### WP Crowdfunding — COMPLETE
+
+**Files:** `class-crowdfunding-module.php` (push sync coordinator, uses `Crowdfunding_Hooks` trait), `trait-crowdfunding-hooks.php` (hook callbacks), `class-crowdfunding-handler.php` (campaign data load from WC product + meta)
+
+**Odoo models:** `product.product` (campaigns as service products)
+
+**Key features:**
+- Push-only (WP → Odoo) — campaigns only (pledges are WC orders handled by WC module)
+- Requires WP Crowdfunding; `boot()` guards with `function_exists('wpneo_crowdfunding_init')`
+- Independent module (no exclusive group) — coexists with WooCommerce
+- Crowdfunding detection via `_wpneo_funding_goal` meta key
+- Funding goal as `list_price`, structured description with funding info (goal, end date, min pledge)
+- Hook: `save_post_product` filtered by crowdfunding meta
+
+**Settings:** `sync_campaigns`
+
+### Ecwid — COMPLETE
+
+**Files:** `class-ecwid-module.php` (push sync coordinator, uses `Ecwid_Cron_Hooks` trait), `trait-ecwid-cron-hooks.php` (WP-Cron polling), `class-ecwid-handler.php` (REST API fetch, product/order data transformation)
+
+**Odoo models:** `product.product` (products), `sale.order` (orders with `order_line` One2many)
+
+**Key features:**
+- Push-only (WP → Odoo) via **WP-Cron polling** (Ecwid data lives on cloud servers)
+- Requires Ecwid; `boot()` guards with `defined('ECWID_PLUGIN_DIR')`
+- Exclusive group `ecommerce` (priority 5) — mutually exclusive with WC, EDD, Sales, ShopWP
+- SHA-256 hash-based change detection (same pattern as Bookly)
+- REST API access via `wp_remote_get` to `app.ecwid.com/api/v3/{store_id}/{endpoint}`
+- Partner resolution for orders via `Partner_Service::get_or_create()` (email from order)
+- Delete detection: products/orders no longer in API response → delete sync
+
+**Settings:** `ecwid_store_id`, `ecwid_api_token`, `sync_products`, `sync_orders`
+
+### ShopWP — COMPLETE
+
+**Files:** `class-shopwp-module.php` (push sync coordinator, uses `ShopWP_Hooks` trait), `trait-shopwp-hooks.php` (hook callbacks), `class-shopwp-handler.php` (CPT + custom table data load)
+
+**Odoo models:** `product.product` (products)
+
+**Key features:**
+- Push-only (WP → Odoo) — products only (orders stay on Shopify)
+- Requires ShopWP; `boot()` guards with `defined('SHOPWP_PLUGIN_DIR')`
+- Exclusive group `ecommerce` (priority 5) — mutually exclusive with WC, EDD, Sales, Ecwid
+- Data from `wps_products` CPT (name, description) + `shopwp_variants` custom table (price, SKU via `$wpdb`)
+- Hook: `save_post_wps_products` (fired by ShopWP during Shopify sync)
+
+**Settings:** `sync_products`
+
 ### Partner Service
 
 **File:** `class-partner-service.php`
 
-Shared service for managing WP user ↔ Odoo `res.partner` relationships. Accessible in all modules via `Module_Base::partner_service()` (lazy factory). Used by `Portal_Manager`, `WooCommerce_Module`, `EDD_Module`, `Memberships_Module`, `MemberPress_Module`, `PMPro_Module`, `RCP_Module`, `Dual_Accounting_Module_Base` (GiveWP, Charitable, SimplePay), `Booking_Module_Base` (Amelia, Bookly), `LearnDash_Module`, `LifterLMS_Module`, `WC_Subscriptions_Module`, and `Events_Calendar_Module`.
+Shared service for managing WP user ↔ Odoo `res.partner` relationships. Accessible in all modules via `Module_Base::partner_service()` (lazy factory). Used by `Portal_Manager`, `WooCommerce_Module`, `EDD_Module`, `Memberships_Module`, `MemberPress_Module`, `PMPro_Module`, `RCP_Module`, `Dual_Accounting_Module_Base` (GiveWP, Charitable, SimplePay), `Booking_Module_Base` (Amelia, Bookly), `LearnDash_Module`, `LifterLMS_Module`, `WC_Subscriptions_Module`, `Events_Calendar_Module`, `Sprout_Invoices_Module`, `WP_Invoice_Module`, and `Ecwid_Module`.
 
 **Resolution flow (3-step):**
 1. Check `wp4odoo_entity_map` for existing mapping
