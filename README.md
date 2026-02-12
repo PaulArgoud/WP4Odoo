@@ -185,11 +185,19 @@ composer install
 composer check          # Runs PHPCS + PHPUnit + PHPStan (mirrors CI)
 ```
 
-Integration tests require Docker — see CONTRIBUTING.md for the full setup.
+Integration tests require Docker.
 
-📖 [ARCHITECTURE.md](ARCHITECTURE.md) — Class diagrams, data flows, REST API endpoints, hooks & filters reference
-📋 [CONTRIBUTING.md](CONTRIBUTING.md) — Development setup, coding standards, testing, translations, commit conventions, PR checklist
-📝 [CHANGELOG.md](CHANGELOG.md) — Version history
+- 📖 [ARCHITECTURE.md](ARCHITECTURE.md) — Class diagrams, data flows, REST API endpoints, hooks & filters reference
+- 📋 [CONTRIBUTING.md](CONTRIBUTING.md) — Development setup, coding standards, testing, translations, commit conventions, PR checklist
+- 📝 [CHANGELOG.md](CHANGELOG.md) — Version history
+
+## Support the Project
+
+WP4Odoo is free and open source. If it saves you time or money, consider throwing a few bucks my way — it keeps the lights on and the commits flowing.
+
+[![Sponsor on GitHub](https://img.shields.io/badge/Sponsor-♥-ea4aaa?logo=github)](https://github.com/sponsors/PaulArgoud)
+[![Buy Me a Coffee](https://img.shields.io/badge/Buy%20me%20a%20coffee-☕-FFDD00?logo=buymeacoffee&logoColor=black)](https://buymeacoffee.com/paulargoud)
+[![PayPal](https://img.shields.io/badge/PayPal-💸-0070BA?logo=paypal)](https://paypal.me/paulargoud)
 
 ## License
 
