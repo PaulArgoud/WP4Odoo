@@ -234,7 +234,7 @@ WordPress For Odoo/
 │   ├── class-sync-queue-repository.php # DB access for wp4odoo_sync_queue (atomic dedup via transaction)
 │   ├── class-partner-service.php       # Shared res.partner lookup/creation service
 │   ├── class-failure-notifier.php     # Admin email notification on consecutive sync failures
-│   ├── class-circuit-breaker.php     # Circuit breaker for Odoo connectivity (transient-based, 3-state, probe mutex)
+│   ├── class-circuit-breaker.php     # Circuit breaker for Odoo connectivity (3-state, advisory lock probe mutex)
 │   ├── class-sync-engine.php          # Queue processor, batch operations, advisory locking, smart retry (Error_Type)
 │   ├── class-queue-manager.php        # Helpers for enqueuing sync jobs
 │   ├── class-query-service.php        # Paginated queries (queue jobs, log entries) — injectable instance
@@ -268,7 +268,7 @@ WordPress For Odoo/
 ├── templates/
 │   └── customer-portal.php           #   Customer portal HTML template (orders/invoices tabs)
 │
-├── tests/                             # 1823 unit tests (2838 assertions) + 26 integration tests (wp-env)
+├── tests/                             # 1832 unit tests (2855 assertions) + 26 integration tests (wp-env)
 │   ├── bootstrap.php                 #   Unit test bootstrap: constants, stub loading, plugin class requires
 │   ├── bootstrap-integration.php     #   Integration test bootstrap: loads WP test framework (wp-env)
 │   ├── stubs/
@@ -306,7 +306,7 @@ WordPress For Odoo/
 │   │   └── SyncEngineLockTest.php        #   2 tests for advisory locking
 │   └── Unit/
 │       ├── AdminAjaxTest.php             #   36 tests for Admin_Ajax (15 handlers)
-│       ├── EntityMapRepositoryTest.php  #   19 tests for Entity_Map_Repository
+│       ├── EntityMapRepositoryTest.php  #   25 tests for Entity_Map_Repository
 │       ├── FieldMapperTest.php          #   49 tests for Field_Mapper
 │       ├── ModuleBaseHashTest.php       #   6 tests for generate_sync_hash() + dependency status
 │       ├── SettingsRepositoryTest.php  #   30 tests for Settings_Repository
@@ -334,7 +334,7 @@ WordPress For Odoo/
 │       ├── InvoiceHelperTest.php        #   14 tests for Invoice_Helper
 │       ├── MembershipsModuleTest.php    #   19 tests for Memberships_Module
 │       ├── MembershipHandlerTest.php    #   18 tests for Membership_Handler
-│       ├── FailureNotifierTest.php      #   12 tests for Failure_Notifier
+│       ├── FailureNotifierTest.php      #   14 tests for Failure_Notifier
 │       ├── CPTHelperTest.php            #   11 tests for CPT_Helper
 │       ├── SalesModuleTest.php          #   23 tests for Sales_Module
 │       ├── FormHandlerTest.php         #   27 tests for Form_Handler
@@ -597,7 +597,7 @@ $qs->get_queue_jobs( $page, $per_page, $status );
 $qs->get_log_entries( $filters, $page, $per_page );
 ```
 
-Uses `SQL_CALC_FOUND_ROWS` to retrieve both results and total count in a single query, avoiding double-query overhead. Injected into consumers (`Admin_Ajax`, `CLI`) via constructor. Testable without global state.
+Uses separate `COUNT(*)` + `SELECT` queries for MySQL 8.0+ / MariaDB 10.5+ compatibility (`SQL_CALC_FOUND_ROWS` deprecated since MySQL 8.0.17). Injected into consumers (`Admin_Ajax`, `CLI`) via constructor. Testable without global state.
 
 ### 7. Error Handling Convention
 

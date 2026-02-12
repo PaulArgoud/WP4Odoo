@@ -27,9 +27,7 @@ Modular WordPress plugin that creates a seamless, bidirectional bridge between W
 
 PHP 8.2+, MySQL 8.0+ / MariaDB 10.5+, WordPress 6.0+, Odoo 17+ (JSON-RPC) or 14+ (XML-RPC).
 
-## Compatibility
-
-### By Odoo version and hosting type
+### Odoo Compatibility
 
 | Versions | On-Premise | Odoo.sh   | Online  | One App Free |
 |:---------|:----------:|:---------:|:-------:|:------------:|
@@ -130,14 +128,16 @@ Each Odoo domain is encapsulated in an independent module extending `Module_Base
 
 > ⁴ **[One App Free](https://www.odoo.com/pricing)**: with CRM as your free app, CRM and Forms modules work. With Invoicing as your free app, GiveWP, WP Charitable, WP Simple Pay, Sprout Invoices, and WP-Invoice work. With Calendar as your free app, Amelia, Bookly, and Events Calendar (fallback mode) work (partial — no Contacts). Sales, WooCommerce, WooCommerce Subscriptions (Enterprise), Memberships (MemberPress/PMPro/RCP/WC Memberships), LMS (LearnDash/LifterLMS), Ecwid, and WP Recipe Maker require 2–4 apps.
 
-## Shortcodes
+## Usage
+
+### Shortcodes
 
 | Shortcode                   | Description                                                                                       |
 |-----------------------------|---------------------------------------------------------------------------------------------------|
 | `[wp4odoo_customer_portal]` | Customer portal with Orders and Invoices tabs (requires logged-in user linked to an Odoo partner) |
 | `[wp4odoo_lead_form]`       | Lead capture form with AJAX submission, creates `crm.lead` in Odoo                                |
 
-## WP-CLI
+### WP-CLI
 
 ```bash
 wp wp4odoo status                    # Connection info, queue stats, modules
@@ -154,13 +154,13 @@ wp wp4odoo module enable crm         # Enable a module
 wp wp4odoo module disable crm        # Disable a module
 ```
 
-## REST API & Hooks
+### REST API & Hooks
 
 The plugin exposes 3 REST endpoints under `wp-json/wp4odoo/v1/` (webhook receiver, health check, manual sync trigger) and 6 action hooks + 20 data filters for customization.
 
 See [ARCHITECTURE.md — REST API](ARCHITECTURE.md#rest-api) for endpoints, authentication, and rate limiting details, and [Hooks & Filters](ARCHITECTURE.md#hooks--filters) for the complete reference with parameters and naming conventions.
 
-## Architecture
+## Architecture & Development
 
 ![WP4ODOO Architecture](assets/images/architecture-v2.svg)
 
@@ -182,10 +182,6 @@ All synchronization goes through a persistent database queue — no Odoo API cal
 - All inputs sanitized (`sanitize_text_field`, `esc_url_raw`, `absint`)
 - `index.php` in every subdirectory to prevent directory listing
 
-## Development
-
-For detailed architecture, class diagrams, and data flows, see [ARCHITECTURE.md](ARCHITECTURE.md). For version history, see [CHANGELOG.md](CHANGELOG.md).
-
 ### Quick Check
 
 ```bash
@@ -194,6 +190,8 @@ composer check          # Runs PHPCS + PHPUnit + PHPStan (mirrors CI)
 ```
 
 Integration tests require Docker — see [CONTRIBUTING.md](CONTRIBUTING.md#testing) for the full setup.
+
+For detailed architecture, class diagrams, and data flows, see [ARCHITECTURE.md](ARCHITECTURE.md). For version history, see [CHANGELOG.md](CHANGELOG.md).
 
 ### Contributing
 

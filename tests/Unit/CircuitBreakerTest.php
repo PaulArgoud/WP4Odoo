@@ -10,13 +10,19 @@ use PHPUnit\Framework\TestCase;
  * Unit tests for Circuit_Breaker.
  *
  * Verifies circuit state transitions: closed → open → half-open → closed,
- * threshold counting, and recovery delay behaviour.
+ * threshold counting, recovery delay behaviour, and probe mutex atomicity.
  */
 class CircuitBreakerTest extends TestCase {
 
 	private Circuit_Breaker $breaker;
 
 	protected function setUp(): void {
+		global $wpdb;
+		$wpdb = new \WP_DB_Stub();
+
+		// Advisory lock acquired by default (probe mutex).
+		$wpdb->get_var_return = '1';
+
 		$GLOBALS['_wp_transients'] = [];
 
 		$logger        = new \WP4Odoo\Logger( 'test' );
@@ -72,6 +78,37 @@ class CircuitBreakerTest extends TestCase {
 		$GLOBALS['_wp_transients']['wp4odoo_cb_opened_at'] = time() - 301;
 
 		$this->assertTrue( $this->breaker->is_available() );
+	}
+
+	public function test_second_probe_blocked_by_mutex(): void {
+		$this->breaker->record_failure();
+		$this->breaker->record_failure();
+		$this->breaker->record_failure();
+
+		// Simulate recovery delay.
+		$GLOBALS['_wp_transients']['wp4odoo_cb_opened_at'] = time() - 301;
+
+		// First probe acquires the mutex.
+		$this->assertTrue( $this->breaker->is_available() );
+
+		// Second probe is blocked (KEY_PROBE transient now set).
+		$this->assertFalse( $this->breaker->is_available() );
+	}
+
+	public function test_probe_blocked_when_advisory_lock_unavailable(): void {
+		global $wpdb;
+
+		$this->breaker->record_failure();
+		$this->breaker->record_failure();
+		$this->breaker->record_failure();
+
+		// Simulate recovery delay.
+		$GLOBALS['_wp_transients']['wp4odoo_cb_opened_at'] = time() - 301;
+
+		// Advisory lock NOT acquired (another process holds it).
+		$wpdb->get_var_return = '0';
+
+		$this->assertFalse( $this->breaker->is_available() );
 	}
 
 	// ─── Recovery ────────────────────────────────────────

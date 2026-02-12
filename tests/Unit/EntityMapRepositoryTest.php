@@ -204,6 +204,88 @@ class EntityMapRepositoryTest extends TestCase {
 		$this->assertStringContainsString( '%d,%d', $prepare[0]['args'][0] );
 	}
 
+	// ─── Batch dedup + cache optimization ───────────────
+
+	public function test_get_wp_ids_batch_deduplicates_input(): void {
+		$this->wpdb->get_results_return = [
+			(object) [ 'odoo_id' => '100', 'wp_id' => '10' ],
+		];
+
+		$result = $this->repo->get_wp_ids_batch( 'woocommerce', 'product', [ 100, 100, 100 ] );
+
+		$this->assertSame( [ 100 => 10 ], $result );
+
+		// Only one chunk query should be generated (3 dupes → 1 unique ID).
+		$prepare = $this->get_calls( 'prepare' );
+		$this->assertNotEmpty( $prepare );
+		$this->assertStringContainsString( '%d', $prepare[0]['args'][0] );
+		$this->assertStringNotContainsString( '%d,%d', $prepare[0]['args'][0] );
+	}
+
+	public function test_get_wp_ids_batch_uses_cache_hits(): void {
+		// Pre-populate cache via a single lookup.
+		$this->wpdb->get_var_return = '10';
+		$this->repo->get_wp_id( 'woocommerce', 'product', 100 );
+
+		// Reset calls to track only the batch query.
+		$this->wpdb->calls              = [];
+		$this->wpdb->get_results_return = [
+			(object) [ 'odoo_id' => '200', 'wp_id' => '20' ],
+		];
+
+		$result = $this->repo->get_wp_ids_batch( 'woocommerce', 'product', [ 100, 200 ] );
+
+		// 100 from cache, 200 from DB.
+		$this->assertSame( [ 100 => 10, 200 => 20 ], $result );
+
+		// DB query should only contain ID 200 (100 was cached).
+		$prepare = $this->get_calls( 'prepare' );
+		$this->assertNotEmpty( $prepare );
+		$this->assertStringNotContainsString( '%d,%d', $prepare[0]['args'][0] );
+	}
+
+	public function test_get_wp_ids_batch_all_cached_skips_db(): void {
+		// Pre-populate cache.
+		$this->wpdb->get_var_return = '10';
+		$this->repo->get_wp_id( 'woocommerce', 'product', 100 );
+
+		$this->wpdb->calls = [];
+
+		$result = $this->repo->get_wp_ids_batch( 'woocommerce', 'product', [ 100 ] );
+
+		$this->assertSame( [ 100 => 10 ], $result );
+
+		// No DB queries should have been made.
+		$prepare = $this->get_calls( 'prepare' );
+		$this->assertEmpty( $prepare );
+	}
+
+	public function test_get_odoo_ids_batch_deduplicates_input(): void {
+		$this->wpdb->get_results_return = [
+			(object) [ 'wp_id' => '10', 'odoo_id' => '100' ],
+		];
+
+		$result = $this->repo->get_odoo_ids_batch( 'woocommerce', 'product', [ 10, 10, 10 ] );
+
+		$this->assertSame( [ 10 => 100 ], $result );
+	}
+
+	public function test_get_odoo_ids_batch_uses_cache_hits(): void {
+		// Pre-populate cache via a single lookup.
+		$this->wpdb->get_var_return = '100';
+		$this->repo->get_odoo_id( 'woocommerce', 'product', 10 );
+
+		$this->wpdb->calls              = [];
+		$this->wpdb->get_results_return = [
+			(object) [ 'wp_id' => '20', 'odoo_id' => '200' ],
+		];
+
+		$result = $this->repo->get_odoo_ids_batch( 'woocommerce', 'product', [ 10, 20 ] );
+
+		// 10 from cache, 20 from DB.
+		$this->assertSame( [ 10 => 100, 20 => 200 ], $result );
+	}
+
 	// ─── get_module_entity_mappings() ────────────────────
 
 	public function test_get_module_entity_mappings_returns_indexed_map(): void {

@@ -91,17 +91,60 @@ class Circuit_Breaker {
 		}
 
 		if ( ( time() - $opened_at ) >= self::RECOVERY_DELAY ) {
-			// Only allow one probe batch at a time to avoid overwhelming Odoo during recovery.
-			if ( false !== get_transient( self::KEY_PROBE ) ) {
+			if ( ! $this->try_acquire_probe() ) {
 				return false;
 			}
-			set_transient( self::KEY_PROBE, 1, self::PROBE_TTL );
 
 			$this->logger->info( 'Circuit breaker half-open: allowing probe batch.' );
 			return true;
 		}
 
 		return false;
+	}
+
+	/**
+	 * Atomically acquire the probe mutex.
+	 *
+	 * Uses a MySQL advisory lock to prevent TOCTOU races where
+	 * multiple processes see KEY_PROBE as empty and all start
+	 * probe batches simultaneously. Same proven pattern as
+	 * Sync_Engine's queue processing lock.
+	 *
+	 * @return bool True if this process acquired the probe slot.
+	 */
+	private function try_acquire_probe(): bool {
+		// Fast path: if probe transient is already set, skip the lock.
+		if ( false !== get_transient( self::KEY_PROBE ) ) {
+			return false;
+		}
+
+		global $wpdb;
+
+		// Non-blocking advisory lock (timeout = 0).
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+		$locked = $wpdb->get_var(
+			$wpdb->prepare( 'SELECT GET_LOCK( %s, %d )', 'wp4odoo_cb_probe', 0 )
+		);
+
+		if ( '1' !== (string) $locked ) {
+			return false;
+		}
+
+		try {
+			// Double-check under lock: another process may set the transient
+			// between our fast-path check and lock acquisition.
+			if ( false !== get_transient( self::KEY_PROBE ) ) { // @phpstan-ignore notIdentical.alwaysFalse
+				return false;
+			}
+
+			set_transient( self::KEY_PROBE, 1, self::PROBE_TTL );
+			return true;
+		} finally {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->get_var(
+				$wpdb->prepare( 'SELECT RELEASE_LOCK( %s )', 'wp4odoo_cb_probe' )
+			);
+		}
 	}
 
 	/**

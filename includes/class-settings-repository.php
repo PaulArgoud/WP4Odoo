@@ -45,11 +45,13 @@ class Settings_Repository {
 	];
 
 	private const DEFAULTS_SYNC = [
-		'direction'     => 'bidirectional',
-		'conflict_rule' => 'newest_wins',
-		'batch_size'    => 50,
-		'sync_interval' => 'wp4odoo_five_minutes',
-		'auto_sync'     => false,
+		'direction'         => 'bidirectional',
+		'conflict_rule'     => 'newest_wins',
+		'batch_size'        => 50,
+		'sync_interval'     => 'wp4odoo_five_minutes',
+		'auto_sync'         => false,
+		'failure_threshold' => 5,
+		'failure_cooldown'  => 3600,
 	];
 
 	private const DEFAULTS_LOG = [
@@ -124,6 +126,30 @@ class Settings_Repository {
 		}
 
 		return $merged;
+	}
+
+	/**
+	 * Get the failure notification threshold.
+	 *
+	 * Number of consecutive batch failures before sending admin email.
+	 *
+	 * @return int Threshold (minimum 1).
+	 */
+	public function get_failure_threshold(): int {
+		$sync = $this->get_sync_settings();
+		return max( 1, (int) ( $sync['failure_threshold'] ?? 5 ) );
+	}
+
+	/**
+	 * Get the failure notification cooldown in seconds.
+	 *
+	 * Minimum interval between admin notification emails.
+	 *
+	 * @return int Cooldown seconds (minimum 60).
+	 */
+	public function get_failure_cooldown(): int {
+		$sync = $this->get_sync_settings();
+		return max( 60, (int) ( $sync['failure_cooldown'] ?? 3600 ) );
 	}
 
 	// ── Log settings ───────────────────────────────────────

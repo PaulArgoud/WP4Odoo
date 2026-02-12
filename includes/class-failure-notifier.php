@@ -22,16 +22,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Failure_Notifier {
 
 	/**
-	 * Number of consecutive batch failures before sending a notification.
-	 */
-	private const THRESHOLD = 5;
-
-	/**
-	 * Minimum interval between notification emails (seconds).
-	 */
-	private const COOLDOWN = 3600;
-
-	/**
 	 * Logger instance.
 	 *
 	 * @var Logger
@@ -84,7 +74,7 @@ class Failure_Notifier {
 		$consecutive += $failures;
 		$this->settings->save_consecutive_failures( $consecutive );
 
-		if ( $consecutive < self::THRESHOLD ) {
+		if ( $consecutive < $this->settings->get_failure_threshold() ) {
 			return;
 		}
 
@@ -99,7 +89,7 @@ class Failure_Notifier {
 	 */
 	private function maybe_send( int $consecutive ): void {
 		$last_email = $this->settings->get_last_failure_email();
-		if ( ( time() - $last_email ) < self::COOLDOWN ) {
+		if ( ( time() - $last_email ) < $this->settings->get_failure_cooldown() ) {
 			return;
 		}
 

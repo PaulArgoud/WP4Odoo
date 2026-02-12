@@ -38,11 +38,11 @@ trait Events_Calendar_Hooks {
 			return;
 		}
 
-		if ( \wp_is_post_revision( $post_id ) || \wp_is_post_autosave( $post_id ) ) {
+		if ( wp_is_post_revision( $post_id ) || wp_is_post_autosave( $post_id ) ) {
 			return;
 		}
 
-		if ( 'tribe_events' !== \get_post_type( $post_id ) ) {
+		if ( 'tribe_events' !== get_post_type( $post_id ) ) {
 			return;
 		}
 
@@ -68,7 +68,7 @@ trait Events_Calendar_Hooks {
 			return;
 		}
 
-		if ( \wp_is_post_revision( $post_id ) || \wp_is_post_autosave( $post_id ) ) {
+		if ( wp_is_post_revision( $post_id ) || wp_is_post_autosave( $post_id ) ) {
 			return;
 		}
 

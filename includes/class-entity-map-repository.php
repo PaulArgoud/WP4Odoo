@@ -129,12 +129,33 @@ class Entity_Map_Repository {
 			return [];
 		}
 
+		// Deduplicate input IDs.
+		$odoo_ids = array_values( array_unique( array_map( 'intval', $odoo_ids ) ) );
+
+		// Collect cache hits before querying DB.
+		$map      = [];
+		$uncached = [];
+
+		foreach ( $odoo_ids as $oid ) {
+			$cache_key = "{$module}:{$entity_type}:odoo:{$oid}";
+			if ( array_key_exists( $cache_key, $this->cache ) ) {
+				if ( null !== $this->cache[ $cache_key ] ) {
+					$map[ $oid ] = $this->cache[ $cache_key ];
+				}
+			} else {
+				$uncached[] = $oid;
+			}
+		}
+
+		if ( empty( $uncached ) ) {
+			return $map;
+		}
+
 		global $wpdb;
 
 		$table = $wpdb->prefix . 'wp4odoo_entity_map';
-		$map   = [];
 
-		foreach ( array_chunk( $odoo_ids, self::BATCH_CHUNK_SIZE ) as $chunk ) {
+		foreach ( array_chunk( $uncached, self::BATCH_CHUNK_SIZE ) as $chunk ) {
 			$placeholders = implode( ',', array_fill( 0, count( $chunk ), '%d' ) );
 			$prepare_args = array_merge( [ $module, $entity_type ], array_map( 'intval', $chunk ) );
 
@@ -175,12 +196,33 @@ class Entity_Map_Repository {
 			return [];
 		}
 
+		// Deduplicate input IDs.
+		$wp_ids = array_values( array_unique( array_map( 'intval', $wp_ids ) ) );
+
+		// Collect cache hits before querying DB.
+		$map      = [];
+		$uncached = [];
+
+		foreach ( $wp_ids as $wid ) {
+			$cache_key = "{$module}:{$entity_type}:wp:{$wid}";
+			if ( array_key_exists( $cache_key, $this->cache ) ) {
+				if ( null !== $this->cache[ $cache_key ] ) {
+					$map[ $wid ] = $this->cache[ $cache_key ];
+				}
+			} else {
+				$uncached[] = $wid;
+			}
+		}
+
+		if ( empty( $uncached ) ) {
+			return $map;
+		}
+
 		global $wpdb;
 
 		$table = $wpdb->prefix . 'wp4odoo_entity_map';
-		$map   = [];
 
-		foreach ( array_chunk( $wp_ids, self::BATCH_CHUNK_SIZE ) as $chunk ) {
+		foreach ( array_chunk( $uncached, self::BATCH_CHUNK_SIZE ) as $chunk ) {
 			$placeholders = implode( ',', array_fill( 0, count( $chunk ), '%d' ) );
 			$prepare_args = array_merge( [ $module, $entity_type ], array_map( 'intval', $chunk ) );
 

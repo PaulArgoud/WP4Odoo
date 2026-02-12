@@ -564,6 +564,17 @@ abstract class Module_Base {
 	}
 
 	/**
+	 * Flush the in-memory field mapping cache.
+	 *
+	 * Useful after bulk operations or when mappings are changed at runtime.
+	 *
+	 * @return void
+	 */
+	public function flush_mapping_cache(): void {
+		$this->mapping_cache = [];
+	}
+
+	/**
 	 * Get module settings from wp_options.
 	 *
 	 * @return array

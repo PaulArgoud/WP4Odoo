@@ -114,6 +114,33 @@ class FailureNotifierTest extends TestCase {
 		$this->assertCount( 2, $GLOBALS['_wp_mail_calls'] );
 	}
 
+	// ─── Configurable thresholds ────────────────────────────
+
+	public function test_custom_threshold_changes_trigger_point(): void {
+		// Set a custom threshold of 3 (instead of default 5).
+		update_option( 'wp4odoo_sync_settings', [ 'failure_threshold' => 3 ] );
+
+		$this->notifier->check( 0, 3 );
+
+		$this->assertCount( 1, $GLOBALS['_wp_mail_calls'] );
+	}
+
+	public function test_custom_cooldown_changes_wait_period(): void {
+		// Set a custom cooldown of 120 seconds (instead of default 3600).
+		update_option( 'wp4odoo_sync_settings', [ 'failure_cooldown' => 120 ] );
+
+		// First email at threshold.
+		$this->notifier->check( 0, 5 );
+		$this->assertCount( 1, $GLOBALS['_wp_mail_calls'] );
+
+		// Set last email to 121 seconds ago (past short cooldown).
+		$GLOBALS['_wp_options']['wp4odoo_last_failure_email'] = time() - 121;
+
+		// More failures → new email (cooldown expired).
+		$this->notifier->check( 0, 3 );
+		$this->assertCount( 2, $GLOBALS['_wp_mail_calls'] );
+	}
+
 	// ─── Edge cases ──────────────────────────────────────────
 
 	public function test_no_email_without_admin_email(): void {

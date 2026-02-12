@@ -140,6 +140,7 @@ final class Database_Migration {
 		return [
 			1 => [ self::class, 'migration_1' ],
 			2 => [ self::class, 'migration_2' ],
+			3 => [ self::class, 'migration_3' ],
 		];
 	}
 
@@ -195,6 +196,30 @@ final class Database_Migration {
 
 		if ( ! in_array( 'idx_created_at', $names, true ) ) {
 			$wpdb->query( "ALTER TABLE {$queue_table} ADD KEY idx_created_at (created_at)" );
+		}
+		// phpcs:enable
+	}
+
+	/**
+	 * Migration 3: Add composite index for dedup SELECT … FOR UPDATE.
+	 *
+	 * The dedup mechanism in Sync_Queue_Repository uses
+	 * `WHERE module AND entity_type AND direction AND status`
+	 * which requires a covering index for reliable InnoDB gap locking.
+	 *
+	 * @return void
+	 */
+	private static function migration_3(): void {
+		global $wpdb;
+
+		$queue_table = $wpdb->prefix . 'wp4odoo_sync_queue';
+
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.SchemaChange
+		$indexes = $wpdb->get_results( "SHOW INDEX FROM {$queue_table}" );
+		$names   = array_column( $indexes, 'Key_name' );
+
+		if ( ! in_array( 'idx_dedup_composite', $names, true ) ) {
+			$wpdb->query( "ALTER TABLE {$queue_table} ADD KEY idx_dedup_composite (module, entity_type, direction, status)" );
 		}
 		// phpcs:enable
 	}

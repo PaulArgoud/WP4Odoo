@@ -13,9 +13,10 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Shared by Odoo_JsonRPC and Odoo_XmlRPC transports.
  * Requires the using class to have a `Logger $logger` property.
  *
- * Fails immediately on transient errors (WP_Error, HTTP 5xx) and lets
- * the Sync_Engine handle retry via queue-level exponential backoff.
- * This avoids blocking the queue processor with in-process usleep().
+ * Does NOT retry internally — throws immediately on WP_Error or
+ * HTTP 5xx. Retry is handled by the Sync_Engine at queue level
+ * via exponential backoff (scheduled_at). This avoids blocking
+ * the queue processor with in-process usleep().
  *
  * @package WP4Odoo
  * @since   1.9.2

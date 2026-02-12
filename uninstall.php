@@ -40,6 +40,11 @@ foreach ( $cpt_types as $cpt ) {
 	}
 }
 
+// Remove plugin transients.
+// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s", '_transient_wp4odoo\_%', '_transient_timeout_wp4odoo\_%' ) );
+
 // Clear scheduled cron events.
 wp_clear_scheduled_hook( 'wp4odoo_scheduled_sync' );
 wp_clear_scheduled_hook( 'wp4odoo_bookly_poll' );
+wp_clear_scheduled_hook( 'wp4odoo_ecwid_poll' );

@@ -12,10 +12,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Webhook_Handler rate limiter** — Switched from `get_transient()` / `set_transient()` to `wp_cache_get()` / `wp_cache_set()` with a non-persistent cache group, avoiding a database write on every webhook request when no persistent object cache is configured
 - **Module_Test_Case** — Added centralized `reset_static_caches()` method calling `Logger::reset_cache()` and `Odoo_Auth::flush_credentials_cache()`. Non-module tests (OdooAuthTest, CLITest, AdminAjaxTest, LoggerTest) now delegate to this single method instead of duplicating individual flush calls
 - **ARCHITECTURE.md** — Documented `handler_*()` vs `get_*()` abstract method naming convention in intermediate base classes
+- **Circuit_Breaker** — Replaced TOCTOU-prone `get_transient()` + `set_transient()` probe mutex with atomic MySQL advisory lock (`GET_LOCK`) and double-checked locking pattern, preventing duplicate probe batches during recovery
+- **Entity_Map_Repository** — `get_wp_ids_batch()` and `get_odoo_ids_batch()` now deduplicate input IDs and serve cache hits before querying the database, reducing unnecessary SQL queries during batch operations
+- **Failure_Notifier** — Threshold and cooldown are now configurable via `failure_threshold` and `failure_cooldown` in sync settings (defaults: 5 failures, 3600 s cooldown), replacing hardcoded constants
+- **Events_Calendar_Hooks** — Removed unnecessary `\` global function prefix for consistency with all other hook traits
+- **Retryable_Http** — Clarified docblock to explicitly state no internal retry
+- **CI** — Added Composer dependency caching (`actions/cache@v4`) to `test` and `coverage` jobs; Codecov `fail_ci_if_error` set to `true`
 
 ### Added
 - `wp_cache_get()` / `wp_cache_set()` / `wp_cache_delete()` stubs for unit tests
 - MySQL 8.0+ / MariaDB 10.5+ added to README.md requirements
+- **Database migration 3** — `idx_dedup_composite (module, entity_type, direction, status)` index on `wp4odoo_sync_queue` for reliable InnoDB gap locking during dedup `SELECT … FOR UPDATE`
+- **Module_Base** — `flush_mapping_cache()` method to invalidate the in-memory field mapping cache after bulk operations or runtime mapping changes
+- **Settings_Repository** — `get_failure_threshold()` and `get_failure_cooldown()` typed accessors
+- 9 new unit tests (1832 total, 2855 assertions): circuit breaker probe mutex atomicity, entity map batch dedup/cache, configurable failure thresholds
+
+### Fixed
+- **uninstall.php** — Added cleanup of `_transient_wp4odoo_%` and `_transient_timeout_wp4odoo_%` rows; added missing `wp4odoo_ecwid_poll` cron unhook
 
 ## [2.9.0] - 2026-02-12
 
