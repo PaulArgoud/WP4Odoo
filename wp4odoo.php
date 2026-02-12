@@ -2,8 +2,8 @@
 /**
  * Plugin Name: WordPress For Odoo
  * Plugin URI: https://github.com/PaulArgoud/wordpress-for-odoo
- * Description: Modular WordPress/WooCommerce sync with Odoo ERP (v14+). 19 modules — CRM, Sales, WooCommerce, WooCommerce Subscriptions, EDD, Memberships, MemberPress, Restrict Content Pro, Paid Memberships Pro, GiveWP, Charitable, WP Simple Pay, WP Recipe Maker, Forms (GF/WPForms/CF7/Fluent/Formidable/Ninja/Forminator), Amelia, Bookly, LearnDash, LifterLMS, The Events Calendar — covering contacts, leads, orders, invoices, products, donations, bookings, recipes, LMS courses, recurring subscriptions, events. Async queue, webhooks, customer portal, WP-CLI, encrypted credentials.
- * Version: 2.9.5
+ * Description: Modular WordPress/WooCommerce sync with Odoo ERP (v14+). 24 modules — CRM, Sales, WooCommerce, WooCommerce Subscriptions, EDD, Ecwid, ShopWP, WP Crowdfunding, Memberships, MemberPress, Restrict Content Pro, Paid Memberships Pro, GiveWP, Charitable, WP Simple Pay, WP Recipe Maker, Forms (GF/WPForms/CF7/Fluent/Formidable/Ninja/Forminator), Amelia, Bookly, LearnDash, LifterLMS, The Events Calendar, Sprout Invoices, WP-Invoice — covering contacts, leads, orders, invoices, products, donations, bookings, recipes, LMS courses, recurring subscriptions, events. Async queue, webhooks, customer portal, WP-CLI, encrypted credentials.
+ * Version: 3.0.0
  * Requires at least: 6.0
  * Requires PHP: 8.2
  * Author: Paul ARGOUD
@@ -21,7 +21,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Plugin constants
-define( 'WP4ODOO_VERSION', '2.9.5' );
+define( 'WP4ODOO_VERSION', '3.0.0' );
 define( 'WP4ODOO_PLUGIN_FILE', __FILE__ );
 define( 'WP4ODOO_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'WP4ODOO_PLUGIN_URL', plugin_dir_url( __FILE__ ) );

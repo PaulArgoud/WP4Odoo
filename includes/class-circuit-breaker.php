@@ -10,9 +10,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Circuit breaker for Odoo connectivity.
  *
- * Tracks consecutive all-fail batches and pauses queue processing
+ * Tracks consecutive high-failure batches and pauses queue processing
  * when Odoo appears unreachable, avoiding wasted RPC calls and
- * log flooding during outages.
+ * log flooding during outages. Uses ratio-based threshold (80%+
+ * failures) instead of binary all-or-nothing detection.
  *
  * States:
  * - Closed (normal): processing proceeds normally.
@@ -35,6 +36,14 @@ class Circuit_Breaker {
 	 * Seconds to wait before allowing a probe batch (half-open state).
 	 */
 	private const RECOVERY_DELAY = 300;
+
+	/**
+	 * Failure ratio threshold for considering a batch as "failed".
+	 *
+	 * When 80%+ of jobs in a batch fail, the batch counts as a failure
+	 * even if a few jobs succeeded. This detects partial degradation.
+	 */
+	private const FAILURE_RATIO = 0.8;
 
 	/**
 	 * Transient key for consecutive batch failure count.
@@ -148,7 +157,33 @@ class Circuit_Breaker {
 	}
 
 	/**
-	 * Record a successful batch (at least one job succeeded).
+	 * Record a batch outcome using failure ratio.
+	 *
+	 * A batch is considered "failed" when the failure ratio exceeds the
+	 * threshold (default 80%). This catches partial degradation where a
+	 * single lucky success would otherwise reset the counter.
+	 *
+	 * @param int $successes Number of successful jobs in the batch.
+	 * @param int $failures  Number of failed jobs in the batch.
+	 * @return void
+	 */
+	public function record_batch( int $successes, int $failures ): void {
+		$total = $successes + $failures;
+		if ( 0 === $total ) {
+			return;
+		}
+
+		$failure_ratio = $failures / $total;
+
+		if ( $failure_ratio >= self::FAILURE_RATIO ) {
+			$this->record_failure( $successes, $failures );
+		} else {
+			$this->record_success();
+		}
+	}
+
+	/**
+	 * Record a successful batch (failure ratio below threshold).
 	 *
 	 * Resets the failure counter and closes the circuit if it was open.
 	 *
@@ -165,24 +200,28 @@ class Circuit_Breaker {
 	}
 
 	/**
-	 * Record a failed batch (zero successes, one or more failures).
+	 * Record a failed batch (failure ratio at or above threshold).
 	 *
 	 * Increments the failure counter and opens the circuit when the
-	 * threshold is reached.
+	 * consecutive failure threshold is reached.
 	 *
+	 * @param int $successes Batch successes (for logging).
+	 * @param int $failures  Batch failures (for logging).
 	 * @return void
 	 */
-	public function record_failure(): void {
-		$failures = (int) get_transient( self::KEY_FAILURES ) + 1;
-		set_transient( self::KEY_FAILURES, $failures, HOUR_IN_SECONDS );
+	public function record_failure( int $successes = 0, int $failures = 0 ): void {
+		$count = (int) get_transient( self::KEY_FAILURES ) + 1;
+		set_transient( self::KEY_FAILURES, $count, HOUR_IN_SECONDS );
 
-		if ( $failures >= self::FAILURE_THRESHOLD ) {
+		if ( $count >= self::FAILURE_THRESHOLD ) {
 			set_transient( self::KEY_OPENED_AT, time(), HOUR_IN_SECONDS );
 
 			$this->logger->warning(
 				'Circuit breaker opened: Odoo appears unreachable.',
 				[
-					'consecutive_batch_failures' => $failures,
+					'consecutive_batch_failures' => $count,
+					'last_batch_successes'       => $successes,
+					'last_batch_failures'        => $failures,
 					'recovery_delay_seconds'     => self::RECOVERY_DELAY,
 				]
 			);

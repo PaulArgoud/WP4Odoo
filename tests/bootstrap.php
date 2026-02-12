@@ -23,7 +23,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 define( 'WP4ODOO_PLUGIN_DIR', dirname( __DIR__ ) . '/' );
-define( 'WP4ODOO_VERSION', '2.9.5' );
+define( 'WP4ODOO_VERSION', '3.0.0' );
 
 if ( ! defined( 'DAY_IN_SECONDS' ) ) {
 	define( 'DAY_IN_SECONDS', 86400 );

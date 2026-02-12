@@ -4,6 +4,7 @@ declare( strict_types=1 );
 namespace WP4Odoo\Modules;
 
 use WP4Odoo\Module_Base;
+use WP4Odoo\Odoo_Model;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -35,7 +36,7 @@ abstract class Dual_Accounting_Module_Base extends Module_Base {
 	 * @return bool
 	 */
 	private function has_donation_model(): bool {
-		return $this->has_odoo_model( 'donation.donation', 'wp4odoo_has_donation_model' );
+		return $this->has_odoo_model( Odoo_Model::Donation, 'wp4odoo_has_donation_model' );
 	}
 
 	/**
@@ -49,9 +50,9 @@ abstract class Dual_Accounting_Module_Base extends Module_Base {
 	 */
 	private function resolve_accounting_model( string $entity_key ): void {
 		if ( $this->has_donation_model() ) {
-			$this->odoo_models[ $entity_key ] = 'donation.donation';
+			$this->odoo_models[ $entity_key ] = Odoo_Model::Donation->value;
 		} else {
-			$this->odoo_models[ $entity_key ] = 'account.move';
+			$this->odoo_models[ $entity_key ] = Odoo_Model::AccountMove->value;
 		}
 	}
 
@@ -112,7 +113,7 @@ abstract class Dual_Accounting_Module_Base extends Module_Base {
 		}
 
 		$model  = $this->odoo_models[ $entity_key ];
-		$method = 'donation.donation' === $model ? 'validate' : 'action_post';
+		$method = Odoo_Model::Donation->value === $model ? 'validate' : 'action_post';
 
 		try {
 			$this->client()->execute(
@@ -352,7 +353,7 @@ abstract class Dual_Accounting_Module_Base extends Module_Base {
 			return [];
 		}
 
-		$use_donation_model = 'donation.donation' === $this->odoo_models[ $this->get_child_entity_type() ];
+		$use_donation_model = Odoo_Model::Donation->value === $this->odoo_models[ $this->get_child_entity_type() ];
 
 		return $this->handler_load_child( $wp_id, $partner_id, $parent_odoo_id, $use_donation_model );
 	}

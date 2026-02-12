@@ -272,7 +272,7 @@ class Odoo_Auth {
 
 		try {
 			$records = $transport->execute_kw(
-				'ir.model',
+				\WP4Odoo\Odoo_Model::IrModel->value,
 				'search_read',
 				[ [ [ 'model', 'in', $models ] ] ],
 				[ 'fields' => [ 'model' ] ]

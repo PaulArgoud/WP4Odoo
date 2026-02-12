@@ -1,0 +1,160 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 700" font-family="'SF Mono','Fira Code','JetBrains Mono',monospace">
+  <defs>
+    <linearGradient id="wpBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1a1a2e"/><stop offset="100%" stop-color="#16213e"/>
+    </linearGradient>
+    <linearGradient id="odooBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#714B67"/><stop offset="100%" stop-color="#8F5C7A"/>
+    </linearGradient>
+    <linearGradient id="bidir" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#3b82f6"/><stop offset="100%" stop-color="#2563eb"/>
+    </linearGradient>
+    <linearGradient id="push" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#10b981"/><stop offset="100%" stop-color="#059669"/>
+    </linearGradient>
+    <linearGradient id="pull" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#f59e0b"/><stop offset="100%" stop-color="#d97706"/>
+    </linearGradient>
+    <linearGradient id="infra" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2c3e50"/><stop offset="100%" stop-color="#34495e"/>
+    </linearGradient>
+    <linearGradient id="client" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#e67e22"/><stop offset="100%" stop-color="#d35400"/>
+    </linearGradient>
+    <filter id="s">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#000" flood-opacity="0.35"/>
+    </filter>
+    <filter id="g">
+      <feGaussianBlur stdDeviation="2" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1100" height="700" rx="12" fill="#0d1117"/>
+
+  <!-- WordPress container -->
+  <rect x="30" y="20" width="1040" height="500" rx="10" fill="url(#wpBg)" stroke="#30363d" stroke-width="1.5" filter="url(#s)"/>
+  <text x="550" y="48" text-anchor="middle" fill="#58a6ff" font-size="15" font-weight="700" letter-spacing="3">WORDPRESS</text>
+
+  <!-- Legend -->
+  <rect x="700" y="37" width="10" height="10" rx="2" fill="url(#bidir)"/>
+  <text x="715" y="46" fill="#8b949e" font-size="9">Bidirectional</text>
+  <rect x="810" y="37" width="10" height="10" rx="2" fill="url(#push)"/>
+  <text x="825" y="46" fill="#8b949e" font-size="9">WP &#8594; Odoo</text>
+  <rect x="910" y="37" width="10" height="10" rx="2" fill="url(#pull)"/>
+  <text x="925" y="46" fill="#8b949e" font-size="9">Odoo &#8594; WP</text>
+
+  <!-- Module count -->
+  <text x="60" y="64" fill="#484f58" font-size="9" font-weight="600" letter-spacing="1">24 MODULES IN 7 CATEGORIES</text>
+
+  <!-- ═══ ROW 1: 3 category cards (310px wide) ═══ -->
+
+  <!-- E-Commerce (6) -->
+  <rect x="60" y="72" width="310" height="78" rx="7" fill="url(#bidir)" filter="url(#s)"/>
+  <text x="215" y="94" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">E-Commerce (6)</text>
+  <text x="215" y="112" text-anchor="middle" fill="rgba(255,255,255,0.6)" font-size="8.5">WC &#8596; &#183; WC Subs &#8596; &#183; EDD &#8596;</text>
+  <text x="215" y="126" text-anchor="middle" fill="rgba(255,255,255,0.6)" font-size="8.5">Ecwid &#8594; &#183; ShopWP &#8594; &#183; Crowdfunding &#8594;</text>
+
+  <!-- CRM & Forms (2) -->
+  <rect x="385" y="72" width="310" height="78" rx="7" fill="url(#bidir)" filter="url(#s)"/>
+  <text x="540" y="94" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">CRM &amp; Forms (2)</text>
+  <text x="540" y="118" text-anchor="middle" fill="rgba(255,255,255,0.6)" font-size="8.5">CRM &#8596; &#183; Forms (7 plugins) &#8594;</text>
+
+  <!-- Invoicing (3) -->
+  <rect x="710" y="72" width="310" height="78" rx="7" fill="url(#bidir)" filter="url(#s)"/>
+  <text x="865" y="94" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">Invoicing &amp; Sales (3)</text>
+  <text x="865" y="112" text-anchor="middle" fill="rgba(255,255,255,0.6)" font-size="8.5">Sales &#8592; &#183; Sprout Invoices &#8596;</text>
+  <text x="865" y="126" text-anchor="middle" fill="rgba(255,255,255,0.6)" font-size="8.5">WP-Invoice &#8594;</text>
+
+  <!-- ═══ ROW 2: 4 category cards (230px wide) ═══ -->
+
+  <!-- Memberships (4) -->
+  <rect x="60" y="170" width="230" height="78" rx="7" fill="url(#bidir)" filter="url(#s)"/>
+  <text x="175" y="192" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">Memberships (4)</text>
+  <text x="175" y="210" text-anchor="middle" fill="rgba(255,255,255,0.6)" font-size="8.5">WC Memberships &#8596;</text>
+  <text x="175" y="224" text-anchor="middle" fill="rgba(255,255,255,0.6)" font-size="8.5">MemberPress &#183; PMPro &#183; RCP &#8594;</text>
+
+  <!-- Donations (3) — all push -->
+  <rect x="305" y="170" width="230" height="78" rx="7" fill="url(#push)" filter="url(#s)"/>
+  <text x="420" y="192" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">Donations (3)</text>
+  <text x="420" y="210" text-anchor="middle" fill="rgba(255,255,255,0.6)" font-size="8.5">GiveWP &#183; Charitable</text>
+  <text x="420" y="224" text-anchor="middle" fill="rgba(255,255,255,0.6)" font-size="8.5">WP Simple Pay</text>
+
+  <!-- LMS & Content (3) -->
+  <rect x="550" y="170" width="230" height="78" rx="7" fill="url(#bidir)" filter="url(#s)"/>
+  <text x="665" y="192" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">LMS &amp; Content (3)</text>
+  <text x="665" y="210" text-anchor="middle" fill="rgba(255,255,255,0.6)" font-size="8.5">LearnDash &#8596; &#183; LifterLMS &#8596;</text>
+  <text x="665" y="224" text-anchor="middle" fill="rgba(255,255,255,0.6)" font-size="8.5">WP Recipe Maker &#8594;</text>
+
+  <!-- Booking & Events (3) -->
+  <rect x="795" y="170" width="230" height="78" rx="7" fill="url(#bidir)" filter="url(#s)"/>
+  <text x="910" y="192" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">Booking &amp; Events (3)</text>
+  <text x="910" y="210" text-anchor="middle" fill="rgba(255,255,255,0.6)" font-size="8.5">Amelia &#8596; &#183; Bookly &#8596;</text>
+  <text x="910" y="224" text-anchor="middle" fill="rgba(255,255,255,0.6)" font-size="8.5">Events Calendar &#8596;</text>
+
+  <!-- ═══ Connector to infrastructure ═══ -->
+  <line x1="550" y1="256" x2="550" y2="278" stroke="#484f58" stroke-width="2"/>
+  <polygon points="550,283 545,275 555,275" fill="#484f58"/>
+
+  <!-- ═══ CORE INFRASTRUCTURE ═══ -->
+  <rect x="60" y="288" width="980" height="155" rx="8" fill="rgba(255,255,255,0.03)" stroke="#30363d" stroke-width="1" stroke-dasharray="4,4"/>
+  <text x="1020" y="303" text-anchor="end" fill="#484f58" font-size="9" font-weight="600" letter-spacing="1">CORE</text>
+
+  <!-- Infra row 1 -->
+  <rect x="80" y="308" width="200" height="44" rx="6" fill="url(#infra)" filter="url(#s)"/>
+  <text x="180" y="327" text-anchor="middle" fill="#e6edf3" font-size="11" font-weight="700">Sync Engine</text>
+  <text x="180" y="341" text-anchor="middle" fill="rgba(255,255,255,0.45)" font-size="9">WP-Cron &#183; batch &#183; retry</text>
+
+  <rect x="310" y="308" width="200" height="44" rx="6" fill="url(#infra)" filter="url(#s)"/>
+  <text x="410" y="327" text-anchor="middle" fill="#e6edf3" font-size="11" font-weight="700">Queue Manager</text>
+  <text x="410" y="341" text-anchor="middle" fill="rgba(255,255,255,0.45)" font-size="9">enqueue &#183; dedup</text>
+
+  <rect x="540" y="308" width="200" height="44" rx="6" fill="url(#infra)" filter="url(#s)"/>
+  <text x="640" y="327" text-anchor="middle" fill="#e6edf3" font-size="11" font-weight="700">Partner Service</text>
+  <text x="640" y="341" text-anchor="middle" fill="rgba(255,255,255,0.45)" font-size="9">res.partner</text>
+
+  <rect x="770" y="308" width="200" height="44" rx="6" fill="url(#infra)" filter="url(#s)"/>
+  <text x="870" y="327" text-anchor="middle" fill="#e6edf3" font-size="11" font-weight="700">Entity Map</text>
+  <text x="870" y="341" text-anchor="middle" fill="rgba(255,255,255,0.45)" font-size="9">WP &#8596; Odoo IDs</text>
+
+  <!-- Infra row 2 -->
+  <rect x="150" y="364" width="200" height="44" rx="6" fill="url(#infra)" filter="url(#s)"/>
+  <text x="250" y="383" text-anchor="middle" fill="#e6edf3" font-size="11" font-weight="700">Field Mapper</text>
+  <text x="250" y="397" text-anchor="middle" fill="rgba(255,255,255,0.45)" font-size="9">data transform</text>
+
+  <rect x="450" y="364" width="200" height="44" rx="6" fill="url(#infra)" filter="url(#s)"/>
+  <text x="550" y="383" text-anchor="middle" fill="#e6edf3" font-size="11" font-weight="700">Webhook Handler</text>
+  <text x="550" y="397" text-anchor="middle" fill="rgba(255,255,255,0.45)" font-size="9">REST API &#183; rate limit</text>
+
+  <rect x="750" y="364" width="200" height="44" rx="6" fill="url(#infra)" filter="url(#s)"/>
+  <text x="850" y="383" text-anchor="middle" fill="#e6edf3" font-size="11" font-weight="700">Logger</text>
+  <text x="850" y="397" text-anchor="middle" fill="rgba(255,255,255,0.45)" font-size="9">DB-backed &#183; levels</text>
+
+  <!-- Lines to Odoo Client -->
+  <line x1="250" y1="408" x2="380" y2="424" stroke="#e6edf3" stroke-width="1" opacity="0.2"/>
+  <line x1="550" y1="408" x2="550" y2="424" stroke="#e6edf3" stroke-width="1" opacity="0.2"/>
+  <line x1="850" y1="408" x2="720" y2="424" stroke="#e6edf3" stroke-width="1" opacity="0.2"/>
+
+  <!-- Odoo Client -->
+  <rect x="250" y="428" width="600" height="55" rx="8" fill="url(#client)" filter="url(#s)"/>
+  <text x="550" y="446" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">Odoo Client</text>
+
+  <rect x="290" y="454" width="130" height="22" rx="4" fill="rgba(0,0,0,0.25)"/>
+  <text x="355" y="469" text-anchor="middle" fill="rgba(255,255,255,0.85)" font-size="9" font-weight="600">JSON-RPC (17+)</text>
+
+  <rect x="455" y="454" width="130" height="22" rx="4" fill="rgba(0,0,0,0.25)"/>
+  <text x="520" y="469" text-anchor="middle" fill="rgba(255,255,255,0.85)" font-size="9" font-weight="600">XML-RPC (14+)</text>
+
+  <rect x="620" y="454" width="150" height="22" rx="4" fill="rgba(0,0,0,0.15)"/>
+  <text x="695" y="469" text-anchor="middle" fill="rgba(255,255,255,0.5)" font-size="9">Retryable_Http</text>
+
+  <!-- HTTPS line -->
+  <line x1="550" y1="520" x2="550" y2="610" stroke="#e67e22" stroke-width="2.5" stroke-dasharray="6,4" filter="url(#g)"/>
+  <text x="575" y="572" fill="#e67e22" font-size="10" font-weight="600" letter-spacing="1">HTTPS</text>
+
+  <!-- Odoo ERP -->
+  <rect x="400" y="620" width="300" height="55" rx="10" fill="url(#odooBg)" filter="url(#s)"/>
+  <text x="550" y="644" text-anchor="middle" fill="#fff" font-size="15" font-weight="700">Odoo ERP</text>
+  <text x="550" y="662" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="10">v14+</text>
+</svg>

@@ -104,7 +104,7 @@ trait Module_Helpers {
 
 		try {
 			$this->client()->execute(
-				'account.move',
+				Odoo_Model::AccountMove->value,
 				'action_post',
 				[ [ $odoo_id ] ]
 			);
@@ -303,11 +303,12 @@ trait Module_Helpers {
 	 * WC Subscriptions, Dual_Accounting_Module_Base). The result is
 	 * cached in-memory for the request and in a transient (1 hour).
 	 *
-	 * @param string $model_name    Odoo model to probe (e.g. 'event.event').
-	 * @param string $transient_key WP transient key (e.g. 'wp4odoo_has_event_event').
+	 * @param Odoo_Model|string $model_name    Odoo model to probe (e.g. Odoo_Model::EventEvent).
+	 * @param string           $transient_key WP transient key (e.g. 'wp4odoo_has_event_event').
 	 * @return bool True if the model exists in the connected Odoo instance.
 	 */
-	protected function has_odoo_model( string $model_name, string $transient_key ): bool {
+	protected function has_odoo_model( Odoo_Model|string $model_name, string $transient_key ): bool {
+		$model_name = $model_name instanceof Odoo_Model ? $model_name->value : $model_name;
 		if ( isset( $this->odoo_model_cache[ $transient_key ] ) ) {
 			return $this->odoo_model_cache[ $transient_key ];
 		}
@@ -320,7 +321,7 @@ trait Module_Helpers {
 
 		try {
 			$count  = $this->client()->search_count(
-				'ir.model',
+				Odoo_Model::IrModel->value,
 				[ [ 'model', '=', $model_name ] ]
 			);
 			$result = $count > 0;

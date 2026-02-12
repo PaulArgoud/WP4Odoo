@@ -242,11 +242,9 @@ class Sync_Engine {
 
 			$this->failure_notifier->check( $this->batch_successes, $this->batch_failures );
 
-			// Update circuit breaker based on batch outcome.
-			if ( $this->batch_successes > 0 ) {
-				$this->circuit_breaker->record_success();
-			} elseif ( $this->batch_failures > 0 ) {
-				$this->circuit_breaker->record_failure();
+			// Update circuit breaker based on batch outcome (ratio-based).
+			if ( $this->batch_successes > 0 || $this->batch_failures > 0 ) {
+				$this->circuit_breaker->record_batch( $this->batch_successes, $this->batch_failures );
 			}
 		} finally {
 			$this->release_lock( $lock_name );
@@ -359,7 +357,7 @@ class Sync_Engine {
 		$should_retry = Error_Type::Transient === $error_type && $attempts < (int) $job->max_attempts;
 
 		if ( $should_retry ) {
-			$delay     = (int) ( pow( 2, $attempts ) * 60 );
+			$delay     = (int) ( pow( 2, $attempts ) * 60 ) + random_int( 0, 60 );
 			$scheduled = gmdate( 'Y-m-d H:i:s', time() + $delay );
 
 			$this->queue_repo->update_status(

@@ -157,4 +157,62 @@ class CircuitBreakerTest extends TestCase {
 		$this->assertTrue( $this->breaker->is_available() );
 		$this->assertEmpty( $GLOBALS['_wp_transients'] );
 	}
+
+	// ─── record_batch() — ratio-based ───────────────────
+
+	public function test_record_batch_below_threshold_records_success(): void {
+		// 3 failures out of 10 = 30% — well below 80% threshold.
+		$this->breaker->record_batch( 7, 3 );
+		$this->assertTrue( $this->breaker->is_available() );
+	}
+
+	public function test_record_batch_above_threshold_records_failure(): void {
+		// 9 failures out of 10 = 90% — above 80% threshold.
+		$this->breaker->record_batch( 1, 9 );
+		$this->breaker->record_batch( 1, 9 );
+		$this->breaker->record_batch( 1, 9 );
+
+		$this->assertFalse( $this->breaker->is_available() );
+	}
+
+	public function test_record_batch_at_threshold_records_failure(): void {
+		// 8 failures out of 10 = exactly 80% — at threshold, counts as failure.
+		$this->breaker->record_batch( 2, 8 );
+		$this->breaker->record_batch( 2, 8 );
+		$this->breaker->record_batch( 2, 8 );
+
+		$this->assertFalse( $this->breaker->is_available() );
+	}
+
+	public function test_record_batch_all_success_records_success(): void {
+		// 0 failures = 0% — resets counter.
+		$this->breaker->record_failure();
+		$this->breaker->record_failure();
+
+		$this->breaker->record_batch( 10, 0 );
+
+		// Two more failures should NOT open circuit (counter was reset).
+		$this->breaker->record_failure();
+		$this->breaker->record_failure();
+		$this->assertTrue( $this->breaker->is_available() );
+	}
+
+	public function test_record_batch_empty_is_noop(): void {
+		$this->breaker->record_batch( 0, 0 );
+		$this->assertTrue( $this->breaker->is_available() );
+		$this->assertEmpty( $GLOBALS['_wp_transients'] );
+	}
+
+	public function test_record_batch_mixed_below_threshold_resets_failures(): void {
+		// 2 batch failures, then a batch with 50% failure rate (below 80%).
+		$this->breaker->record_failure();
+		$this->breaker->record_failure();
+
+		$this->breaker->record_batch( 5, 5 );
+
+		// Counter should be reset — 3 more record_failure() needed to open.
+		$this->breaker->record_failure();
+		$this->breaker->record_failure();
+		$this->assertTrue( $this->breaker->is_available() );
+	}
 }

@@ -4,6 +4,7 @@ declare( strict_types=1 );
 namespace WP4Odoo\Modules;
 
 use WP4Odoo\Module_Base;
+use WP4Odoo\Odoo_Model;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -209,7 +210,7 @@ class Events_Calendar_Module extends Module_Base {
 	 * @return bool
 	 */
 	private function has_event_model(): bool {
-		return $this->has_odoo_model( 'event.event', 'wp4odoo_has_event_event' );
+		return $this->has_odoo_model( Odoo_Model::EventEvent, 'wp4odoo_has_event_event' );
 	}
 
 	/**
@@ -222,7 +223,7 @@ class Events_Calendar_Module extends Module_Base {
 	 */
 	protected function get_odoo_model( string $entity_type ): string {
 		if ( 'event' === $entity_type && ! $this->has_event_model() ) {
-			return 'calendar.event';
+			return Odoo_Model::CalendarEvent->value;
 		}
 
 		return parent::get_odoo_model( $entity_type );

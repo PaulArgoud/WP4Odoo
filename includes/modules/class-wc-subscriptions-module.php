@@ -4,6 +4,7 @@ declare( strict_types=1 );
 namespace WP4Odoo\Modules;
 
 use WP4Odoo\Module_Base;
+use WP4Odoo\Odoo_Model;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -201,7 +202,7 @@ class WC_Subscriptions_Module extends Module_Base {
 	 * @return bool
 	 */
 	private function has_subscription_model(): bool {
-		return $this->has_odoo_model( 'sale.subscription', 'wp4odoo_has_sale_subscription' );
+		return $this->has_odoo_model( Odoo_Model::SaleSubscription, 'wp4odoo_has_sale_subscription' );
 	}
 
 	// ─── Pull override ─────────────────────────────────────

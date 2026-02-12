@@ -44,6 +44,30 @@ class SyncQueueRepositoryTest extends TestCase {
 		$this->assertFalse( $result );
 	}
 
+	public function test_enqueue_returns_false_for_oversized_payload(): void {
+		$result = $this->repo->enqueue( [
+			'module'      => 'crm',
+			'entity_type' => 'contact',
+			'wp_id'       => 10,
+			'payload'     => [ 'data' => str_repeat( 'x', 1048577 ) ],
+		] );
+
+		$this->assertFalse( $result );
+	}
+
+	public function test_enqueue_accepts_payload_within_limit(): void {
+		$this->wpdb->insert_id = 1;
+
+		$result = $this->repo->enqueue( [
+			'module'      => 'crm',
+			'entity_type' => 'contact',
+			'wp_id'       => 10,
+			'payload'     => [ 'data' => str_repeat( 'x', 1000 ) ],
+		] );
+
+		$this->assertIsInt( $result );
+	}
+
 	// ─── enqueue() — Defaults ──────────────────────────────
 
 	public function test_enqueue_defaults_direction_to_wp_to_odoo(): void {
@@ -201,8 +225,24 @@ class SyncQueueRepositoryTest extends TestCase {
 		] );
 
 		$get_var = $this->get_calls( 'get_var' );
-		$this->assertGreaterThanOrEqual( 2, count( $get_var ), 'Expected @@in_transaction + dedup SELECT' );
-		$this->assertStringContainsString( 'FOR UPDATE', $get_var[1]['args'][0] );
+		$this->assertGreaterThanOrEqual( 1, count( $get_var ), 'Expected dedup SELECT' );
+		$this->assertStringContainsString( 'FOR UPDATE', $get_var[0]['args'][0] );
+	}
+
+	public function test_enqueue_uses_savepoint_when_in_transaction(): void {
+		$this->wpdb->insert_id = 1;
+
+		$this->repo->enqueue( [
+			'module'      => 'crm',
+			'entity_type' => 'contact',
+			'wp_id'       => 10,
+		], true );
+
+		$queries = $this->get_calls( 'query' );
+		$sql     = array_map( fn( $c ) => $c['args'][0], $queries );
+		$this->assertContains( 'SAVEPOINT wp4odoo_dedup', $sql );
+		$this->assertContains( 'RELEASE SAVEPOINT wp4odoo_dedup', $sql );
+		$this->assertNotContains( 'START TRANSACTION', $sql );
 	}
 
 	// ─── enqueue() — Insert data ──────────────────────────

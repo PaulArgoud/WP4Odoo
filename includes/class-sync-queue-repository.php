@@ -47,24 +47,28 @@ class Sync_Queue_Repository {
 	 *     @type array    $payload     Data payload.
 	 *     @type int      $priority    Priority (1-10, lower = higher priority).
 	 * }
+	 * @param bool $in_transaction Whether the caller is already inside a DB transaction.
 	 * @return int|false The job ID, or false on failure.
 	 */
-	public function enqueue( array $args ): int|false {
+	public function enqueue( array $args, bool $in_transaction = false ): int|false {
 		global $wpdb;
 
 		$table = $this->table();
 
-		$module       = sanitize_text_field( $args['module'] ?? '' );
-		$direction    = in_array( $args['direction'] ?? '', [ 'wp_to_odoo', 'odoo_to_wp' ], true )
+		$module      = sanitize_text_field( $args['module'] ?? '' );
+		$direction   = in_array( $args['direction'] ?? '', [ 'wp_to_odoo', 'odoo_to_wp' ], true )
 			? $args['direction']
 			: 'wp_to_odoo';
-		$entity_type  = sanitize_text_field( $args['entity_type'] ?? '' );
-		$wp_id        = isset( $args['wp_id'] ) ? absint( $args['wp_id'] ) : null;
-		$odoo_id      = isset( $args['odoo_id'] ) ? absint( $args['odoo_id'] ) : null;
-		$action       = in_array( $args['action'] ?? '', [ 'create', 'update', 'delete' ], true )
+		$entity_type = sanitize_text_field( $args['entity_type'] ?? '' );
+		$wp_id       = isset( $args['wp_id'] ) ? absint( $args['wp_id'] ) : null;
+		$odoo_id     = isset( $args['odoo_id'] ) ? absint( $args['odoo_id'] ) : null;
+		$action      = in_array( $args['action'] ?? '', [ 'create', 'update', 'delete' ], true )
 			? $args['action']
 			: 'update';
-		$payload      = isset( $args['payload'] ) ? wp_json_encode( $args['payload'] ) : null;
+		$payload     = isset( $args['payload'] ) ? wp_json_encode( $args['payload'] ) : null;
+		if ( null !== $payload && strlen( $payload ) > 1048576 ) {
+			return false;
+		}
 		$priority     = isset( $args['priority'] ) ? absint( $args['priority'] ) : 5;
 		$scheduled_at = isset( $args['scheduled_at'] ) ? sanitize_text_field( $args['scheduled_at'] ) : null;
 
@@ -79,7 +83,7 @@ class Sync_Queue_Repository {
 		//
 		// If already in a transaction (e.g. WordPress test framework, or another
 		// plugin's transaction), use a SAVEPOINT to avoid implicit commit.
-		$use_savepoint = (bool) $wpdb->get_var( 'SELECT @@in_transaction' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+		$use_savepoint = $in_transaction;
 		if ( $use_savepoint ) {
 			$wpdb->query( 'SAVEPOINT wp4odoo_dedup' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 		} else {

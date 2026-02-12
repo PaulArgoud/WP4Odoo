@@ -213,9 +213,9 @@ class SyncEngineTest extends TestCase {
 		$scheduled1 = $retry1['args'][1]['scheduled_at'];
 		$delay1     = strtotime( $scheduled1 ) - time();
 
-		// 2^1 * 60 = 120 seconds (±5 s tolerance for execution time).
+		// 2^1 * 60 = 120 seconds + 0–60 s jitter (±5 s tolerance for execution time).
 		$this->assertGreaterThanOrEqual( 115, $delay1 );
-		$this->assertLessThanOrEqual( 125, $delay1 );
+		$this->assertLessThanOrEqual( 185, $delay1 );
 
 		// Test with attempt 1 → delay = 2^2 * 60 = 240 s.
 		$this->wpdb->calls = [];
@@ -235,9 +235,9 @@ class SyncEngineTest extends TestCase {
 		$scheduled2  = $retry2['args'][1]['scheduled_at'];
 		$delay2      = strtotime( $scheduled2 ) - time();
 
-		// 2^2 * 60 = 240 seconds (±5 s tolerance).
+		// 2^2 * 60 = 240 seconds + 0–60 s jitter (±5 s tolerance for execution time).
 		$this->assertGreaterThanOrEqual( 235, $delay2 );
-		$this->assertLessThanOrEqual( 245, $delay2 );
+		$this->assertLessThanOrEqual( 305, $delay2 );
 
 		// Verify exponential growth: delay2 ≈ 2 × delay1.
 		$this->assertGreaterThan( $delay1, $delay2 );

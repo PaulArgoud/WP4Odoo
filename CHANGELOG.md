@@ -5,7 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.9.5] - Unreleased
+## [3.0.0] - Unreleased
+
+## [2.9.5] - 2026-02-12
 
 ### Changed
 - **Query_Service** — Replaced deprecated `SQL_CALC_FOUND_ROWS` / `FOUND_ROWS()` with separate `COUNT(*)` + `SELECT` queries for MySQL 8.0+ / MariaDB 10.5+ compatibility
@@ -21,8 +23,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Status mapping DRY** — Extracted repeated 2-line status mapping pattern (`apply_filters` + array lookup + default) into centralized `Status_Mapper::resolve()`, used by 20 methods across 10 handler files
 - **Ecwid_Handler** — `fetch_api()` now paginates Ecwid REST API responses with `offset`/`limit` parameters, safety-capped at 50 pages × 100 items (was single-page fetch limited to first 100 items)
 - **Bookly_Cron_Hooks / Ecwid_Cron_Hooks** — WP-Cron `poll()` methods now acquire a MySQL advisory lock (`GET_LOCK`) with try/finally release, preventing concurrent cron executions from double-processing data
+- **Sync_Engine backoff** — Added random jitter (0–60 s) to exponential backoff delay, preventing thundering herd when multiple jobs retry simultaneously
+- **Circuit_Breaker** — Switched from binary all-or-nothing to ratio-based threshold (80% failure rate). New `record_batch(successes, failures)` method replaces direct `record_success()`/`record_failure()` calls from Sync_Engine, detecting partial degradation (e.g. 1 success + 20 failures no longer resets the counter)
+- **Sync_Queue_Repository** — `enqueue()` accepts explicit `$in_transaction` parameter instead of querying `@@in_transaction` MySQL variable, improving portability and testability
+- **Sync_Queue_Repository** — Payload size validation: `enqueue()` rejects payloads exceeding 1 MB after JSON encoding, preventing oversized queue entries
 
 ### Added
+- **Odoo_Model** — New string-backed enum (`includes/class-odoo-model.php`) listing all 14 Odoo models used by WP4Odoo, replacing hardcoded model name strings in model probes, dual-model detection, and accounting comparisons
+- **Architecture diagrams** — New `architecture-synth.svg` (grouped by category, used in README) and `architecture-full.svg` (all 24 individual modules, used in ARCHITECTURE.md) replacing the incomplete `architecture-v2.svg`
 - `wp_cache_get()` / `wp_cache_set()` / `wp_cache_delete()` stubs for unit tests
 - MySQL 8.0+ / MariaDB 10.5+ added to README.md requirements
 - **Database migration 3** — `idx_dedup_composite (module, entity_type, direction, status)` index on `wp4odoo_sync_queue` for reliable InnoDB gap locking during dedup `SELECT … FOR UPDATE`
@@ -30,7 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Module_Base** — `enqueue_push()` protected helper method for the common 3-line enqueue pattern (get mapping → determine action → `Queue_Manager::push`)
 - **Status_Mapper** — New shared utility class (`includes/modules/class-status-mapper.php`) centralizing filterable status mapping with `resolve(status, map, hook, default)`
 - **Settings_Repository** — `get_failure_threshold()` and `get_failure_cooldown()` typed accessors
-- 9 new unit tests (1832 total, 2855 assertions): circuit breaker probe mutex atomicity, entity map batch dedup/cache, configurable failure thresholds
+- 30 new unit tests (1853 total, 2893 assertions): circuit breaker probe mutex atomicity + ratio-based `record_batch()`, entity map batch dedup/cache, configurable failure thresholds, `Odoo_Model` enum values and `tryFrom()`, payload size validation, savepoint `$in_transaction` parameter
 
 ### Fixed
 - **uninstall.php** — Added cleanup of `_transient_wp4odoo_%` and `_transient_timeout_wp4odoo_%` rows; added missing `wp4odoo_ecwid_poll` cron unhook

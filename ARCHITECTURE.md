@@ -4,6 +4,8 @@
 
 Modular WordPress plugin providing bidirectional synchronization between WordPress/WooCommerce and Odoo ERP (v14+). The plugin covers 24 modules across 14 domains: CRM, Sales & Invoicing, WooCommerce, WooCommerce Subscriptions, Easy Digital Downloads, Memberships (WC Memberships + MemberPress + PMPro + RCP), Donations (GiveWP + WP Charitable + WP Simple Pay), Forms (7 plugins), WP Recipe Maker, LMS (LearnDash + LifterLMS), Booking (Amelia + Bookly), Events (The Events Calendar + Event Tickets), Invoicing (Sprout Invoices + WP-Invoice), and E-Commerce (WP Crowdfunding + Ecwid + ShopWP).
 
+![WP4ODOO Full Architecture](assets/images/architecture-full.svg)
+
 ```
 ┌──────────────────────────────────────────────────────────────────────────┐
 │                                WordPress                                │

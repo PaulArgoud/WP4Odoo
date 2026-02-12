@@ -160,7 +160,7 @@ The plugin exposes 3 REST endpoints under `wp-json/wp4odoo/v1/` (webhook receive
 
 ## Architecture
 
-![WP4ODOO Architecture](assets/images/architecture-v2.svg)
+![WP4ODOO Architecture](assets/images/architecture-synth.svg)
 
 All synchronization goes through a persistent database queue — no Odoo API calls are made during user requests:
 
