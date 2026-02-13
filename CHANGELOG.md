@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [3.0.5] - Unreleased
 
 ### Added
+- **WC Points & Rewards module** — Bidirectional sync between WooCommerce Points & Rewards and Odoo Loyalty (`loyalty.card`). Point balances synced to/from a configured Odoo loyalty program. Custom find-or-create pattern for loyalty cards (search by partner_id + program_id). Model detection probes `loyalty.program`. Settings: sync/pull toggles + program ID. Clear limitation notices (balance-only sync, no transaction history). 44 new tests
 - **Translation UI (Phase 5)** — Language detection panel in WooCommerce module settings: "Detect languages" button probes WPML/Polylang active languages against Odoo `res.lang`, shows per-language availability indicators, and provides per-language toggles for selective translation pull
 - **Translation_Service::detect_languages()** — New public method returning structured language availability data (plugin name, default language, per-language Odoo locale availability). Odoo `res.lang` probe cached via 1-hour transient
 - **Admin AJAX** — `wp4odoo_detect_languages` endpoint and `languages` field type in module settings save handler

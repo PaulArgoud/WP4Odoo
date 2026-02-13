@@ -2,7 +2,7 @@
 
 ## Overview
 
-Modular WordPress plugin providing bidirectional synchronization between WordPress/WooCommerce and Odoo ERP (v14+). The plugin covers 25 modules across 15 domains: CRM, Sales & Invoicing, WooCommerce, WooCommerce Subscriptions, Easy Digital Downloads, Memberships (WC Memberships + MemberPress + PMPro + RCP), Donations (GiveWP + WP Charitable + WP Simple Pay), Forms (7 plugins), WP Recipe Maker, LMS (LearnDash + LifterLMS), Booking (Amelia + Bookly), Events (The Events Calendar + Event Tickets), Invoicing (Sprout Invoices + WP-Invoice), E-Commerce (WP Crowdfunding + Ecwid + ShopWP), and HR (WP Job Manager).
+Modular WordPress plugin providing bidirectional synchronization between WordPress/WooCommerce and Odoo ERP (v14+). The plugin covers 27 modules across 17 domains: CRM, Sales & Invoicing, WooCommerce, WooCommerce Subscriptions, WC Points & Rewards, Easy Digital Downloads, Memberships (WC Memberships + MemberPress + PMPro + RCP), Donations (GiveWP + WP Charitable + WP Simple Pay), Forms (7 plugins), WP Recipe Maker, LMS (LearnDash + LifterLMS), Booking (Amelia + Bookly), Events (The Events Calendar + Event Tickets), Invoicing (Sprout Invoices + WP-Invoice), E-Commerce (WP Crowdfunding + Ecwid + ShopWP), and HR (WP Job Manager).
 
 ![WP4ODOO Full Architecture](assets/images/architecture-full.svg)
 
@@ -138,6 +138,11 @@ WordPress For Odoo/
 │   │   ├── trait-wc-subscriptions-hooks.php  # WCS: hook callbacks (product save, subscription status, renewal)
 │   │   ├── class-wc-subscriptions-handler.php # WCS: product/subscription/renewal data load, status mapping
 │   │   ├── class-wc-subscriptions-module.php # WCS: push sync coordinator, dual-model (sale.subscription / skip)
+│   │   │
+│   │   ├── # ─── WC Points & Rewards ─────────────────────────
+│   │   ├── trait-wc-points-rewards-hooks.php  # Points: on_points_change (all 3 WC hooks)
+│   │   ├── class-wc-points-rewards-handler.php # Points: balance load/save, Odoo formatting, float→int rounding
+│   │   ├── class-wc-points-rewards-module.php # Points: bidirectional, custom find-or-create loyalty.card
 │   │   │
 │   │   ├── # ─── Events Calendar ──────────────────────────────
 │   │   ├── trait-events-calendar-hooks.php   # Events Calendar: hook callbacks (event save, ticket save, attendee created)
@@ -348,6 +353,9 @@ WordPress For Odoo/
 │       ├── ShopWPModuleTest.php          # 25 tests for ShopWP_Module
 │       ├── JobManagerModuleTest.php     # 28 tests for Job_Manager_Module
 │       ├── JobManagerHandlerTest.php    # 33 tests for Job_Manager_Handler
+│       ├── WCPointsRewardsModuleTest.php # 20 tests for WC_Points_Rewards_Module
+│       ├── WCPointsRewardsHandlerTest.php # 19 tests for WC_Points_Rewards_Handler
+│       ├── WCPointsRewardsHooksTest.php  # 5 tests for WC_Points_Rewards_Hooks
 │       ├── WPMLAdapterTest.php          # 17 tests for WPML_Adapter
 │       ├── PolylangAdapterTest.php      # 16 tests for Polylang_Adapter
 │       └── TranslationServiceTest.php   # 27 tests for Translation_Service
@@ -419,6 +427,7 @@ Module_Base (abstract)
 ├── Ecwid_Module                → product.product, sale.order                        [WP → Odoo]
 ├── ShopWP_Module               → product.product                                    [WP → Odoo]
 ├── Job_Manager_Module          → hr.job                                             [WP ↔ Odoo]
+├── WC_Points_Rewards_Module    → loyalty.card                                       [WP ↔ Odoo]
 └── [Custom_Module]             → extensible via action hook
 ```
 
@@ -426,7 +435,7 @@ Module_Base (abstract)
 - **Commerce**: WooCommerce, EDD, Sales, Ecwid, and ShopWP are mutually exclusive (all share `sale.order` / `product.product` for commerce). Priority: WC > EDD > Sales = Ecwid = ShopWP.
 - **Memberships**: WC Memberships, MemberPress, PMPro, and RCP are mutually exclusive (all target `membership.membership_line`). Priority: MemberPress (10) > RCP (12) > PMPro (15) > WC Memberships (20).
 - **Invoicing**: Sprout Invoices and WP-Invoice are mutually exclusive (both target `account.move` for invoicing). Priority: WP-Invoice (5) > Sprout Invoices (10).
-- All other modules are independent and can coexist freely (LMS, Subscriptions, Events, Booking, Donations, Forms, WPRM, Crowdfunding).
+- All other modules are independent and can coexist freely (LMS, Subscriptions, Points & Rewards, Events, Booking, Donations, Forms, WPRM, Crowdfunding).
 
 **Module_Base provides:**
 - Push/Pull orchestration: `push_to_odoo()` returns `Sync_Result` (value object with success, odoo_id, error, Error_Type), `pull_from_odoo()` returns `Sync_Result`
@@ -1295,6 +1304,25 @@ All user inputs are sanitized with:
 - Hooks: `save_post_job_listing`, `job_listing_expired`
 
 **Settings:** `sync_jobs`, `pull_jobs`
+
+### WC Points & Rewards — COMPLETE
+
+**Files:** `class-wc-points-rewards-module.php` (bidirectional sync coordinator, uses `WC_Points_Rewards_Hooks` trait), `trait-wc-points-rewards-hooks.php` (hook callbacks: `on_points_change`), `class-wc-points-rewards-handler.php` (balance data load/save, Odoo formatting, float→int rounding)
+
+**Odoo models:** `loyalty.card` (customer point balances)
+
+**Key features:**
+- Bidirectional (WP ↔ Odoo) — point balances only (no transaction history)
+- Requires WC Points & Rewards; `boot()` guards with `class_exists('WC_Points_Rewards_Manager')`
+- No exclusive group — independent module (coexists with WooCommerce)
+- Custom `push_to_odoo()` — find-or-create pattern for `loyalty.card` (search by `partner_id` + `program_id`, not standard entity map alone)
+- Model detection: probes `loyalty.program` via `has_odoo_model()` with transient caching
+- Float→int rounding: Odoo stores points as Float, WC as integer — `(int) round()` on pull
+- Anti-loop: `set_points_balance()` during pull fires WC hooks, blocked by `is_importing()` guard
+- Three WC hooks all delegate to single `on_points_change()`: `wc_points_rewards_after_increase_points`, `wc_points_rewards_after_reduce_points`, `wc_points_rewards_after_set_points_balance`
+- User-facing limitation notices: balance-only sync, single program, rules not synced, integer rounding
+
+**Settings:** `sync_balances`, `pull_balances`, `odoo_program_id`
 
 ### ACF (Advanced Custom Fields) — COMPLETE
 

@@ -78,6 +78,7 @@ $GLOBALS['_rcp_memberships']     = [];
 $GLOBALS['_llms_orders']         = [];
 $GLOBALS['_llms_enrollments']    = [];
 $GLOBALS['_wc_subscriptions']    = [];
+$GLOBALS['_wc_points_rewards']   = [];
 $GLOBALS['_tribe_events']        = [];
 $GLOBALS['_tribe_tickets']       = [];
 $GLOBALS['_tribe_attendees']     = [];
@@ -115,6 +116,7 @@ require_once __DIR__ . '/stubs/wc-subscriptions-classes.php';
 require_once __DIR__ . '/stubs/events-calendar-classes.php';
 require_once __DIR__ . '/stubs/wc-bookings-classes.php';
 require_once __DIR__ . '/stubs/job-manager-classes.php';
+require_once __DIR__ . '/stubs/wc-points-rewards-classes.php';
 require_once __DIR__ . '/stubs/acf-classes.php';
 require_once __DIR__ . '/stubs/i18n-classes.php';
 

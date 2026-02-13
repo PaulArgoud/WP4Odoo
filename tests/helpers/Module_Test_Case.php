@@ -54,6 +54,7 @@ abstract class Module_Test_Case extends TestCase {
 		'_llms_orders',
 		'_llms_enrollments',
 		'_wc_subscriptions',
+		'_wc_points_rewards',
 		'_tribe_events',
 		'_tribe_tickets',
 		'_tribe_attendees',

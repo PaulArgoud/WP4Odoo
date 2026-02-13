@@ -812,6 +812,25 @@ if ( ! function_exists( 'update_field' ) ) {
 	function update_field( string $selector, $value, $post_id = false ): bool { return true; }
 }
 
+// ─── WC Points & Rewards stubs ──────────────────────
+
+if ( ! class_exists( 'WC_Points_Rewards' ) ) {
+	class WC_Points_Rewards {
+		public static string $version = '1.7.0';
+	}
+}
+
+if ( ! class_exists( 'WC_Points_Rewards_Manager' ) ) {
+	class WC_Points_Rewards_Manager {
+		public static function get_users_points( int $user_id ): int { return 0; }
+		public static function set_points_balance( int $user_id, int $points, string $type = 'admin-adjustment' ): void {}
+		/** @param mixed $data */
+		public static function increase_points( int $user_id, int $points, string $type = 'order-placed', $data = null, int $order_id = 0 ): void {}
+		/** @param mixed $data */
+		public static function decrease_points( int $user_id, int $points, string $type = 'order-redeem', $data = null, int $order_id = 0 ): void {}
+	}
+}
+
 // ─── WPML stubs ─────────────────────────────────────────
 
 if ( ! defined( 'ICL_SITEPRESS_VERSION' ) ) {

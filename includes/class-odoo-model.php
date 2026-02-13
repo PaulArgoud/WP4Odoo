@@ -96,6 +96,14 @@ enum Odoo_Model: string {
 	/** HR departments. */
 	case HrDepartment = 'hr.department';
 
+	// ─── Loyalty ───────────────────────────────────────────
+
+	/** Loyalty programs. */
+	case LoyaltyProgram = 'loyalty.program';
+
+	/** Loyalty cards (customer point balances). */
+	case LoyaltyCard = 'loyalty.card';
+
 	// ─── Inventory ─────────────────────────────────────────
 
 	/** Stock pickings (delivery orders). */
