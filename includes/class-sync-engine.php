@@ -232,7 +232,7 @@ class Sync_Engine {
 					break;
 				}
 
-				$this->queue_repo->update_status( (int) $job->id, 'processing' );
+				$this->queue_repo->update_status( (int) $job->id, 'processing', [ 'processed_at' => current_time( 'mysql', true ) ] );
 				$this->logger->set_correlation_id( $job->correlation_id ?? null );
 
 				try {

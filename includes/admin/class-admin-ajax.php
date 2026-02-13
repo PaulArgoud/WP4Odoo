@@ -144,11 +144,47 @@ class Admin_Ajax {
 		$value = wp_unslash( $_POST[ $key ] );
 
 		return match ( $type ) {
-			'url'  => esc_url_raw( $value ),
+			'url'  => $this->sanitize_url( $value ),
 			'key'  => sanitize_key( $value ),
 			'int'  => absint( $value ),
 			'bool' => ! empty( $value ),
 			default => sanitize_text_field( $value ),
 		};
+	}
+
+	/**
+	 * Sanitize a URL and reject private/reserved IP ranges (SSRF protection).
+	 *
+	 * Prevents admin-submitted URLs from targeting internal network addresses
+	 * (e.g., 127.0.0.1, 10.x.x.x, 192.168.x.x, link-local, etc.).
+	 *
+	 * @param string $value Raw URL value.
+	 * @return string Sanitized URL, or empty string if rejected.
+	 */
+	private function sanitize_url( string $value ): string {
+		$url = esc_url_raw( $value );
+		if ( '' === $url ) {
+			return '';
+		}
+
+		$host = wp_parse_url( $url, PHP_URL_HOST );
+		if ( ! $host ) {
+			return '';
+		}
+
+		// Resolve hostname to IP for validation.
+		$ip = gethostbyname( $host );
+
+		// gethostbyname returns the hostname unchanged on failure.
+		if ( $ip === $host && ! filter_var( $host, FILTER_VALIDATE_IP ) ) {
+			return '';
+		}
+
+		// Reject private and reserved IP ranges.
+		if ( ! filter_var( $ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE ) ) {
+			return '';
+		}
+
+		return $url;
 	}
 }

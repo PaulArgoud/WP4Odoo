@@ -76,7 +76,7 @@ class Odoo_Client {
 			);
 		}
 
-		$timeout = $credentials['timeout'] ?: 30;
+		$timeout = $credentials['timeout'] ?? 30; // @phpstan-ignore nullCoalesce.offset
 
 		if ( 'xmlrpc' === $credentials['protocol'] ) {
 			$this->transport = new Odoo_XmlRPC(

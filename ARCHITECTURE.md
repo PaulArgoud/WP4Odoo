@@ -196,9 +196,9 @@ WordPress For Odoo/
 │   ├── trait-module-helpers.php       # Shared helpers: auto_post_invoice (→bool), ensure_entity_synced, synthetic IDs, partner_service, translation_service, resolve_partner_from_user/email, check_dependency
 │   ├── class-entity-map-repository.php # DB access for wp4odoo_entity_map (batch lookups, LRU cache)
 │   ├── class-sync-queue-repository.php # DB access for wp4odoo_sync_queue (atomic dedup via transaction)
-│   ├── class-partner-service.php       # Shared res.partner lookup/creation service
+│   ├── class-partner-service.php       # Shared res.partner lookup/creation service (advisory lock dedup)
 │   ├── class-failure-notifier.php     # Admin email notification on consecutive sync failures
-│   ├── class-circuit-breaker.php     # Circuit breaker for Odoo connectivity (3-state, advisory lock probe mutex)
+│   ├── class-circuit-breaker.php     # Circuit breaker for Odoo connectivity (3-state, advisory lock probe mutex, DB-backed fallback)
 │   ├── class-sync-engine.php          # Queue processor, batch operations, advisory locking, smart retry (Error_Type), memory guard
 │   ├── class-queue-manager.php        # Helpers for enqueuing sync jobs
 │   ├── class-query-service.php        # Paginated queries with column projection (queue jobs, log entries) — injectable instance
@@ -510,7 +510,7 @@ WP Event               Sync Engine (cron)           Odoo
 **Reliability mechanisms:**
 - MySQL advisory locking via `GET_LOCK()` / `RELEASE_LOCK()` (prevents parallel execution, return value verified)
 - Exponential backoff on failure (`2^(attempts+1) × 60s`)
-- Circuit breaker: pauses processing after 3 consecutive all-fail batches (5-min recovery delay, probe mutex)
+- Circuit breaker: pauses processing after 3 consecutive all-fail batches (5-min recovery delay, probe mutex, DB-backed state via `wp_options` survives cache flushes)
 - Deduplication: updates an existing `pending` job rather than creating a duplicate (atomic via `SELECT … FOR UPDATE`)
 - Configurable batch size (50 items per cron tick by default)
 - Stale job recovery: configurable timeout (60–3600 s, default 600 s via `stale_timeout` sync setting)
@@ -812,7 +812,7 @@ Reading:  wp_options → sodium_crypto_secretbox_open() → API key (plaintext)
 
 All user inputs are sanitized with:
 - `sanitize_text_field()` for strings
-- `esc_url_raw()` for URLs
+- `esc_url_raw()` + SSRF protection for URLs (private/reserved IP rejection via `FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE` with DNS resolution)
 - `absint()` for integers
 - `wp_kses_post()` for rich HTML
 
@@ -1405,6 +1405,7 @@ Auto-dismissed when all steps completed. Dismiss via × button persisted in `wp4
 | `wp4odoo_wcs_renewal_status_map` | Customize WC Subscriptions renewal → Odoo invoice status mapping |
 | `wp4odoo_wcs_billing_period_map` | Customize WC Subscriptions billing period → Odoo recurring rule type |
 | `wp4odoo_form_lead_data` | Modify/skip form lead data before enqueue |
+| `wp4odoo_invoice_line_data` | Modify invoice line data (inject tax_ids, analytic accounts) |
 
 ## Cron
 

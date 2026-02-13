@@ -200,6 +200,42 @@ class Partner_Service {
 			return null;
 		}
 
+		// Advisory lock prevents duplicate partner creation when concurrent
+		// queue workers resolve the same email simultaneously (TOCTOU race
+		// between search and create). Same proven pattern as Circuit_Breaker.
+		global $wpdb;
+
+		$lock_name = 'wp4odoo_partner_' . md5( $email );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+		$locked = $wpdb->get_var(
+			$wpdb->prepare( 'SELECT GET_LOCK( %s, %d )', $lock_name, 5 )
+		);
+
+		if ( '1' !== (string) $locked ) {
+			$this->logger->warning( 'Could not acquire partner lock, proceeding without lock.', [ 'email' => $email ] );
+		}
+
+		try {
+			return $this->search_or_create_partner( $client, $email, $data, $wp_id );
+		} finally {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->get_var(
+				$wpdb->prepare( 'SELECT RELEASE_LOCK( %s )', $lock_name )
+			);
+		}
+	}
+
+	/**
+	 * Search for or create a partner in Odoo (called under advisory lock).
+	 *
+	 * @param \WP4Odoo\API\Odoo_Client $client Odoo client.
+	 * @param string                    $email  Partner email.
+	 * @param array                     $data   Partner data.
+	 * @param int                       $wp_id  WordPress user ID (0 if guest).
+	 * @return int|null Odoo partner ID, or null on failure.
+	 */
+	private function search_or_create_partner( $client, string $email, array $data, int $wp_id ): ?int {
 		// 2. Search Odoo by email.
 		$ids = $client->search( 'res.partner', [ [ 'email', '=', $email ] ], 0, 1 );
 

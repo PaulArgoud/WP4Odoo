@@ -100,7 +100,8 @@ class Sync_Queue_Repository {
 
 		if ( null !== $wp_id && $wp_id > 0 ) {
 			$where_parts[] = $wpdb->prepare( 'wp_id = %d', $wp_id );
-		} elseif ( null !== $odoo_id && $odoo_id > 0 ) {
+		}
+		if ( null !== $odoo_id && $odoo_id > 0 ) {
 			$where_parts[] = $wpdb->prepare( 'odoo_id = %d', $odoo_id );
 		}
 
@@ -432,7 +433,7 @@ class Sync_Queue_Repository {
 
 		return (int) $wpdb->query(
 			$wpdb->prepare(
-				"UPDATE {$table} SET status = 'pending', error_message = 'Recovered from stale processing state.' WHERE status = 'processing' AND created_at < %s", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is from $wpdb->prefix, safe.
+				"UPDATE {$table} SET status = 'pending', error_message = 'Recovered from stale processing state.' WHERE status = 'processing' AND processed_at IS NOT NULL AND processed_at < %s", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is from $wpdb->prefix, safe.
 				$cutoff
 			)
 		);

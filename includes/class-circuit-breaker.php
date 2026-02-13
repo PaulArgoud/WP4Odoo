@@ -20,7 +20,8 @@ if ( ! defined( 'ABSPATH' ) ) {
  * - Open (tripped): processing is skipped entirely.
  * - Half-open (probe): one batch is allowed to test recovery.
  *
- * Uses WordPress transients for lightweight, auto-expiring state.
+ * Uses WordPress transients as the fast path, with DB-backed
+ * fallback (wp_options) to survive object cache flushes.
  *
  * @package WP4Odoo
  * @since   2.7.0
@@ -64,8 +65,20 @@ class Circuit_Breaker {
 
 	/**
 	 * TTL for the probe mutex transient (seconds).
+	 *
+	 * Must exceed BATCH_TIME_LIMIT (55 s) to prevent a second probe
+	 * batch from starting before the first one finishes.
 	 */
-	private const PROBE_TTL = 60;
+	private const PROBE_TTL = 120;
+
+	/**
+	 * wp_options key for DB-backed circuit breaker state.
+	 *
+	 * Survives object cache flushes, ensuring the circuit stays open
+	 * during Odoo outages even when Redis/Memcached is restarted.
+	 * Transients remain the fast path; DB is the fallback.
+	 */
+	private const OPT_CB_STATE = 'wp4odoo_cb_state';
 
 	/**
 	 * Logger instance.
@@ -94,6 +107,17 @@ class Circuit_Breaker {
 	 */
 	public function is_available(): bool {
 		$opened_at = (int) get_transient( self::KEY_OPENED_AT );
+
+		// Fallback: if transient was lost (cache flush), check DB.
+		if ( 0 === $opened_at ) {
+			$db_state  = get_option( self::OPT_CB_STATE, [] );
+			$opened_at = (int) ( is_array( $db_state ) ? ( $db_state['opened_at'] ?? 0 ) : 0 );
+			if ( $opened_at > 0 ) {
+				// Restore transients from DB state.
+				set_transient( self::KEY_OPENED_AT, $opened_at, HOUR_IN_SECONDS );
+				set_transient( self::KEY_FAILURES, (int) ( $db_state['failures'] ?? self::FAILURE_THRESHOLD ), HOUR_IN_SECONDS );
+			}
+		}
 
 		if ( 0 === $opened_at ) {
 			return true;
@@ -197,6 +221,7 @@ class Circuit_Breaker {
 		delete_transient( self::KEY_FAILURES );
 		delete_transient( self::KEY_OPENED_AT );
 		delete_transient( self::KEY_PROBE );
+		delete_option( self::OPT_CB_STATE );
 	}
 
 	/**
@@ -214,7 +239,17 @@ class Circuit_Breaker {
 		set_transient( self::KEY_FAILURES, $count, HOUR_IN_SECONDS );
 
 		if ( $count >= self::FAILURE_THRESHOLD ) {
-			set_transient( self::KEY_OPENED_AT, time(), HOUR_IN_SECONDS );
+			$now = time();
+			set_transient( self::KEY_OPENED_AT, $now, HOUR_IN_SECONDS );
+
+			// Persist to DB so state survives object cache flushes.
+			update_option(
+				self::OPT_CB_STATE,
+				[
+					'opened_at' => $now,
+					'failures'  => $count,
+				]
+			);
 
 			$this->logger->warning(
 				'Circuit breaker opened: Odoo appears unreachable.',

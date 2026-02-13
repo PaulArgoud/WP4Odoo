@@ -23,7 +23,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **ACF meta-module** — Advanced Custom Fields mapping module: maps ACF custom fields to Odoo custom fields (`x_*`). Filter-based enrichment architecture — hooks into existing modules' push/pull pipelines without owning entity types. Admin UI with repeatable-row mapping configurator (target module, entity type, ACF field, Odoo field, type). 9 type conversions (text, number, integer, boolean, date, datetime, html, select, binary). CRM contacts use ACF user context (`user_{ID}`). 82 new tests
 - **Module_Base infrastructure** — `_wp_entity_id` injected into `$wp_data` in `push_to_odoo()` for filter consumers. New `wp4odoo_after_save_{module}_{entity}` action fired after `save_wp_data()` in `pull_from_odoo()` for meta-module post-save writes
 
+### Fixed
+- **Circuit_Breaker** — State now persisted to `wp_options` (DB fallback) so the circuit stays open during Odoo outages even when object cache (Redis/Memcached) is flushed. `PROBE_TTL` increased from 60 s to 120 s to prevent concurrent probe batches
+- **Module_Base::push_to_odoo()** — Mapping save failure on update path now returns `Sync_Result::failure(Transient)` (was silent — asymmetric with create path)
+- **Partner_Service::get_or_create()** — MySQL advisory lock (`GET_LOCK`) around search+create prevents duplicate partner creation under concurrent queue workers
+- **Sync_Engine / Sync_Queue_Repository** — Processing start time recorded in `processed_at` when job status → `processing`; stale job recovery now uses `processed_at` (not `created_at`) for accurate timeout detection
+- **Sync_Queue_Repository::enqueue()** — Dedup WHERE clause includes both `wp_id` AND `odoo_id` when both are known (was exclusive OR, allowing near-duplicates)
+- **Odoo_Client** — Timeout fallback uses `??` instead of `?:` (0 is a valid timeout value, not falsy)
+
 ### Changed
+- **Settings_Repository** — Instance-level cache (`$cache`) for `get_connection()`, `get_sync_settings()`, `get_log_settings()` — avoids repeated `get_option()` calls within the same request. Cache invalidated on save
+- **Odoo_Accounting_Formatter** — New `wp4odoo_invoice_line_data` filter on `for_account_move()` invoice lines, allowing injection of `tax_ids`, analytic accounts, or other Odoo fields
+- **Admin_Ajax** — SSRF protection: URL fields now validated against private/reserved IP ranges (`FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE`) with DNS resolution before validation
 - **LMS_Helpers trait** — Extracted shared enrollment loading logic (decode synthetic ID → load enrollment → resolve partner → resolve course product → format sale order) from LearnDash and LifterLMS modules into `trait-lms-helpers.php`. Both modules now delegate via callable parameters instead of duplicating 33 lines each
 - **WooCommerce module** — `sync_translations` setting migrated from boolean to array of language codes (backward compatible). UI replaced from checkbox to interactive language detection panel
 - **WC_Pull_Coordinator** — `flush_translations()` extended to flush category and attribute value translations alongside product translations. New accumulators: `pulled_categories`, `pulled_attribute_values`

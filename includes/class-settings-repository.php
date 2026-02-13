@@ -19,6 +19,13 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class Settings_Repository {
 
+	/**
+	 * Instance-level cache to avoid repeated get_option() calls.
+	 *
+	 * @var array<string, array>
+	 */
+	private array $cache = [];
+
 	// ── Option key constants ───────────────────────────────
 
 	public const OPT_CONNECTION           = 'wp4odoo_connection';
@@ -69,6 +76,10 @@ class Settings_Repository {
 	 * @return array
 	 */
 	public function get_connection(): array {
+		if ( isset( $this->cache['connection'] ) ) {
+			return $this->cache['connection'];
+		}
+
 		$stored = get_option( self::OPT_CONNECTION, [] );
 		if ( ! is_array( $stored ) ) {
 			$stored = [];
@@ -81,6 +92,7 @@ class Settings_Repository {
 		}
 		$merged['timeout'] = max( 5, min( 120, (int) $merged['timeout'] ) );
 
+		$this->cache['connection'] = $merged;
 		return $merged;
 	}
 
@@ -91,6 +103,7 @@ class Settings_Repository {
 	 * @return bool
 	 */
 	public function save_connection( array $data ): bool {
+		unset( $this->cache['connection'] );
 		return update_option( self::OPT_CONNECTION, $data );
 	}
 
@@ -102,6 +115,10 @@ class Settings_Repository {
 	 * @return array
 	 */
 	public function get_sync_settings(): array {
+		if ( isset( $this->cache['sync'] ) ) {
+			return $this->cache['sync'];
+		}
+
 		$stored = get_option( self::OPT_SYNC_SETTINGS, [] );
 		if ( ! is_array( $stored ) ) {
 			$stored = [];
@@ -128,6 +145,7 @@ class Settings_Repository {
 
 		$merged['stale_timeout'] = max( 60, min( 3600, (int) $merged['stale_timeout'] ) );
 
+		$this->cache['sync'] = $merged;
 		return $merged;
 	}
 
@@ -175,6 +193,10 @@ class Settings_Repository {
 	 * @return array
 	 */
 	public function get_log_settings(): array {
+		if ( isset( $this->cache['log'] ) ) {
+			return $this->cache['log'];
+		}
+
 		$stored = get_option( self::OPT_LOG_SETTINGS, [] );
 		if ( ! is_array( $stored ) ) {
 			$stored = [];
@@ -188,6 +210,7 @@ class Settings_Repository {
 		}
 		$merged['retention_days'] = max( 1, min( 365, (int) $merged['retention_days'] ) );
 
+		$this->cache['log'] = $merged;
 		return $merged;
 	}
 

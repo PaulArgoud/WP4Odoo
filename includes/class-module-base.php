@@ -212,6 +212,7 @@ abstract class Module_Base {
 			$this->client()->write( $model, [ $odoo_id ], $odoo_values );
 			if ( ! $this->save_mapping( $entity_type, $wp_id, $odoo_id, $new_hash ) ) {
 				$this->logger->error( 'Mapping save failed after Odoo update.', compact( 'entity_type', 'wp_id', 'odoo_id' ) );
+				return Sync_Result::failure( 'Mapping save failed after Odoo update.', Error_Type::Transient, $odoo_id );
 			}
 			$this->logger->info( 'Updated Odoo record.', compact( 'entity_type', 'wp_id', 'odoo_id' ) );
 		} else {
