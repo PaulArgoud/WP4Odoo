@@ -114,6 +114,7 @@ WordPress For Odoo/
 │   │   ├── class-exchange-rate-service.php   # WooCommerce: Odoo exchange rate fetching + caching + conversion
 │   │   ├── class-pricelist-handler.php      # WooCommerce: pricelist price import (product.pricelist → WC sale_price)
 │   │   ├── class-shipment-handler.php       # WooCommerce: shipment tracking import (stock.picking → WC order meta, AST format)
+│   │   ├── class-wc-pull-coordinator.php   # WooCommerce: pull orchestration (variant/shipment dispatch, post-pull hooks)
 │   │   │
 │   │   ├── # ─── EDD ───────────────────────────────────────────
 │   │   ├── trait-edd-hooks.php               # EDD: hook callbacks (download save/delete, order status)
@@ -248,7 +249,9 @@ WordPress For Odoo/
 │   ├── class-query-service.php        # Paginated queries with column projection (queue jobs, log entries) — injectable instance
 │   ├── class-field-mapper.php         # Type conversions (Many2one, dates, HTML)
 │   ├── class-cpt-helper.php           # Shared CPT register/load/save helpers
-│   ├── class-webhook-handler.php      # REST API endpoints for Odoo webhooks, rate limiting
+│   ├── class-webhook-handler.php      # REST API endpoints for Odoo webhooks, rate limiting, HMAC signature
+│   ├── class-schema-cache.php        # fields_get() cache (memory + transient) for field validation
+│   ├── class-reconciler.php          # Entity map reconciliation against live Odoo records
 │   ├── class-cli.php                 # WP-CLI commands (loaded only in CLI context)
 │   └── class-logger.php              # DB-backed logger with level filtering, 4KB context truncation
 │

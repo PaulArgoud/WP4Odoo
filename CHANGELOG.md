@@ -36,7 +36,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Database migration 4** — `idx_processed_status (status, processed_at)` index on `wp4odoo_sync_queue` for efficient health metrics queries
 - **WP-Cron log cleanup** — Daily `wp4odoo_log_cleanup` event triggers `Logger::cleanup()` (respects `retention_days` setting), replacing the previous in-sync-run cleanup that added latency to every cron tick
 - **`wp_convert_hr_to_bytes()`** stub for unit tests (memory limit parsing)
-- 70 new/updated unit tests (1902 total, 2972 assertions): pricelist handler, shipment handler, transient cache isolation, nullable entity_id, memory threshold, stale timeout configuration
+- **Transactional gap fix (P0)** — `push_to_odoo()` now checks `save_mapping()` return value after Odoo `create()`. On failure, returns `Sync_Result::failure()` carrying the created `odoo_id`, which is persisted to the queue job for retry (prevents duplicate Odoo records)
+- **Schema validation (P1)** — New `Schema_Cache` class caches Odoo `fields_get()` results per model (memory + 24h transient). `map_to_odoo()` warns about mapped fields not found in model schema (non-blocking)
+- **HMAC webhook signature (P3)** — Optional `X-Odoo-Signature` header for HMAC-SHA256 payload integrity verification. Backward-compatible: absent header uses token-only auth
+- **Reconciliation CLI (P2)** — New `wp wp4odoo reconcile <module> <entity_type> [--fix]` command detects orphaned entity_map entries (mapped to deleted Odoo records) and optionally removes them
+- **WC_Pull_Coordinator (P4)** — Extracted ~215 lines of pull orchestration from WooCommerce_Module into dedicated `WC_Pull_Coordinator` class (variant dispatch, shipment dispatch, post-pull hooks)
+- 82 new/updated unit tests (1902 total, 2972 assertions): pricelist handler, shipment handler, transient cache isolation, nullable entity_id, memory threshold, stale timeout configuration, schema cache, reconciler, HMAC signature, pull coordinator
 
 ## [2.9.5] - 2026-02-12
 

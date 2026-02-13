@@ -338,6 +338,30 @@ class Webhook_Handler {
 			);
 		}
 
+		// Optional HMAC signature verification (backward-compatible).
+		// If the X-Odoo-Signature header is present, verify it against
+		// HMAC-SHA256(body, token). If absent, token-only auth is used.
+		$signature = $request->get_header( 'X-Odoo-Signature' );
+		if ( null !== $signature ) {
+			$body     = $request->get_body();
+			$expected = hash_hmac( 'sha256', $body, $stored );
+
+			if ( ! hash_equals( $expected, (string) $signature ) ) {
+				$this->logger->warning(
+					'Invalid HMAC signature.',
+					[
+						'ip' => $ip,
+					]
+				);
+
+				return new \WP_Error(
+					'wp4odoo_invalid_signature',
+					__( 'Invalid webhook signature.', 'wp4odoo' ),
+					[ 'status' => 403 ]
+				);
+			}
+		}
+
 		return true;
 	}
 

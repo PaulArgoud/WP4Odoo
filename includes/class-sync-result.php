@@ -48,10 +48,11 @@ final class Sync_Result {
 	 *
 	 * @param string     $message    Error description.
 	 * @param Error_Type $error_type Error classification (defaults to Transient for backward compat).
+	 * @param int|null   $entity_id  Optional entity ID created before the failure (e.g., Odoo record created but mapping save failed).
 	 * @return self
 	 */
-	public static function failure( string $message, Error_Type $error_type = Error_Type::Transient ): self {
-		return new self( false, null, $message, $error_type );
+	public static function failure( string $message, Error_Type $error_type = Error_Type::Transient, ?int $entity_id = null ): self {
+		return new self( false, $entity_id, $message, $error_type );
 	}
 
 	/**

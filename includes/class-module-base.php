@@ -209,11 +209,17 @@ abstract class Module_Base {
 
 		if ( 'update' === $action && $odoo_id > 0 ) {
 			$this->client()->write( $model, [ $odoo_id ], $odoo_values );
-			$this->save_mapping( $entity_type, $wp_id, $odoo_id, $new_hash );
+			if ( ! $this->save_mapping( $entity_type, $wp_id, $odoo_id, $new_hash ) ) {
+				$this->logger->error( 'Mapping save failed after Odoo update.', compact( 'entity_type', 'wp_id', 'odoo_id' ) );
+			}
 			$this->logger->info( 'Updated Odoo record.', compact( 'entity_type', 'wp_id', 'odoo_id' ) );
 		} else {
 			$odoo_id = $this->client()->create( $model, $odoo_values );
-			$this->save_mapping( $entity_type, $wp_id, $odoo_id, $new_hash );
+			$saved   = $this->save_mapping( $entity_type, $wp_id, $odoo_id, $new_hash );
+			if ( ! $saved ) {
+				$this->logger->error( 'Mapping save failed after Odoo create.', compact( 'entity_type', 'wp_id', 'odoo_id' ) );
+				return Sync_Result::failure( 'Mapping save failed after Odoo create.', Error_Type::Transient, $odoo_id );
+			}
 			$this->logger->info( 'Created Odoo record.', compact( 'entity_type', 'wp_id', 'odoo_id' ) );
 		}
 
@@ -364,6 +370,24 @@ abstract class Module_Base {
 		foreach ( $mapping as $wp_field => $odoo_field ) {
 			if ( array_key_exists( $wp_field, $wp_data ) ) {
 				$odoo_values[ $odoo_field ] = $wp_data[ $wp_field ];
+			}
+		}
+
+		// Validate mapped Odoo fields exist in the model schema (warning only, non-blocking).
+		if ( ! empty( $odoo_values ) && isset( $this->odoo_models[ $entity_type ] ) ) {
+			$schema = Schema_Cache::get_fields( fn() => $this->client(), $this->odoo_models[ $entity_type ] );
+			if ( ! empty( $schema ) ) {
+				foreach ( $odoo_values as $field => $value ) {
+					if ( ! isset( $schema[ $field ] ) ) {
+						$this->logger->warning(
+							"Mapped Odoo field '{$field}' not found in model schema.",
+							[
+								'entity_type' => $entity_type,
+								'model'       => $this->odoo_models[ $entity_type ],
+							]
+						);
+					}
+				}
 			}
 		}
 
@@ -691,5 +715,14 @@ abstract class Module_Base {
 	 */
 	public function get_odoo_models(): array {
 		return $this->odoo_models;
+	}
+
+	/**
+	 * Get the Odoo client instance (public accessor for CLI/tools).
+	 *
+	 * @return API\Odoo_Client
+	 */
+	public function get_client(): API\Odoo_Client {
+		return $this->client();
 	}
 }

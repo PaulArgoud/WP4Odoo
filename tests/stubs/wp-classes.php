@@ -28,6 +28,7 @@ if ( ! class_exists( 'WP_REST_Request' ) ) {
 		private array $params = [];
 		private array $headers = [];
 		private array $json_params = [];
+		private string $body = '';
 
 		public function __construct( string $method = 'GET', string $route = '' ) {}
 
@@ -48,7 +49,12 @@ if ( ! class_exists( 'WP_REST_Request' ) ) {
 		}
 
 		public function set_body( string $body ): void {
+			$this->body        = $body;
 			$this->json_params = json_decode( $body, true ) ?: [];
+		}
+
+		public function get_body(): string {
+			return $this->body;
 		}
 
 		public function set_json_params( array $params ): void {

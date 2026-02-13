@@ -245,6 +245,47 @@ class WebhookHandlerTest extends TestCase {
 		$this->assertSame( 'existing-token', $GLOBALS['_wp_options']['wp4odoo_webhook_token'] );
 	}
 
+	// ─── HMAC signature verification ──────────────────────
+
+	public function test_validate_token_passes_without_signature_header(): void {
+		$request = new \WP_REST_Request( 'POST', '/wp4odoo/v1/webhook' );
+		$request->set_header( 'X-Odoo-Token', 'test-token-abc123' );
+		// No X-Odoo-Signature header → backward-compatible token-only mode.
+
+		$result = $this->handler->validate_webhook_token( $request );
+
+		$this->assertTrue( $result );
+	}
+
+	public function test_validate_token_passes_with_valid_hmac_signature(): void {
+		$body  = '{"module":"crm","entity_type":"contact","odoo_id":42}';
+		$token = 'test-token-abc123';
+		$hmac  = hash_hmac( 'sha256', $body, $token );
+
+		$request = new \WP_REST_Request( 'POST', '/wp4odoo/v1/webhook' );
+		$request->set_header( 'X-Odoo-Token', $token );
+		$request->set_header( 'X-Odoo-Signature', $hmac );
+		$request->set_body( $body );
+
+		$result = $this->handler->validate_webhook_token( $request );
+
+		$this->assertTrue( $result );
+	}
+
+	public function test_validate_token_rejects_invalid_hmac_signature(): void {
+		$body = '{"module":"crm","entity_type":"contact","odoo_id":42}';
+
+		$request = new \WP_REST_Request( 'POST', '/wp4odoo/v1/webhook' );
+		$request->set_header( 'X-Odoo-Token', 'test-token-abc123' );
+		$request->set_header( 'X-Odoo-Signature', 'deadbeef0000' );
+		$request->set_body( $body );
+
+		$result = $this->handler->validate_webhook_token( $request );
+
+		$this->assertInstanceOf( \WP_Error::class, $result );
+		$this->assertSame( 'wp4odoo_invalid_signature', $result->get_error_code() );
+	}
+
 	// ─── Deduplication ─────────────────────────────────────
 
 	public function test_handle_webhook_deduplicates_identical_payload(): void {

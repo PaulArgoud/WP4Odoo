@@ -6,7 +6,6 @@ namespace WP4Odoo\Modules;
 use WP4Odoo\Field_Mapper;
 use WP4Odoo\Module_Base;
 use WP4Odoo\Partner_Service;
-use WP4Odoo\Queue_Manager;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -140,11 +139,11 @@ class WooCommerce_Module extends Module_Base {
 	private Shipment_Handler $shipment_handler;
 
 	/**
-	 * Raw Odoo data captured during pull for post-save image processing.
+	 * Pull orchestration coordinator.
 	 *
-	 * @var array<string, mixed>
+	 * @var WC_Pull_Coordinator
 	 */
-	private array $last_odoo_data = [];
+	private WC_Pull_Coordinator $pull_coordinator;
 
 	/**
 	 * Constructor.
@@ -171,6 +170,17 @@ class WooCommerce_Module extends Module_Base {
 		$this->image_handler     = new Image_Handler( $this->logger );
 		$this->pricelist_handler = new Pricelist_Handler( $this->logger, fn() => $this->client(), (int) ( $module_settings['pricelist_id'] ?? 0 ), $rate_service, $convert_currency );
 		$this->shipment_handler  = new Shipment_Handler( $this->logger, fn() => $this->client() );
+
+		$this->pull_coordinator = new WC_Pull_Coordinator(
+			$this->logger,
+			fn() => $this->get_settings(),
+			fn() => $this->client(),
+			fn( string $type, int $odoo_id ) => $this->get_wp_mapping( $type, $odoo_id ),
+			$this->variant_handler,
+			$this->image_handler,
+			$this->pricelist_handler,
+			$this->shipment_handler
+		);
 	}
 
 	/**
@@ -187,7 +197,7 @@ class WooCommerce_Module extends Module_Base {
 		$settings = $this->get_settings();
 
 		// Capture raw Odoo data during product pull for image processing.
-		add_filter( "wp4odoo_map_from_odoo_{$this->id}_product", [ $this, 'capture_odoo_data' ], 1, 3 );
+		add_filter( "wp4odoo_map_from_odoo_{$this->id}_product", [ $this->pull_coordinator, 'capture_odoo_data' ], 1, 3 );
 
 		// Products.
 		if ( ! empty( $settings['sync_products'] ) ) {
@@ -295,9 +305,9 @@ class WooCommerce_Module extends Module_Base {
 	/**
 	 * Pull an Odoo entity into WordPress.
 	 *
-	 * Extends the base pull to handle variant and shipment entities,
-	 * auto-enqueue variant pulls after a product template is pulled,
-	 * and apply pricelist prices and shipment tracking post-pull.
+	 * Extends the base pull to handle variant and shipment entities
+	 * (delegated to WC_Pull_Coordinator) and triggers post-pull
+	 * actions (image, variants, pricelist, shipments).
 	 *
 	 * @param string $entity_type The entity type.
 	 * @param string $action      'create', 'update', or 'delete'.
@@ -307,265 +317,41 @@ class WooCommerce_Module extends Module_Base {
 	 * @return \WP4Odoo\Sync_Result
 	 */
 	public function pull_from_odoo( string $entity_type, string $action, int $odoo_id, int $wp_id = 0, array $payload = [] ): \WP4Odoo\Sync_Result {
-		// Variants: delegate directly to Variant_Handler.
+		// Variants: delegate to pull coordinator with anti-loop guard.
 		if ( 'variant' === $entity_type ) {
-			return $this->pull_variant( $odoo_id, $wp_id, $payload );
+			$this->mark_importing();
+			try {
+				return $this->pull_coordinator->pull_variant( $odoo_id, $wp_id, $payload );
+			} finally {
+				$this->clear_importing();
+			}
 		}
 
-		// Shipments: delegate directly to Shipment_Handler.
+		// Shipments: delegate to pull coordinator.
 		if ( 'shipment' === $entity_type ) {
-			return $this->pull_shipment_for_picking( $odoo_id );
+			return $this->pull_coordinator->pull_shipment_for_picking( $odoo_id );
 		}
 
 		// Standard pull for all other entity types.
 		$result = parent::pull_from_odoo( $entity_type, $action, $odoo_id, $wp_id, $payload );
 
-		// After product template pull: import image + enqueue variant pulls + pricelist price.
+		// After product template pull: image + variants + pricelist.
 		if ( $result->succeeded() && 'product' === $entity_type && 'delete' !== $action ) {
 			$pulled_wp_id = $wp_id ?: ( $this->get_wp_mapping( 'product', $odoo_id ) ?? 0 );
 			if ( $pulled_wp_id > 0 ) {
-				$this->maybe_pull_product_image( $pulled_wp_id );
-				$this->enqueue_variants_for_template( $odoo_id, $pulled_wp_id );
-				$this->maybe_apply_pricelist_price( $pulled_wp_id, $odoo_id );
+				$this->pull_coordinator->on_product_pulled( $pulled_wp_id, $odoo_id );
 			}
-			$this->last_odoo_data = [];
 		}
 
 		// After order pull: fetch related shipment tracking.
 		if ( $result->succeeded() && 'order' === $entity_type && 'delete' !== $action ) {
 			$pulled_wp_id = $wp_id ?: ( $this->get_wp_mapping( 'order', $odoo_id ) ?? 0 );
 			if ( $pulled_wp_id > 0 ) {
-				$this->maybe_pull_shipments( $odoo_id, $pulled_wp_id );
+				$this->pull_coordinator->on_order_pulled( $odoo_id, $pulled_wp_id );
 			}
 		}
 
 		return $result;
-	}
-
-	/**
-	 * Capture raw Odoo data during product pull for post-save image processing.
-	 *
-	 * @param array  $wp_data     The mapped WordPress data.
-	 * @param array  $odoo_data   The raw Odoo record data.
-	 * @param string $entity_type The entity type.
-	 * @return array Unmodified WordPress data.
-	 */
-	public function capture_odoo_data( array $wp_data, array $odoo_data, string $entity_type ): array {
-		$this->last_odoo_data = $odoo_data;
-		return $wp_data;
-	}
-
-	/**
-	 * Import the featured image for a product if image sync is enabled.
-	 *
-	 * @param int $wp_product_id WC product ID.
-	 * @return void
-	 */
-	private function maybe_pull_product_image( int $wp_product_id ): void {
-		$settings = $this->get_settings();
-
-		if ( empty( $settings['sync_product_images'] ) ) {
-			return;
-		}
-
-		$image_data   = $this->last_odoo_data['image_1920'] ?? false;
-		$product_name = $this->last_odoo_data['name'] ?? '';
-
-		$this->image_handler->import_featured_image( $wp_product_id, $image_data, $product_name );
-	}
-
-	/**
-	 * Apply pricelist price to a product if pricelist sync is enabled.
-	 *
-	 * @param int $wp_product_id    WC product ID.
-	 * @param int $odoo_template_id Odoo product.template ID.
-	 * @return void
-	 */
-	private function maybe_apply_pricelist_price( int $wp_product_id, int $odoo_template_id ): void {
-		$settings = $this->get_settings();
-
-		if ( empty( $settings['sync_pricelists'] ) ) {
-			return;
-		}
-
-		$this->pricelist_handler->apply_pricelist_price( $wp_product_id, $odoo_template_id );
-	}
-
-	/**
-	 * Pull shipment tracking for an order if shipment sync is enabled.
-	 *
-	 * @param int $odoo_order_id Odoo sale.order ID.
-	 * @param int $wc_order_id   WC order ID.
-	 * @return void
-	 */
-	private function maybe_pull_shipments( int $odoo_order_id, int $wc_order_id ): void {
-		$settings = $this->get_settings();
-
-		if ( empty( $settings['sync_shipments'] ) || $wc_order_id <= 0 ) {
-			return;
-		}
-
-		$this->shipment_handler->pull_shipments( $odoo_order_id, $wc_order_id );
-	}
-
-	/**
-	 * Handle a direct shipment pull from a stock.picking webhook/queue job.
-	 *
-	 * Reads the picking to find the linked sale_id, resolves the WC order,
-	 * and delegates to the Shipment_Handler.
-	 *
-	 * @param int $picking_odoo_id Odoo stock.picking ID.
-	 * @return \WP4Odoo\Sync_Result
-	 */
-	private function pull_shipment_for_picking( int $picking_odoo_id ): \WP4Odoo\Sync_Result {
-		$settings = $this->get_settings();
-
-		if ( empty( $settings['sync_shipments'] ) ) {
-			return \WP4Odoo\Sync_Result::failure(
-				__( 'Shipment sync is disabled.', 'wp4odoo' ),
-				\WP4Odoo\Error_Type::Permanent
-			);
-		}
-
-		try {
-			$records = $this->client()->read(
-				'stock.picking',
-				[ $picking_odoo_id ],
-				[ 'sale_id', 'state', 'picking_type_code' ]
-			);
-		} catch ( \Throwable $e ) {
-			return \WP4Odoo\Sync_Result::failure( $e->getMessage(), \WP4Odoo\Error_Type::Transient );
-		}
-
-		if ( empty( $records ) ) {
-			return \WP4Odoo\Sync_Result::failure(
-				__( 'stock.picking not found.', 'wp4odoo' ),
-				\WP4Odoo\Error_Type::Permanent
-			);
-		}
-
-		$picking = $records[0];
-
-		// Only process outgoing + done pickings.
-		if ( 'outgoing' !== ( $picking['picking_type_code'] ?? '' )
-			|| 'done' !== ( $picking['state'] ?? '' ) ) {
-			return \WP4Odoo\Sync_Result::success( 0 );
-		}
-
-		$sale_id = Field_Mapper::many2one_to_id( $picking['sale_id'] ?? false );
-		if ( ! $sale_id ) {
-			return \WP4Odoo\Sync_Result::failure(
-				__( 'stock.picking has no linked sale.order.', 'wp4odoo' ),
-				\WP4Odoo\Error_Type::Permanent
-			);
-		}
-
-		$wc_order_id = $this->get_wp_mapping( 'order', $sale_id );
-		if ( ! $wc_order_id ) {
-			return \WP4Odoo\Sync_Result::failure(
-				__( 'No WC order mapped for the linked sale.order.', 'wp4odoo' ),
-				\WP4Odoo\Error_Type::Transient
-			);
-		}
-
-		$ok = $this->shipment_handler->pull_shipments( $sale_id, $wc_order_id );
-
-		return $ok
-			? \WP4Odoo\Sync_Result::success( $wc_order_id )
-			: \WP4Odoo\Sync_Result::failure(
-				__( 'Shipment pull failed.', 'wp4odoo' ),
-				\WP4Odoo\Error_Type::Transient
-			);
-	}
-
-	/**
-	 * Pull a single product.product variant from Odoo.
-	 *
-	 * @param int   $odoo_id Odoo product.product ID.
-	 * @param int   $wp_id   Existing WC variation ID (0 if unknown).
-	 * @param array $payload Queue payload (may contain parent_wp_id, template_odoo_id).
-	 * @return \WP4Odoo\Sync_Result
-	 */
-	private function pull_variant( int $odoo_id, int $wp_id, array $payload ): \WP4Odoo\Sync_Result {
-		self::mark_importing();
-
-		try {
-			$parent_wp_id     = (int) ( $payload['parent_wp_id'] ?? 0 );
-			$template_odoo_id = (int) ( $payload['template_odoo_id'] ?? 0 );
-
-			// If parent not in payload, read the variant to find the template, then look up mapping.
-			if ( 0 === $parent_wp_id && 0 === $template_odoo_id ) {
-				$records = $this->client()->read( 'product.product', [ $odoo_id ], [ 'product_tmpl_id' ] );
-				if ( ! empty( $records[0]['product_tmpl_id'] ) ) {
-					$template_odoo_id = is_array( $records[0]['product_tmpl_id'] )
-						? (int) $records[0]['product_tmpl_id'][0]
-						: (int) $records[0]['product_tmpl_id'];
-				}
-			}
-
-			if ( 0 === $parent_wp_id && $template_odoo_id > 0 ) {
-				$parent_wp_id = $this->get_wp_mapping( 'product', $template_odoo_id ) ?? 0;
-			}
-
-			if ( 0 === $parent_wp_id ) {
-				$this->logger->warning(
-					'Cannot pull variant: parent product not mapped.',
-					[
-						'variant_odoo_id'  => $odoo_id,
-						'template_odoo_id' => $template_odoo_id,
-					]
-				);
-				return \WP4Odoo\Sync_Result::failure( 'Cannot pull variant: parent product not mapped.', \WP4Odoo\Error_Type::Permanent );
-			}
-
-			$ok = $this->variant_handler->pull_variants( $template_odoo_id, $parent_wp_id );
-			return $ok
-				? \WP4Odoo\Sync_Result::success( $parent_wp_id )
-				: \WP4Odoo\Sync_Result::failure( 'Variant pull failed.', \WP4Odoo\Error_Type::Transient );
-		} finally {
-			self::clear_importing();
-		}
-	}
-
-	/**
-	 * Enqueue variant pulls for a product template.
-	 *
-	 * @param int $template_odoo_id Odoo product.template ID.
-	 * @param int $wp_parent_id     WC parent product ID.
-	 * @return void
-	 */
-	private function enqueue_variants_for_template( int $template_odoo_id, int $wp_parent_id ): void {
-		$variant_ids = $this->client()->search(
-			'product.product',
-			[ [ 'product_tmpl_id', '=', $template_odoo_id ] ]
-		);
-
-		// Single variant or none: simple product, nothing to enqueue.
-		if ( count( $variant_ids ) <= 1 ) {
-			return;
-		}
-
-		foreach ( $variant_ids as $variant_odoo_id ) {
-			Queue_Manager::pull(
-				'woocommerce',
-				'variant',
-				'update',
-				(int) $variant_odoo_id,
-				0,
-				[
-					'parent_wp_id'     => $wp_parent_id,
-					'template_odoo_id' => $template_odoo_id,
-				]
-			);
-		}
-
-		$this->logger->info(
-			'Enqueued variant pulls for template.',
-			[
-				'template_odoo_id' => $template_odoo_id,
-				'variant_count'    => count( $variant_ids ),
-			]
-		);
 	}
 
 	// ─── Data Loading (delegates to handlers) ───────────────

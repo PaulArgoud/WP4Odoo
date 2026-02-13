@@ -223,6 +223,102 @@ class CLI {
 	}
 
 	/**
+	 * Reconcile entity mappings against live Odoo records.
+	 *
+	 * Checks whether mapped Odoo IDs still exist and reports orphans.
+	 *
+	 * ## OPTIONS
+	 *
+	 * <module>
+	 * : Module identifier (e.g. crm, woocommerce).
+	 *
+	 * <entity_type>
+	 * : Entity type (e.g. contact, product).
+	 *
+	 * [--fix]
+	 * : Remove orphaned mappings.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     wp wp4odoo reconcile crm contact
+	 *     wp wp4odoo reconcile woocommerce product --fix
+	 *
+	 * @subcommand reconcile
+	 * @when after_wp_load
+	 */
+	public function reconcile( array $args, array $assoc_args = [] ): void {
+		$module_id   = $args[0] ?? '';
+		$entity_type = $args[1] ?? '';
+
+		if ( empty( $module_id ) || empty( $entity_type ) ) {
+			\WP_CLI::error( 'Usage: wp wp4odoo reconcile <module> <entity_type> [--fix]' );
+		}
+
+		$module = \WP4Odoo_Plugin::instance()->get_module( $module_id );
+
+		if ( null === $module ) {
+			\WP_CLI::error( sprintf( 'Module "%s" not found.', $module_id ) );
+		}
+
+		$odoo_models = $module->get_odoo_models();
+
+		if ( ! isset( $odoo_models[ $entity_type ] ) ) {
+			\WP_CLI::error(
+				sprintf(
+					'Entity type "%s" not found in module "%s". Available: %s',
+					$entity_type,
+					$module_id,
+					implode( ', ', array_keys( $odoo_models ) )
+				)
+			);
+		}
+
+		$fix = isset( $assoc_args['fix'] );
+
+		\WP_CLI::line(
+			sprintf(
+				'Reconciling %s/%s against Odoo model %s%s...',
+				$module_id,
+				$entity_type,
+				$odoo_models[ $entity_type ],
+				$fix ? ' (fix mode)' : ''
+			)
+		);
+
+		$settings   = \WP4Odoo_Plugin::instance()->settings();
+		$logger     = new Logger( 'reconcile', $settings );
+		$reconciler = new Reconciler(
+			new Entity_Map_Repository(),
+			fn() => $module->get_client(),
+			$logger
+		);
+
+		$result = $reconciler->reconcile( $module_id, $entity_type, $odoo_models[ $entity_type ], $fix );
+
+		\WP_CLI::line( sprintf( 'Checked: %d mapping(s)', $result['checked'] ) );
+		\WP_CLI::line( sprintf( 'Orphaned: %d', count( $result['orphaned'] ) ) );
+
+		if ( ! empty( $result['orphaned'] ) ) {
+			$rows = [];
+			foreach ( $result['orphaned'] as $orphan ) {
+				$rows[] = [
+					'wp_id'   => $orphan['wp_id'],
+					'odoo_id' => $orphan['odoo_id'],
+				];
+			}
+			\WP_CLI\Utils\format_items( 'table', $rows, [ 'wp_id', 'odoo_id' ] );
+		}
+
+		if ( $fix ) {
+			\WP_CLI::success( sprintf( '%d orphaned mapping(s) removed.', $result['fixed'] ) );
+		} elseif ( ! empty( $result['orphaned'] ) ) {
+			\WP_CLI::warning( 'Run with --fix to remove orphaned mappings.' );
+		} else {
+			\WP_CLI::success( 'No orphans found.' );
+		}
+	}
+
+	/**
 	 * Manage modules.
 	 *
 	 * ## EXAMPLES

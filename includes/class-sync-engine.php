@@ -249,7 +249,7 @@ class Sync_Engine {
 						++$processed;
 						++$this->batch_successes;
 					} else {
-						$this->handle_failure( $job, $result->get_message(), $result->get_error_type() );
+						$this->handle_failure( $job, $result->get_message(), $result->get_error_type(), $result->get_entity_id() );
 						++$this->batch_failures;
 					}
 				} catch ( \Throwable $e ) {
@@ -363,12 +363,13 @@ class Sync_Engine {
 	 * - Transient (default): retry with exponential backoff.
 	 * - Permanent: fail immediately, no retry.
 	 *
-	 * @param object          $job           The job row.
-	 * @param string          $error_message The error description.
-	 * @param Error_Type|null $error_type    Error classification (null = Transient for backward compat).
+	 * @param object          $job               The job row.
+	 * @param string          $error_message     The error description.
+	 * @param Error_Type|null $error_type        Error classification (null = Transient for backward compat).
+	 * @param int|null        $created_entity_id Entity ID created before the failure (prevents duplicate creation on retry).
 	 * @return void
 	 */
-	private function handle_failure( object $job, string $error_message, ?Error_Type $error_type = null ): void {
+	private function handle_failure( object $job, string $error_message, ?Error_Type $error_type = null, ?int $created_entity_id = null ): void {
 		$attempts      = (int) $job->attempts + 1;
 		$error_trimmed = sanitize_text_field( mb_substr( $error_message, 0, 65535 ) );
 		$error_type    = $error_type ?? Error_Type::Transient;
@@ -380,15 +381,18 @@ class Sync_Engine {
 			$delay     = (int) ( pow( 2, $attempts ) * 60 ) + random_int( 0, 60 );
 			$scheduled = gmdate( 'Y-m-d H:i:s', time() + $delay );
 
-			$this->queue_repo->update_status(
-				(int) $job->id,
-				'pending',
-				[
-					'attempts'      => $attempts,
-					'error_message' => $error_trimmed,
-					'scheduled_at'  => $scheduled,
-				]
-			);
+			$extra = [
+				'attempts'      => $attempts,
+				'error_message' => $error_trimmed,
+				'scheduled_at'  => $scheduled,
+			];
+
+			// Persist the created Odoo ID so retries switch to update instead of duplicate create.
+			if ( null !== $created_entity_id && $created_entity_id > 0 && 0 === (int) ( $job->odoo_id ?? 0 ) ) {
+				$extra['odoo_id'] = $created_entity_id;
+			}
+
+			$this->queue_repo->update_status( (int) $job->id, 'pending', $extra );
 
 			$this->logger->warning(
 				'Sync job failed, will retry.',
@@ -401,15 +405,18 @@ class Sync_Engine {
 				]
 			);
 		} else {
-			$this->queue_repo->update_status(
-				(int) $job->id,
-				'failed',
-				[
-					'attempts'      => $attempts,
-					'error_message' => $error_trimmed,
-					'processed_at'  => current_time( 'mysql', true ),
-				]
-			);
+			$extra = [
+				'attempts'      => $attempts,
+				'error_message' => $error_trimmed,
+				'processed_at'  => current_time( 'mysql', true ),
+			];
+
+			// Persist the created Odoo ID even on permanent failure for manual reconciliation.
+			if ( null !== $created_entity_id && $created_entity_id > 0 && 0 === (int) ( $job->odoo_id ?? 0 ) ) {
+				$extra['odoo_id'] = $created_entity_id;
+			}
+
+			$this->queue_repo->update_status( (int) $job->id, 'failed', $extra );
 
 			$this->logger->error(
 				'Sync job permanently failed.',

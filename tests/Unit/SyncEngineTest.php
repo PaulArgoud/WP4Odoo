@@ -537,6 +537,73 @@ class SyncEngineTest extends TestCase {
 		$this->assertEmpty( $GLOBALS['_wp_mail_calls'] );
 	}
 
+	public function test_handle_failure_persists_entity_id_on_retry(): void {
+		$this->wpdb->get_var_return = '1';
+
+		$module = new Mock_Module( 'test' );
+		// Return a failure WITH an entity_id (simulates Odoo create succeeded but mapping save failed).
+		$module->push_result = \WP4Odoo\Sync_Result::failure( 'Mapping save failed.', \WP4Odoo\Error_Type::Transient, 999 );
+		\WP4Odoo_Plugin::instance()->register_module( 'test', $module );
+
+		$job = (object) [
+			'id'           => 800,
+			'module'       => 'test',
+			'direction'    => 'wp_to_odoo',
+			'entity_type'  => 'product',
+			'action'       => 'create',
+			'wp_id'        => 10,
+			'odoo_id'      => 0,
+			'payload'      => '{}',
+			'attempts'     => 0,
+			'max_attempts' => 3,
+		];
+
+		$this->wpdb->get_results_return = [ $job ];
+
+		$engine = new Sync_Engine( wp4odoo_test_module_resolver(), wp4odoo_test_queue_repo(), wp4odoo_test_settings() );
+		$engine->process_queue();
+
+		// The retry update should include the created entity_id (odoo_id = 999).
+		$updates     = $this->get_calls( 'update' );
+		$last_update = end( $updates );
+		$data        = $last_update['args'][1];
+		$this->assertSame( 'pending', $data['status'] );
+		$this->assertArrayHasKey( 'odoo_id', $data );
+		$this->assertSame( 999, $data['odoo_id'] );
+	}
+
+	public function test_handle_failure_does_not_overwrite_existing_odoo_id(): void {
+		$this->wpdb->get_var_return = '1';
+
+		$module = new Mock_Module( 'test' );
+		$module->push_result = \WP4Odoo\Sync_Result::failure( 'Some error.', \WP4Odoo\Error_Type::Transient, 555 );
+		\WP4Odoo_Plugin::instance()->register_module( 'test', $module );
+
+		// Job already has an odoo_id — should NOT be overwritten.
+		$job = (object) [
+			'id'           => 801,
+			'module'       => 'test',
+			'direction'    => 'wp_to_odoo',
+			'entity_type'  => 'product',
+			'action'       => 'update',
+			'wp_id'        => 10,
+			'odoo_id'      => 100,
+			'payload'      => '{}',
+			'attempts'     => 0,
+			'max_attempts' => 3,
+		];
+
+		$this->wpdb->get_results_return = [ $job ];
+
+		$engine = new Sync_Engine( wp4odoo_test_module_resolver(), wp4odoo_test_queue_repo(), wp4odoo_test_settings() );
+		$engine->process_queue();
+
+		$updates     = $this->get_calls( 'update' );
+		$last_update = end( $updates );
+		$data        = $last_update['args'][1];
+		$this->assertArrayNotHasKey( 'odoo_id', $data );
+	}
+
 	public function test_failure_notification_respects_cooldown(): void {
 		$this->wpdb->get_var_return = '1';
 		$GLOBALS['_wp_options']['admin_email'] = 'admin@test.com';
