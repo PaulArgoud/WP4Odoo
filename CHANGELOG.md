@@ -17,6 +17,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Translation_Service::pull_term_translations_batch()** — Pulls translated term names from Odoo and applies to WPML/Polylang translated terms. Reuses `read_translated_batch()` for efficient per-language batch reads
 - **Product category pull** — `Product_Handler` resolves Odoo `categ_id` Many2one to WP `product_cat` terms during product pull. WooCommerce_Module now maps `categ_id` and declares `product.category` Odoo model
 - **Attribute value entity tracking** — `Variant_Handler` saves entity_map entries for attribute values after parent attribute creation, enabling translation flush by taxonomy
+- **WP Job Manager module** — New bidirectional sync module for WP Job Manager (100k+ installs). Syncs `job_listing` CPT ↔ Odoo `hr.job` (job positions). Status mapping: `publish` ↔ `recruit`, `expired`/`filled` ↔ `open`. Pull support: department → `job_listing_category` taxonomy. Filterable status hooks. 61 new tests
+- **Odoo_Model enum** — Added `HrJob` (`hr.job`) and `HrDepartment` (`hr.department`) cases for the HR domain
+- **Backup warning** — Persistent admin banner on plugin settings page reminding users to back up WordPress + Odoo databases before sync. JS confirmation dialog before bulk import/export and retry operations. WP-CLI warning before `sync run`. Translated (FR, ES)
 
 ### Changed
 - **WooCommerce module** — `sync_translations` setting migrated from boolean to array of language codes (backward compatible). UI replaced from checkbox to interactive language detection panel

@@ -6,7 +6,7 @@
 ![Odoo 14+](https://img.shields.io/badge/Odoo-14%2B-714B67)
 ![License: GPL v2+](https://img.shields.io/badge/License-GPL%20v2%2B-blue)
 
-Modular WordPress plugin that creates a seamless, bidirectional bridge between WordPress/WooCommerce and Odoo ERP (v14+). Built on a clean, extensible architecture with 24 integration modules, an async sync queue, and full WP-CLI support. Ships in **3 languages** (English, French, Spanish).
+Modular WordPress plugin that creates a seamless, bidirectional bridge between WordPress/WooCommerce and Odoo ERP (v14+). Built on a clean, extensible architecture with 26 integration modules, an async sync queue, and full WP-CLI support. Ships in **3 languages** (English, French, Spanish).
 
 **Target users:** WordPress agencies and businesses running Odoo as their ERP who need reliable, real-time data flow between their website and back-office.
 
@@ -21,7 +21,7 @@ Modular WordPress plugin that creates a seamless, bidirectional bridge between W
 - **Admin Dashboard** — 5-tab settings interface (Connection, Sync, Modules, Queue, Logs) with guided onboarding
 - **WP-CLI** — Full command suite: `wp wp4odoo status|test|sync|queue|module` for headless management
 - **Extensible** — Register custom modules via `wp4odoo_register_modules`; filter data with `wp4odoo_map_to_odoo_*` / `wp4odoo_map_from_odoo_*`
-- **Multilingual** — 442 translatable strings, ships with English, French, and Spanish. Translation-ready via `.po`/`.mo`
+- **Multilingual** — 481 translatable strings, ships with English, French, and Spanish. Translation-ready via `.po`/`.mo`
 
 ## Requirements
 
@@ -66,12 +66,18 @@ Each Odoo domain is encapsulated in an independent module extending `Module_Base
 
 | Module                        | Sync | Odoo Apps                             | Free⁴ | Key Features                                                              |
 |-------------------------------|:----:|---------------------------------------|:-----:|---------------------------------------------------------------------------|
-| **WooCommerce**               |  ↔️  | Contacts, Sales, Inventory, Invoicing |  ❌  | Product/order/stock sync, variants, image pull, exchange rates, bulk ops  |
+| **WooCommerce**               |  ↔️  | Contacts, Sales, Inventory, Invoicing |  ❌  | Product/order/stock/category sync, variants, image pull, exchange rates, bulk ops |
 | **WooCommerce Subscriptions** |  ↔️  | Contacts, Subscriptions, Invoicing    |  ❌  | Subscription/renewal sync, dual-model (sale.subscription / account.move)  |
 | **Easy Digital Downloads**    |  ↔️  | Contacts, Sales, Invoicing            |  ❌  | Download/order sync, status mapping, invoice pull                         |
 | **Ecwid**                     |  ➡️  | Contacts, Sales                       |  ❌  | Product/order sync via WP-Cron polling, REST API, hash-based detection    |
 | **ShopWP**                    |  ➡️  | Products                              |  ❌  | Shopify product sync via CPT + custom table, variant price/SKU            |
 | **WP Crowdfunding**           |  ➡️  | Products                              |  ❌  | Campaign sync as service products, funding description, coexists with WC  |
+
+### HR
+
+| Module                | Sync | Odoo Apps    | Free⁴ | Key Features                                                                   |
+|-----------------------|------|--------------|-------|--------------------------------------------------------------------------------|
+| **WP Job Manager**    |  ↔️  | HR Recruitment                        |  ✅  | Job listings ↔ hr.job, status mapping (publish ↔ recruit), department pull    |
 
 ### CRM & Forms
 

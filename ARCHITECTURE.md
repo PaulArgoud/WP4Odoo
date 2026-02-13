@@ -2,7 +2,7 @@
 
 ## Overview
 
-Modular WordPress plugin providing bidirectional synchronization between WordPress/WooCommerce and Odoo ERP (v14+). The plugin covers 24 modules across 14 domains: CRM, Sales & Invoicing, WooCommerce, WooCommerce Subscriptions, Easy Digital Downloads, Memberships (WC Memberships + MemberPress + PMPro + RCP), Donations (GiveWP + WP Charitable + WP Simple Pay), Forms (7 plugins), WP Recipe Maker, LMS (LearnDash + LifterLMS), Booking (Amelia + Bookly), Events (The Events Calendar + Event Tickets), Invoicing (Sprout Invoices + WP-Invoice), and E-Commerce (WP Crowdfunding + Ecwid + ShopWP).
+Modular WordPress plugin providing bidirectional synchronization between WordPress/WooCommerce and Odoo ERP (v14+). The plugin covers 25 modules across 15 domains: CRM, Sales & Invoicing, WooCommerce, WooCommerce Subscriptions, Easy Digital Downloads, Memberships (WC Memberships + MemberPress + PMPro + RCP), Donations (GiveWP + WP Charitable + WP Simple Pay), Forms (7 plugins), WP Recipe Maker, LMS (LearnDash + LifterLMS), Booking (Amelia + Bookly), Events (The Events Calendar + Event Tickets), Invoicing (Sprout Invoices + WP-Invoice), E-Commerce (WP Crowdfunding + Ecwid + ShopWP), and HR (WP Job Manager).
 
 ![WP4ODOO Full Architecture](assets/images/architecture-full.svg)
 
@@ -160,7 +160,11 @@ WordPress For Odoo/
 │   │   ├── class-ecwid-module.php            # Ecwid: ecommerce exclusive group, cron-based
 │   │   ├── trait-shopwp-hooks.php            # ShopWP: on_product_save via save_post_wps_products
 │   │   ├── class-shopwp-handler.php          # ShopWP: CPT + shopwp_variants table via $wpdb
-│   │   └── class-shopwp-module.php           # ShopWP: ecommerce exclusive group, products only
+│   │   ├── class-shopwp-module.php           # ShopWP: ecommerce exclusive group, products only
+│   │   ├── # ─── HR (WP Job Manager) ──────────
+│   │   ├── trait-job-manager-hooks.php       # Job Manager: on_job_save, on_job_expired
+│   │   ├── class-job-manager-handler.php     # Job Manager: job_listing CPT, status mapping, department resolution
+│   │   └── class-job-manager-module.php      # Job Manager: independent, bidirectional job ↔ hr.job
 │   │
 │   ├── i18n/
 │   │   ├── interface-translation-adapter.php   # Adapter interface (8 methods: post + term translations, default lang, active langs)
@@ -170,7 +174,7 @@ WordPress For Odoo/
 │   │   └── index.php                           # Silence is golden
 │   │
 │   ├── admin/
-│   │   ├── class-admin.php            # Admin menu, assets, activation redirect, setup notice
+│   │   ├── class-admin.php            # Admin menu, assets, activation redirect, setup notice, backup warning
 │   │   ├── class-bulk-handler.php     # Bulk product import/export (paginated, batch lookups)
 │   │   ├── trait-ajax-monitor-handlers.php  # AJAX: queue management + log viewing (7 handlers)
 │   │   ├── trait-ajax-module-handlers.php   # AJAX: module settings + bulk operations (4 handlers)
@@ -338,6 +342,8 @@ WordPress For Odoo/
 │       ├── CrowdfundingModuleTest.php    # 22 tests for Crowdfunding_Module
 │       ├── EcwidModuleTest.php           # 42 tests for Ecwid_Module
 │       ├── ShopWPModuleTest.php          # 25 tests for ShopWP_Module
+│       ├── JobManagerModuleTest.php     # 28 tests for Job_Manager_Module
+│       ├── JobManagerHandlerTest.php    # 33 tests for Job_Manager_Handler
 │       ├── WPMLAdapterTest.php          # 17 tests for WPML_Adapter
 │       ├── PolylangAdapterTest.php      # 16 tests for Polylang_Adapter
 │       └── TranslationServiceTest.php   # 27 tests for Translation_Service
@@ -408,6 +414,7 @@ Module_Base (abstract)
 ├── Crowdfunding_Module         → product.product                                    [WP → Odoo]
 ├── Ecwid_Module                → product.product, sale.order                        [WP → Odoo]
 ├── ShopWP_Module               → product.product                                    [WP → Odoo]
+├── Job_Manager_Module          → hr.job                                             [WP ↔ Odoo]
 └── [Custom_Module]             → extensible via action hook
 ```
 
@@ -818,7 +825,7 @@ All user inputs are sanitized with:
 | Logs | `tab-logs.php` | Filter bar (level, module, dates), AJAX paginated log table, purge |
 
 **Key classes:**
-- `Admin` — orchestrator: menu registration, asset enqueuing, plugin settings link, activation redirect, setup notice
+- `Admin` — orchestrator: menu registration, asset enqueuing, plugin settings link, activation redirect, setup notice, backup warning banner
 - `Settings_Page` — Settings API registration, tab rendering (dynamic `render_tab()` dispatcher), setup checklist, sanitize callbacks
 - `Admin_Ajax` — 15 handlers: test_connection, retry_failed, cleanup_queue, cancel_job, purge_logs, fetch_logs, queue_stats, toggle_module, save_module_settings, bulk_import_products, bulk_export_products, fetch_queue, dismiss_onboarding, dismiss_checklist, confirm_webhooks
 
@@ -1267,6 +1274,23 @@ All user inputs are sanitized with:
 - Hook: `save_post_wps_products` (fired by ShopWP during Shopify sync)
 
 **Settings:** `sync_products`
+
+### WP Job Manager — COMPLETE
+
+**Files:** `class-job-manager-module.php` (bidirectional sync coordinator, uses `Job_Manager_Hooks` trait), `trait-job-manager-hooks.php` (hook callbacks: `on_job_save`, `on_job_expired`), `class-job-manager-handler.php` (data load/save/parse for `job_listing` CPT)
+
+**Odoo models:** `hr.job` (job positions)
+
+**Key features:**
+- Bidirectional (WP ↔ Odoo) — job listings as Odoo job positions
+- Requires WP Job Manager; `boot()` guards with `defined('JOB_MANAGER_VERSION')`
+- No exclusive group — HR domain is independent
+- Status mapping: `publish` → `recruit`, `expired`/`filled` → `open` (filterable via `wp4odoo_job_manager_status_map` / `wp4odoo_job_manager_reverse_status_map`)
+- Department pull: Odoo `department_id` Many2one → `job_listing_category` taxonomy term
+- Description builder: post content + location + company meta (same `\n\n` pattern as WPRM)
+- Hooks: `save_post_job_listing`, `job_listing_expired`
+
+**Settings:** `sync_jobs`, `pull_jobs`
 
 ### Partner Service
 

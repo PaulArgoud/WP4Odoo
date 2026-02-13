@@ -437,6 +437,15 @@
 .wp4odoo-lang-ok { color: #00a32a; }
 .wp4odoo-lang-missing { color: #d63638; }
 
+/* --- Backup warning --- */
+.wp4odoo-backup-warning {
+	border-left-color: #dba617;
+}
+
+.wp4odoo-backup-warning p {
+	font-size: 13px;
+}
+
 /* --- Responsive --- */
 @media (max-width: 782px) {
 	.wp4odoo-stats-grid {

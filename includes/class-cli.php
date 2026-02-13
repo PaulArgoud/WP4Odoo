@@ -158,6 +158,10 @@ class CLI {
 
 		$dry_run = isset( $assoc_args['dry-run'] );
 
+		\WP_CLI::warning(
+			__( 'Back up your WordPress and Odoo databases before running sync operations.', 'wp4odoo' )
+		);
+
 		if ( $dry_run ) {
 			\WP_CLI::line( 'Processing sync queue (dry-run mode)...' );
 		} else {

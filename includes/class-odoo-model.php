@@ -88,6 +88,14 @@ enum Odoo_Model: string {
 	/** Event registrations / attendees. */
 	case EventRegistration = 'event.registration';
 
+	// ─── HR ────────────────────────────────────────────────
+
+	/** Job positions. */
+	case HrJob = 'hr.job';
+
+	/** HR departments. */
+	case HrDepartment = 'hr.department';
+
 	// ─── Inventory ─────────────────────────────────────────
 
 	/** Stock pickings (delivery orders). */

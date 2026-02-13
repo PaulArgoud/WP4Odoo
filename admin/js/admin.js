@@ -249,6 +249,9 @@
 
 		bindRetryFailed: function() {
 			$( '#wp4odoo-retry-failed' ).on( 'click', function() {
+				if ( ! confirm( wp4odooAdmin.i18n.confirmBackup ) ) {
+					return;
+				}
 				WP4Odoo.ajax( 'wp4odoo_retry_failed', {}, function( data ) {
 					WP4Odoo.showNotice( 'success', data.message );
 					WP4Odoo.refreshStats();
@@ -322,6 +325,9 @@
 		 */
 		bindBulkAction: function( selector, action, confirmKey ) {
 			$( selector ).on( 'click', function() {
+				if ( ! confirm( wp4odooAdmin.i18n.confirmBackup ) ) {
+					return;
+				}
 				if ( ! confirm( wp4odooAdmin.i18n[ confirmKey ] ) ) {
 					return;
 				}

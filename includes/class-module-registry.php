@@ -143,6 +143,10 @@ class Module_Registry {
 			$this->register( 'events_calendar', new Modules\Events_Calendar_Module( $client_provider, $entity_map, $settings ) );
 		}
 
+		if ( defined( 'JOB_MANAGER_VERSION' ) ) {
+			$this->register( 'job_manager', new Modules\Job_Manager_Module( $client_provider, $entity_map, $settings ) );
+		}
+
 		// Allow third-party modules (closures and shared entity map available as arguments).
 		do_action( 'wp4odoo_register_modules', $this->plugin, $client_provider, $entity_map );
 	}

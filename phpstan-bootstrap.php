@@ -788,6 +788,12 @@ if ( ! class_exists( 'WC_Product_Booking' ) ) {
 	}
 }
 
+// ─── WP Job Manager stubs ────────────────────────────────
+
+if ( ! defined( 'JOB_MANAGER_VERSION' ) ) {
+	define( 'JOB_MANAGER_VERSION', '2.4.0' );
+}
+
 // ─── WPML stubs ─────────────────────────────────────────
 
 if ( ! defined( 'ICL_SITEPRESS_VERSION' ) ) {

@@ -43,6 +43,7 @@ class Admin {
 		add_action( 'admin_init', [ $this, 'maybe_redirect_after_activation' ] );
 		add_action( 'admin_notices', [ $this, 'maybe_show_setup_notice' ] );
 		add_action( 'admin_notices', [ $this, 'maybe_show_cron_warning' ] );
+		add_action( 'admin_notices', [ $this, 'show_backup_warning' ] );
 	}
 
 	/**
@@ -117,6 +118,7 @@ class Admin {
 					'statusFailed'       => __( 'Failed', 'wp4odoo' ),
 					'detectingLanguages' => __( 'Detecting languages...', 'wp4odoo' ),
 					'defaultLang'        => __( 'default', 'wp4odoo' ),
+					'confirmBackup'      => __( 'Have you backed up your WordPress and Odoo databases?', 'wp4odoo' ),
 				],
 			]
 		);
@@ -223,6 +225,26 @@ class Admin {
 			'<div class="notice notice-warning"><p><strong>%s</strong> %s</p></div>',
 			esc_html__( 'WordPress For Odoo', 'wp4odoo' ),
 			esc_html( $warning )
+		);
+	}
+
+	/**
+	 * Show a backup warning on the plugin settings page.
+	 *
+	 * Reminds users to back up WordPress + Odoo databases before sync.
+	 *
+	 * @return void
+	 */
+	public function show_backup_warning(): void {
+		$screen = get_current_screen();
+		if ( ! $screen || $this->hook_suffix !== $screen->id ) {
+			return;
+		}
+
+		printf(
+			'<div class="notice notice-warning wp4odoo-backup-warning"><p><strong>%s</strong> %s</p></div>',
+			esc_html__( 'Back up your databases before any synchronization.', 'wp4odoo' ),
+			esc_html__( 'WP4Odoo is designed and tested with care, but WordPress and Odoo (along with their respective modules) evolve at their own pace — a third-party update can introduce unexpected incompatibilities. A full backup (WordPress + Odoo) allows you to roll back if anything goes wrong.', 'wp4odoo' )
 		);
 	}
 
