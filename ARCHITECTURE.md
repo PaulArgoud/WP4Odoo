@@ -340,7 +340,7 @@ WordPress For Odoo/
 │       ├── ShopWPModuleTest.php          # 25 tests for ShopWP_Module
 │       ├── WPMLAdapterTest.php          # 12 tests for WPML_Adapter
 │       ├── PolylangAdapterTest.php      # 12 tests for Polylang_Adapter
-│       └── TranslationServiceTest.php   # 20 tests for Translation_Service
+│       └── TranslationServiceTest.php   # 24 tests for Translation_Service
 │
 ├── uninstall.php                      # Cleanup on plugin uninstall
 │
@@ -673,6 +673,14 @@ Translation_Service
 - `Translation_Service::pull_translations_batch()`: one `read()` per language for entire batch (N calls, not N×P), maps Odoo fields to WP fields, creates/updates translated posts via adapter
 - `WC_Pull_Coordinator::apply_product_translation()`: uses WC API (`set_name()`, `set_description()`, `save()`) with `wp_update_post()` fallback
 - Extensible via `wp4odoo_translatable_fields_woocommerce` filter (default: `name → post_title`, `description_sale → post_content`)
+
+**Admin UI (Phase 5):**
+- `detect_languages()` public method: detects WPML/Polylang active languages, probes Odoo `res.lang` for availability, returns structured `{plugin, default_language, languages[]{code, odoo_locale, odoo_available}}`
+- Odoo `res.lang` probe cached via transient (`wp4odoo_odoo_active_langs`, 1 hour)
+- New `languages` admin field type: "Detect languages" button → AJAX call → per-language checkboxes with green/red Odoo availability indicators
+- `sync_translations` setting migrated from `bool` to `string[]` (array of enabled language codes). Backward compatible: old boolean `true` = all languages, `false` = none
+- `WC_Pull_Coordinator::flush_translations()` passes enabled languages to `pull_translations_batch()` for selective language filtering
+- Phase 6 prep: `Translation_Adapter` extended with `get_term_translations()` / `create_term_translation()` stubs (not yet implemented)
 
 ## Database
 

@@ -169,6 +169,30 @@ if ( ! defined( 'ABSPATH' ) ) {
 											<?php
 											break;
 
+										case 'languages':
+											?>
+										<div class="wp4odoo-languages-panel"
+											data-module="<?php echo esc_attr( $module_id ); ?>"
+											data-key="<?php echo esc_attr( $field_key ); ?>">
+											<button type="button" class="button wp4odoo-detect-languages"
+												data-module="<?php echo esc_attr( $module_id ); ?>">
+												<?php esc_html_e( 'Detect languages', 'wp4odoo' ); ?>
+											</button>
+											<span class="wp4odoo-languages-status"></span>
+											<div class="wp4odoo-languages-list" style="display:none;"></div>
+										</div>
+										<input type="hidden"
+											class="wp4odoo-module-setting"
+											data-module="<?php echo esc_attr( $module_id ); ?>"
+											data-key="<?php echo esc_attr( $field_key ); ?>"
+											id="<?php echo esc_attr( $input_id ); ?>"
+											value="<?php echo esc_attr( is_array( $value ) ? implode( ',', $value ) : '' ); ?>" />
+											<?php if ( ! empty( $field['description'] ) ) : ?>
+											<p class="description"><?php echo esc_html( $field['description'] ); ?></p>
+										<?php endif; ?>
+											<?php
+											break;
+
 										default: // text
 											?>
 											<input type="text"

@@ -138,4 +138,24 @@ class Polylang_Adapter implements Translation_Adapter {
 	public function link_translations( array $translations ): void {
 		pll_save_post_translations( $translations );
 	}
+
+	// ─── Term translations (Phase 6 prep) ───────────────────
+
+	/**
+	 * {@inheritDoc}
+	 *
+	 * @since 3.1.0
+	 */
+	public function get_term_translations( int $term_id, string $taxonomy ): array {
+		return [];
+	}
+
+	/**
+	 * {@inheritDoc}
+	 *
+	 * @since 3.1.0
+	 */
+	public function create_term_translation( int $original_term_id, string $lang, string $taxonomy ): int {
+		return 0;
+	}
 }

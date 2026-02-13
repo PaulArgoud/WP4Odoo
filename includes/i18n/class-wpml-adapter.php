@@ -193,6 +193,26 @@ class WPML_Adapter implements Translation_Adapter {
 		// No-op: WPML uses TRID-based linking (implicit in create_translation).
 	}
 
+	// ─── Term translations (Phase 6 prep) ───────────────────
+
+	/**
+	 * {@inheritDoc}
+	 *
+	 * @since 3.1.0
+	 */
+	public function get_term_translations( int $term_id, string $taxonomy ): array {
+		return [];
+	}
+
+	/**
+	 * {@inheritDoc}
+	 *
+	 * @since 3.1.0
+	 */
+	public function create_term_translation( int $original_term_id, string $lang, string $taxonomy ): int {
+		return 0;
+	}
+
 	/**
 	 * Get the WPML translation group ID (trid) for a post.
 	 *

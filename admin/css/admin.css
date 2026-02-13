@@ -408,6 +408,35 @@
 	margin-right: 6px;
 }
 
+/* --- Language detection panel --- */
+.wp4odoo-languages-panel {
+	margin: 4px 0;
+}
+
+.wp4odoo-languages-status {
+	display: inline-block;
+	margin-left: 10px;
+	vertical-align: middle;
+	font-size: 13px;
+}
+
+.wp4odoo-languages-list {
+	margin-top: 10px;
+	padding: 10px 14px;
+	background: #f6f7f7;
+	border: 1px solid #c3c4c7;
+	border-radius: 4px;
+}
+
+.wp4odoo-lang-toggle {
+	display: block;
+	padding: 4px 0;
+	cursor: pointer;
+}
+
+.wp4odoo-lang-ok { color: #00a32a; }
+.wp4odoo-lang-missing { color: #d63638; }
+
 /* --- Responsive --- */
 @media (max-width: 782px) {
 	.wp4odoo-stats-grid {

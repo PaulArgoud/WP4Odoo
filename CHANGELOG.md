@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.0.5] - Unreleased
 
+### Added
+- **Translation UI (Phase 5)** — Language detection panel in WooCommerce module settings: "Detect languages" button probes WPML/Polylang active languages against Odoo `res.lang`, shows per-language availability indicators, and provides per-language toggles for selective translation pull
+- **Translation_Service::detect_languages()** — New public method returning structured language availability data (plugin name, default language, per-language Odoo locale availability). Odoo `res.lang` probe cached via 1-hour transient
+- **Translation_Adapter** — Phase 6 prep: `get_term_translations()` and `create_term_translation()` method stubs added to interface and both adapters
+- **Admin AJAX** — `wp4odoo_detect_languages` endpoint and `languages` field type in module settings save handler
+- **pull_translations_batch()** — Optional `$enabled_languages` parameter to filter which languages are pulled from Odoo
+
+### Changed
+- **WooCommerce module** — `sync_translations` setting migrated from boolean to array of language codes (backward compatible). UI replaced from checkbox to interactive language detection panel
+
 ## [3.0.0] - 2026-02-13
 
 ### Changed

@@ -30,6 +30,7 @@
 			this.bindConnectionValidation();
 			this.bindDismissChecklist();
 			this.bindConfirmWebhooks();
+			this.bindDetectLanguages();
 		},
 
 		/**
@@ -584,6 +585,62 @@
 
 			$fields.on( 'input', checkFields );
 			checkFields(); // initial state
+		},
+
+		// ─── Language detection ─────────────────────────────────
+
+		bindDetectLanguages: function() {
+			$( document ).on( 'click', '.wp4odoo-detect-languages', function() {
+				var $btn    = $( this );
+				var $panel  = $btn.closest( '.wp4odoo-languages-panel' );
+				var $status = $panel.find( '.wp4odoo-languages-status' );
+				var $list   = $panel.find( '.wp4odoo-languages-list' );
+				var $hidden = $panel.siblings( 'input.wp4odoo-module-setting' );
+				var enabled = ( $hidden.val() || '' ).split( ',' ).filter( Boolean );
+
+				$status.text( wp4odooAdmin.i18n.detectingLanguages || 'Detecting languages...' );
+				$list.hide().empty();
+
+				WP4Odoo.ajax( 'wp4odoo_detect_languages', {}, function( data ) {
+					if ( ! data.available ) {
+						$status.text( data.message );
+						return;
+					}
+
+					$status.html(
+						'<strong>' + $( '<span>' ).text( data.plugin ).html() + '</strong> \u2014 ' +
+						( wp4odooAdmin.i18n.defaultLang || 'default' ) + ': ' + data.default.toUpperCase()
+					);
+
+					$.each( data.languages, function( code, lang ) {
+						if ( code === data.default ) {
+							return; // Skip default language.
+						}
+						var checked = enabled.indexOf( code ) !== -1 ? ' checked' : '';
+						var icon = lang.odoo_available ? '&#x2705;' : '&#x274C;';
+						var cls  = lang.odoo_available ? 'wp4odoo-lang-ok' : 'wp4odoo-lang-missing';
+
+						$list.append(
+							'<label class="wp4odoo-lang-toggle">' +
+							'<input type="checkbox" class="wp4odoo-lang-checkbox" value="' + code + '"' + checked + ' /> ' +
+							'<span class="' + cls + '">' + icon + '</span> ' +
+							code.toUpperCase() + ' <small>(' + $( '<span>' ).text( lang.odoo_locale ).html() + ')</small>' +
+							'</label>'
+						);
+					} );
+
+					$list.show();
+
+					// Sync checkboxes to hidden input.
+					$list.off( 'change' ).on( 'change', '.wp4odoo-lang-checkbox', function() {
+						var selected = [];
+						$list.find( '.wp4odoo-lang-checkbox:checked' ).each( function() {
+							selected.push( $( this ).val() );
+						} );
+						$hidden.val( selected.join( ',' ) );
+					} );
+				}, $btn );
+			} );
 		}
 	};
 

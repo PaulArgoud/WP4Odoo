@@ -385,6 +385,144 @@ class TranslationServiceTest extends TestCase {
 
 	// ─── Pull translations batch (Odoo 14-15 ir.translation) ─
 
+	public function test_pull_translations_batch_filters_by_enabled_languages(): void {
+		$GLOBALS['_wp_filters']['wpml_active_languages'] = function () {
+			return [
+				'en' => [ 'code' => 'en' ],
+				'fr' => [ 'code' => 'fr' ],
+				'es' => [ 'code' => 'es' ],
+				'de' => [ 'code' => 'de' ],
+			];
+		};
+		$GLOBALS['_wpml_default_lang'] = 'en';
+
+		// Odoo 16+: no ir.translation.
+		$this->transport->return_value = 0;
+		$this->service->has_ir_translation();
+		$this->transport->calls = [];
+
+		$this->transport->return_value = [
+			[ 'id' => 100, 'name' => 'Translated', 'description_sale' => 'Desc' ],
+		];
+
+		$GLOBALS['_wp_filters']['wpml_object_id'] = function ( $post_id, $post_type, $return_original, $lang ) {
+			$offsets = [ 'fr' => 1000, 'es' => 2000, 'de' => 3000 ];
+			if ( isset( $offsets[ $lang ] ) ) {
+				return $post_id + $offsets[ $lang ];
+			}
+			return $post_id;
+		};
+
+		$applied = [];
+		$callback = function ( int $trans_wp_id, array $data, string $lang ) use ( &$applied ) {
+			$applied[] = [ 'lang' => $lang ];
+		};
+
+		// Only enable fr and de — es should be skipped.
+		$this->service->pull_translations_batch(
+			'product.template',
+			[ 100 => 10 ],
+			[ 'name', 'description_sale' ],
+			[ 'name' => 'post_title', 'description_sale' => 'post_content' ],
+			'product',
+			$callback,
+			[ 'fr', 'de' ]
+		);
+
+		// Callback should have been called twice (fr and de), NOT for es.
+		$this->assertCount( 2, $applied );
+		$langs = array_column( $applied, 'lang' );
+		$this->assertContains( 'fr', $langs );
+		$this->assertContains( 'de', $langs );
+		$this->assertNotContains( 'es', $langs );
+	}
+
+	// ─── Language detection (detect_languages) ───────────────
+
+	public function test_detect_languages_returns_null_without_adapter(): void {
+		// Force no adapter.
+		$ref = new \ReflectionClass( $this->service );
+		$prop = $ref->getProperty( 'adapter' );
+		$prop->setAccessible( true );
+		$prop->setValue( $this->service, false );
+
+		$this->assertNull( $this->service->detect_languages() );
+	}
+
+	public function test_detect_languages_returns_structured_result(): void {
+		$GLOBALS['_wp_filters']['wpml_default_language'] = function () {
+			return 'en';
+		};
+		$GLOBALS['_wp_filters']['wpml_active_languages'] = function () {
+			return [
+				'en' => [ 'code' => 'en' ],
+				'fr' => [ 'code' => 'fr' ],
+			];
+		};
+
+		// Odoo res.lang returns en_US and fr_FR as active.
+		$this->transport->return_value = [
+			[ 'code' => 'en_US' ],
+			[ 'code' => 'fr_FR' ],
+		];
+
+		$result = $this->service->detect_languages();
+
+		$this->assertNotNull( $result );
+		$this->assertSame( 'WPML', $result['plugin'] );
+		$this->assertSame( 'en', $result['default_language'] );
+		$this->assertArrayHasKey( 'en', $result['languages'] );
+		$this->assertArrayHasKey( 'fr', $result['languages'] );
+		$this->assertTrue( $result['languages']['en']['odoo_available'] );
+		$this->assertTrue( $result['languages']['fr']['odoo_available'] );
+		$this->assertSame( 'fr_FR', $result['languages']['fr']['odoo_locale'] );
+	}
+
+	public function test_detect_languages_marks_unavailable_odoo_locale(): void {
+		$GLOBALS['_wp_filters']['wpml_default_language'] = function () {
+			return 'en';
+		};
+		$GLOBALS['_wp_filters']['wpml_active_languages'] = function () {
+			return [
+				'en' => [ 'code' => 'en' ],
+				'fr' => [ 'code' => 'fr' ],
+				'de' => [ 'code' => 'de' ],
+			];
+		};
+
+		// Odoo only has en_US installed — fr_FR and de_DE are missing.
+		$this->transport->return_value = [
+			[ 'code' => 'en_US' ],
+		];
+
+		$result = $this->service->detect_languages();
+
+		$this->assertNotNull( $result );
+		$this->assertTrue( $result['languages']['en']['odoo_available'] );
+		$this->assertFalse( $result['languages']['fr']['odoo_available'] );
+		$this->assertFalse( $result['languages']['de']['odoo_available'] );
+	}
+
+	public function test_detect_languages_caches_odoo_locales(): void {
+		$GLOBALS['_wp_filters']['wpml_default_language'] = function () {
+			return 'en';
+		};
+		$GLOBALS['_wp_filters']['wpml_active_languages'] = function () {
+			return [ 'en' => [ 'code' => 'en' ] ];
+		};
+
+		// Pre-set the transient to avoid API call.
+		$GLOBALS['_wp_transients']['wp4odoo_odoo_active_langs'] = [ 'en_US', 'fr_FR' ];
+
+		$result = $this->service->detect_languages();
+
+		// No API calls should be made (cached via transient).
+		$this->assertCount( 0, $this->transport->calls );
+		$this->assertTrue( $result['languages']['en']['odoo_available'] );
+	}
+
+	// ─── Pull translations batch (Odoo 14-15 ir.translation) ─
+
 	public function test_pull_translations_batch_via_ir_translation(): void {
 		$GLOBALS['_wp_filters']['wpml_active_languages'] = function () {
 			return [

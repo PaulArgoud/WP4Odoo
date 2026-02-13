@@ -329,7 +329,7 @@ class WooCommerce_Module extends Module_Base {
 			'auto_confirm_orders' => true,
 			'convert_currency'    => false,
 			'pricelist_id'        => 0,
-			'sync_translations'   => false,
+			'sync_translations'   => [],
 		];
 	}
 
@@ -387,8 +387,8 @@ class WooCommerce_Module extends Module_Base {
 			],
 			'sync_translations'   => [
 				'label'       => __( 'Sync translations', 'wp4odoo' ),
-				'type'        => 'checkbox',
-				'description' => __( 'Pull product translations from Odoo when WPML or Polylang is active.', 'wp4odoo' ),
+				'type'        => 'languages',
+				'description' => __( 'Select languages to pull product translations from Odoo (requires WPML or Polylang).', 'wp4odoo' ),
 			],
 		];
 	}

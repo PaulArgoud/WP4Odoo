@@ -108,6 +108,13 @@ class Translation_Service {
 	private const TRANSIENT_IR_TRANSLATION = 'wp4odoo_has_ir_translation';
 
 	/**
+	 * Transient key for active Odoo language codes.
+	 *
+	 * @var string
+	 */
+	private const TRANSIENT_ODOO_LANGS = 'wp4odoo_odoo_active_langs';
+
+	/**
 	 * Constructor.
 	 *
 	 * @param \Closure $client_getter Returns the shared Odoo_Client instance.
@@ -159,6 +166,89 @@ class Translation_Service {
 		}
 
 		return false;
+	}
+
+	// ─── Language detection ────────────────────────────────
+
+	/**
+	 * Detect languages from the WP translation plugin and check Odoo availability.
+	 *
+	 * Returns structured data with detected plugin name, default language,
+	 * and per-language Odoo availability (probed via res.lang).
+	 *
+	 * @since 3.0.5
+	 *
+	 * @return array{
+	 *     plugin: string,
+	 *     default_language: string,
+	 *     languages: array<string, array{code: string, odoo_locale: string, odoo_available: bool}>
+	 * }|null Null if no translation adapter is available.
+	 */
+	public function detect_languages(): ?array {
+		$adapter = $this->get_adapter();
+		if ( ! $adapter ) {
+			return null;
+		}
+
+		// Determine plugin name.
+		$plugin = 'Unknown';
+		if ( defined( 'ICL_SITEPRESS_VERSION' ) && $adapter instanceof WPML_Adapter ) {
+			$plugin = 'WPML';
+		} elseif ( defined( 'POLYLANG_VERSION' ) && $adapter instanceof Polylang_Adapter ) {
+			$plugin = 'Polylang';
+		}
+
+		$default_lang = $adapter->get_default_language();
+		$active_langs = $adapter->get_active_languages();
+		$odoo_locales = $this->get_odoo_active_locales();
+		$languages    = [];
+
+		foreach ( $active_langs as $lang ) {
+			$odoo_locale        = $this->wp_to_odoo_locale( $lang );
+			$languages[ $lang ] = [
+				'code'           => $lang,
+				'odoo_locale'    => $odoo_locale,
+				'odoo_available' => in_array( $odoo_locale, $odoo_locales, true ),
+			];
+		}
+
+		return [
+			'plugin'           => $plugin,
+			'default_language' => $default_lang,
+			'languages'        => $languages,
+		];
+	}
+
+	/**
+	 * Get active language codes from the connected Odoo instance.
+	 *
+	 * Probes `res.lang` with `active=true`, cached via transient (1 hour).
+	 *
+	 * @since 3.0.5
+	 *
+	 * @return array<int, string> Odoo locale codes (e.g. ['en_US', 'fr_FR']).
+	 */
+	private function get_odoo_active_locales(): array {
+		$cached = get_transient( self::TRANSIENT_ODOO_LANGS );
+		if ( is_array( $cached ) ) {
+			return $cached;
+		}
+
+		try {
+			$records = $this->client()->search_read(
+				'res.lang',
+				[ [ 'active', '=', true ] ],
+				[ 'code' ]
+			);
+			$locales = array_column( $records, 'code' );
+		} catch ( \Exception $e ) {
+			$this->logger->warning( 'Could not probe Odoo languages.', [ 'error' => $e->getMessage() ] );
+			$locales = [];
+		}
+
+		set_transient( self::TRANSIENT_ODOO_LANGS, $locales, HOUR_IN_SECONDS );
+
+		return $locales;
 	}
 
 	// ─── Locale mapping ─────────────────────────────────────
@@ -235,12 +325,13 @@ class Translation_Service {
 	 * For each secondary language, makes ONE Odoo read() call for all
 	 * records, then creates/updates WP translated posts via the adapter.
 	 *
-	 * @param string               $model          Odoo model (e.g. 'product.template').
-	 * @param array<int, int>      $odoo_wp_map    Odoo ID => WP post ID map.
-	 * @param array<int, string>   $odoo_fields    Odoo field names to read (e.g. ['name', 'description_sale']).
-	 * @param array<string, string> $field_map      Odoo field => WP field (e.g. ['name' => 'post_title']).
-	 * @param string               $post_type      WP post type (e.g. 'product').
-	 * @param callable             $apply_callback fn(int $trans_wp_id, array $wp_data, string $lang): void.
+	 * @param string                $model              Odoo model (e.g. 'product.template').
+	 * @param array<int, int>       $odoo_wp_map        Odoo ID => WP post ID map.
+	 * @param array<int, string>    $odoo_fields        Odoo field names to read (e.g. ['name', 'description_sale']).
+	 * @param array<string, string> $field_map          Odoo field => WP field (e.g. ['name' => 'post_title']).
+	 * @param string                $post_type          WP post type (e.g. 'product').
+	 * @param callable              $apply_callback     fn(int $trans_wp_id, array $wp_data, string $lang): void.
+	 * @param array<int, string>    $enabled_languages  If non-empty, only pull these language codes.
 	 * @return void
 	 */
 	public function pull_translations_batch(
@@ -249,7 +340,8 @@ class Translation_Service {
 		array $odoo_fields,
 		array $field_map,
 		string $post_type,
-		callable $apply_callback
+		callable $apply_callback,
+		array $enabled_languages = []
 	): void {
 		$adapter = $this->get_adapter();
 		if ( ! $adapter ) {
@@ -258,7 +350,13 @@ class Translation_Service {
 
 		$default_lang = $adapter->get_default_language();
 		$languages    = $adapter->get_active_languages();
-		$odoo_ids     = array_keys( $odoo_wp_map );
+
+		// Filter to enabled languages if specified.
+		if ( ! empty( $enabled_languages ) ) {
+			$languages = array_values( array_intersect( $languages, $enabled_languages ) );
+		}
+
+		$odoo_ids = array_keys( $odoo_wp_map );
 
 		if ( empty( $odoo_ids ) || empty( $odoo_fields ) ) {
 			return;

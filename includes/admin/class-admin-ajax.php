@@ -68,6 +68,7 @@ class Admin_Ajax {
 			'wp4odoo_dismiss_onboarding',
 			'wp4odoo_dismiss_checklist',
 			'wp4odoo_confirm_webhooks',
+			'wp4odoo_detect_languages',
 		];
 
 		foreach ( $actions as $action ) {

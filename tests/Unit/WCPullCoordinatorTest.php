@@ -262,6 +262,55 @@ class WCPullCoordinatorTest extends TestCase {
 		$this->assertEmpty( $pulled );
 	}
 
+	public function test_flush_translations_passes_enabled_languages(): void {
+		// New array format: only 'fr' enabled.
+		$coordinator = $this->make_coordinator( [ 'sync_translations' => [ 'fr' ] ] );
+
+		// Manually accumulate products.
+		$ref = new \ReflectionClass( $coordinator );
+		$prop = $ref->getProperty( 'pulled_products' );
+		$prop->setAccessible( true );
+		$prop->setValue( $coordinator, [ 100 => 10 ] );
+
+		$coordinator->flush_translations();
+
+		// Accumulator should be cleared.
+		$pulled = $prop->getValue( $coordinator );
+		$this->assertEmpty( $pulled );
+	}
+
+	public function test_flush_translations_backward_compat_boolean_true(): void {
+		// Old boolean true format → should process all languages.
+		$coordinator = $this->make_coordinator( [ 'sync_translations' => true ] );
+
+		$ref = new \ReflectionClass( $coordinator );
+		$prop = $ref->getProperty( 'pulled_products' );
+		$prop->setAccessible( true );
+		$prop->setValue( $coordinator, [ 100 => 10 ] );
+
+		$coordinator->flush_translations();
+
+		// Accumulator should be cleared (processed, not skipped).
+		$pulled = $prop->getValue( $coordinator );
+		$this->assertEmpty( $pulled );
+	}
+
+	public function test_flush_translations_empty_array_skips(): void {
+		// New array format with empty array → translation disabled.
+		$coordinator = $this->make_coordinator( [ 'sync_translations' => [] ] );
+
+		$ref = new \ReflectionClass( $coordinator );
+		$prop = $ref->getProperty( 'pulled_products' );
+		$prop->setAccessible( true );
+		$prop->setValue( $coordinator, [ 100 => 10 ] );
+
+		$coordinator->flush_translations();
+
+		// Accumulator should be cleared (skipped early).
+		$pulled = $prop->getValue( $coordinator );
+		$this->assertEmpty( $pulled );
+	}
+
 	// ─── apply_product_translation ───────────────────────
 
 	public function test_apply_product_translation_uses_wp_update_post_fallback(): void {

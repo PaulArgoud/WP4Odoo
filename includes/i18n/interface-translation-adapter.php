@@ -105,4 +105,35 @@ interface Translation_Adapter {
 	 * @return void
 	 */
 	public function link_translations( array $translations ): void;
+
+	// ─── Term translations (Phase 6 prep) ───────────────────
+
+	/**
+	 * Get translations for a taxonomy term.
+	 *
+	 * Returns language code => translated term ID pairs, excluding
+	 * the original term itself.
+	 *
+	 * @since 3.1.0
+	 *
+	 * @param int    $term_id  Term ID.
+	 * @param string $taxonomy Taxonomy name (e.g. 'product_cat').
+	 * @return array<string, int> Language code => translated term ID.
+	 */
+	public function get_term_translations( int $term_id, string $taxonomy ): array;
+
+	/**
+	 * Create a translated term linked to an original.
+	 *
+	 * Returns the existing translation ID if one already exists
+	 * for the given language (idempotent).
+	 *
+	 * @since 3.1.0
+	 *
+	 * @param int    $original_term_id Original term ID.
+	 * @param string $lang             Target language code (e.g. 'fr').
+	 * @param string $taxonomy         Taxonomy name (e.g. 'product_cat').
+	 * @return int Translated term ID, or 0 on failure.
+	 */
+	public function create_term_translation( int $original_term_id, string $lang, string $taxonomy ): int;
 }

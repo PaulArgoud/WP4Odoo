@@ -169,6 +169,10 @@ trait Ajax_Module_Handlers {
 						$val           = sanitize_text_field( $settings[ $key ] );
 						$clean[ $key ] = in_array( $val, $allowed, true ) ? $val : ( $defaults[ $key ] ?? '' );
 						break;
+					case 'languages':
+						$raw           = sanitize_text_field( $settings[ $key ] );
+						$clean[ $key ] = '' === $raw ? [] : array_map( 'sanitize_key', explode( ',', $raw ) );
+						break;
 					default:
 						$clean[ $key ] = sanitize_text_field( $settings[ $key ] );
 						break;
@@ -228,5 +232,43 @@ trait Ajax_Module_Handlers {
 
 		$handler = new Bulk_Handler( $plugin->client(), new \WP4Odoo\Entity_Map_Repository() );
 		wp_send_json_success( $handler->export_products() );
+	}
+
+	/**
+	 * Detect translation languages and Odoo availability.
+	 *
+	 * Probes the active translation plugin (WPML/Polylang) for available
+	 * languages, then checks which ones are installed in Odoo via res.lang.
+	 *
+	 * @since 3.0.5
+	 *
+	 * @return void
+	 */
+	public function detect_languages(): void {
+		$this->verify_request();
+
+		$ts = new \WP4Odoo\I18n\Translation_Service(
+			static fn() => \WP4Odoo_Plugin::instance()->client()
+		);
+
+		$result = $ts->detect_languages();
+
+		if ( null === $result ) {
+			wp_send_json_success(
+				[
+					'available' => false,
+					'message'   => __( 'No translation plugin detected (WPML or Polylang required).', 'wp4odoo' ),
+				]
+			);
+		}
+
+		wp_send_json_success(
+			[
+				'available' => true,
+				'plugin'    => $result['plugin'],
+				'default'   => $result['default_language'],
+				'languages' => $result['languages'],
+			]
+		);
 	}
 }

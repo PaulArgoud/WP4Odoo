@@ -417,10 +417,22 @@ class WC_Pull_Coordinator {
 			return;
 		}
 
-		$settings = ( $this->settings_fn )();
-		if ( empty( $settings['sync_translations'] ) ) {
-			$this->pulled_products = [];
-			return;
+		$settings     = ( $this->settings_fn )();
+		$sync_setting = $settings['sync_translations'] ?? [];
+
+		// Backward compat: old boolean format (true = all languages, false = none).
+		if ( ! is_array( $sync_setting ) ) {
+			if ( empty( $sync_setting ) ) {
+				$this->pulled_products = [];
+				return;
+			}
+			$enabled_langs = []; // Boolean true → all languages.
+		} else {
+			if ( empty( $sync_setting ) ) {
+				$this->pulled_products = [];
+				return;
+			}
+			$enabled_langs = $sync_setting;
 		}
 
 		/** @var Translation_Service $ts */
@@ -453,7 +465,8 @@ class WC_Pull_Coordinator {
 			array_keys( $field_map ),
 			$field_map,
 			'product',
-			[ $this, 'apply_product_translation' ]
+			[ $this, 'apply_product_translation' ],
+			$enabled_langs
 		);
 
 		$this->logger->info(
