@@ -572,4 +572,132 @@ class TranslationServiceTest extends TestCase {
 		$this->assertSame( 'Description FR', $applied[0]['data']['post_content'] );
 		$this->assertSame( 'fr', $applied[0]['lang'] );
 	}
+
+	// ─── Pull term translations batch (Phase 6) ─────────────
+
+	public function test_pull_term_translations_batch_creates_translated_terms(): void {
+		$GLOBALS['_wp_filters']['wpml_default_language'] = function () {
+			return 'en';
+		};
+		$GLOBALS['_wp_filters']['wpml_active_languages'] = function () {
+			return [
+				'en' => [ 'code' => 'en' ],
+				'fr' => [ 'code' => 'fr' ],
+			];
+		};
+
+		// Odoo 16+: no ir.translation.
+		$this->transport->return_value = 0;
+		$this->service->has_ir_translation();
+		$this->transport->calls = [];
+
+		// Read with context={'lang': 'fr_FR'} returns translated name.
+		$this->transport->return_value = [
+			[ 'id' => 50, 'name' => 'Catégorie FR' ],
+		];
+
+		// WPML: create_term_translation via wpml_object_id (no existing = return self).
+		$GLOBALS['_wp_filters']['wpml_object_id'] = function ( $id, $taxonomy, $return_original, $lang ) {
+			return $id; // No existing translation.
+		};
+
+		// wpml_element_trid for the term.
+		$GLOBALS['_wp_filters']['wpml_element_trid'] = function ( $trid, $term_id, $element_type ) {
+			if ( 'tax_product_cat' === $element_type ) {
+				return 999;
+			}
+			return $trid;
+		};
+
+		$applied = [];
+		$callback = function ( int $trans_term_id, string $name, string $lang ) use ( &$applied ) {
+			$applied[] = [ 'term_id' => $trans_term_id, 'name' => $name, 'lang' => $lang ];
+		};
+
+		$this->service->pull_term_translations_batch(
+			'product.category',
+			[ 50 => 100 ],
+			'product_cat',
+			$callback
+		);
+
+		$this->assertCount( 1, $applied );
+		$this->assertSame( 'Catégorie FR', $applied[0]['name'] );
+		$this->assertSame( 'fr', $applied[0]['lang'] );
+		$this->assertGreaterThan( 0, $applied[0]['term_id'] );
+	}
+
+	public function test_pull_term_translations_batch_filters_by_enabled_languages(): void {
+		$GLOBALS['_wp_filters']['wpml_default_language'] = function () {
+			return 'en';
+		};
+		$GLOBALS['_wp_filters']['wpml_active_languages'] = function () {
+			return [
+				'en' => [ 'code' => 'en' ],
+				'fr' => [ 'code' => 'fr' ],
+				'de' => [ 'code' => 'de' ],
+			];
+		};
+
+		// Odoo 16+.
+		$this->transport->return_value = 0;
+		$this->service->has_ir_translation();
+		$this->transport->calls = [];
+
+		$this->transport->return_value = [
+			[ 'id' => 50, 'name' => 'Translated' ],
+		];
+
+		// WPML stubs.
+		$GLOBALS['_wp_filters']['wpml_object_id'] = function ( $id ) {
+			return $id;
+		};
+		$GLOBALS['_wp_filters']['wpml_element_trid'] = function ( $trid, $term_id, $element_type ) {
+			return 999;
+		};
+
+		$applied = [];
+		$callback = function ( int $id, string $name, string $lang ) use ( &$applied ) {
+			$applied[] = [ 'lang' => $lang ];
+		};
+
+		// Only enable fr — de should be skipped.
+		$this->service->pull_term_translations_batch(
+			'product.category',
+			[ 50 => 100 ],
+			'product_cat',
+			$callback,
+			[ 'fr' ]
+		);
+
+		$this->assertCount( 1, $applied );
+		$this->assertSame( 'fr', $applied[0]['lang'] );
+	}
+
+	public function test_pull_term_translations_batch_skips_empty_map(): void {
+		$GLOBALS['_wp_filters']['wpml_default_language'] = function () {
+			return 'en';
+		};
+		$GLOBALS['_wp_filters']['wpml_active_languages'] = function () {
+			return [
+				'en' => [ 'code' => 'en' ],
+				'fr' => [ 'code' => 'fr' ],
+			];
+		};
+
+		$applied = [];
+		$callback = function ( int $id, string $name, string $lang ) use ( &$applied ) {
+			$applied[] = true;
+		};
+
+		// Empty map: callback should never be called.
+		$this->service->pull_term_translations_batch(
+			'product.category',
+			[],
+			'product_cat',
+			$callback
+		);
+
+		$this->assertEmpty( $applied );
+	}
 }

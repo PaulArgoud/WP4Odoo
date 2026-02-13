@@ -587,6 +587,39 @@ if ( ! function_exists( 'wp_set_object_terms' ) ) {
 	}
 }
 
+if ( ! function_exists( 'wp_insert_term' ) ) {
+	function wp_insert_term( $term, $taxonomy, $args = [] ) {
+		static $id = 5000;
+		$id++;
+		return [ 'term_id' => $id, 'term_taxonomy_id' => $id ];
+	}
+}
+
+if ( ! function_exists( 'term_exists' ) ) {
+	function term_exists( $term, $taxonomy = '', $parent = 0 ) {
+		return $GLOBALS['_wp_term_exists'][ $taxonomy ][ $term ] ?? null;
+	}
+}
+
+if ( ! function_exists( 'get_term_by' ) ) {
+	function get_term_by( $field, $value, $taxonomy = '', $output = OBJECT, $filter = 'raw' ) {
+		return $GLOBALS['_wp_terms_by'][ $taxonomy ][ $field ][ $value ] ?? false;
+	}
+}
+
+if ( ! function_exists( 'get_term' ) ) {
+	function get_term( $term, $taxonomy = '', $output = OBJECT, $filter = 'raw' ) {
+		return $GLOBALS['_wp_terms'][ $term ] ?? false;
+	}
+}
+
+if ( ! function_exists( 'wp_update_term' ) ) {
+	function wp_update_term( $term_id, $taxonomy, $args = [] ) {
+		$GLOBALS['_wp_updated_terms'][ $term_id ] = $args;
+		return [ 'term_id' => $term_id, 'term_taxonomy_id' => $term_id ];
+	}
+}
+
 // ─── Scripts / styles ───────────────────────────────────
 
 if ( ! function_exists( 'wp_enqueue_style' ) ) {

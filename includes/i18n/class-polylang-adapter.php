@@ -139,23 +139,69 @@ class Polylang_Adapter implements Translation_Adapter {
 		pll_save_post_translations( $translations );
 	}
 
-	// ─── Term translations (Phase 6 prep) ───────────────────
+	// ─── Term translations (Phase 6) ────────────────────────
 
 	/**
 	 * {@inheritDoc}
 	 *
+	 * Uses Polylang's `pll_get_term_translations()` to retrieve
+	 * all translated term IDs for a given term.
+	 *
 	 * @since 3.1.0
 	 */
 	public function get_term_translations( int $term_id, string $taxonomy ): array {
-		return [];
+		$all       = pll_get_term_translations( $term_id );
+		$self_lang = pll_get_term_language( $term_id );
+		$result    = [];
+
+		foreach ( $all as $lang => $trans_id ) {
+			$trans_id = (int) $trans_id;
+
+			// Exclude the source term itself.
+			if ( $trans_id === $term_id || $lang === $self_lang ) {
+				continue;
+			}
+
+			$result[ $lang ] = $trans_id;
+		}
+
+		return $result;
 	}
 
 	/**
 	 * {@inheritDoc}
 	 *
+	 * Creates a placeholder term and links it to the original via
+	 * Polylang's `pll_save_term_translations()`.
+	 *
 	 * @since 3.1.0
 	 */
 	public function create_term_translation( int $original_term_id, string $lang, string $taxonomy ): int {
-		return 0;
+		// Check if a translation already exists.
+		$existing = pll_get_term_translations( $original_term_id );
+		if ( isset( $existing[ $lang ] ) ) {
+			return (int) $existing[ $lang ];
+		}
+
+		// Create a placeholder term.
+		$result = wp_insert_term( '(translation)', $taxonomy );
+		if ( is_wp_error( $result ) ) {
+			return 0;
+		}
+
+		$new_term_id = (int) $result['term_id'];
+
+		// Set the language for the new term.
+		pll_set_term_language( $new_term_id, $lang );
+
+		// Build the full translation group (original + existing + new).
+		$default_lang                      = $this->get_default_language();
+		$all_translations                  = $existing;
+		$all_translations[ $default_lang ] = $original_term_id;
+		$all_translations[ $lang ]         = $new_term_id;
+
+		pll_save_term_translations( $all_translations );
+
+		return $new_term_id;
 	}
 }

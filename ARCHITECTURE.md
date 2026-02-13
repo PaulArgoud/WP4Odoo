@@ -163,10 +163,10 @@ WordPress For Odoo/
 │   │   └── class-shopwp-module.php           # ShopWP: ecommerce exclusive group, products only
 │   │
 │   ├── i18n/
-│   │   ├── interface-translation-adapter.php   # Adapter interface (6 methods: default lang, active langs, translations, post lang, original ID, is_translation)
+│   │   ├── interface-translation-adapter.php   # Adapter interface (8 methods: post + term translations, default lang, active langs)
 │   │   ├── class-wpml-adapter.php              # WPML implementation (filter API: wpml_default_language, wpml_active_languages, etc.)
 │   │   ├── class-polylang-adapter.php          # Polylang implementation (function API: pll_default_language, pll_get_post_translations, etc.)
-│   │   ├── class-translation-service.php       # Core service: adapter detection, locale mapping (34 WP→Odoo), Odoo version detection, dual-path push
+│   │   ├── class-translation-service.php       # Core service: adapter detection, locale mapping (34 WP→Odoo), Odoo version detection, dual-path push/pull
 │   │   └── index.php                           # Silence is golden
 │   │
 │   ├── admin/
@@ -338,9 +338,9 @@ WordPress For Odoo/
 │       ├── CrowdfundingModuleTest.php    # 22 tests for Crowdfunding_Module
 │       ├── EcwidModuleTest.php           # 42 tests for Ecwid_Module
 │       ├── ShopWPModuleTest.php          # 25 tests for ShopWP_Module
-│       ├── WPMLAdapterTest.php          # 12 tests for WPML_Adapter
-│       ├── PolylangAdapterTest.php      # 12 tests for Polylang_Adapter
-│       └── TranslationServiceTest.php   # 24 tests for Translation_Service
+│       ├── WPMLAdapterTest.php          # 17 tests for WPML_Adapter
+│       ├── PolylangAdapterTest.php      # 16 tests for Polylang_Adapter
+│       └── TranslationServiceTest.php   # 27 tests for Translation_Service
 │
 ├── uninstall.php                      # Cleanup on plugin uninstall
 │
@@ -680,7 +680,16 @@ Translation_Service
 - New `languages` admin field type: "Detect languages" button → AJAX call → per-language checkboxes with green/red Odoo availability indicators
 - `sync_translations` setting migrated from `bool` to `string[]` (array of enabled language codes). Backward compatible: old boolean `true` = all languages, `false` = none
 - `WC_Pull_Coordinator::flush_translations()` passes enabled languages to `pull_translations_batch()` for selective language filtering
-- Phase 6 prep: `Translation_Adapter` extended with `get_term_translations()` / `create_term_translation()` stubs (not yet implemented)
+
+**Taxonomy term translations (Phase 6):**
+- `Translation_Adapter` extended with `get_term_translations(int, string)` and `create_term_translation(int, string, string)` for taxonomy terms
+- WPML_Adapter: uses `tax_*` element types with `wpml_element_trid`, `wpml_get_element_translations`, `wpml_set_element_language_details` filters
+- Polylang_Adapter: uses `pll_get_term_translations()`, `pll_get_term_language()`, `pll_set_term_language()`, `pll_save_term_translations()`
+- `Translation_Service::pull_term_translations_batch()`: parallel to `pull_translations_batch()` but for taxonomy terms — reads `name` field per language, creates/updates translated terms via adapter
+- `Product_Handler::assign_category()`: resolves Odoo `categ_id` Many2one (`[id, name]` tuple), finds/creates `product_cat` term, assigns to product
+- `Variant_Handler`: tracks attribute value Odoo IDs in `entity_map` after `set_parent_attributes()`, accumulates `[odoo_value_id => wp_term_id]`
+- `WC_Pull_Coordinator`: accumulates categories (`pulled_categories`) and attribute values (`pulled_attribute_values`) alongside products, `flush_translations()` processes all three term types (products, categories, attribute values grouped by `pa_*` taxonomy)
+- `WooCommerce_Module`: `category` model (`product.category`) and `categ_id` field mapping added
 
 ## Database
 
@@ -861,7 +870,7 @@ All user inputs are sanitized with:
 
 **Files:** `class-woocommerce-module.php` (sync coordinator, uses `WooCommerce_Hooks` trait), `trait-woocommerce-hooks.php` (WC hook callbacks), `class-product-handler.php` (product CRUD), `class-order-handler.php` (order CRUD + status mapping), `class-variant-handler.php` (variant import), `class-image-handler.php` (product image pull), `class-pricelist-handler.php` (pricelist price pull), `class-shipment-handler.php` (shipment tracking pull), `class-currency-guard.php` (currency mismatch detection), `class-exchange-rate-service.php` (Odoo exchange rates), `class-invoice-helper.php` (shared with Sales + EDD)
 
-**Odoo models:** `product.template`, `product.product`, `sale.order`, `stock.quant`, `account.move`, `product.pricelist`, `product.pricelist.item`, `stock.picking`
+**Odoo models:** `product.template`, `product.product`, `product.category`, `sale.order`, `stock.quant`, `account.move`, `product.pricelist`, `product.pricelist.item`, `stock.picking`
 
 **Key features:**
 - Mutually exclusive with Sales_Module and EDD_Module (same Odoo models)
@@ -875,6 +884,8 @@ All user inputs are sanitized with:
 - **Exchange rate conversion**: optional `convert_currency` setting; prices converted via `Exchange_Rate_Service` (Odoo `res.currency` rates, 1-hour cache, stampede-protected fetch)
 - **Pricelist price pull**: imports computed prices from Odoo pricelists (`product.pricelist`) as WC sale prices; transient-cached (5min), currency guard integration, pricelist tracking meta
 - **Shipment tracking pull**: imports completed shipments (`stock.picking`) from Odoo into WC order meta (AST-compatible format); SHA-256 hash change detection, HPOS compatible
+- **Category pull**: `Product_Handler` resolves Odoo `categ_id` Many2one to WP `product_cat` terms during product pull; `WC_Pull_Coordinator` accumulates category mappings for translation flush
+- **Attribute value translation**: `Variant_Handler` tracks attribute value Odoo IDs in `entity_map`; accumulated per-taxonomy for translated term name pull
 
 **Settings:** `sync_products`, `sync_orders`, `sync_stock`, `sync_product_images`, `sync_pricelist`, `sync_shipments`, `convert_currency`, `auto_confirm_orders`
 

@@ -11,14 +11,17 @@
 
 // ─── Global test stores ─────────────────────────────────
 
-$GLOBALS['_wpml_translations']     = [];
-$GLOBALS['_pll_translations']      = [];
-$GLOBALS['_pll_languages']         = [ 'en', 'fr', 'es' ];
-$GLOBALS['_wpml_default_lang']     = 'en';
-$GLOBALS['_pll_default_lang']      = 'en';
-$GLOBALS['_post_languages']        = [];
-$GLOBALS['_pll_saved_translations'] = [];
-$GLOBALS['_wpml_language_details']  = [];
+$GLOBALS['_wpml_translations']          = [];
+$GLOBALS['_pll_translations']           = [];
+$GLOBALS['_pll_languages']              = [ 'en', 'fr', 'es' ];
+$GLOBALS['_wpml_default_lang']          = 'en';
+$GLOBALS['_pll_default_lang']           = 'en';
+$GLOBALS['_post_languages']             = [];
+$GLOBALS['_pll_saved_translations']     = [];
+$GLOBALS['_wpml_language_details']      = [];
+$GLOBALS['_pll_term_translations']      = [];
+$GLOBALS['_pll_term_languages']         = [];
+$GLOBALS['_pll_saved_term_translations'] = [];
 
 // ─── WPML constants and classes ─────────────────────────
 
@@ -141,6 +144,61 @@ if ( ! function_exists( 'pll_save_post_translations' ) ) {
 		$GLOBALS['_pll_saved_translations'][] = $translations;
 		foreach ( $translations as $lang => $post_id ) {
 			$GLOBALS['_pll_translations'][ $post_id ] = $translations;
+		}
+	}
+}
+
+// ─── Polylang term translation functions ────────────────
+
+if ( ! function_exists( 'pll_get_term_translations' ) ) {
+	/**
+	 * Get translation term IDs for a given term.
+	 *
+	 * @param int $term_id Term ID.
+	 * @return array<string, int> Language code => term ID.
+	 */
+	function pll_get_term_translations( int $term_id ): array {
+		return $GLOBALS['_pll_term_translations'][ $term_id ] ?? [];
+	}
+}
+
+if ( ! function_exists( 'pll_get_term_language' ) ) {
+	/**
+	 * Get the language code for a term.
+	 *
+	 * @param int    $term_id Term ID.
+	 * @param string $field   Field to return (default 'slug').
+	 * @return string|false
+	 */
+	function pll_get_term_language( int $term_id, string $field = 'slug' ) {
+		return $GLOBALS['_pll_term_languages'][ $term_id ] ?? 'en';
+	}
+}
+
+if ( ! function_exists( 'pll_set_term_language' ) ) {
+	/**
+	 * Set the language for a term.
+	 *
+	 * @param int    $term_id Term ID.
+	 * @param string $lang    Language code.
+	 * @return void
+	 */
+	function pll_set_term_language( int $term_id, string $lang ): void {
+		$GLOBALS['_pll_term_languages'][ $term_id ] = $lang;
+	}
+}
+
+if ( ! function_exists( 'pll_save_term_translations' ) ) {
+	/**
+	 * Save the translation group for a set of terms.
+	 *
+	 * @param array<string, int> $translations Language code => term ID.
+	 * @return void
+	 */
+	function pll_save_term_translations( array $translations ): void {
+		$GLOBALS['_pll_saved_term_translations'][] = $translations;
+		foreach ( $translations as $lang => $term_id ) {
+			$GLOBALS['_pll_term_translations'][ $term_id ] = $translations;
 		}
 	}
 }

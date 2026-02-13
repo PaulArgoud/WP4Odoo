@@ -185,6 +185,11 @@ class Product_Handler {
 			update_post_meta( $saved_id, '_wp4odoo_currency', $odoo_currency );
 		}
 
+		// Assign product category from Odoo categ_id (Many2one: [id, name]).
+		if ( $saved_id > 0 ) {
+			$this->assign_category( $saved_id, $data );
+		}
+
 		return $saved_id > 0 ? $saved_id : 0;
 	}
 
@@ -243,6 +248,44 @@ class Product_Handler {
 		// Cannot create variation without parent context; handled by Variant_Handler.
 		$this->logger->warning( 'Variant creation without parent context is not supported via save_wp_data.' );
 		return 0;
+	}
+
+	// ─── Category assignment ────────────────────────────────
+
+	/**
+	 * Assign a product_cat term from Odoo's categ_id Many2one field.
+	 *
+	 * The categ_id is a Many2one that returns [id, name] from Odoo.
+	 * We find-or-create the product_cat term by name and assign it.
+	 *
+	 * @since 3.1.0
+	 *
+	 * @param int   $wp_id Product ID.
+	 * @param array $data  Mapped product data.
+	 * @return void
+	 */
+	private function assign_category( int $wp_id, array $data ): void {
+		$categ_id = $data['_wp4odoo_categ_id'] ?? null;
+		if ( ! $categ_id ) {
+			return;
+		}
+
+		// Many2one: [id, name] tuple.
+		$categ_name = is_array( $categ_id ) ? (string) ( $categ_id[1] ?? '' ) : '';
+
+		if ( '' === $categ_name ) {
+			return;
+		}
+
+		$term = term_exists( $categ_name, 'product_cat' );
+		if ( ! $term ) {
+			$term = wp_insert_term( $categ_name, 'product_cat' );
+		}
+
+		if ( ! is_wp_error( $term ) ) {
+			$term_id = (int) ( is_array( $term ) ? $term['term_id'] : $term ); // @phpstan-ignore function.alreadyNarrowedType
+			wp_set_object_terms( $wp_id, [ $term_id ], 'product_cat' );
+		}
 	}
 
 	// ─── Delete ──────────────────────────────────────────────

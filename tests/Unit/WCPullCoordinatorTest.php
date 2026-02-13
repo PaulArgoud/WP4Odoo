@@ -324,6 +324,129 @@ class WCPullCoordinatorTest extends TestCase {
 		$this->assertTrue( true );
 	}
 
+	// ─── apply_term_translation ──────────────────────────
+
+	public function test_apply_term_translation_calls_wp_update_term(): void {
+		$coordinator = $this->make_coordinator();
+		$GLOBALS['_wp_updated_terms'] = [];
+
+		$coordinator->apply_term_translation( 42, 'Catégorie FR', 'fr' );
+
+		$this->assertArrayHasKey( 42, $GLOBALS['_wp_updated_terms'] );
+		$this->assertSame( 'Catégorie FR', $GLOBALS['_wp_updated_terms'][42]['name'] );
+	}
+
+	// ─── Category accumulation (Phase 6) ─────────────────
+
+	public function test_on_product_pulled_accumulates_categories(): void {
+		$coordinator = $this->make_coordinator( [ 'sync_product_images' => false ] );
+
+		// Simulate captured Odoo data with categ_id.
+		$ref = new \ReflectionClass( $coordinator );
+		$prop = $ref->getProperty( 'last_odoo_data' );
+		$prop->setAccessible( true );
+		$prop->setValue( $coordinator, [
+			'categ_id' => [ 7, 'Electronics' ],
+		] );
+
+		// Pre-register the term so term_exists() finds it.
+		$GLOBALS['_wp_term_exists']['product_cat']['Electronics'] = [ 'term_id' => 300 ];
+
+		$coordinator->on_product_pulled( 10, 100 );
+
+		$cat_prop = $ref->getProperty( 'pulled_categories' );
+		$cat_prop->setAccessible( true );
+		$pulled_cats = $cat_prop->getValue( $coordinator );
+
+		$this->assertSame( [ 7 => 300 ], $pulled_cats );
+	}
+
+	public function test_on_product_pulled_skips_category_without_categ_id(): void {
+		$coordinator = $this->make_coordinator( [ 'sync_product_images' => false ] );
+
+		// No categ_id in Odoo data.
+		$ref = new \ReflectionClass( $coordinator );
+		$prop = $ref->getProperty( 'last_odoo_data' );
+		$prop->setAccessible( true );
+		$prop->setValue( $coordinator, [] );
+
+		$coordinator->on_product_pulled( 10, 100 );
+
+		$cat_prop = $ref->getProperty( 'pulled_categories' );
+		$cat_prop->setAccessible( true );
+		$pulled_cats = $cat_prop->getValue( $coordinator );
+
+		$this->assertEmpty( $pulled_cats );
+	}
+
+	// ─── flush_translations with categories ──────────────
+
+	public function test_flush_translations_clears_category_accumulator(): void {
+		$coordinator = $this->make_coordinator( [ 'sync_translations' => true ] );
+
+		$ref = new \ReflectionClass( $coordinator );
+
+		$cat_prop = $ref->getProperty( 'pulled_categories' );
+		$cat_prop->setAccessible( true );
+		$cat_prop->setValue( $coordinator, [ 50 => 300 ] );
+
+		$coordinator->flush_translations();
+
+		$this->assertEmpty( $cat_prop->getValue( $coordinator ) );
+	}
+
+	public function test_flush_translations_clears_attribute_value_accumulator(): void {
+		$coordinator = $this->make_coordinator( [ 'sync_translations' => true ] );
+
+		$ref = new \ReflectionClass( $coordinator );
+
+		$attr_prop = $ref->getProperty( 'pulled_attribute_values' );
+		$attr_prop->setAccessible( true );
+		$attr_prop->setValue( $coordinator, [ 88 => 400 ] );
+
+		$coordinator->flush_translations();
+
+		$this->assertEmpty( $attr_prop->getValue( $coordinator ) );
+	}
+
+	// ─── pull_variant accumulates attribute values ───────
+
+	public function test_pull_variant_accumulates_attribute_values(): void {
+		$variant_handler = $this->createMock( \WP4Odoo\Modules\Variant_Handler::class );
+		$variant_handler->method( 'pull_variants' )->willReturn( true );
+		$variant_handler->method( 'get_pulled_attribute_values' )->willReturn( [ 55 => 600 ] );
+		$variant_handler->expects( $this->once() )->method( 'clear_pulled_attribute_values' );
+
+		$logger     = new Logger( 'woocommerce', wp4odoo_test_settings() );
+		$client     = $this->make_noop_client();
+		$mapping_fn = static fn( string $type, int $odoo_id ) => null;
+
+		$coordinator = new WC_Pull_Coordinator(
+			$logger,
+			static fn() => [],
+			static fn() => $client,
+			$mapping_fn,
+			$variant_handler,
+			$this->createMock( \WP4Odoo\Modules\Image_Handler::class ),
+			$this->createMock( \WP4Odoo\Modules\Pricelist_Handler::class ),
+			$this->createMock( \WP4Odoo\Modules\Shipment_Handler::class ),
+			static fn() => new \WP4Odoo\I18n\Translation_Service( static fn() => $client )
+		);
+
+		$result = $coordinator->pull_variant( 42, 0, [
+			'parent_wp_id'     => 99,
+			'template_odoo_id' => 100,
+		] );
+
+		$this->assertTrue( $result->succeeded() );
+
+		// Verify attribute values accumulated.
+		$ref = new \ReflectionClass( $coordinator );
+		$attr_prop = $ref->getProperty( 'pulled_attribute_values' );
+		$attr_prop->setAccessible( true );
+		$this->assertSame( [ 55 => 600 ], $attr_prop->getValue( $coordinator ) );
+	}
+
 	// ─── on_order_pulled ──────────────────────────────────
 
 	public function test_on_order_pulled_skips_shipments_when_disabled(): void {

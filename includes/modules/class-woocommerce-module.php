@@ -50,6 +50,7 @@ class WooCommerce_Module extends Module_Base {
 		'invoice'   => 'account.move',
 		'pricelist' => 'product.pricelist',
 		'shipment'  => 'stock.picking',
+		'category'  => 'product.category',
 	];
 
 	protected array $default_mappings = [
@@ -61,6 +62,7 @@ class WooCommerce_Module extends Module_Base {
 			'weight'            => 'weight',
 			'description'       => 'description_sale',
 			'_wp4odoo_currency' => 'currency_id',
+			'_wp4odoo_categ_id' => 'categ_id',
 		],
 		'variant' => [
 			'sku'               => 'default_code',

@@ -191,4 +191,62 @@ class PolylangAdapterTest extends TestCase {
 		$this->assertCount( 1, $GLOBALS['_pll_saved_translations'] );
 		$this->assertSame( [ 'en' => 10, 'fr' => 20, 'es' => 30 ], $GLOBALS['_pll_saved_translations'][0] );
 	}
+
+	// ─── get_term_translations (Phase 6) ────────────────────
+
+	public function test_get_term_translations_returns_translated_term_ids(): void {
+		$GLOBALS['_pll_term_languages'][100]      = 'en';
+		$GLOBALS['_pll_term_translations'][100] = [
+			'en' => 100,
+			'fr' => 200,
+			'es' => 300,
+		];
+
+		$result = $this->adapter->get_term_translations( 100, 'product_cat' );
+
+		$this->assertSame( [ 'fr' => 200, 'es' => 300 ], $result );
+	}
+
+	public function test_get_term_translations_empty_for_no_translations(): void {
+		$GLOBALS['_pll_term_languages'][100]      = 'en';
+		$GLOBALS['_pll_term_translations'][100] = [ 'en' => 100 ];
+
+		$result = $this->adapter->get_term_translations( 100, 'product_cat' );
+
+		$this->assertSame( [], $result );
+	}
+
+	// ─── create_term_translation (Phase 6) ──────────────────
+
+	public function test_create_term_translation_returns_existing(): void {
+		$GLOBALS['_pll_term_translations'][100] = [
+			'en' => 100,
+			'fr' => 200,
+		];
+
+		$result = $this->adapter->create_term_translation( 100, 'fr', 'product_cat' );
+
+		$this->assertSame( 200, $result );
+	}
+
+	public function test_create_term_translation_creates_and_links_term(): void {
+		$GLOBALS['_pll_default_lang']            = 'en';
+		$GLOBALS['_pll_term_translations'][100]  = [];
+		$GLOBALS['_pll_term_languages']          = [];
+		$GLOBALS['_pll_saved_term_translations'] = [];
+
+		$result = $this->adapter->create_term_translation( 100, 'fr', 'product_cat' );
+
+		// wp_insert_term returns auto-increment ID > 0.
+		$this->assertGreaterThan( 0, $result );
+
+		// Verify pll_set_term_language was called.
+		$this->assertSame( 'fr', $GLOBALS['_pll_term_languages'][ $result ] ?? '' );
+
+		// Verify pll_save_term_translations was called.
+		$this->assertNotEmpty( $GLOBALS['_pll_saved_term_translations'] );
+		$saved = end( $GLOBALS['_pll_saved_term_translations'] );
+		$this->assertSame( 100, $saved['en'] );
+		$this->assertSame( $result, $saved['fr'] );
+	}
 }

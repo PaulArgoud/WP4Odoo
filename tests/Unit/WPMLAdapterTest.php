@@ -267,4 +267,71 @@ class WPMLAdapterTest extends TestCase {
 		// If we reach here without error, the test passes.
 		$this->assertTrue( true );
 	}
+
+	// ─── get_term_translations (Phase 6) ────────────────────
+
+	public function test_get_term_translations_returns_translated_term_ids(): void {
+		$GLOBALS['_wpml_default_lang'] = 'en';
+
+		$GLOBALS['_wpml_trids'][100] = 77;
+		$GLOBALS['_wpml_trid_translations'][77] = [
+			(object) [ 'language_code' => 'en', 'element_id' => 100 ],
+			(object) [ 'language_code' => 'fr', 'element_id' => 200 ],
+			(object) [ 'language_code' => 'es', 'element_id' => 300 ],
+		];
+
+		$result = $this->adapter->get_term_translations( 100, 'product_cat' );
+
+		$this->assertSame( [ 'fr' => 200, 'es' => 300 ], $result );
+	}
+
+	public function test_get_term_translations_empty_without_trid(): void {
+		$GLOBALS['_wpml_trids'] = [];
+
+		$result = $this->adapter->get_term_translations( 100, 'product_cat' );
+
+		$this->assertSame( [], $result );
+	}
+
+	// ─── create_term_translation (Phase 6) ──────────────────
+
+	public function test_create_term_translation_returns_existing(): void {
+		// Override wpml_object_id to return existing translation for 'fr'.
+		$GLOBALS['_wp_filters']['wpml_object_id'] = function ( $id, $type, $return_original, $lang ) {
+			if ( 'fr' === $lang && 100 === $id ) {
+				return 200;
+			}
+			return $id;
+		};
+
+		$result = $this->adapter->create_term_translation( 100, 'fr', 'product_cat' );
+
+		$this->assertSame( 200, $result );
+	}
+
+	public function test_create_term_translation_creates_and_links_term(): void {
+		$GLOBALS['_wpml_trids'][100] = 88;
+
+		// No existing translation.
+		$GLOBALS['_wp_filters']['wpml_object_id'] = function ( $id ) {
+			return $id;
+		};
+
+		$result = $this->adapter->create_term_translation( 100, 'fr', 'product_cat' );
+
+		// wp_insert_term returns auto-increment ID > 0.
+		$this->assertGreaterThan( 0, $result );
+	}
+
+	public function test_create_term_translation_returns_zero_when_no_trid(): void {
+		$GLOBALS['_wpml_trids'] = [];
+
+		$GLOBALS['_wp_filters']['wpml_object_id'] = function ( $id ) {
+			return $id;
+		};
+
+		$result = $this->adapter->create_term_translation( 100, 'fr', 'product_cat' );
+
+		$this->assertSame( 0, $result );
+	}
 }

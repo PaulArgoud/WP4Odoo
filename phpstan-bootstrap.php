@@ -839,5 +839,24 @@ if ( ! function_exists( 'pll_save_post_translations' ) ) {
 	function pll_save_post_translations( array $translations ): void {}
 }
 
+if ( ! function_exists( 'pll_get_term_translations' ) ) {
+	/** @return array<string, int> */
+	function pll_get_term_translations( int $term_id ): array { return []; }
+}
+
+if ( ! function_exists( 'pll_get_term_language' ) ) {
+	/** @return string|false */
+	function pll_get_term_language( int $term_id, string $field = 'slug' ) { return false; }
+}
+
+if ( ! function_exists( 'pll_set_term_language' ) ) {
+	function pll_set_term_language( int $term_id, string $lang ): void {}
+}
+
+if ( ! function_exists( 'pll_save_term_translations' ) ) {
+	/** @param array<string, int> $translations */
+	function pll_save_term_translations( array $translations ): void {}
+}
+
 // WP_CLI\Utils namespace stub loaded from separate file (PHP namespace rules).
 require_once __DIR__ . '/phpstan-wp-cli-stubs.php';

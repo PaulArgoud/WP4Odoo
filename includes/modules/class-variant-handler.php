@@ -58,6 +58,17 @@ class Variant_Handler {
 	private \WP4Odoo\Entity_Map_Repository $entity_map;
 
 	/**
+	 * Accumulated attribute value mappings (Odoo value ID => WP term ID).
+	 *
+	 * Populated during pull_variants() for translation flush by the coordinator.
+	 *
+	 * @since 3.1.0
+	 *
+	 * @var array<int, int>
+	 */
+	private array $pulled_attribute_values = [];
+
+	/**
 	 * Constructor.
 	 *
 	 * @param Logger                          $logger           Logger instance.
@@ -137,6 +148,9 @@ class Variant_Handler {
 		// Register product-level attributes on the parent.
 		if ( ! empty( $all_attributes ) ) {
 			$this->set_parent_attributes( $parent, $all_attributes );
+
+			// Track attribute value entity_map entries for translation flush.
+			$this->save_attribute_value_mappings( $all_attributes );
 		}
 
 		// Create/update each variation.
@@ -411,5 +425,64 @@ class Variant_Handler {
 
 		$parent->set_attributes( $product_attributes );
 		$parent->save();
+	}
+
+	// ─── Attribute value tracking (Phase 6) ─────────────────
+
+	/**
+	 * Save entity_map entries for attribute values and accumulate
+	 * for translation flush.
+	 *
+	 * After set_parent_attributes() creates WP terms, look up the
+	 * term IDs by name in each pa_* taxonomy and save the mapping.
+	 *
+	 * @since 3.1.0
+	 *
+	 * @param array $all_attributes Attribute data from collect_attributes().
+	 * @return void
+	 */
+	private function save_attribute_value_mappings( array $all_attributes ): void {
+		$resolved = $all_attributes['_resolved'] ?? [];
+
+		foreach ( $resolved as $odoo_value_id => $pair ) {
+			$slug = 'pa_' . sanitize_title( $pair['attribute'] );
+			$term = get_term_by( 'name', $pair['value'], $slug );
+
+			if ( $term && ! is_wp_error( $term ) ) { // @phpstan-ignore function.impossibleType
+				$term_id = (int) $term->term_id;
+
+				$this->entity_map->save(
+					'woocommerce',
+					'attribute_value',
+					$term_id,
+					(int) $odoo_value_id,
+					'product.attribute.value'
+				);
+
+				$this->pulled_attribute_values[ (int) $odoo_value_id ] = $term_id;
+			}
+		}
+	}
+
+	/**
+	 * Get accumulated attribute value mappings (Odoo value ID => WP term ID).
+	 *
+	 * @since 3.1.0
+	 *
+	 * @return array<int, int>
+	 */
+	public function get_pulled_attribute_values(): array {
+		return $this->pulled_attribute_values;
+	}
+
+	/**
+	 * Clear accumulated attribute value mappings.
+	 *
+	 * @since 3.1.0
+	 *
+	 * @return void
+	 */
+	public function clear_pulled_attribute_values(): void {
+		$this->pulled_attribute_values = [];
 	}
 }

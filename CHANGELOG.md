@@ -10,12 +10,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - **Translation UI (Phase 5)** — Language detection panel in WooCommerce module settings: "Detect languages" button probes WPML/Polylang active languages against Odoo `res.lang`, shows per-language availability indicators, and provides per-language toggles for selective translation pull
 - **Translation_Service::detect_languages()** — New public method returning structured language availability data (plugin name, default language, per-language Odoo locale availability). Odoo `res.lang` probe cached via 1-hour transient
-- **Translation_Adapter** — Phase 6 prep: `get_term_translations()` and `create_term_translation()` method stubs added to interface and both adapters
 - **Admin AJAX** — `wp4odoo_detect_languages` endpoint and `languages` field type in module settings save handler
 - **pull_translations_batch()** — Optional `$enabled_languages` parameter to filter which languages are pulled from Odoo
+- **Taxonomy term translations (Phase 6)** — Product categories (`product_cat`) and attribute values (`pa_*`) are now translated during pull from Odoo. Accumulate-and-flush pattern extended to three entity types: products, categories, attribute values
+- **Translation_Adapter** — `get_term_translations()` and `create_term_translation()` implemented in both WPML_Adapter (filter API with `tax_*` element types) and Polylang_Adapter (function API)
+- **Translation_Service::pull_term_translations_batch()** — Pulls translated term names from Odoo and applies to WPML/Polylang translated terms. Reuses `read_translated_batch()` for efficient per-language batch reads
+- **Product category pull** — `Product_Handler` resolves Odoo `categ_id` Many2one to WP `product_cat` terms during product pull. WooCommerce_Module now maps `categ_id` and declares `product.category` Odoo model
+- **Attribute value entity tracking** — `Variant_Handler` saves entity_map entries for attribute values after parent attribute creation, enabling translation flush by taxonomy
 
 ### Changed
 - **WooCommerce module** — `sync_translations` setting migrated from boolean to array of language codes (backward compatible). UI replaced from checkbox to interactive language detection panel
+- **WC_Pull_Coordinator** — `flush_translations()` extended to flush category and attribute value translations alongside product translations. New accumulators: `pulled_categories`, `pulled_attribute_values`
 
 ## [3.0.0] - 2026-02-13
 

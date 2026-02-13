@@ -436,6 +436,119 @@ class Translation_Service {
 		}
 	}
 
+	// ─── Pull term translations (batch) ────────────────────
+
+	/**
+	 * Pull translated term names from Odoo and apply them to
+	 * WPML/Polylang translated taxonomy terms.
+	 *
+	 * For each secondary language, reads `name` from the Odoo model
+	 * with the appropriate locale, then creates/updates translated
+	 * WP terms via the adapter.
+	 *
+	 * @since 3.1.0
+	 *
+	 * @param string             $model             Odoo model (e.g. 'product.category').
+	 * @param array<int, int>    $odoo_wp_map       Odoo ID => WP term ID.
+	 * @param string             $taxonomy          WP taxonomy (e.g. 'product_cat').
+	 * @param callable           $apply_callback    fn(int $trans_term_id, string $name, string $lang): void.
+	 * @param array<int, string> $enabled_languages If non-empty, only pull these language codes.
+	 * @return void
+	 */
+	public function pull_term_translations_batch(
+		string $model,
+		array $odoo_wp_map,
+		string $taxonomy,
+		callable $apply_callback,
+		array $enabled_languages = []
+	): void {
+		$adapter = $this->get_adapter();
+		if ( ! $adapter ) {
+			return;
+		}
+
+		$default_lang = $adapter->get_default_language();
+		$languages    = $adapter->get_active_languages();
+
+		// Filter to enabled languages if specified.
+		if ( ! empty( $enabled_languages ) ) {
+			$languages = array_values( array_intersect( $languages, $enabled_languages ) );
+		}
+
+		$odoo_ids = array_keys( $odoo_wp_map );
+
+		if ( empty( $odoo_ids ) ) {
+			return;
+		}
+
+		foreach ( $languages as $lang ) {
+			if ( $lang === $default_lang ) {
+				continue;
+			}
+
+			$odoo_locale = $this->wp_to_odoo_locale( $lang );
+
+			try {
+				$records = $this->read_translated_batch( $model, $odoo_ids, [ 'name' ], $odoo_locale );
+			} catch ( \Exception $e ) {
+				$this->logger->warning(
+					'Failed to read term translations from Odoo.',
+					[
+						'model'  => $model,
+						'locale' => $odoo_locale,
+						'error'  => $e->getMessage(),
+					]
+				);
+				continue;
+			}
+
+			// Index records by Odoo ID.
+			$indexed = [];
+			foreach ( $records as $record ) {
+				if ( isset( $record['id'] ) ) {
+					$indexed[ (int) $record['id'] ] = $record;
+				}
+			}
+
+			foreach ( $odoo_wp_map as $odoo_id => $term_id ) {
+				if ( ! isset( $indexed[ $odoo_id ] ) ) {
+					continue;
+				}
+
+				$name = $indexed[ $odoo_id ]['name'] ?? '';
+				if ( ! is_string( $name ) || '' === $name ) {
+					continue;
+				}
+
+				// Create or get existing translated term.
+				$trans_term_id = $adapter->create_term_translation( $term_id, $lang, $taxonomy );
+				if ( $trans_term_id <= 0 ) {
+					$this->logger->warning(
+						'Could not create term translation.',
+						[
+							'original_term_id' => $term_id,
+							'lang'             => $lang,
+							'taxonomy'         => $taxonomy,
+						]
+					);
+					continue;
+				}
+
+				$apply_callback( $trans_term_id, $name, $lang );
+			}
+
+			$this->logger->info(
+				'Pulled term translations batch.',
+				[
+					'model'    => $model,
+					'taxonomy' => $taxonomy,
+					'locale'   => $odoo_locale,
+					'count'    => count( $indexed ),
+				]
+			);
+		}
+	}
+
 	/**
 	 * Read translated field values for a batch of Odoo records.
 	 *

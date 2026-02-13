@@ -193,24 +193,94 @@ class WPML_Adapter implements Translation_Adapter {
 		// No-op: WPML uses TRID-based linking (implicit in create_translation).
 	}
 
-	// ─── Term translations (Phase 6 prep) ───────────────────
+	// ─── Term translations (Phase 6) ────────────────────────
 
 	/**
 	 * {@inheritDoc}
 	 *
+	 * Uses WPML's filter-based API with `tax_*` element types (same pattern
+	 * as post translations but with taxonomy element types).
+	 *
 	 * @since 3.1.0
 	 */
 	public function get_term_translations( int $term_id, string $taxonomy ): array {
-		return [];
+		$element_type = 'tax_' . $taxonomy;
+		$trid         = $this->get_term_trid( $term_id, $element_type );
+
+		if ( ! $trid ) {
+			return [];
+		}
+
+		/** @var \stdClass[]|null $translations */
+		$translations = apply_filters( 'wpml_get_element_translations', null, $trid, $element_type );
+
+		if ( ! is_array( $translations ) ) {
+			return [];
+		}
+
+		$default_lang = $this->get_default_language();
+		$result       = [];
+
+		foreach ( $translations as $translation ) {
+			if ( ! isset( $translation->language_code, $translation->element_id ) ) {
+				continue;
+			}
+
+			$lang     = $translation->language_code;
+			$trans_id = (int) $translation->element_id;
+
+			if ( $lang === $default_lang || $trans_id === $term_id ) {
+				continue;
+			}
+
+			$result[ $lang ] = $trans_id;
+		}
+
+		return $result;
 	}
 
 	/**
 	 * {@inheritDoc}
 	 *
+	 * Creates a placeholder term and links it to the original via WPML's TRID
+	 * system (same pattern as `create_translation()` for posts).
+	 *
 	 * @since 3.1.0
 	 */
 	public function create_term_translation( int $original_term_id, string $lang, string $taxonomy ): int {
-		return 0;
+		$element_type = 'tax_' . $taxonomy;
+
+		// Check if a translation already exists.
+		$existing = $this->get_term_in_language( $original_term_id, $lang, $taxonomy );
+		if ( $existing > 0 ) {
+			return $existing;
+		}
+
+		// Create a placeholder term.
+		$result = wp_insert_term( '(translation)', $taxonomy );
+		if ( is_wp_error( $result ) ) {
+			return 0;
+		}
+
+		$new_term_id = (int) $result['term_id'];
+
+		// Link to the original term's TRID.
+		$trid = $this->get_term_trid( $original_term_id, $element_type );
+		if ( ! $trid ) {
+			return 0;
+		}
+
+		do_action(
+			'wpml_set_element_language_details',
+			[
+				'element_id'    => $new_term_id,
+				'element_type'  => $element_type,
+				'trid'          => $trid,
+				'language_code' => $lang,
+			]
+		);
+
+		return $new_term_id;
 	}
 
 	/**
@@ -239,5 +309,35 @@ class WPML_Adapter implements Translation_Adapter {
 		$translated = apply_filters( 'wpml_object_id', $post_id, $post_type, false, $lang );
 
 		return ( $translated && $translated !== $post_id ) ? (int) $translated : 0;
+	}
+
+	/**
+	 * Get the WPML translation group ID (trid) for a term.
+	 *
+	 * @param int    $term_id      Term ID.
+	 * @param string $element_type WPML element type (e.g. 'tax_product_cat').
+	 * @return int|null Translation group ID.
+	 */
+	private function get_term_trid( int $term_id, string $element_type ): ?int {
+		/** @var int|null $trid */
+		$trid = apply_filters( 'wpml_element_trid', null, $term_id, $element_type );
+		return $trid;
+	}
+
+	/**
+	 * Get the translated term ID for a specific language.
+	 *
+	 * Note: `wpml_object_id` works for both posts and terms.
+	 *
+	 * @param int    $term_id  Source term ID.
+	 * @param string $lang     Target language code.
+	 * @param string $taxonomy WP taxonomy.
+	 * @return int Translated term ID, or 0 if not found.
+	 */
+	private function get_term_in_language( int $term_id, string $lang, string $taxonomy ): int {
+		/** @var int|null $translated */
+		$translated = apply_filters( 'wpml_object_id', $term_id, $taxonomy, false, $lang );
+
+		return ( $translated && $translated !== $term_id ) ? (int) $translated : 0;
 	}
 }
