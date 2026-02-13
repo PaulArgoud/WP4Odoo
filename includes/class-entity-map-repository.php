@@ -29,6 +29,14 @@ class Entity_Map_Repository {
 	private const BATCH_CHUNK_SIZE = 500;
 
 	/**
+	 * Maximum cache entries before LRU eviction kicks in.
+	 *
+	 * Prevents unbounded memory growth during large batch imports.
+	 * Each entry is ~100 bytes, so 2000 entries ≈ 200 KB.
+	 */
+	private const MAX_CACHE_SIZE = 2000;
+
+	/**
 	 * Per-request lookup cache.
 	 *
 	 * Keys use the format "{module}:{entity_type}:wp:{wp_id}" or
@@ -180,6 +188,8 @@ class Entity_Map_Repository {
 			}
 		}
 
+		$this->evict_cache();
+
 		return $map;
 	}
 
@@ -247,6 +257,8 @@ class Entity_Map_Repository {
 			}
 		}
 
+		$this->evict_cache();
+
 		return $map;
 	}
 
@@ -290,6 +302,7 @@ class Entity_Map_Repository {
 		if ( false !== $result ) {
 			$this->cache[ "{$module}:{$entity_type}:wp:{$wp_id}" ]     = $odoo_id;
 			$this->cache[ "{$module}:{$entity_type}:odoo:{$odoo_id}" ] = $wp_id;
+			$this->evict_cache();
 		}
 
 		return false !== $result;
@@ -373,6 +386,8 @@ class Entity_Map_Repository {
 			}
 		}
 
+		$this->evict_cache();
+
 		return $map;
 	}
 
@@ -385,5 +400,22 @@ class Entity_Map_Repository {
 	 */
 	public function flush_cache(): void {
 		$this->cache = [];
+	}
+
+	/**
+	 * Evict oldest cache entries when the cache exceeds MAX_CACHE_SIZE.
+	 *
+	 * Uses FIFO eviction (array_slice on insertion-ordered PHP array)
+	 * which approximates LRU for sequential batch processing patterns.
+	 *
+	 * @return void
+	 */
+	private function evict_cache(): void {
+		if ( count( $this->cache ) <= self::MAX_CACHE_SIZE ) {
+			return;
+		}
+
+		// Keep the most recent half of entries.
+		$this->cache = array_slice( $this->cache, (int) ( self::MAX_CACHE_SIZE / 2 ), null, true );
 	}
 }

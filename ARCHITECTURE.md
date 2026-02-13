@@ -228,21 +228,21 @@ WordPress For Odoo/
 │   │   ├── class-admin-ajax.php       # AJAX coordinator: hook registration, request verification (uses 3 traits)
 │   │   └── class-settings-page.php    # Settings API, 5-tab rendering, setup checklist, sanitize callbacks
 │   │
-│   ├── class-sync-result.php          # Value object: success/fail, odoo_id, error message, Error_Type
+│   ├── class-sync-result.php          # Value object: success/fail, ?int entity_id, error message, Error_Type
 │   ├── class-error-type.php           # Backed enum: Transient, Permanent (retry strategy)
 │   ├── class-database-migration.php   # Table creation (dbDelta), default options, versioned migrations (schema_version)
 │   ├── class-settings-repository.php  # Centralized option access: keys, defaults, typed accessors (DI)
 │   ├── class-module-registry.php      # Module registration, mutual exclusivity, lifecycle
 │   ├── class-module-base.php          # Abstract base class for modules (push/pull, mapping, anti-loop)
-│   ├── trait-module-helpers.php       # Shared helpers: auto_post_invoice, ensure_entity_synced, synthetic IDs, partner_service, resolve_partner_from_user/email, check_dependency
-│   ├── class-entity-map-repository.php # DB access for wp4odoo_entity_map (incl. batch lookups)
+│   ├── trait-module-helpers.php       # Shared helpers: auto_post_invoice (→bool), ensure_entity_synced, synthetic IDs, partner_service, resolve_partner_from_user/email, check_dependency
+│   ├── class-entity-map-repository.php # DB access for wp4odoo_entity_map (batch lookups, LRU cache)
 │   ├── class-sync-queue-repository.php # DB access for wp4odoo_sync_queue (atomic dedup via transaction)
 │   ├── class-partner-service.php       # Shared res.partner lookup/creation service
 │   ├── class-failure-notifier.php     # Admin email notification on consecutive sync failures
 │   ├── class-circuit-breaker.php     # Circuit breaker for Odoo connectivity (3-state, advisory lock probe mutex)
-│   ├── class-sync-engine.php          # Queue processor, batch operations, advisory locking, smart retry (Error_Type)
+│   ├── class-sync-engine.php          # Queue processor, batch operations, advisory locking, smart retry (Error_Type), memory guard
 │   ├── class-queue-manager.php        # Helpers for enqueuing sync jobs
-│   ├── class-query-service.php        # Paginated queries (queue jobs, log entries) — injectable instance
+│   ├── class-query-service.php        # Paginated queries with column projection (queue jobs, log entries) — injectable instance
 │   ├── class-field-mapper.php         # Type conversions (Many2one, dates, HTML)
 │   ├── class-cpt-helper.php           # Shared CPT register/load/save helpers
 │   ├── class-webhook-handler.php      # REST API endpoints for Odoo webhooks, rate limiting
@@ -273,7 +273,7 @@ WordPress For Odoo/
 ├── templates/
 │   └── customer-portal.php           #   Customer portal HTML template (orders/invoices tabs)
 │
-├── tests/                             # 1832 unit tests (2855 assertions) + 26 integration tests (wp-env)
+├── tests/                             # 1853 unit tests (2894 assertions) + 26 integration tests (wp-env)
 │   ├── bootstrap.php                 #   Unit test bootstrap: constants, stub loading, plugin class requires
 │   ├── bootstrap-integration.php     #   Integration test bootstrap: loads WP test framework (wp-env)
 │   ├── stubs/
@@ -459,7 +459,7 @@ Module_Base (abstract)
 - Entity mapping CRUD: `get_mapping()`, `save_mapping()`, `get_wp_mapping()`, `remove_mapping()` (delegates to `Entity_Map_Repository`)
 - Data transformation: `map_to_odoo()`, `map_from_odoo()`, `generate_sync_hash()`
 - Settings: `get_settings()`, `get_settings_fields()`, `get_default_settings()`, `get_dependency_status()` (external dependency check for admin UI) — delegates to injected `Settings_Repository`
-- Helpers: `is_importing()` (anti-loop guard, per-module static array keyed by module ID), `mark_importing()`, `clear_importing()` (try/finally in pull), `resolve_many2one_field()` (Many2one → scalar), `delete_wp_post()` (safe post deletion), `log_unsupported_entity()` (centralized warning), `partner_service()` (lazy `Partner_Service` factory), `resolve_partner_from_user()` (WP user → Odoo partner via Partner_Service), `resolve_partner_from_email()` (email → Odoo partner via Partner_Service), `check_dependency()` (one-liner dependency status), `client()`, `auto_post_invoice()` (setting check + mapping lookup + `action_post`), `ensure_entity_synced()` (mapping check + auto-push if missing), `encode_synthetic_id()` / `decode_synthetic_id()` (static, with overflow guard — used by LMS modules for enrollment IDs)
+- Helpers: `is_importing()` (anti-loop guard, per-module static array keyed by module ID), `mark_importing()`, `clear_importing()` (try/finally in pull), `resolve_many2one_field()` (Many2one → scalar), `delete_wp_post()` (safe post deletion), `log_unsupported_entity()` (centralized warning), `partner_service()` (lazy `Partner_Service` factory), `resolve_partner_from_user()` (WP user → Odoo partner via Partner_Service), `resolve_partner_from_email()` (email → Odoo partner via Partner_Service), `check_dependency()` (one-liner dependency status), `client()`, `auto_post_invoice(): bool` (setting check + mapping lookup + `action_post`, returns success/failure), `ensure_entity_synced()` (mapping check + auto-push if missing), `encode_synthetic_id()` / `decode_synthetic_id()` (static, with overflow guard — used by LMS modules for enrollment IDs)
 - Subclass hooks: `boot()`, `load_wp_data()`, `save_wp_data()`, `delete_wp_data()`
 
 **Module lifecycle:**
@@ -538,6 +538,10 @@ WP Event               Sync Engine (cron)           Odoo
 - Circuit breaker: pauses processing after 3 consecutive all-fail batches (5-min recovery delay, probe mutex)
 - Deduplication: updates an existing `pending` job rather than creating a duplicate (atomic via `SELECT … FOR UPDATE`)
 - Configurable batch size (50 items per cron tick by default)
+- Stale job recovery: configurable timeout (60–3600 s, default 600 s via `stale_timeout` sync setting)
+- Memory safety: batch processing stops when PHP memory usage exceeds 80% of `memory_limit`
+- Transient-cached stats: `get_stats()` and `get_health_metrics()` use 5-minute transient cache to avoid repeated COUNT queries on admin pages
+- Migration rollback: `run_migrations()` stops on first failure and preserves the schema version, preventing partial upgrades
 
 ### 4. Interchangeable Transport (Strategy Pattern)
 
@@ -591,6 +595,7 @@ The `wp4odoo_entity_map` table maintains the correspondence between WordPress an
 - `sync_hash` (SHA-256 of data) to detect changes without making an API call
 - `last_synced_at` tracks when the mapping was last synchronized
 - Fast lookup in both directions via separate indexes (`idx_wp_lookup`, `idx_odoo_lookup`)
+- Per-request static cache with LRU eviction (`MAX_CACHE_SIZE = 2000`, drops oldest half when exceeded)
 
 ### 6. Query Service (Data Access Layer)
 
@@ -602,7 +607,7 @@ $qs->get_queue_jobs( $page, $per_page, $status );
 $qs->get_log_entries( $filters, $page, $per_page );
 ```
 
-Uses separate `COUNT(*)` + `SELECT` queries for MySQL 8.0+ / MariaDB 10.5+ compatibility (`SQL_CALC_FOUND_ROWS` deprecated since MySQL 8.0.17). Injected into consumers (`Admin_Ajax`, `CLI`) via constructor. Testable without global state.
+Uses separate `COUNT(*)` + `SELECT` queries for MySQL 8.0+ / MariaDB 10.5+ compatibility (`SQL_CALC_FOUND_ROWS` deprecated since MySQL 8.0.17). Column projection excludes LONGTEXT fields (`payload` in queue, `context` in logs) to reduce memory usage on paginated admin pages. Injected into consumers (`Admin_Ajax`, `CLI`) via constructor. Testable without global state.
 
 ### 7. Error Handling Convention
 
@@ -611,7 +616,7 @@ The codebase uses a tiered error-handling strategy. Each tier is appropriate for
 | Tier | Mechanism | When Used | Examples |
 |------|-----------|-----------|---------|
 | **1. Exceptions** | `throw \RuntimeException` | Fatal/configuration errors that prevent operation | `Odoo_Client::call()` on RPC fault, `Sync_Engine::process_job()` when module not found |
-| **2. Sync_Result** | `return Sync_Result` | Push/pull outcome with context | `Module_Base::push_to_odoo()`, `Module_Base::pull_from_odoo()` — carries success, odoo_id, error message, `Error_Type` (Transient/Permanent/Config) |
+| **2. Sync_Result** | `return Sync_Result` | Push/pull outcome with context | `Module_Base::push_to_odoo()`, `Module_Base::pull_from_odoo()` — carries success, `?int` entity_id (null = no entity), error message, `Error_Type` (Transient/Permanent/Config) |
 | **3. Bool** | `return bool` | Simple CRUD success/failure (binary outcome) | `Entity_Map_Repository::save()`, `Entity_Map_Repository::remove()` |
 | **4. Null** | `return ?int` / `return ?string` | Missing optional data (lookup misses) | `Entity_Map_Repository::get_odoo_id()`, `Module_Base::resolve_many2one_field()`, `Partner_Service::get_or_create()` |
 | **5. Array** | `return array{success: bool, ...}` | Complex multi-part results | `Odoo_Auth::test_connection()`, `Sync_Engine::get_stats()`, `Bulk_Handler::import_products()` |
@@ -679,6 +684,7 @@ Managed via `dbDelta()` in `Database_Migration::create_tables()`. Schema upgrade
 - Primary index: `(status, priority, scheduled_at)` for efficient polling
 - Retry/cleanup index: `(status, attempts)` — added by migration_2
 - Time-range index: `(created_at)` — added by migration_2
+- Processed status index: `(status, processed_at)` — added by migration_4 (health metrics)
 - Correlation index: `(correlation_id)` — added by migration_1
 
 **`{prefix}wp4odoo_entity_map`** — WP ↔ Odoo mapping
@@ -720,7 +726,7 @@ Namespace: `wp-json/wp4odoo/v1/`
 | `/webhook/test` | `GET` | Token | Health check |
 | `/sync/{module}/{entity}` | `POST` | WP Auth | Triggers sync for a specific module/entity |
 
-The webhook is authenticated via an `X-Odoo-Token` header compared against `wp4odoo_webhook_token`. Rate limiting: 100 requests per IP per 60-second window (returns HTTP 429 when exceeded).
+The webhook is authenticated via an `X-Odoo-Token` header compared against `wp4odoo_webhook_token`. Rate limiting: 20 requests per IP per 60-second window (returns HTTP 429 when exceeded).
 
 ## Sync Flows
 
@@ -770,7 +776,7 @@ Reading:  wp_options → sodium_crypto_secretbox_open() → API key (plaintext)
 ### Request Authentication
 
 - **Admin AJAX**: `manage_options` capability + nonce verification
-- **Incoming webhooks**: token in `X-Odoo-Token` header + per-IP rate limiting (100 req/min)
+- **Incoming webhooks**: token in `X-Odoo-Token` header + per-IP rate limiting (20 req/min)
 - **REST API sync**: standard WordPress authentication (cookie/nonce or Application Passwords)
 - **WooCommerce HPOS**: compatibility declared via `before_woocommerce_init` hook
 
@@ -1320,7 +1326,9 @@ Auto-dismissed when all steps completed. Dismiss via × button persisted in `wp4
 | `wp4odoo_five_minutes` | 300s | Default for sync |
 | `wp4odoo_fifteen_minutes` | 900s | Configurable alternative |
 
-Cron event: `wp4odoo_scheduled_sync` → `Sync_Engine::process_queue()`
+Cron events:
+- `wp4odoo_scheduled_sync` → `Sync_Engine::process_queue()` (every 5 or 15 min)
+- `wp4odoo_log_cleanup` → `Logger::cleanup()` (daily, respects `retention_days` setting)
 
 ## Odoo API Reference
 

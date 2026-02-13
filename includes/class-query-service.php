@@ -43,10 +43,11 @@ class Query_Service {
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 		$total = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table} {$where}" );
 
+		// Exclude LONGTEXT `payload` column from list queries for performance.
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 		$items = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT * FROM {$table} {$where} ORDER BY id DESC LIMIT %d OFFSET %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				"SELECT id, correlation_id, module, direction, entity_type, wp_id, odoo_id, action, priority, status, attempts, max_attempts, error_message, scheduled_at, processed_at, created_at FROM {$table} {$where} ORDER BY id DESC LIMIT %d OFFSET %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 				$per_page,
 				$offset
 			)
@@ -115,7 +116,8 @@ class Query_Service {
 			$total = (int) $wpdb->get_var( $count_query );
 		}
 
-		$data_query        = "SELECT * FROM {$table} {$where_sql} ORDER BY id DESC LIMIT %d OFFSET %d"; // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		// Exclude LONGTEXT `context` column from list queries for performance.
+		$data_query        = "SELECT id, correlation_id, level, module, message, created_at FROM {$table} {$where_sql} ORDER BY id DESC LIMIT %d OFFSET %d"; // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 		$params_with_limit = array_merge( $params, [ $per_page, $offset ] );
 
 		if ( ! empty( $params ) ) {

@@ -226,13 +226,13 @@ class WC_Subscriptions_Module extends Module_Base {
 				\sprintf( '%s pull not supported — originates in WooCommerce.', $entity_type ),
 				[ 'odoo_id' => $odoo_id ]
 			);
-			return \WP4Odoo\Sync_Result::success( 0 );
+			return \WP4Odoo\Sync_Result::success();
 		}
 
 		if ( 'subscription' === $entity_type ) {
 			$settings = $this->get_settings();
 			if ( empty( $settings['pull_subscriptions'] ) ) {
-				return \WP4Odoo\Sync_Result::success( 0 );
+				return \WP4Odoo\Sync_Result::success();
 			}
 		}
 
@@ -306,7 +306,7 @@ class WC_Subscriptions_Module extends Module_Base {
 		if ( 'subscription' === $entity_type && 'delete' !== $action ) {
 			if ( ! $this->has_subscription_model() ) {
 				$this->logger->info( 'sale.subscription not available — skipping subscription push.', [ 'sub_id' => $wp_id ] );
-				return \WP4Odoo\Sync_Result::success( 0 );
+				return \WP4Odoo\Sync_Result::success();
 			}
 			$this->ensure_product_synced( $wp_id, 'subscription' );
 		}

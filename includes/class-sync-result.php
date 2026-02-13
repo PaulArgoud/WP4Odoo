@@ -21,13 +21,13 @@ final class Sync_Result {
 
 	/**
 	 * @param bool            $success    Whether the operation succeeded.
-	 * @param int             $entity_id  The created/updated Odoo or WP entity ID.
+	 * @param int|null        $entity_id  The created/updated Odoo or WP entity ID (null if not applicable).
 	 * @param string          $message    Human-readable context (empty on success, error description on failure).
 	 * @param Error_Type|null $error_type Error classification (null on success).
 	 */
 	private function __construct(
 		private readonly bool $success,
-		private readonly int $entity_id,
+		private readonly ?int $entity_id,
 		private readonly string $message,
 		private readonly ?Error_Type $error_type,
 	) {}
@@ -35,11 +35,11 @@ final class Sync_Result {
 	/**
 	 * Create a success result.
 	 *
-	 * @param int    $entity_id The Odoo or WP entity ID (0 if not applicable).
-	 * @param string $message   Optional context message.
+	 * @param int|null $entity_id The Odoo or WP entity ID (null if not applicable).
+	 * @param string   $message   Optional context message.
 	 * @return self
 	 */
-	public static function success( int $entity_id = 0, string $message = '' ): self {
+	public static function success( ?int $entity_id = null, string $message = '' ): self {
 		return new self( true, $entity_id, $message, null );
 	}
 
@@ -51,7 +51,7 @@ final class Sync_Result {
 	 * @return self
 	 */
 	public static function failure( string $message, Error_Type $error_type = Error_Type::Transient ): self {
-		return new self( false, 0, $message, $error_type );
+		return new self( false, null, $message, $error_type );
 	}
 
 	/**
@@ -66,9 +66,9 @@ final class Sync_Result {
 	/**
 	 * Get the affected entity ID (Odoo ID for push, WP ID for pull).
 	 *
-	 * @return int
+	 * @return int|null Null when the operation has no associated entity.
 	 */
-	public function get_entity_id(): int {
+	public function get_entity_id(): ?int {
 		return $this->entity_id;
 	}
 

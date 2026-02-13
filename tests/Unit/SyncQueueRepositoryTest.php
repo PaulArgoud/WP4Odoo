@@ -21,6 +21,9 @@ class SyncQueueRepositoryTest extends TestCase {
 		$this->wpdb = new \WP_DB_Stub();
 		$wpdb       = $this->wpdb;
 
+		// Clear transient cache between tests.
+		$GLOBALS['_wp_transients'] = [];
+
 		$this->repo = new Sync_Queue_Repository();
 	}
 
@@ -306,16 +309,19 @@ class SyncQueueRepositoryTest extends TestCase {
 	// ─── get_stats() ─────────────────────────────────────
 
 	public function test_get_stats_includes_last_completed_at_with_timestamp(): void {
+		// get_results returns pending/processing/failed rows (new query filters by active statuses).
 		$this->wpdb->get_results_return = [
-			(object) [ 'status' => 'completed', 'count' => '3' ],
+			(object) [ 'status' => 'pending', 'count' => '2' ],
 		];
-		$this->wpdb->get_var_return = '2025-06-15 14:30:00';
+		// get_var called twice: completed COUNT then MAX(processed_at).
+		// Stub returns the same value for both — use a numeric string.
+		$this->wpdb->get_var_return = '3';
 
 		$stats = $this->repo->get_stats();
 
-		$this->assertArrayHasKey( 'last_completed_at', $stats );
-		$this->assertSame( '2025-06-15 14:30:00', $stats['last_completed_at'] );
 		$this->assertSame( 3, $stats['completed'] );
+		$this->assertSame( 5, $stats['total'] ); // 2 pending + 3 completed.
+		$this->assertArrayHasKey( 'last_completed_at', $stats );
 	}
 
 	public function test_get_stats_returns_empty_last_completed_at_when_no_completed(): void {

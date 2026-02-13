@@ -381,6 +381,23 @@ if ( ! function_exists( 'wp_generate_uuid4' ) ) {
 	}
 }
 
+if ( ! function_exists( 'wp_convert_hr_to_bytes' ) ) {
+	function wp_convert_hr_to_bytes( $value ) {
+		$value = strtolower( trim( (string) $value ) );
+		$bytes = (int) $value;
+
+		if ( str_contains( $value, 'g' ) ) {
+			$bytes *= GB_IN_BYTES;
+		} elseif ( str_contains( $value, 'm' ) ) {
+			$bytes *= MB_IN_BYTES;
+		} elseif ( str_contains( $value, 'k' ) ) {
+			$bytes *= KB_IN_BYTES;
+		}
+
+		return min( $bytes, PHP_INT_MAX );
+	}
+}
+
 // ─── Email ──────────────────────────────────────────────
 
 if ( ! function_exists( 'wp_mail' ) ) {

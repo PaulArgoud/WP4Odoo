@@ -171,15 +171,22 @@ class Sync_Queue_Repository {
 	}
 
 	/**
-	 * Get queue statistics.
+	 * Get queue statistics (cached for 5 minutes via transient).
 	 *
 	 * @return array{pending: int, processing: int, completed: int, failed: int, total: int, last_completed_at: string}
 	 */
 	public function get_stats(): array {
+		$cached = get_transient( 'wp4odoo_queue_stats' );
+		if ( is_array( $cached ) ) {
+			return $cached;
+		}
+
 		global $wpdb;
 
 		$table = $this->table();
-		$rows  = $wpdb->get_results( "SELECT status, COUNT(*) as count FROM {$table} GROUP BY status" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is from $wpdb->prefix, safe.
+
+		// Count only active statuses (pending + processing) individually, plus recent failed.
+		$rows = $wpdb->get_results( "SELECT status, COUNT(*) as count FROM {$table} WHERE status IN ('pending', 'processing', 'failed') GROUP BY status" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is from $wpdb->prefix, safe.
 
 		$stats = [
 			'pending'    => 0,
@@ -196,16 +203,24 @@ class Sync_Queue_Repository {
 			$stats['total'] += (int) $row->count;
 		}
 
+		// Completed count (separate, uses idx_status_attempts index).
+		$stats['completed'] = (int) $wpdb->get_var(
+			"SELECT COUNT(*) FROM {$table} WHERE status = 'completed'" // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is from $wpdb->prefix, safe.
+		);
+		$stats['total']    += $stats['completed'];
+
 		// Last completed sync timestamp.
 		$stats['last_completed_at'] = $wpdb->get_var(
 			"SELECT MAX(processed_at) FROM {$table} WHERE status = 'completed'" // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is from $wpdb->prefix, safe.
 		) ?? '';
 
+		set_transient( 'wp4odoo_queue_stats', $stats, 300 );
+
 		return $stats;
 	}
 
 	/**
-	 * Get queue health metrics.
+	 * Get queue health metrics (cached for 5 minutes via transient).
 	 *
 	 * Returns extended metrics beyond basic counts: average processing
 	 * latency, success rate, and per-module depth.
@@ -213,6 +228,11 @@ class Sync_Queue_Repository {
 	 * @return array{avg_latency_seconds: float, success_rate: float, depth_by_module: array<string, int>}
 	 */
 	public function get_health_metrics(): array {
+		$cached = get_transient( 'wp4odoo_queue_health' );
+		if ( is_array( $cached ) ) {
+			return $cached;
+		}
+
 		global $wpdb;
 
 		$table = $this->table();
@@ -241,11 +261,15 @@ class Sync_Queue_Repository {
 			$depth_by_module[ $row->module ] = (int) $row->depth;
 		}
 
-		return [
+		$metrics = [
 			'avg_latency_seconds' => round( $avg_latency, 1 ),
 			'success_rate'        => $success_rate,
 			'depth_by_module'     => $depth_by_module,
 		];
+
+		set_transient( 'wp4odoo_queue_health', $metrics, 300 );
+
+		return $metrics;
 	}
 
 	/**
@@ -394,16 +418,17 @@ class Sync_Queue_Repository {
 	/**
 	 * Recover jobs stuck in 'processing' state from a previous crash.
 	 *
-	 * Resets jobs that have been in 'processing' for more than 10 minutes
-	 * back to 'pending' so they can be retried.
+	 * Resets jobs that have been in 'processing' longer than the given
+	 * timeout back to 'pending' so they can be retried.
 	 *
+	 * @param int $timeout_seconds Seconds before a processing job is considered stale (default 600).
 	 * @return int Number of recovered jobs.
 	 */
-	public function recover_stale_processing(): int {
+	public function recover_stale_processing( int $timeout_seconds = 600 ): int {
 		global $wpdb;
 
 		$table  = $this->table();
-		$cutoff = gmdate( 'Y-m-d H:i:s', time() - 600 );
+		$cutoff = gmdate( 'Y-m-d H:i:s', time() - max( 60, $timeout_seconds ) );
 
 		return (int) $wpdb->query(
 			$wpdb->prepare(

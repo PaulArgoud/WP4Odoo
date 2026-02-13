@@ -189,16 +189,16 @@ class Memberships_Module extends Module_Base {
 		$settings = $this->get_settings();
 
 		if ( 'plan' === $entity_type && empty( $settings['pull_plans'] ) ) {
-			return \WP4Odoo\Sync_Result::success( 0 );
+			return \WP4Odoo\Sync_Result::success();
 		}
 
 		if ( 'membership' === $entity_type ) {
 			if ( empty( $settings['pull_memberships'] ) ) {
-				return \WP4Odoo\Sync_Result::success( 0 );
+				return \WP4Odoo\Sync_Result::success();
 			}
 			if ( 'delete' === $action ) {
 				$this->logger->info( 'Membership deletion from Odoo not supported — memberships originate in WooCommerce.', [ 'odoo_id' => $odoo_id ] );
-				return \WP4Odoo\Sync_Result::success( 0 );
+				return \WP4Odoo\Sync_Result::success();
 			}
 		}
 

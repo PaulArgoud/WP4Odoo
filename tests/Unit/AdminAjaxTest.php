@@ -25,6 +25,7 @@ class AdminAjaxTest extends TestCase {
 		$wpdb       = $this->wpdb;
 
 		$GLOBALS['_wp_options']          = [];
+		$GLOBALS['_wp_transients']       = [];
 		$GLOBALS['_wp_current_user_can'] = true;
 		$_POST                           = [];
 

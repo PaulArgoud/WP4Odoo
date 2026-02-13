@@ -163,7 +163,7 @@ class Field_Mapper {
 	 * @return float
 	 */
 	public static function format_price( mixed $value, int $decimals = 2 ): float {
-		return (float) number_format( (float) $value, $decimals, '.', '' );
+		return round( (float) $value, $decimals );
 	}
 
 	/**

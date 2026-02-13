@@ -225,13 +225,13 @@ class WCSubscriptionsModuleTest extends TestCase {
 	public function test_pull_product_skipped(): void {
 		$result = $this->module->pull_from_odoo( 'product', 'update', 100, 0 );
 		$this->assertTrue( $result->succeeded() );
-		$this->assertSame( 0, $result->get_entity_id() );
+		$this->assertNull( $result->get_entity_id() );
 	}
 
 	public function test_pull_renewal_skipped(): void {
 		$result = $this->module->pull_from_odoo( 'renewal', 'create', 200, 0 );
 		$this->assertTrue( $result->succeeded() );
-		$this->assertSame( 0, $result->get_entity_id() );
+		$this->assertNull( $result->get_entity_id() );
 	}
 
 	// ─── Pull: delete not supported ─────────────────────

@@ -235,11 +235,11 @@ class Sprout_Invoices_Module extends Module_Base {
 		$settings = $this->get_settings();
 
 		if ( 'invoice' === $entity_type && empty( $settings['pull_invoices'] ) ) {
-			return Sync_Result::success( 0 );
+			return Sync_Result::success();
 		}
 
 		if ( 'payment' === $entity_type && empty( $settings['pull_payments'] ) ) {
-			return Sync_Result::success( 0 );
+			return Sync_Result::success();
 		}
 
 		return parent::pull_from_odoo( $entity_type, $action, $odoo_id, $wp_id, $payload );

@@ -26,7 +26,7 @@ class Webhook_Handler {
 	/**
 	 * Maximum webhook requests per IP within the rate limit window.
 	 */
-	private const RATE_LIMIT_MAX = 100;
+	private const RATE_LIMIT_MAX = 20;
 
 	/**
 	 * Rate limit window in seconds.

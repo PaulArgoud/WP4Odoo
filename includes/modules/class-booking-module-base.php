@@ -185,13 +185,13 @@ abstract class Booking_Module_Base extends Module_Base {
 	public function pull_from_odoo( string $entity_type, string $action, int $odoo_id, int $wp_id = 0, array $payload = [] ): \WP4Odoo\Sync_Result {
 		if ( $this->get_booking_entity_type() === $entity_type ) {
 			$this->logger->info( "{$entity_type} pull not supported — {$entity_type}s originate in WordPress.", [ 'odoo_id' => $odoo_id ] );
-			return \WP4Odoo\Sync_Result::success( 0 );
+			return \WP4Odoo\Sync_Result::success();
 		}
 
 		if ( 'service' === $entity_type ) {
 			$settings = $this->get_settings();
 			if ( empty( $settings['pull_services'] ) ) {
-				return \WP4Odoo\Sync_Result::success( 0 );
+				return \WP4Odoo\Sync_Result::success();
 			}
 		}
 

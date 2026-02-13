@@ -37,7 +37,7 @@ class Testable_Module extends Module_Base {
 	 */
 	public function push_to_odoo( string $entity_type, string $action, int $wp_id, int $odoo_id = 0, array $payload = [] ): Sync_Result {
 		$this->push_calls[] = compact( 'entity_type', 'action', 'wp_id' );
-		return Sync_Result::success( 0 );
+		return Sync_Result::success();
 	}
 
 	public function get_default_settings(): array {

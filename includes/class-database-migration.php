@@ -123,9 +123,16 @@ final class Database_Migration {
 				continue;
 			}
 
-			$callback();
-			++$applied;
-			update_option( self::OPT_SCHEMA_VERSION, $version );
+			try {
+				$callback();
+				++$applied;
+				update_option( self::OPT_SCHEMA_VERSION, $version );
+			} catch ( \Throwable $e ) {
+				if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+					error_log( sprintf( 'WP4Odoo migration %d failed: %s', $version, $e->getMessage() ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Debug-only logging for migration failures.
+				}
+				break;
+			}
 		}
 
 		return $applied;
@@ -141,6 +148,7 @@ final class Database_Migration {
 			1 => [ self::class, 'migration_1' ],
 			2 => [ self::class, 'migration_2' ],
 			3 => [ self::class, 'migration_3' ],
+			4 => [ self::class, 'migration_4' ],
 		];
 	}
 
@@ -220,6 +228,29 @@ final class Database_Migration {
 
 		if ( ! in_array( 'idx_dedup_composite', $names, true ) ) {
 			$wpdb->query( "ALTER TABLE {$queue_table} ADD KEY idx_dedup_composite (module, entity_type, direction, status)" );
+		}
+		// phpcs:enable
+	}
+
+	/**
+	 * Migration 4: Add composite index for health metric queries.
+	 *
+	 * Covers the `WHERE status = 'completed' AND processed_at >= …`
+	 * pattern used by get_health_metrics() for latency and success rate.
+	 *
+	 * @return void
+	 */
+	private static function migration_4(): void {
+		global $wpdb;
+
+		$queue_table = $wpdb->prefix . 'wp4odoo_sync_queue';
+
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.SchemaChange
+		$indexes = $wpdb->get_results( "SHOW INDEX FROM {$queue_table}" );
+		$names   = array_column( $indexes, 'Key_name' );
+
+		if ( ! in_array( 'idx_processed_status', $names, true ) ) {
+			$wpdb->query( "ALTER TABLE {$queue_table} ADD KEY idx_processed_status (status, processed_at)" );
 		}
 		// phpcs:enable
 	}

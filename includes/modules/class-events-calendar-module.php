@@ -247,17 +247,17 @@ class Events_Calendar_Module extends Module_Base {
 	public function pull_from_odoo( string $entity_type, string $action, int $odoo_id, int $wp_id = 0, array $payload = [] ): \WP4Odoo\Sync_Result {
 		if ( 'attendee' === $entity_type ) {
 			$this->logger->info( 'Attendee pull not supported — attendees originate in WordPress.', [ 'odoo_id' => $odoo_id ] );
-			return \WP4Odoo\Sync_Result::success( 0 );
+			return \WP4Odoo\Sync_Result::success();
 		}
 
 		$settings = $this->get_settings();
 
 		if ( 'event' === $entity_type && empty( $settings['pull_events'] ) ) {
-			return \WP4Odoo\Sync_Result::success( 0 );
+			return \WP4Odoo\Sync_Result::success();
 		}
 
 		if ( 'ticket' === $entity_type && empty( $settings['pull_tickets'] ) ) {
-			return \WP4Odoo\Sync_Result::success( 0 );
+			return \WP4Odoo\Sync_Result::success();
 		}
 
 		return parent::pull_from_odoo( $entity_type, $action, $odoo_id, $wp_id, $payload );
@@ -333,7 +333,7 @@ class Events_Calendar_Module extends Module_Base {
 		if ( 'attendee' === $entity_type && 'delete' !== $action ) {
 			if ( ! $this->has_event_model() ) {
 				$this->logger->info( 'event.event not available — skipping attendee push.', [ 'attendee_id' => $wp_id ] );
-				return \WP4Odoo\Sync_Result::success( 0 );
+				return \WP4Odoo\Sync_Result::success();
 			}
 			$this->ensure_event_synced_for_attendee( $wp_id );
 		}

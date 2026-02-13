@@ -129,6 +129,7 @@ final class WP4Odoo_Plugin {
 
 		// Cron for sync
 		add_action( 'wp4odoo_scheduled_sync', [ $this, 'run_scheduled_sync' ] );
+		add_action( 'wp4odoo_log_cleanup', [ $this, 'run_log_cleanup' ] );
 		add_filter( 'cron_schedules', [ $this, 'add_cron_intervals' ] );
 
 		// WooCommerce HPOS compatibility
@@ -146,6 +147,10 @@ final class WP4Odoo_Plugin {
 			wp_schedule_event( time(), 'wp4odoo_five_minutes', 'wp4odoo_scheduled_sync' );
 		}
 
+		if ( ! wp_next_scheduled( 'wp4odoo_log_cleanup' ) ) {
+			wp_schedule_event( time(), 'daily', 'wp4odoo_log_cleanup' );
+		}
+
 		// Flag for post-activation redirect.
 		set_transient( 'wp4odoo_activated', '1', 60 );
 
@@ -157,6 +162,7 @@ final class WP4Odoo_Plugin {
 	 */
 	public function deactivate(): void {
 		wp_clear_scheduled_hook( 'wp4odoo_scheduled_sync' );
+		wp_clear_scheduled_hook( 'wp4odoo_log_cleanup' );
 		wp_clear_scheduled_hook( 'wp4odoo_bookly_poll' );
 		flush_rewrite_rules();
 	}
@@ -267,8 +273,14 @@ final class WP4Odoo_Plugin {
 			$this->settings
 		);
 		$sync->process_queue();
+	}
 
-		// Automatic log cleanup (runs every cron cycle — lightweight indexed DELETE).
+	/**
+	 * Run automatic log cleanup (daily WP-Cron event).
+	 *
+	 * Deletes log entries older than the configured retention period.
+	 */
+	public function run_log_cleanup(): void {
 		$logger = new WP4Odoo\Logger( 'system', $this->settings );
 		$logger->cleanup();
 	}

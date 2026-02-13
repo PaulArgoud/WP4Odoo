@@ -52,6 +52,7 @@ class Settings_Repository {
 		'auto_sync'         => false,
 		'failure_threshold' => 5,
 		'failure_cooldown'  => 3600,
+		'stale_timeout'     => 600,
 	];
 
 	private const DEFAULTS_LOG = [
@@ -125,7 +126,21 @@ class Settings_Repository {
 			$merged['sync_interval'] = 'wp4odoo_five_minutes';
 		}
 
+		$merged['stale_timeout'] = max( 60, min( 3600, (int) $merged['stale_timeout'] ) );
+
 		return $merged;
+	}
+
+	/**
+	 * Get the stale processing recovery timeout in seconds.
+	 *
+	 * Jobs stuck in 'processing' longer than this are reset to 'pending'.
+	 *
+	 * @return int Timeout in seconds (60–3600, default 600).
+	 */
+	public function get_stale_timeout(): int {
+		$sync = $this->get_sync_settings();
+		return (int) $sync['stale_timeout'];
 	}
 
 	/**

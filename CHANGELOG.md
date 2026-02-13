@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.0.0] - Unreleased
 
+### Changed
+- **Sync_Result** — `entity_id` is now `?int` (nullable) instead of `int` with `0` default. `success()` factory defaults to `null`, `failure()` passes `null`. Clearer semantics: `null` = no entity, vs `0` which was ambiguous
+- **Webhook_Handler** — Rate limit reduced from 100 to 20 requests per IP per 60-second window, matching realistic Odoo webhook throughput
+- **Field_Mapper::format_price()** — Replaced `(float) number_format()` with `round()` to avoid string→float conversion artifacts (e.g. `1234.5600` locale issues)
+- **Module_Helpers::auto_post_invoice()** — Returns `bool` instead of `void`, allowing callers to detect auto-posting failures
+- **Entity_Map_Repository** — Added LRU cache eviction (`MAX_CACHE_SIZE = 2000`); drops oldest half when exceeded, preventing unbounded memory growth during large batch operations
+- **Sync_Queue_Repository::recover_stale_processing()** — Accepts configurable `$timeout_seconds` parameter (was hardcoded 600s). New `stale_timeout` sync setting (60–3600 s, default 600 s) with `Settings_Repository::get_stale_timeout()` accessor
+- **Sync_Queue_Repository::get_stats()** — Cached via 5-minute transient (`wp4odoo_queue_stats`), split completed count into separate indexed query
+- **Sync_Queue_Repository::get_health_metrics()** — Cached via 5-minute transient (`wp4odoo_queue_health`)
+- **Database_Migration::run_migrations()** — Wrapped migration callbacks in try/catch; stops on first failure without incrementing schema version, preventing partial upgrades
+- **Query_Service** — `get_queue_jobs()` and `get_log_entries()` now use explicit column projection, excluding LONGTEXT fields (`payload`, `context`) to reduce memory on paginated admin pages
+- **Sync_Engine** — Constructor accepts optional `?Logger $logger` parameter (4th arg) for dependency injection in tests. Batch loop now checks memory usage against 80% of `memory_limit` (`MEMORY_THRESHOLD`), stopping gracefully before OOM
+
+### Added
+- **Database migration 4** — `idx_processed_status (status, processed_at)` index on `wp4odoo_sync_queue` for efficient health metrics queries
+- **WP-Cron log cleanup** — Daily `wp4odoo_log_cleanup` event triggers `Logger::cleanup()` (respects `retention_days` setting), replacing the previous in-sync-run cleanup that added latency to every cron tick
+- **`wp_convert_hr_to_bytes()`** stub for unit tests (memory limit parsing)
+- 21 new/updated unit tests (1853 total, 2894 assertions): transient cache isolation, nullable entity_id, memory threshold, stale timeout configuration
+
 ## [2.9.5] - 2026-02-12
 
 ### Changed

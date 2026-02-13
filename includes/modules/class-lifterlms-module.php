@@ -263,17 +263,17 @@ class LifterLMS_Module extends Module_Base {
 	public function pull_from_odoo( string $entity_type, string $action, int $odoo_id, int $wp_id = 0, array $payload = [] ): \WP4Odoo\Sync_Result {
 		if ( in_array( $entity_type, [ 'order', 'enrollment' ], true ) ) {
 			$this->logger->info( "{$entity_type} pull not supported — {$entity_type}s originate in WordPress.", [ 'odoo_id' => $odoo_id ] );
-			return \WP4Odoo\Sync_Result::success( 0 );
+			return \WP4Odoo\Sync_Result::success();
 		}
 
 		$settings = $this->get_settings();
 
 		if ( 'course' === $entity_type && empty( $settings['pull_courses'] ) ) {
-			return \WP4Odoo\Sync_Result::success( 0 );
+			return \WP4Odoo\Sync_Result::success();
 		}
 
 		if ( 'membership' === $entity_type && empty( $settings['pull_memberships'] ) ) {
-			return \WP4Odoo\Sync_Result::success( 0 );
+			return \WP4Odoo\Sync_Result::success();
 		}
 
 		return parent::pull_from_odoo( $entity_type, $action, $odoo_id, $wp_id, $payload );

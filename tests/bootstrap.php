@@ -33,6 +33,18 @@ if ( ! defined( 'HOUR_IN_SECONDS' ) ) {
 	define( 'HOUR_IN_SECONDS', 3600 );
 }
 
+if ( ! defined( 'KB_IN_BYTES' ) ) {
+	define( 'KB_IN_BYTES', 1024 );
+}
+
+if ( ! defined( 'MB_IN_BYTES' ) ) {
+	define( 'MB_IN_BYTES', 1048576 );
+}
+
+if ( ! defined( 'GB_IN_BYTES' ) ) {
+	define( 'GB_IN_BYTES', 1073741824 );
+}
+
 if ( ! defined( 'AUTH_KEY' ) ) {
 	define( 'AUTH_KEY', 'test-auth-key-for-phpunit-only' );
 }

@@ -89,17 +89,17 @@ trait Module_Helpers {
 	 * @param string $setting_key Settings key to check (e.g., 'auto_post_invoices').
 	 * @param string $entity_type Entity type for mapping lookup.
 	 * @param int    $wp_id       WordPress entity ID.
-	 * @return void
+	 * @return bool True if posted successfully, false on skip or error.
 	 */
-	protected function auto_post_invoice( string $setting_key, string $entity_type, int $wp_id ): void {
+	protected function auto_post_invoice( string $setting_key, string $entity_type, int $wp_id ): bool {
 		$settings = $this->get_settings();
 		if ( empty( $settings[ $setting_key ] ) ) {
-			return;
+			return false;
 		}
 
 		$odoo_id = $this->get_mapping( $entity_type, $wp_id );
 		if ( ! $odoo_id ) {
-			return;
+			return false;
 		}
 
 		try {
@@ -116,6 +116,7 @@ trait Module_Helpers {
 					'odoo_id'     => $odoo_id,
 				]
 			);
+			return true;
 		} catch ( \Exception $e ) {
 			$this->logger->warning(
 				'Could not auto-post invoice.',
@@ -126,6 +127,7 @@ trait Module_Helpers {
 					'error'       => $e->getMessage(),
 				]
 			);
+			return false;
 		}
 	}
 

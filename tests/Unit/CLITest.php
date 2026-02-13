@@ -23,7 +23,8 @@ class CLITest extends TestCase {
 		global $wpdb;
 		$this->wpdb             = new \WP_DB_Stub();
 		$wpdb                   = $this->wpdb;
-		$GLOBALS['_wp_options'] = [];
+		$GLOBALS['_wp_options']    = [];
+		$GLOBALS['_wp_transients'] = [];
 		\WP4Odoo\Tests\Module_Test_Case::reset_static_caches();
 		\WP4Odoo_Plugin::reset_instance();
 		\WP_CLI::reset();

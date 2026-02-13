@@ -108,17 +108,25 @@ class Sync_Engine {
 	private Settings_Repository $settings;
 
 	/**
+	 * Memory usage threshold (fraction of PHP memory_limit).
+	 *
+	 * When usage exceeds this ratio, batch processing stops to prevent OOM.
+	 */
+	private const MEMORY_THRESHOLD = 0.8;
+
+	/**
 	 * Constructor.
 	 *
 	 * @param \Closure              $module_resolver Returns a Module_Base (or null) for a given module ID.
 	 * @param Sync_Queue_Repository $queue_repo      Sync queue repository.
 	 * @param Settings_Repository   $settings        Settings repository.
+	 * @param Logger|null           $logger          Optional logger (injected for testing, auto-created otherwise).
 	 */
-	public function __construct( \Closure $module_resolver, Sync_Queue_Repository $queue_repo, Settings_Repository $settings ) {
+	public function __construct( \Closure $module_resolver, Sync_Queue_Repository $queue_repo, Settings_Repository $settings, ?Logger $logger = null ) {
 		$this->module_resolver  = $module_resolver;
 		$this->queue_repo       = $queue_repo;
 		$this->settings         = $settings;
-		$this->logger           = new Logger( 'sync', $settings );
+		$this->logger           = $logger ?? new Logger( 'sync', $settings );
 		$this->failure_notifier = new Failure_Notifier( $this->logger, $settings );
 		$this->circuit_breaker  = new Circuit_Breaker( $this->logger );
 	}
@@ -197,7 +205,7 @@ class Sync_Engine {
 			$this->batch_successes = 0;
 
 			// Recover any jobs left in 'processing' from a previous crash.
-			$this->queue_repo->recover_stale_processing();
+			$this->queue_repo->recover_stale_processing( $this->settings->get_stale_timeout() );
 
 			foreach ( $jobs as $job ) {
 				if ( ( microtime( true ) - $start_time ) >= self::BATCH_TIME_LIMIT ) {
@@ -207,6 +215,18 @@ class Sync_Engine {
 							'elapsed'   => round( microtime( true ) - $start_time, 2 ),
 							'processed' => $processed,
 							'remaining' => count( $jobs ) - $processed,
+						]
+					);
+					break;
+				}
+
+				if ( $this->is_memory_exhausted() ) {
+					$this->logger->warning(
+						'Memory threshold reached, deferring remaining jobs.',
+						[
+							'memory_usage_mb' => round( memory_get_usage( true ) / 1048576, 1 ),
+							'processed'       => $processed,
+							'remaining'       => count( $jobs ) - $processed,
 						]
 					);
 					break;
@@ -421,6 +441,33 @@ class Sync_Engine {
 		);
 
 		return '1' === (string) $result;
+	}
+
+	/**
+	 * Release the processing lock.
+	 *
+	 * Logs a warning if the lock was not held or could not be released
+	 * (e.g. database connection dropped after processing).
+	 *
+	 * @param string $lock_name Lock name (global or per-module).
+	 * @return void
+	 */
+	/**
+	 * Check whether memory usage exceeds the safety threshold.
+	 *
+	 * Compares current real usage against MEMORY_THRESHOLD of the
+	 * PHP memory_limit. Returns false if the limit is unbounded (-1).
+	 *
+	 * @return bool True if memory is exhausted.
+	 */
+	private function is_memory_exhausted(): bool {
+		$limit = (string) ini_get( 'memory_limit' );
+		if ( '' === $limit || '-1' === $limit ) {
+			return false;
+		}
+
+		$limit_bytes = wp_convert_hr_to_bytes( $limit );
+		return memory_get_usage( true ) >= (int) ( $limit_bytes * self::MEMORY_THRESHOLD );
 	}
 
 	/**
