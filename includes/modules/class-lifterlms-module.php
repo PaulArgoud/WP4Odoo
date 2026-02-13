@@ -33,6 +33,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 class LifterLMS_Module extends Module_Base {
 
 	use LifterLMS_Hooks;
+	use LMS_Helpers;
 
 	/**
 	 * Sync direction: bidirectional for courses/memberships, push-only for orders/enrollments.
@@ -394,44 +395,17 @@ class LifterLMS_Module extends Module_Base {
 	/**
 	 * Load and resolve an enrollment with Odoo references.
 	 *
-	 * Decodes the synthetic ID and resolves user → partner, course → product.
+	 * Delegates to LMS_Helpers::load_enrollment_from_synthetic().
 	 *
 	 * @param int $synthetic_id Synthetic enrollment ID (user_id * 1M + course_id).
 	 * @return array<string, mixed>
 	 */
 	private function load_enrollment_data( int $synthetic_id ): array {
-		[ $user_id, $course_id ] = self::decode_synthetic_id( $synthetic_id );
-
-		$data = $this->handler->load_enrollment( $user_id, $course_id );
-		if ( empty( $data ) ) {
-			return [];
-		}
-
-		// Resolve user → partner.
-		$partner_id = $this->resolve_partner_from_email( $data['user_email'], $data['user_name'], $user_id );
-
-		if ( ! $partner_id ) {
-			$this->logger->warning(
-				'Cannot resolve partner for enrollment.',
-				[
-					'user_id'   => $user_id,
-					'course_id' => $course_id,
-				]
-			);
-			return [];
-		}
-
-		// Resolve course → Odoo product.
-		$product_odoo_id = $this->get_mapping( 'course', $course_id ) ?? 0;
-		if ( ! $product_odoo_id ) {
-			$this->logger->warning( 'Cannot resolve Odoo product for enrollment course.', [ 'course_id' => $course_id ] );
-			return [];
-		}
-
-		$course_post = get_post( $course_id );
-		$course_name = $course_post ? $course_post->post_title : '';
-
-		return $this->handler->format_sale_order( $product_odoo_id, $partner_id, $data['date'], $course_name );
+		return $this->load_enrollment_from_synthetic(
+			$synthetic_id,
+			[ $this->handler, 'load_enrollment' ],
+			[ $this->handler, 'format_sale_order' ]
+		);
 	}
 
 	// ─── Product sync ──────────────────────────────────────

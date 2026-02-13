@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Module_Base infrastructure** — `_wp_entity_id` injected into `$wp_data` in `push_to_odoo()` for filter consumers. New `wp4odoo_after_save_{module}_{entity}` action fired after `save_wp_data()` in `pull_from_odoo()` for meta-module post-save writes
 
 ### Changed
+- **LMS_Helpers trait** — Extracted shared enrollment loading logic (decode synthetic ID → load enrollment → resolve partner → resolve course product → format sale order) from LearnDash and LifterLMS modules into `trait-lms-helpers.php`. Both modules now delegate via callable parameters instead of duplicating 33 lines each
 - **WooCommerce module** — `sync_translations` setting migrated from boolean to array of language codes (backward compatible). UI replaced from checkbox to interactive language detection panel
 - **WC_Pull_Coordinator** — `flush_translations()` extended to flush category and attribute value translations alongside product translations. New accumulators: `pulled_categories`, `pulled_attribute_values`
 

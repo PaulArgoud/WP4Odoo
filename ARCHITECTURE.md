@@ -126,12 +126,13 @@ WordPress For Odoo/
 │   │   ├── class-wc-bookings-module.php      # WC Bookings: extends Booking_Module_Base (uses WC_Bookings_Hooks trait)
 │   │   │
 │   │   ├── # ─── LMS (LearnDash + LifterLMS) ─────────────────
+│   │   ├── trait-lms-helpers.php             # LMS shared: enrollment loading pipeline (synthetic ID → partner → product → sale order)
 │   │   ├── trait-learndash-hooks.php         # LearnDash: hook callbacks (course/group save, transaction, enrollment)
 │   │   ├── class-learndash-handler.php       # LearnDash: course/group/transaction/enrollment data load
-│   │   ├── class-learndash-module.php        # LearnDash: push sync coordinator (uses LearnDash_Hooks trait)
+│   │   ├── class-learndash-module.php        # LearnDash: push sync coordinator (uses LearnDash_Hooks + LMS_Helpers traits)
 │   │   ├── trait-lifterlms-hooks.php         # LifterLMS: hook callbacks (course/membership save, order, enrollment)
 │   │   ├── class-lifterlms-handler.php       # LifterLMS: course/membership/order/enrollment data load
-│   │   ├── class-lifterlms-module.php        # LifterLMS: push sync coordinator (uses LifterLMS_Hooks trait)
+│   │   ├── class-lifterlms-module.php        # LifterLMS: push sync coordinator (uses LifterLMS_Hooks + LMS_Helpers traits)
 │   │   │
 │   │   ├── # ─── WC Subscriptions ─────────────────────────────
 │   │   ├── trait-wc-subscriptions-hooks.php  # WCS: hook callbacks (product save, subscription status, renewal)
