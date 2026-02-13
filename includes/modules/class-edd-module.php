@@ -94,6 +94,10 @@ class EDD_Module extends Module_Base {
 	 */
 	public function __construct( \Closure $client_provider, \WP4Odoo\Entity_Map_Repository $entity_map, \WP4Odoo\Settings_Repository $settings ) {
 		parent::__construct( 'edd', 'Easy Digital Downloads', $client_provider, $entity_map, $settings );
+
+		$this->partner_service  = new Partner_Service( fn() => $this->client(), $this->entity_map() );
+		$this->download_handler = new EDD_Download_Handler( $this->logger );
+		$this->order_handler    = new EDD_Order_Handler( $this->logger, $this->partner_service );
 	}
 
 	/**
@@ -108,10 +112,6 @@ class EDD_Module extends Module_Base {
 		}
 
 		$settings = $this->get_settings();
-
-		$this->partner_service  = new Partner_Service( fn() => $this->client(), $this->entity_map() );
-		$this->download_handler = new EDD_Download_Handler( $this->logger );
-		$this->order_handler    = new EDD_Order_Handler( $this->logger, $this->partner_service );
 
 		// Downloads.
 		if ( ! empty( $settings['sync_downloads'] ) ) {

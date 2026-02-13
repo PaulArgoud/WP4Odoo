@@ -177,6 +177,13 @@ if ( ! class_exists( 'WC_Memberships_Membership_Plan' ) ) {
 	}
 }
 
+// ─── WC_DateTime ────────────────────────────────────────
+
+if ( ! class_exists( 'WC_DateTime' ) ) {
+	class WC_DateTime extends \DateTime {
+	}
+}
+
 // ─── WC Order ───────────────────────────────────────────
 
 if ( ! class_exists( 'WC_Order' ) ) {
@@ -188,8 +195,8 @@ if ( ! class_exists( 'WC_Order' ) ) {
 		}
 		public function get_id(): int { return $this->id; }
 		public function get_total(): string { return $this->data['total'] ?? '0.00'; }
-		public function get_date_created(): ?\DateTimeImmutable {
-			return isset( $this->data['date_created'] ) ? new \DateTimeImmutable( $this->data['date_created'] ) : null;
+		public function get_date_created(): ?\WC_DateTime {
+			return isset( $this->data['date_created'] ) ? new \WC_DateTime( $this->data['date_created'] ) : null;
 		}
 		public function get_status(): string { return $this->data['status'] ?? 'pending'; }
 		public function set_status( string $status ): void { $this->data['status'] = $status; }

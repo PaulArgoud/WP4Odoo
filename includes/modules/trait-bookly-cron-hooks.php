@@ -116,8 +116,9 @@ trait Bookly_Cron_Hooks {
 		}
 
 		// Deletions: services in entity_map but no longer in Bookly.
+		$seen_lookup = array_flip( $seen_ids );
 		foreach ( $existing as $wp_id => $map ) {
-			if ( ! in_array( $wp_id, $seen_ids, true ) ) {
+			if ( ! isset( $seen_lookup[ $wp_id ] ) ) {
 				Queue_Manager::push( 'bookly', 'service', 'delete', $wp_id, $map['odoo_id'] );
 			}
 		}
@@ -154,8 +155,9 @@ trait Bookly_Cron_Hooks {
 		}
 
 		// Deletions: bookings in entity_map but no longer active in Bookly.
+		$seen_lookup = array_flip( $seen_ids );
 		foreach ( $existing as $wp_id => $map ) {
-			if ( ! in_array( $wp_id, $seen_ids, true ) ) {
+			if ( ! isset( $seen_lookup[ $wp_id ] ) ) {
 				Queue_Manager::push( 'bookly', 'booking', 'delete', $wp_id, $map['odoo_id'] );
 			}
 		}

@@ -19,6 +19,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Database_Migration::run_migrations()** — Wrapped migration callbacks in try/catch; stops on first failure without incrementing schema version, preventing partial upgrades
 - **Query_Service** — `get_queue_jobs()` and `get_log_entries()` now use explicit column projection, excluding LONGTEXT fields (`payload`, `context`) to reduce memory on paginated admin pages
 - **Sync_Engine** — Constructor accepts optional `?Logger $logger` parameter (4th arg) for dependency injection in tests. Batch loop now checks memory usage against 80% of `memory_limit` (`MEMORY_THRESHOLD`), stopping gracefully before OOM
+- **EDD_Module** — Handler initialization (`Partner_Service`, `EDD_Download_Handler`, `EDD_Order_Handler`) moved from `boot()` to `__construct()`, preventing null reference if Sync_Engine processes residual queue jobs on a non-booted module
+- **Order_Handler / EDD_Order_Handler** — Migrated 3 remaining status mapping methods to `Status_Mapper::resolve()` with filterable hooks; 100% of status maps now use the centralized pattern
+- **Bookly_Cron_Hooks / Ecwid_Cron_Hooks** — Deletion detection in polling loops uses `array_flip()` + `isset()` instead of `in_array()`, reducing O(n²) to O(n)
+- **Ecwid_Handler** — `fetch_api()` uses `array_push(...$items)` instead of `array_merge()` in pagination loop, avoiding repeated full-array copies
+- **Exchange_Rate_Service** — `fetch_rates()` uses a transient-based mutex (`LOCK_KEY`, 30 s TTL) to prevent cache stampede when multiple concurrent processes detect a cache miss
+
+### Fixed
+- **Failure_Notifier** — `wp_mail()` return value is now checked; cooldown timestamp is only saved on successful email delivery (previously, a failed send would suppress the next notification attempt)
+- **Odoo_Auth** — Logs a warning when API key decryption fails, aiding diagnosis of encryption key rotation issues (was silent failure)
 
 ### Added
 - **Pricelist price sync** — Pull computed prices from Odoo pricelists (`product.pricelist`) and apply as WooCommerce sale prices; transient-cached (5min), currency guard integration, pricelist tracking meta

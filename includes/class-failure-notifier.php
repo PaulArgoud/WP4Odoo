@@ -111,7 +111,14 @@ class Failure_Notifier {
 			admin_url( 'admin.php?page=wp4odoo-settings&tab=queue' )
 		);
 
-		wp_mail( $admin_email, $subject, $message );
+		if ( ! wp_mail( $admin_email, $subject, $message ) ) {
+			$this->logger->error(
+				'Failed to send failure notification email.',
+				[ 'email' => $admin_email ]
+			);
+			return;
+		}
+
 		$this->settings->save_last_failure_email( time() );
 
 		$this->logger->warning(

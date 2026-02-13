@@ -133,11 +133,36 @@ class Exchange_Rate_Service {
 	}
 
 	/**
+	 * Transient key for the cache stampede mutex.
+	 *
+	 * @var string
+	 */
+	private const LOCK_KEY = 'wp4odoo_exchange_rates_lock';
+
+	/**
+	 * Maximum lock duration in seconds.
+	 *
+	 * @var int
+	 */
+	private const LOCK_TTL = 30;
+
+	/**
 	 * Fetch exchange rates from Odoo and cache them.
+	 *
+	 * Uses a transient-based mutex to prevent cache stampede: when multiple
+	 * concurrent processes detect a cache miss, only one fetches from Odoo
+	 * while others return empty (the caller retries on the next sync cycle).
 	 *
 	 * @return array<string, float> Currency code => rate.
 	 */
 	private function fetch_rates(): array {
+		// Stampede protection: only one process fetches at a time.
+		if ( false !== get_transient( self::LOCK_KEY ) ) {
+			return [];
+		}
+
+		set_transient( self::LOCK_KEY, 1, self::LOCK_TTL );
+
 		try {
 			$client  = ( $this->client_fn )();
 			$records = $client->search_read(
@@ -150,10 +175,12 @@ class Exchange_Rate_Service {
 				'Failed to fetch exchange rates from Odoo.',
 				[ 'error' => $e->getMessage() ]
 			);
+			delete_transient( self::LOCK_KEY );
 			return [];
 		}
 
 		if ( empty( $records ) ) {
+			delete_transient( self::LOCK_KEY );
 			return [];
 		}
 
@@ -175,6 +202,8 @@ class Exchange_Rate_Service {
 				[ 'currency_count' => count( $rates ) ]
 			);
 		}
+
+		delete_transient( self::LOCK_KEY );
 
 		return $rates;
 	}

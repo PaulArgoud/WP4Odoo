@@ -232,7 +232,7 @@ class Ecwid_Handler {
 				break;
 			}
 
-			$all_items = array_merge( $all_items, $items );
+			array_push( $all_items, ...$items );
 
 			$total   = (int) ( $body['total'] ?? 0 );
 			$offset += self::API_PAGE_LIMIT;

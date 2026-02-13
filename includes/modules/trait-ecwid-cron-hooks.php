@@ -116,8 +116,9 @@ trait Ecwid_Cron_Hooks {
 			}
 		}
 
+		$seen_lookup = array_flip( $seen_ids );
 		foreach ( $existing as $wp_id => $map ) {
-			if ( ! in_array( $wp_id, $seen_ids, true ) ) {
+			if ( ! isset( $seen_lookup[ $wp_id ] ) ) {
 				Queue_Manager::push( 'ecwid', 'product', 'delete', $wp_id, $map['odoo_id'] );
 			}
 		}
@@ -150,8 +151,9 @@ trait Ecwid_Cron_Hooks {
 			}
 		}
 
+		$seen_lookup = array_flip( $seen_ids );
 		foreach ( $existing as $wp_id => $map ) {
-			if ( ! in_array( $wp_id, $seen_ids, true ) ) {
+			if ( ! isset( $seen_lookup[ $wp_id ] ) ) {
 				Queue_Manager::push( 'ecwid', 'order', 'delete', $wp_id, $map['odoo_id'] );
 			}
 		}

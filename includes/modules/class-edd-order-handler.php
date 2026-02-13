@@ -112,31 +112,40 @@ class EDD_Order_Handler {
 	// ─── Status Mapping ─────────────────────────────────────
 
 	/**
+	 * EDD → Odoo order status mapping.
+	 *
+	 * @var array<string, string>
+	 */
+	private const STATUS_MAP = [
+		'pending'   => 'draft',
+		'complete'  => 'sale',
+		'failed'    => 'cancel',
+		'refunded'  => 'cancel',
+		'abandoned' => 'cancel',
+		'revoked'   => 'cancel',
+	];
+
+	/**
+	 * Odoo → EDD order status mapping.
+	 *
+	 * @var array<string, string>
+	 */
+	private const REVERSE_STATUS_MAP = [
+		'draft'  => 'pending',
+		'sent'   => 'pending',
+		'sale'   => 'complete',
+		'done'   => 'complete',
+		'cancel' => 'failed',
+	];
+
+	/**
 	 * Map an EDD order status to an Odoo sale.order state.
 	 *
 	 * @param string $edd_status EDD status value.
 	 * @return string Odoo state.
 	 */
 	public function map_edd_status_to_odoo( string $edd_status ): string {
-		$default_map = [
-			'pending'   => 'draft',
-			'complete'  => 'sale',
-			'failed'    => 'cancel',
-			'refunded'  => 'cancel',
-			'abandoned' => 'cancel',
-			'revoked'   => 'cancel',
-		];
-
-		/**
-		 * Filters the EDD → Odoo order status mapping.
-		 *
-		 * @since 1.9.9
-		 *
-		 * @param array<string, string> $map EDD status => Odoo state.
-		 */
-		$map = apply_filters( 'wp4odoo_edd_order_status_map', $default_map );
-
-		return $map[ $edd_status ] ?? 'draft';
+		return Status_Mapper::resolve( $edd_status, self::STATUS_MAP, 'wp4odoo_edd_order_status_map', 'draft' );
 	}
 
 	/**
@@ -146,23 +155,6 @@ class EDD_Order_Handler {
 	 * @return string EDD status.
 	 */
 	public function map_odoo_status_to_edd( string $odoo_state ): string {
-		$default_map = [
-			'draft'  => 'pending',
-			'sent'   => 'pending',
-			'sale'   => 'complete',
-			'done'   => 'complete',
-			'cancel' => 'failed',
-		];
-
-		/**
-		 * Filters the Odoo → EDD order status mapping.
-		 *
-		 * @since 1.9.9
-		 *
-		 * @param array<string, string> $map Odoo state => EDD status.
-		 */
-		$map = apply_filters( 'wp4odoo_edd_odoo_status_map', $default_map );
-
-		return $map[ $odoo_state ] ?? 'pending';
+		return Status_Mapper::resolve( $odoo_state, self::REVERSE_STATUS_MAP, 'wp4odoo_edd_odoo_status_map', 'pending' );
 	}
 }

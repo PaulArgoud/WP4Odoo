@@ -115,29 +115,25 @@ class Order_Handler {
 	// ─── Status Mapping ─────────────────────────────────────
 
 	/**
+	 * Odoo → WooCommerce order status mapping.
+	 *
+	 * @var array<string, string>
+	 */
+	private const REVERSE_STATUS_MAP = [
+		'draft'  => 'pending',
+		'sent'   => 'on-hold',
+		'sale'   => 'processing',
+		'done'   => 'completed',
+		'cancel' => 'cancelled',
+	];
+
+	/**
 	 * Map an Odoo sale.order state to a WooCommerce order status.
 	 *
 	 * @param string $odoo_state Odoo state value.
 	 * @return string WC status (without 'wc-' prefix).
 	 */
 	public function map_odoo_status_to_wc( string $odoo_state ): string {
-		$default_map = [
-			'draft'  => 'pending',
-			'sent'   => 'on-hold',
-			'sale'   => 'processing',
-			'done'   => 'completed',
-			'cancel' => 'cancelled',
-		];
-
-		/**
-		 * Filters the Odoo → WooCommerce order status mapping.
-		 *
-		 * @since 1.9.1
-		 *
-		 * @param array<string, string> $map Odoo state => WC status (without wc- prefix).
-		 */
-		$map = apply_filters( 'wp4odoo_order_status_map', $default_map );
-
-		return $map[ $odoo_state ] ?? 'on-hold';
+		return Status_Mapper::resolve( $odoo_state, self::REVERSE_STATUS_MAP, 'wp4odoo_order_status_map', 'on-hold' );
 	}
 }

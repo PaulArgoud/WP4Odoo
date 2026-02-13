@@ -867,7 +867,7 @@ All user inputs are sanitized with:
 - **Product variants**: auto-imports `product.product` variants as WC variations after a `product.template` pull; skips single-variant (simple) products; resolves attributes via `product.template.attribute.value`
 - **Bulk operations**: queue-based import/export of all products via admin UI (Sync tab)
 - **Multi-currency guard**: skips price update when Odoo `currency_id` differs from WC shop currency
-- **Exchange rate conversion**: optional `convert_currency` setting; prices converted via `Exchange_Rate_Service` (Odoo `res.currency` rates, 1-hour cache)
+- **Exchange rate conversion**: optional `convert_currency` setting; prices converted via `Exchange_Rate_Service` (Odoo `res.currency` rates, 1-hour cache, stampede-protected fetch)
 - **Pricelist price pull**: imports computed prices from Odoo pricelists (`product.pricelist`) as WC sale prices; transient-cached (5min), currency guard integration, pricelist tracking meta
 - **Shipment tracking pull**: imports completed shipments (`stock.picking`) from Odoo into WC order meta (AST-compatible format); SHA-256 hash change detection, HPOS compatible
 
