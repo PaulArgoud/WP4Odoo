@@ -262,7 +262,7 @@ class SproutInvoicesModuleTest extends Module_Test_Case {
 
 		$this->assertCount( 1, $data['invoice_line_ids'] );
 		$this->assertSame( 'Flat Invoice', $data['invoice_line_ids'][0][2]['name'] );
-		$this->assertSame( 1, $data['invoice_line_ids'][0][2]['quantity'] );
+		$this->assertSame( 1.0, $data['invoice_line_ids'][0][2]['quantity'] );
 		$this->assertSame( 250.0, $data['invoice_line_ids'][0][2]['price_unit'] );
 	}
 

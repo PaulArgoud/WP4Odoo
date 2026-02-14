@@ -43,16 +43,11 @@ trait Awesome_Support_Hooks {
 	 * @return void
 	 */
 	public function on_ticket_created( int $ticket_id, array $data = [] ): void {
-		if ( $this->is_importing() ) {
+		if ( ! $this->should_sync( 'sync_tickets' ) ) {
 			return;
 		}
 
 		if ( $ticket_id <= 0 ) {
-			return;
-		}
-
-		$settings = $this->get_settings();
-		if ( empty( $settings['sync_tickets'] ) ) {
 			return;
 		}
 
@@ -66,16 +61,11 @@ trait Awesome_Support_Hooks {
 	 * @return void
 	 */
 	public function on_ticket_status_updated( int $ticket_id ): void {
-		if ( $this->is_importing() ) {
+		if ( ! $this->should_sync( 'sync_tickets' ) ) {
 			return;
 		}
 
 		if ( $ticket_id <= 0 ) {
-			return;
-		}
-
-		$settings = $this->get_settings();
-		if ( empty( $settings['sync_tickets'] ) ) {
 			return;
 		}
 

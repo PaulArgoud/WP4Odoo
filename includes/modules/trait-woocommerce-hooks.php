@@ -34,13 +34,7 @@ trait WooCommerce_Hooks {
 	 * @return void
 	 */
 	public function on_product_save( int $product_id ): void {
-		if ( $this->is_importing() ) {
-			return;
-		}
-
-		$settings = $this->get_settings();
-		if ( empty( $settings['sync_products'] ) ) {
-			$this->logger->debug( 'WC: product sync disabled, skipping.', [ 'product_id' => $product_id ] );
+		if ( ! $this->should_sync( 'sync_products' ) ) {
 			return;
 		}
 
@@ -140,13 +134,7 @@ trait WooCommerce_Hooks {
 	 * @return void
 	 */
 	public function on_new_order( int $order_id ): void {
-		if ( $this->is_importing() ) {
-			return;
-		}
-
-		$settings = $this->get_settings();
-		if ( empty( $settings['sync_orders'] ) ) {
-			$this->logger->debug( 'WC: order sync disabled, skipping.', [ 'order_id' => $order_id ] );
+		if ( ! $this->should_sync( 'sync_orders' ) ) {
 			return;
 		}
 
@@ -173,12 +161,7 @@ trait WooCommerce_Hooks {
 	 * @return void
 	 */
 	public function on_order_status_changed( int $order_id, string $old_status, string $new_status ): void {
-		if ( $this->is_importing() ) {
-			return;
-		}
-
-		$settings = $this->get_settings();
-		if ( empty( $settings['sync_orders'] ) ) {
+		if ( ! $this->should_sync( 'sync_orders' ) ) {
 			return;
 		}
 

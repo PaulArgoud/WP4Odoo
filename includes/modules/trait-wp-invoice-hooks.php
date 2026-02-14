@@ -35,16 +35,11 @@ trait WP_Invoice_Hooks {
 	 * @return void
 	 */
 	public function on_invoice_save( int $invoice_id ): void {
-		if ( $this->is_importing() ) {
+		if ( ! $this->should_sync( 'sync_invoices' ) ) {
 			return;
 		}
 
 		if ( 'wpi_object' !== get_post_type( $invoice_id ) ) {
-			return;
-		}
-
-		$settings = $this->get_settings();
-		if ( empty( $settings['sync_invoices'] ) ) {
 			return;
 		}
 
@@ -64,12 +59,7 @@ trait WP_Invoice_Hooks {
 	 * @return void
 	 */
 	public function on_payment( int $invoice_id ): void {
-		if ( $this->is_importing() ) {
-			return;
-		}
-
-		$settings = $this->get_settings();
-		if ( empty( $settings['sync_invoices'] ) ) {
+		if ( ! $this->should_sync( 'sync_invoices' ) ) {
 			return;
 		}
 

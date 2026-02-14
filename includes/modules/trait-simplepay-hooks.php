@@ -21,11 +21,9 @@ if ( ! defined( 'ABSPATH' ) ) {
  * creates tracking posts (wp4odoo_spay), and enqueues sync jobs.
  *
  * Expects the using class to provide:
- * - is_importing(): bool           (from Module_Base)
- * - get_mapping(): ?int            (from Module_Base)
- * - get_settings(): array          (from Module_Base)
- * - logger: Logger                 (from Module_Base)
- * - handler: SimplePay_Handler     (from SimplePay_Module)
+ * - should_sync(): bool             (from Module_Base)
+ * - logger: Logger                  (from Module_Base)
+ * - handler: SimplePay_Handler      (from SimplePay_Module)
  *
  * @package WP4Odoo
  * @since   2.0.0
@@ -53,32 +51,7 @@ trait SimplePay_Hooks {
 	 * @return void
 	 */
 	public function on_payment_succeeded( object $event, object $payment_intent ): void {
-		if ( $this->is_importing() ) {
-			return;
-		}
-
-		$settings = $this->get_settings();
-		if ( empty( $settings['sync_payments'] ) ) {
-			return;
-		}
-
-		$data = $this->handler->extract_from_payment_intent( $payment_intent );
-		if ( empty( $data['stripe_pi_id'] ) ) {
-			return;
-		}
-
-		// Deduplicate by Stripe PaymentIntent ID.
-		$existing = $this->handler->find_existing_payment( $data['stripe_pi_id'] );
-		if ( $existing > 0 ) {
-			return;
-		}
-
-		$post_id = $this->handler->create_tracking_post( $data );
-		if ( $post_id <= 0 ) {
-			return;
-		}
-
-		Queue_Manager::push( 'simplepay', 'payment', 'create', $post_id );
+		$this->process_stripe_payment( $this->handler->extract_from_payment_intent( $payment_intent ) );
 	}
 
 	/**
@@ -92,16 +65,23 @@ trait SimplePay_Hooks {
 	 * @return void
 	 */
 	public function on_invoice_payment_succeeded( object $event, object $invoice ): void {
-		if ( $this->is_importing() ) {
+		$this->process_stripe_payment( $this->handler->extract_from_invoice( $invoice ) );
+	}
+
+	/**
+	 * Process a Stripe payment: dedup, create tracking post, enqueue.
+	 *
+	 * Shared logic for both payment_intent.succeeded and
+	 * invoice.payment_succeeded webhooks.
+	 *
+	 * @param array<string, mixed> $data Extracted payment data from handler.
+	 * @return void
+	 */
+	private function process_stripe_payment( array $data ): void {
+		if ( ! $this->should_sync( 'sync_payments' ) ) {
 			return;
 		}
 
-		$settings = $this->get_settings();
-		if ( empty( $settings['sync_payments'] ) ) {
-			return;
-		}
-
-		$data = $this->handler->extract_from_invoice( $invoice );
 		if ( empty( $data['stripe_pi_id'] ) ) {
 			return;
 		}

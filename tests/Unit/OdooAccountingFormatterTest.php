@@ -123,4 +123,63 @@ class OdooAccountingFormatterTest extends TestCase {
 
 		$this->assertCount( 1, $result['invoice_line_ids'] );
 	}
+
+	// ─── build_invoice_lines ───────────────────────────
+
+	public function test_build_invoice_lines_converts_items_to_tuples(): void {
+		$items = [
+			[ 'name' => 'Item A', 'quantity' => 2.0, 'price_unit' => 10.0 ],
+			[ 'name' => 'Item B', 'quantity' => 1.0, 'price_unit' => 25.0 ],
+		];
+
+		$lines = Odoo_Accounting_Formatter::build_invoice_lines( $items, 'Fallback', 0.0 );
+
+		$this->assertCount( 2, $lines );
+		$this->assertSame( 0, $lines[0][0] );
+		$this->assertSame( 0, $lines[0][1] );
+		$this->assertSame( 'Item A', $lines[0][2]['name'] );
+		$this->assertSame( 2.0, $lines[0][2]['quantity'] );
+		$this->assertSame( 10.0, $lines[0][2]['price_unit'] );
+		$this->assertSame( 'Item B', $lines[1][2]['name'] );
+	}
+
+	public function test_build_invoice_lines_skips_empty_names(): void {
+		$items = [
+			[ 'name' => '', 'quantity' => 1.0, 'price_unit' => 10.0 ],
+			[ 'name' => 'Valid', 'quantity' => 1.0, 'price_unit' => 20.0 ],
+		];
+
+		$lines = Odoo_Accounting_Formatter::build_invoice_lines( $items, 'Fallback', 0.0 );
+
+		$this->assertCount( 1, $lines );
+		$this->assertSame( 'Valid', $lines[0][2]['name'] );
+	}
+
+	public function test_build_invoice_lines_falls_back_when_no_items(): void {
+		$lines = Odoo_Accounting_Formatter::build_invoice_lines( [], 'Invoice #123', 99.0 );
+
+		$this->assertCount( 1, $lines );
+		$this->assertSame( 'Invoice #123', $lines[0][2]['name'] );
+		$this->assertSame( 1.0, $lines[0][2]['quantity'] );
+		$this->assertSame( 99.0, $lines[0][2]['price_unit'] );
+	}
+
+	public function test_build_invoice_lines_no_fallback_when_total_is_zero(): void {
+		$lines = Odoo_Accounting_Formatter::build_invoice_lines( [], 'Fallback', 0.0 );
+
+		$this->assertEmpty( $lines );
+	}
+
+	public function test_build_invoice_lines_falls_back_when_all_names_empty(): void {
+		$items = [
+			[ 'name' => '', 'quantity' => 1.0, 'price_unit' => 10.0 ],
+		];
+
+		$lines = Odoo_Accounting_Formatter::build_invoice_lines( $items, 'Fallback', 50.0 );
+
+		$this->assertCount( 1, $lines );
+		$this->assertSame( 'Fallback', $lines[0][2]['name'] );
+		$this->assertSame( 50.0, $lines[0][2]['price_unit'] );
+	}
+
 }

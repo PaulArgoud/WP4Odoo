@@ -3,8 +3,6 @@ declare( strict_types=1 );
 
 namespace WP4Odoo\Modules;
 
-use WP4Odoo\Queue_Manager;
-
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -20,8 +18,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Expects the using class to provide:
  * - is_importing(): bool              (from Module_Base)
  * - get_settings(): array             (from Module_Base)
- * - generate_sync_hash(): string      (from Module_Base)
- * - entity_map(): Entity_Map_Repository (from Module_Base)
+ * - poll_entity_changes(): void       (from Module_Base)
  * - logger: Logger                    (from Module_Base)
  * - get_handler(): Ecwid_Handler      (from Ecwid_Module)
  *
@@ -78,7 +75,7 @@ trait Ecwid_Cron_Hooks {
 
 			if ( ! empty( $settings['sync_products'] ) ) {
 				try {
-					$this->poll_products( $store_id, $token );
+					$this->poll_entity_changes( 'product', $this->get_handler()->fetch_products( $store_id, $token ) );
 				} catch ( \Throwable $e ) {
 					$this->logger->critical(
 						'Ecwid product polling crashed (graceful degradation).',
@@ -92,7 +89,7 @@ trait Ecwid_Cron_Hooks {
 
 			if ( ! empty( $settings['sync_orders'] ) ) {
 				try {
-					$this->poll_orders( $store_id, $token );
+					$this->poll_entity_changes( 'order', $this->get_handler()->fetch_orders( $store_id, $token ), 'orderNumber' );
 				} catch ( \Throwable $e ) {
 					$this->logger->critical(
 						'Ecwid order polling crashed (graceful degradation).',
@@ -106,76 +103,6 @@ trait Ecwid_Cron_Hooks {
 		} finally {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock_name ) );
-		}
-	}
-
-	/**
-	 * Poll products: detect new, changed, and deleted products.
-	 *
-	 * @param string $store_id  Ecwid store ID.
-	 * @param string $token     Ecwid API token.
-	 * @return void
-	 */
-	private function poll_products( string $store_id, string $token ): void {
-		$products = $this->get_handler()->fetch_products( $store_id, $token );
-		$existing = $this->entity_map()->get_module_entity_mappings( 'ecwid', 'product' );
-		$seen_ids = [];
-
-		foreach ( $products as $product ) {
-			$ecwid_id   = (int) ( $product['id'] ?? 0 );
-			$seen_ids[] = $ecwid_id;
-
-			$hash_data = $product;
-			unset( $hash_data['id'] );
-			$hash = $this->generate_sync_hash( $hash_data );
-
-			if ( ! isset( $existing[ $ecwid_id ] ) ) {
-				Queue_Manager::push( 'ecwid', 'product', 'create', $ecwid_id );
-			} elseif ( $existing[ $ecwid_id ]['sync_hash'] !== $hash ) {
-				Queue_Manager::push( 'ecwid', 'product', 'update', $ecwid_id, $existing[ $ecwid_id ]['odoo_id'] );
-			}
-		}
-
-		$seen_lookup = array_flip( $seen_ids );
-		foreach ( $existing as $wp_id => $map ) {
-			if ( ! isset( $seen_lookup[ $wp_id ] ) ) {
-				Queue_Manager::push( 'ecwid', 'product', 'delete', $wp_id, $map['odoo_id'] );
-			}
-		}
-	}
-
-	/**
-	 * Poll orders: detect new, changed, and deleted orders.
-	 *
-	 * @param string $store_id  Ecwid store ID.
-	 * @param string $token     Ecwid API token.
-	 * @return void
-	 */
-	private function poll_orders( string $store_id, string $token ): void {
-		$orders   = $this->get_handler()->fetch_orders( $store_id, $token );
-		$existing = $this->entity_map()->get_module_entity_mappings( 'ecwid', 'order' );
-		$seen_ids = [];
-
-		foreach ( $orders as $order ) {
-			$ecwid_id   = (int) ( $order['orderNumber'] ?? 0 );
-			$seen_ids[] = $ecwid_id;
-
-			$hash_data = $order;
-			unset( $hash_data['orderNumber'] );
-			$hash = $this->generate_sync_hash( $hash_data );
-
-			if ( ! isset( $existing[ $ecwid_id ] ) ) {
-				Queue_Manager::push( 'ecwid', 'order', 'create', $ecwid_id );
-			} elseif ( $existing[ $ecwid_id ]['sync_hash'] !== $hash ) {
-				Queue_Manager::push( 'ecwid', 'order', 'update', $ecwid_id, $existing[ $ecwid_id ]['odoo_id'] );
-			}
-		}
-
-		$seen_lookup = array_flip( $seen_ids );
-		foreach ( $existing as $wp_id => $map ) {
-			if ( ! isset( $seen_lookup[ $wp_id ] ) ) {
-				Queue_Manager::push( 'ecwid', 'order', 'delete', $wp_id, $map['odoo_id'] );
-			}
 		}
 	}
 }

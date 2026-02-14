@@ -62,7 +62,7 @@ trait WC_Bookings_Hooks {
 	 * @return void
 	 */
 	public function on_product_save( int $post_id ): void {
-		if ( $this->is_importing() ) {
+		if ( ! $this->should_sync( 'sync_products' ) ) {
 			return;
 		}
 
@@ -80,11 +80,6 @@ trait WC_Bookings_Hooks {
 		}
 
 		if ( 'booking' !== $product->get_type() ) {
-			return;
-		}
-
-		$settings = $this->get_settings();
-		if ( empty( $settings['sync_products'] ) ) {
 			return;
 		}
 
@@ -106,12 +101,7 @@ trait WC_Bookings_Hooks {
 	 * @return void
 	 */
 	public function on_booking_status_changed( string $from, string $to, int $booking_id ): void {
-		if ( $this->is_importing() ) {
-			return;
-		}
-
-		$settings = $this->get_settings();
-		if ( empty( $settings['sync_bookings'] ) ) {
+		if ( ! $this->should_sync( 'sync_bookings' ) ) {
 			return;
 		}
 

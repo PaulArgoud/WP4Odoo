@@ -33,16 +33,11 @@ trait PMPro_Hooks {
 	 * @return void
 	 */
 	public function on_level_saved( int $level_id ): void {
-		if ( $this->is_importing() ) {
+		if ( ! $this->should_sync( 'sync_levels' ) ) {
 			return;
 		}
 
 		if ( $level_id <= 0 ) {
-			return;
-		}
-
-		$settings = $this->get_settings();
-		if ( empty( $settings['sync_levels'] ) ) {
 			return;
 		}
 
@@ -83,12 +78,7 @@ trait PMPro_Hooks {
 	 * @return void
 	 */
 	private function process_order( $morder ): void {
-		if ( $this->is_importing() ) {
-			return;
-		}
-
-		$settings = $this->get_settings();
-		if ( empty( $settings['sync_orders'] ) ) {
+		if ( ! $this->should_sync( 'sync_orders' ) ) {
 			return;
 		}
 
@@ -116,12 +106,7 @@ trait PMPro_Hooks {
 	 * @return void
 	 */
 	public function on_membership_changed( int $level_id, int $user_id, int $cancel_level = 0 ): void {
-		if ( $this->is_importing() ) {
-			return;
-		}
-
-		$settings = $this->get_settings();
-		if ( empty( $settings['sync_memberships'] ) ) {
+		if ( ! $this->should_sync( 'sync_memberships' ) ) {
 			return;
 		}
 

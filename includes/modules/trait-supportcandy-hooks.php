@@ -41,17 +41,12 @@ trait SupportCandy_Hooks {
 	 * @return void
 	 */
 	public function on_ticket_created( $ticket ): void {
-		if ( $this->is_importing() ) {
+		if ( ! $this->should_sync( 'sync_tickets' ) ) {
 			return;
 		}
 
 		$ticket_id = $this->extract_ticket_id( $ticket );
 		if ( $ticket_id <= 0 ) {
-			return;
-		}
-
-		$settings = $this->get_settings();
-		if ( empty( $settings['sync_tickets'] ) ) {
 			return;
 		}
 
@@ -71,17 +66,12 @@ trait SupportCandy_Hooks {
 	 * @return void
 	 */
 	public function on_ticket_status_changed( $ticket, int $prev_status = 0, int $new_status = 0, int $customer_id = 0 ): void {
-		if ( $this->is_importing() ) {
+		if ( ! $this->should_sync( 'sync_tickets' ) ) {
 			return;
 		}
 
 		$ticket_id = $this->extract_ticket_id( $ticket );
 		if ( $ticket_id <= 0 ) {
-			return;
-		}
-
-		$settings = $this->get_settings();
-		if ( empty( $settings['sync_tickets'] ) ) {
 			return;
 		}
 

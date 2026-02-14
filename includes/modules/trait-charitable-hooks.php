@@ -53,16 +53,11 @@ trait Charitable_Hooks {
 	 * @return void
 	 */
 	public function on_donation_status_change( string $new_status, string $old_status, \WP_Post $post ): void {
-		if ( $this->is_importing() ) {
+		if ( ! $this->should_sync( 'sync_donations' ) ) {
 			return;
 		}
 
 		if ( 'donation' !== $post->post_type ) {
-			return;
-		}
-
-		$settings = $this->get_settings();
-		if ( empty( $settings['sync_donations'] ) ) {
 			return;
 		}
 

@@ -56,12 +56,7 @@ trait LifterLMS_Hooks {
 	 * @return void
 	 */
 	public function on_order_completed( int $order_id ): void {
-		if ( $this->is_importing() ) {
-			return;
-		}
-
-		$settings = $this->get_settings();
-		if ( empty( $settings['sync_orders'] ) ) {
+		if ( ! $this->should_sync( 'sync_orders' ) ) {
 			return;
 		}
 
@@ -81,12 +76,7 @@ trait LifterLMS_Hooks {
 	 * @return void
 	 */
 	public function on_enrollment( int $user_id, int $course_id ): void {
-		if ( $this->is_importing() ) {
-			return;
-		}
-
-		$settings = $this->get_settings();
-		if ( empty( $settings['sync_enrollments'] ) ) {
+		if ( ! $this->should_sync( 'sync_enrollments' ) ) {
 			return;
 		}
 
@@ -103,12 +93,7 @@ trait LifterLMS_Hooks {
 	 * @return void
 	 */
 	public function on_unenrollment( int $user_id, int $course_id ): void {
-		if ( $this->is_importing() ) {
-			return;
-		}
-
-		$settings = $this->get_settings();
-		if ( empty( $settings['sync_enrollments'] ) ) {
+		if ( ! $this->should_sync( 'sync_enrollments' ) ) {
 			return;
 		}
 

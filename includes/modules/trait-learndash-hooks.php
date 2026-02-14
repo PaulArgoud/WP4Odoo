@@ -54,12 +54,7 @@ trait LearnDash_Hooks {
 	 * @return void
 	 */
 	public function on_transaction_created( int $transaction_id ): void {
-		if ( $this->is_importing() ) {
-			return;
-		}
-
-		$settings = $this->get_settings();
-		if ( empty( $settings['sync_transactions'] ) ) {
+		if ( ! $this->should_sync( 'sync_transactions' ) ) {
 			return;
 		}
 
@@ -79,12 +74,7 @@ trait LearnDash_Hooks {
 	 * @return void
 	 */
 	public function on_enrollment_change( int $user_id, int $course_id, array $course_access_list, bool $remove ): void {
-		if ( $this->is_importing() ) {
-			return;
-		}
-
-		$settings = $this->get_settings();
-		if ( empty( $settings['sync_enrollments'] ) ) {
+		if ( ! $this->should_sync( 'sync_enrollments' ) ) {
 			return;
 		}
 

@@ -45,12 +45,7 @@ trait MemberPress_Hooks {
 	 * @return void
 	 */
 	public function on_transaction_store( $txn ): void {
-		if ( $this->is_importing() ) {
-			return;
-		}
-
-		$settings = $this->get_settings();
-		if ( empty( $settings['sync_transactions'] ) ) {
+		if ( ! $this->should_sync( 'sync_transactions' ) ) {
 			return;
 		}
 
@@ -75,12 +70,7 @@ trait MemberPress_Hooks {
 	 * @return void
 	 */
 	public function on_subscription_status_change( string $old_status, string $new_status, $sub ): void {
-		if ( $this->is_importing() ) {
-			return;
-		}
-
-		$settings = $this->get_settings();
-		if ( empty( $settings['sync_subscriptions'] ) ) {
+		if ( ! $this->should_sync( 'sync_subscriptions' ) ) {
 			return;
 		}
 

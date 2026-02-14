@@ -32,17 +32,12 @@ trait EDD_Hooks {
 	 * @return void
 	 */
 	public function on_download_save( int $post_id ): void {
-		if ( $this->is_importing() ) {
+		if ( ! $this->should_sync( 'sync_downloads' ) ) {
 			return;
 		}
 
 		// Skip autosaves and revisions.
 		if ( wp_is_post_revision( $post_id ) || wp_is_post_autosave( $post_id ) ) {
-			return;
-		}
-
-		$settings = $this->get_settings();
-		if ( empty( $settings['sync_downloads'] ) ) {
 			return;
 		}
 

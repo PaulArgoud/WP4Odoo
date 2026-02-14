@@ -33,12 +33,7 @@ trait RCP_Hooks {
 	 * @return void
 	 */
 	public function on_level_saved( int $level_id ): void {
-		if ( $this->is_importing() ) {
-			return;
-		}
-
-		$settings = $this->get_settings();
-		if ( empty( $settings['sync_levels'] ) ) {
+		if ( ! $this->should_sync( 'sync_levels' ) ) {
 			return;
 		}
 
@@ -58,12 +53,7 @@ trait RCP_Hooks {
 	 * @return void
 	 */
 	public function on_payment_created( int $payment_id, array $args = [] ): void {
-		if ( $this->is_importing() ) {
-			return;
-		}
-
-		$settings = $this->get_settings();
-		if ( empty( $settings['sync_payments'] ) ) {
+		if ( ! $this->should_sync( 'sync_payments' ) ) {
 			return;
 		}
 
@@ -83,12 +73,7 @@ trait RCP_Hooks {
 	 * @return void
 	 */
 	public function on_membership_activated( \RCP_Membership $membership ): void {
-		if ( $this->is_importing() ) {
-			return;
-		}
-
-		$settings = $this->get_settings();
-		if ( empty( $settings['sync_memberships'] ) ) {
+		if ( ! $this->should_sync( 'sync_memberships' ) ) {
 			return;
 		}
 
@@ -110,12 +95,7 @@ trait RCP_Hooks {
 	 * @return void
 	 */
 	public function on_membership_status_change( string $old_status, string $new_status, int $membership_id ): void {
-		if ( $this->is_importing() ) {
-			return;
-		}
-
-		$settings = $this->get_settings();
-		if ( empty( $settings['sync_memberships'] ) ) {
+		if ( ! $this->should_sync( 'sync_memberships' ) ) {
 			return;
 		}
 

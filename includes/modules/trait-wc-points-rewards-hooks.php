@@ -40,12 +40,7 @@ trait WC_Points_Rewards_Hooks {
 	 * @return void
 	 */
 	public function on_points_change( int $user_id ): void {
-		if ( $this->is_importing() ) {
-			return;
-		}
-
-		$settings = $this->get_settings();
-		if ( empty( $settings['sync_balances'] ) ) {
+		if ( ! $this->should_sync( 'sync_balances' ) ) {
 			return;
 		}
 

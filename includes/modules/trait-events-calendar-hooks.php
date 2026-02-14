@@ -44,7 +44,7 @@ trait Events_Calendar_Hooks {
 	 * @return void
 	 */
 	public function on_ticket_save( int $post_id ): void {
-		if ( $this->is_importing() ) {
+		if ( ! $this->should_sync( 'sync_tickets' ) ) {
 			return;
 		}
 
@@ -53,11 +53,6 @@ trait Events_Calendar_Hooks {
 		}
 
 		if ( ! class_exists( 'Tribe__Tickets__Main' ) ) {
-			return;
-		}
-
-		$settings = $this->get_settings();
-		if ( empty( $settings['sync_tickets'] ) ) {
 			return;
 		}
 
@@ -77,12 +72,7 @@ trait Events_Calendar_Hooks {
 	 * @return void
 	 */
 	public function on_rsvp_attendee_created( int $attendee_id, int $order_id, int $product_id, int $order_attendee_id ): void {
-		if ( $this->is_importing() ) {
-			return;
-		}
-
-		$settings = $this->get_settings();
-		if ( empty( $settings['sync_attendees'] ) ) {
+		if ( ! $this->should_sync( 'sync_attendees' ) ) {
 			return;
 		}
 

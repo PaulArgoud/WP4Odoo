@@ -33,7 +33,7 @@ trait Crowdfunding_Hooks {
 	 * @return void
 	 */
 	public function on_campaign_save( int $post_id ): void {
-		if ( $this->is_importing() ) {
+		if ( ! $this->should_sync( 'sync_campaigns' ) ) {
 			return;
 		}
 
@@ -42,11 +42,6 @@ trait Crowdfunding_Hooks {
 		}
 
 		if ( 'product' !== get_post_type( $post_id ) ) {
-			return;
-		}
-
-		$settings = $this->get_settings();
-		if ( empty( $settings['sync_campaigns'] ) ) {
 			return;
 		}
 

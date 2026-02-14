@@ -805,7 +805,7 @@ abstract class Module_Base {
 	 * @return void
 	 */
 	protected function handle_cpt_save( int $post_id, string $post_type, string $setting_key, string $entity_type ): void {
-		if ( $this->is_importing() ) {
+		if ( ! $this->should_sync( $setting_key ) ) {
 			return;
 		}
 
@@ -817,12 +817,64 @@ abstract class Module_Base {
 			return;
 		}
 
-		$settings = $this->get_settings();
-		if ( empty( $settings[ $setting_key ] ) ) {
-			return;
+		$this->enqueue_push( $entity_type, $post_id );
+	}
+
+	/**
+	 * Check if a sync operation should proceed.
+	 *
+	 * Combines the anti-loop guard with a settings check. Returns false
+	 * if the module is importing or the given setting key is disabled.
+	 *
+	 * @param string $setting_key Settings array key to check (e.g. 'sync_products').
+	 * @return bool True if the sync should proceed.
+	 */
+	protected function should_sync( string $setting_key ): bool {
+		if ( $this->is_importing() ) {
+			return false;
 		}
 
-		$this->enqueue_push( $entity_type, $post_id );
+		$settings = $this->get_settings();
+		return ! empty( $settings[ $setting_key ] );
+	}
+
+	/**
+	 * Detect changes in a set of entities via hash comparison and enqueue sync jobs.
+	 *
+	 * Compares current entity data against entity_map records using SHA-256
+	 * hashes to detect creates, updates, and deletions. Used by WP-Cron
+	 * polling modules (Bookly, Ecwid) that have no real-time hooks.
+	 *
+	 * @param string            $entity_type Entity type (e.g. 'service', 'product').
+	 * @param array<int, array> $items       Current items from the data source.
+	 * @param string            $id_field    Name of the ID field in each item.
+	 * @return void
+	 */
+	protected function poll_entity_changes( string $entity_type, array $items, string $id_field = 'id' ): void {
+		$existing = $this->entity_map()->get_module_entity_mappings( $this->id, $entity_type );
+		$seen_ids = [];
+
+		foreach ( $items as $item ) {
+			$wp_id      = (int) ( $item[ $id_field ] ?? 0 );
+			$seen_ids[] = $wp_id;
+
+			$hash_data = $item;
+			unset( $hash_data[ $id_field ] );
+			$hash = $this->generate_sync_hash( $hash_data );
+
+			if ( ! isset( $existing[ $wp_id ] ) ) {
+				Queue_Manager::push( $this->id, $entity_type, 'create', $wp_id );
+			} elseif ( $existing[ $wp_id ]['sync_hash'] !== $hash ) {
+				Queue_Manager::push( $this->id, $entity_type, 'update', $wp_id, $existing[ $wp_id ]['odoo_id'] );
+			}
+		}
+
+		$seen_lookup = array_flip( $seen_ids );
+		foreach ( $existing as $wp_id => $map ) {
+			if ( ! isset( $seen_lookup[ $wp_id ] ) ) {
+				Queue_Manager::push( $this->id, $entity_type, 'delete', $wp_id, $map['odoo_id'] );
+			}
+		}
 	}
 
 	// -------------------------------------------------------------------------

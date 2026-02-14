@@ -53,12 +53,7 @@ trait GiveWP_Hooks {
 	 * @return void
 	 */
 	public function on_donation_status_change( int $payment_id, string $new_status, string $old_status ): void {
-		if ( $this->is_importing() ) {
-			return;
-		}
-
-		$settings = $this->get_settings();
-		if ( empty( $settings['sync_donations'] ) ) {
+		if ( ! $this->should_sync( 'sync_donations' ) ) {
 			return;
 		}
 

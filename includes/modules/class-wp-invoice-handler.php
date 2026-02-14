@@ -132,8 +132,8 @@ class WP_Invoice_Handler {
 	/**
 	 * Build Odoo invoice_line_ids from WP-Invoice itemized list.
 	 *
-	 * WP-Invoice stores items as an array of arrays with 'name', 'price', 'quantity' keys.
-	 * Falls back to a single line with the total if no items exist.
+	 * Normalizes WP-Invoice keys (price → price_unit) and delegates
+	 * to the shared Odoo_Accounting_Formatter::build_invoice_lines().
 	 *
 	 * @param array<int, array<string, mixed>> $items      WP-Invoice itemized list.
 	 * @param string                           $invoice_id Invoice reference (fallback name).
@@ -141,38 +141,16 @@ class WP_Invoice_Handler {
 	 * @return array<int, array<int, mixed>>
 	 */
 	private function build_invoice_lines( array $items, string $invoice_id, float $total ): array {
-		$lines = [];
+		$normalized = array_map(
+			static fn( array $item ): array => [
+				'name'       => (string) ( $item['name'] ?? '' ),
+				'quantity'   => (float) ( $item['quantity'] ?? 1 ),
+				'price_unit' => (float) ( $item['price'] ?? 0 ),
+			],
+			$items
+		);
 
-		foreach ( $items as $item ) {
-			$name = (string) ( $item['name'] ?? '' );
-			if ( '' === $name ) {
-				continue;
-			}
-
-			$lines[] = [
-				0,
-				0,
-				[
-					'name'       => $name,
-					'quantity'   => (float) ( $item['quantity'] ?? 1 ),
-					'price_unit' => (float) ( $item['price'] ?? 0 ),
-				],
-			];
-		}
-
-		if ( empty( $lines ) && $total > 0 ) {
-			$lines[] = [
-				0,
-				0,
-				[
-					/* translators: %s: invoice ID/reference. */
-					'name'       => sprintf( __( 'Invoice %s', 'wp4odoo' ), $invoice_id ),
-					'quantity'   => 1,
-					'price_unit' => $total,
-				],
-			];
-		}
-
-		return $lines;
+		/* translators: %s: invoice ID/reference. */
+		return Odoo_Accounting_Formatter::build_invoice_lines( $normalized, sprintf( __( 'Invoice %s', 'wp4odoo' ), $invoice_id ), $total );
 	}
 }

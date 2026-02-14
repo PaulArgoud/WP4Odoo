@@ -42,10 +42,8 @@ trait Membership_Hooks {
 			return;
 		}
 
-		$settings = $this->get_settings();
-
 		// Auto-push the plan if not yet mapped.
-		if ( ! empty( $settings['sync_plans'] ) ) {
+		if ( $this->should_sync( 'sync_plans' ) ) {
 			$plan_id      = $plan->get_id();
 			$odoo_plan_id = $this->get_mapping( 'plan', $plan_id );
 			if ( ! $odoo_plan_id ) {
@@ -54,7 +52,7 @@ trait Membership_Hooks {
 		}
 
 		// Push the membership line.
-		if ( ! empty( $settings['sync_memberships'] ) ) {
+		if ( $this->should_sync( 'sync_memberships' ) ) {
 			Queue_Manager::push( 'memberships', 'membership', 'create', $membership_id );
 		}
 	}
@@ -68,12 +66,7 @@ trait Membership_Hooks {
 	 * @return void
 	 */
 	public function on_membership_status_changed( $user_membership, string $old_status, string $new_status ): void {
-		if ( $this->is_importing() ) {
-			return;
-		}
-
-		$settings = $this->get_settings();
-		if ( empty( $settings['sync_memberships'] ) ) {
+		if ( ! $this->should_sync( 'sync_memberships' ) ) {
 			return;
 		}
 
@@ -91,12 +84,7 @@ trait Membership_Hooks {
 	 * @return void
 	 */
 	public function on_membership_saved( $plan, array $args ): void {
-		if ( $this->is_importing() ) {
-			return;
-		}
-
-		$settings = $this->get_settings();
-		if ( empty( $settings['sync_memberships'] ) ) {
+		if ( ! $this->should_sync( 'sync_memberships' ) ) {
 			return;
 		}
 

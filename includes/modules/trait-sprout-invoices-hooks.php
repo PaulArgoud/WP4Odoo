@@ -45,12 +45,7 @@ trait Sprout_Invoices_Hooks {
 	 * @return void
 	 */
 	public function on_payment( int $payment_id ): void {
-		if ( $this->is_importing() ) {
-			return;
-		}
-
-		$settings = $this->get_settings();
-		if ( empty( $settings['sync_payments'] ) ) {
+		if ( ! $this->should_sync( 'sync_payments' ) ) {
 			return;
 		}
 

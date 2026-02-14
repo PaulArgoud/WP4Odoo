@@ -36,7 +36,7 @@ trait WC_Subscriptions_Hooks {
 	 * @return void
 	 */
 	public function on_product_save( int $post_id ): void {
-		if ( $this->is_importing() ) {
+		if ( ! $this->should_sync( 'sync_products' ) ) {
 			return;
 		}
 
@@ -57,11 +57,6 @@ trait WC_Subscriptions_Hooks {
 			return;
 		}
 
-		$settings = $this->get_settings();
-		if ( empty( $settings['sync_products'] ) ) {
-			return;
-		}
-
 		$odoo_id = $this->get_mapping( 'product', $post_id ) ?? 0;
 		$action  = $odoo_id ? 'update' : 'create';
 
@@ -77,12 +72,7 @@ trait WC_Subscriptions_Hooks {
 	 * @return void
 	 */
 	public function on_subscription_status_updated( $subscription, string $new_status, string $old_status ): void {
-		if ( $this->is_importing() ) {
-			return;
-		}
-
-		$settings = $this->get_settings();
-		if ( empty( $settings['sync_subscriptions'] ) ) {
+		if ( ! $this->should_sync( 'sync_subscriptions' ) ) {
 			return;
 		}
 
@@ -103,12 +93,7 @@ trait WC_Subscriptions_Hooks {
 	 * @return void
 	 */
 	public function on_renewal_payment_complete( $subscription, $last_order ): void {
-		if ( $this->is_importing() ) {
-			return;
-		}
-
-		$settings = $this->get_settings();
-		if ( empty( $settings['sync_renewals'] ) ) {
+		if ( ! $this->should_sync( 'sync_renewals' ) ) {
 			return;
 		}
 

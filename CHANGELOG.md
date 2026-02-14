@@ -8,6 +8,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [3.1.0] - Unreleased
 
 ### Added
+- **`should_sync()` helper** — New `Module_Base::should_sync(string $setting_key)` consolidates the repeated `is_importing()` + settings check pattern into a single guard clause. Applied across ~40 hook callbacks in 22 trait files, replacing ~80 lines of duplicated guard logic. 6 new tests in `ModuleBaseHelpersTest`
+- **`poll_entity_changes()` helper** — New `Module_Base::poll_entity_changes(string $entity_type, array $items, string $id_field)` extracts the SHA-256 hash-based change detection loop from Bookly and Ecwid cron traits into a reusable method. Detects creates, updates (hash mismatch), and deletes (missing items) against the entity map. 5 new tests in `ModuleBaseHelpersTest`
+- **`Odoo_Accounting_Formatter::build_invoice_lines()`** — Shared static method for converting line item arrays into Odoo One2many `(0, 0, {...})` tuples with fallback to a single total line. Used by WP-Invoice and Sprout Invoices handlers (key normalization + delegation). 6 new tests in `OdooAccountingFormatterTest`
+
+### Changed
+- **SimplePay_Hooks** — Deduplicated `on_payment_succeeded()` and `on_invoice_payment_succeeded()` (95% identical) into a shared `process_stripe_payment()` method
+- **Bookly_Cron_Hooks / Ecwid_Cron_Hooks** — `poll()` methods now delegate to `poll_entity_changes()` from `Module_Base` instead of duplicating the hash-diff loop
+- **WP_Invoice_Handler / Sprout_Invoices_Handler** — `build_invoice_lines()` now normalizes plugin-specific keys and delegates to `Odoo_Accounting_Formatter::build_invoice_lines()`
+- **22 hook traits** — Replaced `is_importing()` + `$settings` guard clauses with `should_sync()` calls across all third-party hook callbacks
+
+### Added (continued)
 - **Graceful degradation for third-party hooks** — All ~87 third-party hook callbacks are now wrapped with `safe_callback()` in `Module_Base`. If a third-party plugin update causes a callback to crash (`\Throwable`), the exception is caught and logged as `critical` instead of crashing the WordPress request. WP-Cron polling (Bookly, Ecwid) also has individual try/catch around each poll operation. 9 new tests in `SafeCallbackTest`
 - **Defensive version bounds** — Each module now declares `PLUGIN_MIN_VERSION` and `PLUGIN_TESTED_UP_TO` constants. At boot, `check_dependency()` blocks modules whose third-party plugin is below minimum (error notice), and warns when the plugin version exceeds the last tested version (warning notice). Patch-version normalization (e.g. `10.5.0` within `10.5` range). Admin notice banner on the settings page for untested versions. `Module_Registry` enforces version gating before boot. 17 new tests in `VersionBoundsTest`
 - **AffiliateWP module** — Push-only sync of AffiliateWP affiliates and referral commissions to Odoo. Affiliates synced as `res.partner` (vendor), referrals as vendor bills (`account.move` with `move_type=in_invoice`). First `in_invoice` support in the plugin. Auto-sync affiliate before referral push. Auto-post vendor bills when referral is paid (optional). Status mapping: unpaid→draft, paid→posted, rejected→cancel. 3 settings (sync_affiliates, sync_referrals, auto_post_bills). 62 new tests

@@ -67,12 +67,7 @@ trait Amelia_Hooks {
 	 * @return void
 	 */
 	public function on_booking_saved( array $booking, array $service, array $appointment ): void {
-		if ( $this->is_importing() ) {
-			return;
-		}
-
-		$settings = $this->get_settings();
-		if ( empty( $settings['sync_appointments'] ) ) {
+		if ( ! $this->should_sync( 'sync_appointments' ) ) {
 			return;
 		}
 
@@ -152,12 +147,7 @@ trait Amelia_Hooks {
 	 * @return void
 	 */
 	public function on_service_saved( array $service ): void {
-		if ( $this->is_importing() ) {
-			return;
-		}
-
-		$settings = $this->get_settings();
-		if ( empty( $settings['sync_services'] ) ) {
+		if ( ! $this->should_sync( 'sync_services' ) ) {
 			return;
 		}
 

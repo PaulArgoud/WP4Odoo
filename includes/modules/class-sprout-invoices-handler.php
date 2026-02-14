@@ -319,10 +319,8 @@ class Sprout_Invoices_Handler {
 	/**
 	 * Build Odoo invoice_line_ids from SI line items.
 	 *
-	 * SI stores line items as an array of arrays with 'desc', 'rate', 'qty' keys.
-	 * Converts to Odoo One2many create tuples: [(0, 0, {values})].
-	 *
-	 * Falls back to a single line with the invoice total if no items exist.
+	 * Normalizes SI keys (desc → name, qty → quantity, rate → price_unit)
+	 * and delegates to the shared Odoo_Accounting_Formatter::build_invoice_lines().
 	 *
 	 * @param array<int, array<string, mixed>> $line_items SI line items.
 	 * @param string                           $title      Invoice title (fallback line name).
@@ -330,36 +328,15 @@ class Sprout_Invoices_Handler {
 	 * @return array<int, array<int, mixed>>
 	 */
 	private function build_invoice_lines( array $line_items, string $title, float $total ): array {
-		$lines = [];
+		$normalized = array_map(
+			static fn( array $item ): array => [
+				'name'       => (string) ( $item['desc'] ?? '' ),
+				'quantity'   => (float) ( $item['qty'] ?? 1 ),
+				'price_unit' => (float) ( $item['rate'] ?? 0 ),
+			],
+			$line_items
+		);
 
-		foreach ( $line_items as $item ) {
-			if ( empty( $item['desc'] ) ) {
-				continue;
-			}
-
-			$lines[] = [
-				0,
-				0,
-				[
-					'name'       => $item['desc'],
-					'quantity'   => (float) ( $item['qty'] ?? 1 ),
-					'price_unit' => (float) ( $item['rate'] ?? 0 ),
-				],
-			];
-		}
-
-		if ( empty( $lines ) && $total > 0 ) {
-			$lines[] = [
-				0,
-				0,
-				[
-					'name'       => $title ?: __( 'Invoice', 'wp4odoo' ),
-					'quantity'   => 1,
-					'price_unit' => $total,
-				],
-			];
-		}
-
-		return $lines;
+		return Odoo_Accounting_Formatter::build_invoice_lines( $normalized, $title ?: __( 'Invoice', 'wp4odoo' ), $total );
 	}
 }

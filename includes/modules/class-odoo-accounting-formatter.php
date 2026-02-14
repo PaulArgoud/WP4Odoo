@@ -101,6 +101,57 @@ final class Odoo_Accounting_Formatter {
 	}
 
 	/**
+	 * Build Odoo invoice_line_ids One2many tuples from a normalized item list.
+	 *
+	 * Each item should have 'name', 'quantity', and 'price_unit' keys.
+	 * Falls back to a single line with $fallback_name and $total when
+	 * the item list produces no lines.
+	 *
+	 * Used by WP_Invoice_Handler and Sprout_Invoices_Handler to avoid
+	 * duplicating the same line-building algorithm.
+	 *
+	 * @since 3.1.0
+	 *
+	 * @param array<int, array{name: string, quantity: float, price_unit: float}> $items         Normalized line items.
+	 * @param string                                                               $fallback_name Fallback line name when no items.
+	 * @param float                                                                $total         Invoice total for fallback line.
+	 * @return array<int, array<int, mixed>> Odoo One2many create tuples.
+	 */
+	public static function build_invoice_lines( array $items, string $fallback_name, float $total ): array {
+		$lines = [];
+
+		foreach ( $items as $item ) {
+			if ( '' === $item['name'] ) {
+				continue;
+			}
+
+			$lines[] = [
+				0,
+				0,
+				[
+					'name'       => $item['name'],
+					'quantity'   => $item['quantity'],
+					'price_unit' => $item['price_unit'],
+				],
+			];
+		}
+
+		if ( empty( $lines ) && $total > 0 ) {
+			$lines[] = [
+				0,
+				0,
+				[
+					'name'       => $fallback_name,
+					'quantity'   => 1.0,
+					'price_unit' => $total,
+				],
+			];
+		}
+
+		return $lines;
+	}
+
+	/**
 	 * Format data for vendor bill (account.move with in_invoice).
 	 *
 	 * Unlike customer invoices (out_invoice), vendor bills represent
