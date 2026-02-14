@@ -101,7 +101,7 @@ class Job_Manager_Module extends Module_Base {
 		$settings = $this->get_settings();
 
 		if ( ! empty( $settings['sync_jobs'] ) ) {
-			add_action( 'save_post_job_listing', [ $this, 'on_job_save' ], 10, 1 );
+			add_action( 'save_post_job_listing', $this->safe_callback( [ $this, 'on_job_save' ] ), 10, 1 );
 		}
 	}
 

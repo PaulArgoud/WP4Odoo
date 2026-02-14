@@ -93,7 +93,7 @@ class WPRM_Module extends Module_Base {
 		$settings = $this->get_settings();
 
 		if ( ! empty( $settings['sync_recipes'] ) ) {
-			add_action( 'save_post_wprm_recipe', [ $this, 'on_recipe_save' ], 10, 1 );
+			add_action( 'save_post_wprm_recipe', $this->safe_callback( [ $this, 'on_recipe_save' ] ), 10, 1 );
 		}
 	}
 

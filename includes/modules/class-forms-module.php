@@ -90,37 +90,37 @@ class Forms_Module extends Module_Base {
 
 		// Gravity Forms hook.
 		if ( ! empty( $settings['sync_gravity_forms'] ) && class_exists( 'GFAPI' ) ) {
-			add_action( 'gform_after_submission', [ $this, 'on_gravity_form_submitted' ], 10, 2 );
+			add_action( 'gform_after_submission', $this->safe_callback( [ $this, 'on_gravity_form_submitted' ] ), 10, 2 );
 		}
 
 		// WPForms hook.
 		if ( ! empty( $settings['sync_wpforms'] ) && function_exists( 'wpforms' ) ) {
-			add_action( 'wpforms_process_complete', [ $this, 'on_wpforms_submitted' ], 10, 4 );
+			add_action( 'wpforms_process_complete', $this->safe_callback( [ $this, 'on_wpforms_submitted' ] ), 10, 4 );
 		}
 
 		// Contact Form 7 hook.
 		if ( ! empty( $settings['sync_cf7'] ) && defined( 'WPCF7_VERSION' ) ) {
-			add_action( 'wpcf7_mail_sent', [ $this, 'on_cf7_submitted' ], 10, 1 );
+			add_action( 'wpcf7_mail_sent', $this->safe_callback( [ $this, 'on_cf7_submitted' ] ), 10, 1 );
 		}
 
 		// Fluent Forms hook.
 		if ( ! empty( $settings['sync_fluent_forms'] ) && defined( 'FLUENTFORM' ) ) {
-			add_action( 'fluentform/submission_inserted', [ $this, 'on_fluent_form_submitted' ], 10, 3 );
+			add_action( 'fluentform/submission_inserted', $this->safe_callback( [ $this, 'on_fluent_form_submitted' ] ), 10, 3 );
 		}
 
 		// Formidable Forms hook.
 		if ( ! empty( $settings['sync_formidable'] ) && class_exists( 'FrmAppHelper' ) ) {
-			add_action( 'frm_after_create_entry', [ $this, 'on_formidable_submitted' ], 10, 2 );
+			add_action( 'frm_after_create_entry', $this->safe_callback( [ $this, 'on_formidable_submitted' ] ), 10, 2 );
 		}
 
 		// Ninja Forms hook.
 		if ( ! empty( $settings['sync_ninja_forms'] ) && class_exists( 'Ninja_Forms' ) ) {
-			add_action( 'ninja_forms_after_submission', [ $this, 'on_ninja_forms_submitted' ], 10, 1 );
+			add_action( 'ninja_forms_after_submission', $this->safe_callback( [ $this, 'on_ninja_forms_submitted' ] ), 10, 1 );
 		}
 
 		// Forminator hook.
 		if ( ! empty( $settings['sync_forminator'] ) && defined( 'FORMINATOR_VERSION' ) ) {
-			add_action( 'forminator_custom_form_submit_before_set_fields', [ $this, 'on_forminator_submitted' ], 10, 3 );
+			add_action( 'forminator_custom_form_submit_before_set_fields', $this->safe_callback( [ $this, 'on_forminator_submitted' ] ), 10, 3 );
 		}
 	}
 

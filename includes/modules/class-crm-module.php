@@ -103,9 +103,9 @@ class CRM_Module extends Module_Base {
 		$this->contact_refiner = new Contact_Refiner( fn() => $this->client() );
 
 		// User hooks for contact sync.
-		add_action( 'user_register', [ $this, 'on_user_register' ], 10, 2 );
-		add_action( 'profile_update', [ $this, 'on_profile_update' ], 10, 3 );
-		add_action( 'delete_user', [ $this, 'on_delete_user' ], 10, 3 );
+		add_action( 'user_register', $this->safe_callback( [ $this, 'on_user_register' ] ), 10, 2 );
+		add_action( 'profile_update', $this->safe_callback( [ $this, 'on_profile_update' ] ), 10, 3 );
+		add_action( 'delete_user', $this->safe_callback( [ $this, 'on_delete_user' ] ), 10, 3 );
 
 		// Lead CPT and shortcode (delegated to Lead_Manager).
 		add_action( 'init', [ $this->lead_manager, 'register_lead_cpt' ] );

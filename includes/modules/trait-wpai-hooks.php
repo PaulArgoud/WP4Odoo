@@ -33,8 +33,8 @@ trait WPAI_Hooks {
 	 * @return void
 	 */
 	private function register_hooks(): void {
-		add_action( 'pmxi_saved_post', [ $this, 'on_post_saved' ], 10, 3 );
-		add_action( 'pmxi_after_xml_import', [ $this, 'on_import_complete' ], 10, 2 );
+		add_action( 'pmxi_saved_post', $this->safe_callback( [ $this, 'on_post_saved' ] ), 10, 3 );
+		add_action( 'pmxi_after_xml_import', $this->safe_callback( [ $this, 'on_import_complete' ] ), 10, 2 );
 	}
 
 	/**

@@ -826,6 +826,42 @@ abstract class Module_Base {
 	}
 
 	// -------------------------------------------------------------------------
+	// Graceful degradation
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Wrap a hook callback in a try/catch for graceful degradation.
+	 *
+	 * Returns a Closure that forwards all arguments to the original callable.
+	 * If the callback throws any \Throwable (fatal error, TypeError, etc.),
+	 * the exception is caught and logged instead of crashing the WordPress
+	 * request. This protects against third-party plugin API changes.
+	 *
+	 * Usage: `add_action( 'third_party_hook', $this->safe_callback( [ $this, 'on_event' ] ) );`
+	 *
+	 * @param callable $callback The original callback to wrap.
+	 * @return \Closure Wrapped callback that never throws.
+	 */
+	protected function safe_callback( callable $callback ): \Closure {
+		return function () use ( $callback ): void {
+			try {
+				$callback( ...func_get_args() );
+			} catch ( \Throwable $e ) {
+				$this->logger->critical(
+					'Hook callback crashed (graceful degradation).',
+					[
+						'module'    => $this->id,
+						'exception' => get_class( $e ),
+						'message'   => $e->getMessage(),
+						'file'      => $e->getFile(),
+						'line'      => $e->getLine(),
+					]
+				);
+			}
+		};
+	}
+
+	// -------------------------------------------------------------------------
 	// Anti-loop
 	// -------------------------------------------------------------------------
 

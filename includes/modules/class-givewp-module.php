@@ -100,11 +100,11 @@ class GiveWP_Module extends Dual_Accounting_Module_Base {
 		$settings = $this->get_settings();
 
 		if ( ! empty( $settings['sync_forms'] ) ) {
-			add_action( 'save_post_give_forms', [ $this, 'on_form_save' ], 10, 1 );
+			add_action( 'save_post_give_forms', $this->safe_callback( [ $this, 'on_form_save' ] ), 10, 1 );
 		}
 
 		if ( ! empty( $settings['sync_donations'] ) ) {
-			add_action( 'give_update_payment_status', [ $this, 'on_donation_status_change' ], 10, 3 );
+			add_action( 'give_update_payment_status', $this->safe_callback( [ $this, 'on_donation_status_change' ] ), 10, 3 );
 		}
 
 		if ( class_exists( 'Give_Recurring' ) ) {

@@ -98,7 +98,7 @@ class Crowdfunding_Module extends Module_Base {
 		$settings = $this->get_settings();
 
 		if ( ! empty( $settings['sync_campaigns'] ) ) {
-			add_action( 'save_post_product', [ $this, 'on_campaign_save' ], 10, 1 );
+			add_action( 'save_post_product', $this->safe_callback( [ $this, 'on_campaign_save' ] ), 10, 1 );
 		}
 	}
 

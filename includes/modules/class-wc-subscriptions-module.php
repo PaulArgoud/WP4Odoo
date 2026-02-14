@@ -124,15 +124,15 @@ class WC_Subscriptions_Module extends Module_Base {
 		$settings = $this->get_settings();
 
 		if ( ! empty( $settings['sync_products'] ) ) {
-			add_action( 'save_post_product', [ $this, 'on_product_save' ], 10, 1 );
+			add_action( 'save_post_product', $this->safe_callback( [ $this, 'on_product_save' ] ), 10, 1 );
 		}
 
 		if ( ! empty( $settings['sync_subscriptions'] ) ) {
-			add_action( 'woocommerce_subscription_status_updated', [ $this, 'on_subscription_status_updated' ], 10, 3 );
+			add_action( 'woocommerce_subscription_status_updated', $this->safe_callback( [ $this, 'on_subscription_status_updated' ] ), 10, 3 );
 		}
 
 		if ( ! empty( $settings['sync_renewals'] ) ) {
-			add_action( 'woocommerce_subscription_renewal_payment_complete', [ $this, 'on_renewal_payment_complete' ], 10, 2 );
+			add_action( 'woocommerce_subscription_renewal_payment_complete', $this->safe_callback( [ $this, 'on_renewal_payment_complete' ] ), 10, 2 );
 		}
 	}
 

@@ -117,16 +117,16 @@ class PMPro_Module extends Membership_Module_Base {
 		$settings = $this->get_settings();
 
 		if ( ! empty( $settings['sync_levels'] ) ) {
-			add_action( 'pmpro_save_membership_level', [ $this, 'on_level_saved' ], 10, 1 );
+			add_action( 'pmpro_save_membership_level', $this->safe_callback( [ $this, 'on_level_saved' ] ), 10, 1 );
 		}
 
 		if ( ! empty( $settings['sync_orders'] ) ) {
-			add_action( 'pmpro_added_order', [ $this, 'on_order_created' ], 10, 1 );
-			add_action( 'pmpro_updated_order', [ $this, 'on_order_updated' ], 10, 1 );
+			add_action( 'pmpro_added_order', $this->safe_callback( [ $this, 'on_order_created' ] ), 10, 1 );
+			add_action( 'pmpro_updated_order', $this->safe_callback( [ $this, 'on_order_updated' ] ), 10, 1 );
 		}
 
 		if ( ! empty( $settings['sync_memberships'] ) ) {
-			add_action( 'pmpro_after_change_membership_level', [ $this, 'on_membership_changed' ], 10, 3 );
+			add_action( 'pmpro_after_change_membership_level', $this->safe_callback( [ $this, 'on_membership_changed' ] ), 10, 3 );
 		}
 	}
 

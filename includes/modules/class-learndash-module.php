@@ -120,19 +120,19 @@ class LearnDash_Module extends Module_Base {
 		$settings = $this->get_settings();
 
 		if ( ! empty( $settings['sync_courses'] ) ) {
-			add_action( 'save_post_sfwd-courses', [ $this, 'on_course_save' ], 10, 1 );
+			add_action( 'save_post_sfwd-courses', $this->safe_callback( [ $this, 'on_course_save' ] ), 10, 1 );
 		}
 
 		if ( ! empty( $settings['sync_groups'] ) ) {
-			add_action( 'save_post_groups', [ $this, 'on_group_save' ], 10, 1 );
+			add_action( 'save_post_groups', $this->safe_callback( [ $this, 'on_group_save' ] ), 10, 1 );
 		}
 
 		if ( ! empty( $settings['sync_transactions'] ) ) {
-			add_action( 'learndash_transaction_created', [ $this, 'on_transaction_created' ], 10, 1 );
+			add_action( 'learndash_transaction_created', $this->safe_callback( [ $this, 'on_transaction_created' ] ), 10, 1 );
 		}
 
 		if ( ! empty( $settings['sync_enrollments'] ) ) {
-			add_action( 'learndash_update_course_access', [ $this, 'on_enrollment_change' ], 10, 4 );
+			add_action( 'learndash_update_course_access', $this->safe_callback( [ $this, 'on_enrollment_change' ] ), 10, 4 );
 		}
 	}
 

@@ -29,8 +29,8 @@ trait SupportCandy_Hooks {
 		$settings = $this->get_settings();
 
 		if ( ! empty( $settings['sync_tickets'] ) ) {
-			\add_action( 'wpsc_create_new_ticket', [ $this, 'on_ticket_created' ], 10, 1 );
-			\add_action( 'wpsc_change_ticket_status', [ $this, 'on_ticket_status_changed' ], 10, 4 );
+			\add_action( 'wpsc_create_new_ticket', $this->safe_callback( [ $this, 'on_ticket_created' ] ), 10, 1 );
+			\add_action( 'wpsc_change_ticket_status', $this->safe_callback( [ $this, 'on_ticket_status_changed' ] ), 10, 4 );
 		}
 	}
 

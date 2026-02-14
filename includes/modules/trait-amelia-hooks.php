@@ -44,14 +44,14 @@ trait Amelia_Hooks {
 		$settings = $this->get_settings();
 
 		if ( ! empty( $settings['sync_appointments'] ) ) {
-			add_action( 'amelia_after_appointment_booking_saved', [ $this, 'on_booking_saved' ], 10, 3 );
-			add_action( 'amelia_after_booking_canceled', [ $this, 'on_booking_canceled' ], 10, 1 );
-			add_action( 'amelia_after_booking_rescheduled', [ $this, 'on_booking_rescheduled' ], 10, 1 );
+			add_action( 'amelia_after_appointment_booking_saved', $this->safe_callback( [ $this, 'on_booking_saved' ] ), 10, 3 );
+			add_action( 'amelia_after_booking_canceled', $this->safe_callback( [ $this, 'on_booking_canceled' ] ), 10, 1 );
+			add_action( 'amelia_after_booking_rescheduled', $this->safe_callback( [ $this, 'on_booking_rescheduled' ] ), 10, 1 );
 		}
 
 		if ( ! empty( $settings['sync_services'] ) ) {
-			add_action( 'amelia_after_service_added', [ $this, 'on_service_saved' ], 10, 1 );
-			add_action( 'amelia_after_service_updated', [ $this, 'on_service_saved' ], 10, 1 );
+			add_action( 'amelia_after_service_added', $this->safe_callback( [ $this, 'on_service_saved' ] ), 10, 1 );
+			add_action( 'amelia_after_service_updated', $this->safe_callback( [ $this, 'on_service_saved' ] ), 10, 1 );
 		}
 	}
 

@@ -77,11 +77,31 @@ trait Ecwid_Cron_Hooks {
 			}
 
 			if ( ! empty( $settings['sync_products'] ) ) {
-				$this->poll_products( $store_id, $token );
+				try {
+					$this->poll_products( $store_id, $token );
+				} catch ( \Throwable $e ) {
+					$this->logger->critical(
+						'Ecwid product polling crashed (graceful degradation).',
+						[
+							'exception' => get_class( $e ),
+							'message'   => $e->getMessage(),
+						]
+					);
+				}
 			}
 
 			if ( ! empty( $settings['sync_orders'] ) ) {
-				$this->poll_orders( $store_id, $token );
+				try {
+					$this->poll_orders( $store_id, $token );
+				} catch ( \Throwable $e ) {
+					$this->logger->critical(
+						'Ecwid order polling crashed (graceful degradation).',
+						[
+							'exception' => get_class( $e ),
+							'message'   => $e->getMessage(),
+						]
+					);
+				}
 			}
 		} finally {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching

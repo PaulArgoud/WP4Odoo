@@ -108,9 +108,9 @@ class WP_Invoice_Module extends Module_Base {
 		$settings = $this->get_settings();
 
 		if ( ! empty( $settings['sync_invoices'] ) ) {
-			add_action( 'wpi_object_created', [ $this, 'on_invoice_save' ], 10, 1 );
-			add_action( 'wpi_object_updated', [ $this, 'on_invoice_save' ], 10, 1 );
-			add_action( 'wpi_successful_payment', [ $this, 'on_payment' ], 10, 1 );
+			add_action( 'wpi_object_created', $this->safe_callback( [ $this, 'on_invoice_save' ] ), 10, 1 );
+			add_action( 'wpi_object_updated', $this->safe_callback( [ $this, 'on_invoice_save' ] ), 10, 1 );
+			add_action( 'wpi_successful_payment', $this->safe_callback( [ $this, 'on_payment' ] ), 10, 1 );
 		}
 	}
 

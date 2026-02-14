@@ -33,11 +33,11 @@ trait AffiliateWP_Hooks {
 		$settings = $this->get_settings();
 
 		if ( ! empty( $settings['sync_affiliates'] ) ) {
-			add_action( 'affwp_set_affiliate_status', [ $this, 'on_affiliate_status_change' ], 10, 3 );
+			add_action( 'affwp_set_affiliate_status', $this->safe_callback( [ $this, 'on_affiliate_status_change' ] ), 10, 3 );
 		}
 
 		if ( ! empty( $settings['sync_referrals'] ) ) {
-			add_action( 'affwp_set_referral_status', [ $this, 'on_referral_status_change' ], 10, 3 );
+			add_action( 'affwp_set_referral_status', $this->safe_callback( [ $this, 'on_referral_status_change' ] ), 10, 3 );
 		}
 	}
 

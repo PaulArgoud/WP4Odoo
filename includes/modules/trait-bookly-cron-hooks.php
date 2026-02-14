@@ -77,11 +77,31 @@ trait Bookly_Cron_Hooks {
 			$settings = $this->get_settings();
 
 			if ( ! empty( $settings['sync_services'] ) ) {
-				$this->poll_services();
+				try {
+					$this->poll_services();
+				} catch ( \Throwable $e ) {
+					$this->logger->critical(
+						'Bookly service polling crashed (graceful degradation).',
+						[
+							'exception' => get_class( $e ),
+							'message'   => $e->getMessage(),
+						]
+					);
+				}
 			}
 
 			if ( ! empty( $settings['sync_bookings'] ) ) {
-				$this->poll_bookings();
+				try {
+					$this->poll_bookings();
+				} catch ( \Throwable $e ) {
+					$this->logger->critical(
+						'Bookly booking polling crashed (graceful degradation).',
+						[
+							'exception' => get_class( $e ),
+							'message'   => $e->getMessage(),
+						]
+					);
+				}
 			}
 		} finally {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching

@@ -208,14 +208,14 @@ class WooCommerce_Module extends Module_Base {
 
 		// Products.
 		if ( ! empty( $settings['sync_products'] ) ) {
-			add_action( 'woocommerce_update_product', [ $this, 'on_product_save' ] );
-			add_action( 'before_delete_post', [ $this, 'on_product_delete' ] );
+			add_action( 'woocommerce_update_product', $this->safe_callback( [ $this, 'on_product_save' ] ) );
+			add_action( 'before_delete_post', $this->safe_callback( [ $this, 'on_product_delete' ] ) );
 		}
 
 		// Orders.
 		if ( ! empty( $settings['sync_orders'] ) ) {
-			add_action( 'woocommerce_new_order', [ $this, 'on_new_order' ] );
-			add_action( 'woocommerce_order_status_changed', [ $this, 'on_order_status_changed' ], 10, 3 );
+			add_action( 'woocommerce_new_order', $this->safe_callback( [ $this, 'on_new_order' ] ) );
+			add_action( 'woocommerce_order_status_changed', $this->safe_callback( [ $this, 'on_order_status_changed' ] ), 10, 3 );
 		}
 
 		// Stock: pull-only (Odoo → WC), no WC hooks needed.

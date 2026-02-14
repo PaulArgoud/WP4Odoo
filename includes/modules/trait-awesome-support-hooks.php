@@ -29,9 +29,9 @@ trait Awesome_Support_Hooks {
 		$settings = $this->get_settings();
 
 		if ( ! empty( $settings['sync_tickets'] ) ) {
-			\add_action( 'wpas_open_ticket_after', [ $this, 'on_ticket_created' ], 10, 2 );
-			\add_action( 'wpas_after_close_ticket', [ $this, 'on_ticket_status_updated' ], 10, 1 );
-			\add_action( 'wpas_after_reopen_ticket', [ $this, 'on_ticket_status_updated' ], 10, 1 );
+			\add_action( 'wpas_open_ticket_after', $this->safe_callback( [ $this, 'on_ticket_created' ] ), 10, 2 );
+			\add_action( 'wpas_after_close_ticket', $this->safe_callback( [ $this, 'on_ticket_status_updated' ] ), 10, 1 );
+			\add_action( 'wpas_after_reopen_ticket', $this->safe_callback( [ $this, 'on_ticket_status_updated' ] ), 10, 1 );
 		}
 	}
 

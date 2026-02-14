@@ -108,14 +108,14 @@ class Memberships_Module extends Module_Base {
 		$settings = $this->get_settings();
 
 		// User membership created.
-		add_action( 'wc_memberships_user_membership_created', [ $this, 'on_membership_created' ], 10, 2 );
+		add_action( 'wc_memberships_user_membership_created', $this->safe_callback( [ $this, 'on_membership_created' ] ), 10, 2 );
 
 		// Status changed.
-		add_action( 'wc_memberships_user_membership_status_changed', [ $this, 'on_membership_status_changed' ], 10, 3 );
+		add_action( 'wc_memberships_user_membership_status_changed', $this->safe_callback( [ $this, 'on_membership_status_changed' ] ), 10, 3 );
 
 		// Membership saved (catch-all for meta changes).
 		if ( ! empty( $settings['sync_memberships'] ) ) {
-			add_action( 'wc_memberships_user_membership_saved', [ $this, 'on_membership_saved' ], 10, 2 );
+			add_action( 'wc_memberships_user_membership_saved', $this->safe_callback( [ $this, 'on_membership_saved' ] ), 10, 2 );
 		}
 	}
 

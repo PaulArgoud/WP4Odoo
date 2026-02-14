@@ -131,21 +131,21 @@ class LifterLMS_Module extends Module_Base {
 		$settings = $this->get_settings();
 
 		if ( ! empty( $settings['sync_courses'] ) ) {
-			add_action( 'save_post_llms_course', [ $this, 'on_course_save' ], 10, 1 );
+			add_action( 'save_post_llms_course', $this->safe_callback( [ $this, 'on_course_save' ] ), 10, 1 );
 		}
 
 		if ( ! empty( $settings['sync_memberships'] ) ) {
-			add_action( 'save_post_llms_membership', [ $this, 'on_membership_save' ], 10, 1 );
+			add_action( 'save_post_llms_membership', $this->safe_callback( [ $this, 'on_membership_save' ] ), 10, 1 );
 		}
 
 		if ( ! empty( $settings['sync_orders'] ) ) {
-			add_action( 'lifterlms_order_status_completed', [ $this, 'on_order_completed' ], 10, 1 );
-			add_action( 'lifterlms_order_status_active', [ $this, 'on_order_completed' ], 10, 1 );
+			add_action( 'lifterlms_order_status_completed', $this->safe_callback( [ $this, 'on_order_completed' ] ), 10, 1 );
+			add_action( 'lifterlms_order_status_active', $this->safe_callback( [ $this, 'on_order_completed' ] ), 10, 1 );
 		}
 
 		if ( ! empty( $settings['sync_enrollments'] ) ) {
-			add_action( 'llms_user_enrolled_in_course', [ $this, 'on_enrollment' ], 10, 2 );
-			add_action( 'llms_user_removed_from_course', [ $this, 'on_unenrollment' ], 10, 2 );
+			add_action( 'llms_user_enrolled_in_course', $this->safe_callback( [ $this, 'on_enrollment' ] ), 10, 2 );
+			add_action( 'llms_user_removed_from_course', $this->safe_callback( [ $this, 'on_unenrollment' ] ), 10, 2 );
 		}
 	}
 

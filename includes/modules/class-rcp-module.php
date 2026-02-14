@@ -116,16 +116,16 @@ class RCP_Module extends Membership_Module_Base {
 		$settings = $this->get_settings();
 
 		if ( ! empty( $settings['sync_levels'] ) ) {
-			add_action( 'rcp_edit_subscription_level', [ $this, 'on_level_saved' ], 10, 1 );
+			add_action( 'rcp_edit_subscription_level', $this->safe_callback( [ $this, 'on_level_saved' ] ), 10, 1 );
 		}
 
 		if ( ! empty( $settings['sync_payments'] ) ) {
-			add_action( 'rcp_create_payment', [ $this, 'on_payment_created' ], 10, 2 );
+			add_action( 'rcp_create_payment', $this->safe_callback( [ $this, 'on_payment_created' ] ), 10, 2 );
 		}
 
 		if ( ! empty( $settings['sync_memberships'] ) ) {
-			add_action( 'rcp_membership_post_activate', [ $this, 'on_membership_activated' ], 10, 1 );
-			add_action( 'rcp_transition_membership_status', [ $this, 'on_membership_status_change' ], 10, 3 );
+			add_action( 'rcp_membership_post_activate', $this->safe_callback( [ $this, 'on_membership_activated' ] ), 10, 1 );
+			add_action( 'rcp_transition_membership_status', $this->safe_callback( [ $this, 'on_membership_status_change' ] ), 10, 3 );
 		}
 	}
 

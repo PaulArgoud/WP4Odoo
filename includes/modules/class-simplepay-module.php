@@ -106,12 +106,12 @@ class SimplePay_Module extends Dual_Accounting_Module_Base {
 		$settings = $this->get_settings();
 
 		if ( ! empty( $settings['sync_forms'] ) ) {
-			add_action( 'save_post_simple-pay', [ $this, 'on_form_save' ], 10, 1 );
+			add_action( 'save_post_simple-pay', $this->safe_callback( [ $this, 'on_form_save' ] ), 10, 1 );
 		}
 
 		if ( ! empty( $settings['sync_payments'] ) ) {
-			add_action( 'simpay_webhook_payment_intent_succeeded', [ $this, 'on_payment_succeeded' ], 10, 2 );
-			add_action( 'simpay_webhook_invoice_payment_succeeded', [ $this, 'on_invoice_payment_succeeded' ], 10, 2 );
+			add_action( 'simpay_webhook_payment_intent_succeeded', $this->safe_callback( [ $this, 'on_payment_succeeded' ] ), 10, 2 );
+			add_action( 'simpay_webhook_invoice_payment_succeeded', $this->safe_callback( [ $this, 'on_invoice_payment_succeeded' ] ), 10, 2 );
 		}
 	}
 

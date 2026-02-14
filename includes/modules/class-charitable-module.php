@@ -100,11 +100,11 @@ class Charitable_Module extends Dual_Accounting_Module_Base {
 		$settings = $this->get_settings();
 
 		if ( ! empty( $settings['sync_campaigns'] ) ) {
-			add_action( 'save_post_campaign', [ $this, 'on_campaign_save' ], 10, 1 );
+			add_action( 'save_post_campaign', $this->safe_callback( [ $this, 'on_campaign_save' ] ), 10, 1 );
 		}
 
 		if ( ! empty( $settings['sync_donations'] ) ) {
-			add_action( 'transition_post_status', [ $this, 'on_donation_status_change' ], 10, 3 );
+			add_action( 'transition_post_status', $this->safe_callback( [ $this, 'on_donation_status_change' ] ), 10, 3 );
 		}
 
 		if ( class_exists( 'Charitable_Recurring' ) ) {

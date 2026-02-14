@@ -108,15 +108,15 @@ class MemberPress_Module extends Membership_Module_Base {
 		$settings = $this->get_settings();
 
 		if ( ! empty( $settings['sync_plans'] ) ) {
-			add_action( 'save_post_memberpressproduct', [ $this, 'on_plan_save' ], 10, 1 );
+			add_action( 'save_post_memberpressproduct', $this->safe_callback( [ $this, 'on_plan_save' ] ), 10, 1 );
 		}
 
 		if ( ! empty( $settings['sync_transactions'] ) ) {
-			add_action( 'mepr-txn-store', [ $this, 'on_transaction_store' ], 10, 1 );
+			add_action( 'mepr-txn-store', $this->safe_callback( [ $this, 'on_transaction_store' ] ), 10, 1 );
 		}
 
 		if ( ! empty( $settings['sync_subscriptions'] ) ) {
-			add_action( 'mepr_subscription_transition_status', [ $this, 'on_subscription_status_change' ], 10, 3 );
+			add_action( 'mepr_subscription_transition_status', $this->safe_callback( [ $this, 'on_subscription_status_change' ] ), 10, 3 );
 		}
 	}
 

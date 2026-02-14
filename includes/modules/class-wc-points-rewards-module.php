@@ -102,9 +102,9 @@ class WC_Points_Rewards_Module extends Module_Base {
 		$settings = $this->get_settings();
 
 		if ( ! empty( $settings['sync_balances'] ) ) {
-			add_action( 'wc_points_rewards_after_increase_points', [ $this, 'on_points_change' ], 10, 1 );
-			add_action( 'wc_points_rewards_after_reduce_points', [ $this, 'on_points_change' ], 10, 1 );
-			add_action( 'wc_points_rewards_after_set_points_balance', [ $this, 'on_points_change' ], 10, 1 );
+			add_action( 'wc_points_rewards_after_increase_points', $this->safe_callback( [ $this, 'on_points_change' ] ), 10, 1 );
+			add_action( 'wc_points_rewards_after_reduce_points', $this->safe_callback( [ $this, 'on_points_change' ] ), 10, 1 );
+			add_action( 'wc_points_rewards_after_set_points_balance', $this->safe_callback( [ $this, 'on_points_change' ] ), 10, 1 );
 		}
 	}
 

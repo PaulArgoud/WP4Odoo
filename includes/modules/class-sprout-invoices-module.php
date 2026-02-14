@@ -117,11 +117,11 @@ class Sprout_Invoices_Module extends Module_Base {
 		$settings = $this->get_settings();
 
 		if ( ! empty( $settings['sync_invoices'] ) ) {
-			add_action( 'save_post_sa_invoice', [ $this, 'on_invoice_save' ], 10, 1 );
+			add_action( 'save_post_sa_invoice', $this->safe_callback( [ $this, 'on_invoice_save' ] ), 10, 1 );
 		}
 
 		if ( ! empty( $settings['sync_payments'] ) ) {
-			add_action( 'si_new_payment', [ $this, 'on_payment' ], 10, 1 );
+			add_action( 'si_new_payment', $this->safe_callback( [ $this, 'on_payment' ] ), 10, 1 );
 		}
 	}
 

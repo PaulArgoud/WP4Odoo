@@ -101,7 +101,7 @@ class ShopWP_Module extends Module_Base {
 		$settings = $this->get_settings();
 
 		if ( ! empty( $settings['sync_products'] ) ) {
-			add_action( 'save_post_wps_products', [ $this, 'on_product_save' ], 10, 1 );
+			add_action( 'save_post_wps_products', $this->safe_callback( [ $this, 'on_product_save' ] ), 10, 1 );
 		}
 	}
 

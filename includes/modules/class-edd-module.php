@@ -117,13 +117,13 @@ class EDD_Module extends Module_Base {
 
 		// Downloads.
 		if ( ! empty( $settings['sync_downloads'] ) ) {
-			add_action( 'save_post_download', [ $this, 'on_download_save' ] );
-			add_action( 'before_delete_post', [ $this, 'on_download_delete' ] );
+			add_action( 'save_post_download', $this->safe_callback( [ $this, 'on_download_save' ] ) );
+			add_action( 'before_delete_post', $this->safe_callback( [ $this, 'on_download_delete' ] ) );
 		}
 
 		// Orders.
 		if ( ! empty( $settings['sync_orders'] ) ) {
-			add_action( 'edd_update_payment_status', [ $this, 'on_order_status_change' ], 10, 3 );
+			add_action( 'edd_update_payment_status', $this->safe_callback( [ $this, 'on_order_status_change' ] ), 10, 3 );
 		}
 
 		// Invoices: CPT (EDD has no native invoice type).

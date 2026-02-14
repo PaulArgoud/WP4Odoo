@@ -44,11 +44,11 @@ trait WC_Bookings_Hooks {
 		$settings = $this->get_settings();
 
 		if ( ! empty( $settings['sync_products'] ) ) {
-			add_action( 'save_post_product', [ $this, 'on_product_save' ], 10, 1 );
+			add_action( 'save_post_product', $this->safe_callback( [ $this, 'on_product_save' ] ), 10, 1 );
 		}
 
 		if ( ! empty( $settings['sync_bookings'] ) ) {
-			add_action( 'woocommerce_booking_status_changed', [ $this, 'on_booking_status_changed' ], 10, 3 );
+			add_action( 'woocommerce_booking_status_changed', $this->safe_callback( [ $this, 'on_booking_status_changed' ] ), 10, 3 );
 		}
 	}
 

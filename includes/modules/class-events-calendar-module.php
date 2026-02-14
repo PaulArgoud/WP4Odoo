@@ -129,17 +129,17 @@ class Events_Calendar_Module extends Module_Base {
 		$settings = $this->get_settings();
 
 		if ( ! empty( $settings['sync_events'] ) ) {
-			\add_action( 'save_post_tribe_events', [ $this, 'on_event_save' ], 10, 1 );
+			\add_action( 'save_post_tribe_events', $this->safe_callback( [ $this, 'on_event_save' ] ), 10, 1 );
 		}
 
 		// Ticket and attendee hooks only if Event Tickets is active.
 		if ( class_exists( 'Tribe__Tickets__Main' ) ) {
 			if ( ! empty( $settings['sync_tickets'] ) ) {
-				\add_action( 'save_post_tribe_rsvp_tickets', [ $this, 'on_ticket_save' ], 10, 1 );
+				\add_action( 'save_post_tribe_rsvp_tickets', $this->safe_callback( [ $this, 'on_ticket_save' ] ), 10, 1 );
 			}
 
 			if ( ! empty( $settings['sync_attendees'] ) ) {
-				\add_action( 'event_tickets_rsvp_ticket_created', [ $this, 'on_rsvp_attendee_created' ], 10, 4 );
+				\add_action( 'event_tickets_rsvp_ticket_created', $this->safe_callback( [ $this, 'on_rsvp_attendee_created' ] ), 10, 4 );
 			}
 		}
 	}
