@@ -18,6 +18,8 @@ class AmeliaModuleTest extends TestCase {
 	protected function setUp(): void {
 		global $wpdb;
 		$wpdb = new \WP_DB_Stub();
+		// Simulate all required tables exist (SHOW TABLES LIKE returns the name).
+		$wpdb->get_var_return = 'wp_amelia_services';
 
 		$GLOBALS['_wp_options'] = [];
 

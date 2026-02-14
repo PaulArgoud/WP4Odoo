@@ -110,6 +110,20 @@ class Amelia_Module extends Booking_Module_Base {
 	}
 
 	/**
+	 * Third-party tables accessed directly via $wpdb.
+	 *
+	 * @return array<int, string>
+	 */
+	protected function get_required_tables(): array {
+		return [
+			'amelia_services',
+			'amelia_appointments',
+			'amelia_customer_bookings',
+			'amelia_users',
+		];
+	}
+
+	/**
 	 * Get settings field definitions for the admin UI.
 	 *
 	 * @return array<string, array<string, string>>

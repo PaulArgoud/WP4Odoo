@@ -111,6 +111,29 @@ class Bookly_Module extends Booking_Module_Base {
 	}
 
 	/**
+	 * Third-party tables accessed directly via $wpdb.
+	 *
+	 * @return array<int, string>
+	 */
+	protected function get_required_tables(): array {
+		return [
+			'bookly_services',
+			'bookly_appointments',
+			'bookly_customer_appointments',
+			'bookly_customers',
+		];
+	}
+
+	/**
+	 * This module uses WP-Cron polling (Bookly has no hooks).
+	 *
+	 * @return bool
+	 */
+	protected function uses_cron_polling(): bool {
+		return true;
+	}
+
+	/**
 	 * Get settings field definitions for the admin UI.
 	 *
 	 * @return array<string, array<string, string>>

@@ -108,5 +108,6 @@ abstract class Module_Test_Case extends TestCase {
 	public static function reset_static_caches(): void {
 		\WP4Odoo\Logger::reset_cache();
 		\WP4Odoo\API\Odoo_Auth::flush_credentials_cache();
+		\WP4Odoo\Queue_Manager::reset();
 	}
 }

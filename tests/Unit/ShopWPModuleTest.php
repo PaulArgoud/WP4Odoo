@@ -22,6 +22,8 @@ class ShopWPModuleTest extends Module_Test_Case {
 		parent::setUp();
 		$GLOBALS['_wp_posts']     = [];
 		$GLOBALS['_wp_post_meta'] = [];
+		// Simulate required tables exist (SHOW TABLES LIKE returns the name).
+		$this->wpdb->get_var_return = 'wp_shopwp_variants';
 
 		$this->module  = new ShopWP_Module( wp4odoo_test_client_provider(), wp4odoo_test_entity_map(), wp4odoo_test_settings() );
 		$this->handler = new ShopWP_Handler( new Logger( 'test', wp4odoo_test_settings() ) );

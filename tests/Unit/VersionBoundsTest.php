@@ -138,6 +138,61 @@ class VersionBoundsTest extends TestCase {
 		$this->assertEmpty( $status['notices'] );
 	}
 
+	// ─── Table existence checks ──────────────────────────
+
+	public function test_missing_tables_returns_unavailable(): void {
+		global $wpdb;
+		$wpdb = new \WP_DB_Stub();
+		// get_var returns null → table does not exist.
+		$wpdb->get_var_return = null;
+
+		$module = new VersionBounds_WithTables_Module( wp4odoo_test_client_provider(), wp4odoo_test_entity_map(), wp4odoo_test_settings() );
+		$status = $module->get_dependency_status();
+		$this->assertFalse( $status['available'] );
+		$this->assertNotEmpty( $status['notices'] );
+		$this->assertSame( 'warning', $status['notices'][0]['type'] );
+		$this->assertStringContainsString( 'fake_table', $status['notices'][0]['message'] );
+	}
+
+	public function test_existing_tables_returns_available(): void {
+		global $wpdb;
+		$wpdb = new \WP_DB_Stub();
+		// get_var returns the table name → table exists.
+		$wpdb->get_var_return = 'wp_fake_table';
+
+		$module = new VersionBounds_WithTables_Module( wp4odoo_test_client_provider(), wp4odoo_test_entity_map(), wp4odoo_test_settings() );
+		$status = $module->get_dependency_status();
+		$this->assertTrue( $status['available'] );
+	}
+
+	public function test_no_required_tables_skips_check(): void {
+		$module = new VersionBounds_NoVersion_Module( wp4odoo_test_client_provider(), wp4odoo_test_entity_map(), wp4odoo_test_settings() );
+		$status = $module->get_dependency_status();
+		$this->assertTrue( $status['available'] );
+	}
+
+	// ─── Cron polling notice ─────────────────────────────
+
+	public function test_cron_polling_module_shows_info_notice(): void {
+		global $wpdb;
+		$wpdb = new \WP_DB_Stub();
+
+		$module = new VersionBounds_CronPolling_Module( wp4odoo_test_client_provider(), wp4odoo_test_entity_map(), wp4odoo_test_settings() );
+		$status = $module->get_dependency_status();
+		$this->assertTrue( $status['available'] );
+
+		$info_notices = array_filter( $status['notices'], fn( $n ) => 'info' === $n['type'] );
+		$this->assertNotEmpty( $info_notices );
+		$this->assertStringContainsString( 'system cron', array_values( $info_notices )[0]['message'] );
+	}
+
+	public function test_non_polling_module_has_no_cron_notice(): void {
+		$module = new VersionBounds_NoVersion_Module( wp4odoo_test_client_provider(), wp4odoo_test_entity_map(), wp4odoo_test_settings() );
+		$status = $module->get_dependency_status();
+		$info_notices = array_filter( $status['notices'], fn( $n ) => 'info' === $n['type'] );
+		$this->assertEmpty( $info_notices );
+	}
+
 	// ─── Plugin not available ─────────────────────────────
 
 	public function test_plugin_not_available_returns_unavailable(): void {
@@ -389,6 +444,36 @@ class VersionBounds_Unavailable_Module extends Module_Base {
 	public function get_default_settings(): array { return []; }
 	public function get_dependency_status(): array {
 		return $this->check_dependency( false, 'MissingPlugin' );
+	}
+}
+
+/** Module with required tables. */
+class VersionBounds_WithTables_Module extends Module_Base {
+	public function __construct( \Closure $cp, \WP4Odoo\Entity_Map_Repository $em, \WP4Odoo\Settings_Repository $s ) {
+		parent::__construct( 'vb_tables', 'TablePlugin', $cp, $em, $s );
+	}
+	public function boot(): void {}
+	public function get_default_settings(): array { return []; }
+	public function get_dependency_status(): array {
+		return $this->check_dependency( true, 'TablePlugin' );
+	}
+	protected function get_required_tables(): array {
+		return [ 'fake_table' ];
+	}
+}
+
+/** Module with cron polling. */
+class VersionBounds_CronPolling_Module extends Module_Base {
+	public function __construct( \Closure $cp, \WP4Odoo\Entity_Map_Repository $em, \WP4Odoo\Settings_Repository $s ) {
+		parent::__construct( 'vb_cron', 'CronPlugin', $cp, $em, $s );
+	}
+	public function boot(): void {}
+	public function get_default_settings(): array { return []; }
+	public function get_dependency_status(): array {
+		return $this->check_dependency( true, 'CronPlugin' );
+	}
+	protected function uses_cron_polling(): bool {
+		return true;
 	}
 }
 

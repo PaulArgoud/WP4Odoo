@@ -119,6 +119,15 @@ class Ecwid_Module extends Module_Base {
 	}
 
 	/**
+	 * This module uses WP-Cron polling (Ecwid data is cloud-hosted).
+	 *
+	 * @return bool
+	 */
+	protected function uses_cron_polling(): bool {
+		return true;
+	}
+
+	/**
 	 * Get settings field definitions for the admin UI.
 	 *
 	 * @return array<string, array<string, string>>

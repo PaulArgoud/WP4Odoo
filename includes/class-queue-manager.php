@@ -192,4 +192,16 @@ class Queue_Manager {
 	public static function get_health_metrics(): array {
 		return self::repo()->get_health_metrics();
 	}
+
+	/**
+	 * Reset the static repository instance.
+	 *
+	 * Forces a fresh Sync_Queue_Repository on the next call.
+	 * Used by PHPUnit tests to isolate static state between tests.
+	 *
+	 * @return void
+	 */
+	public static function reset(): void {
+		self::$repo = null;
+	}
 }

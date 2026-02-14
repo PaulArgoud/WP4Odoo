@@ -93,7 +93,7 @@ trait Amelia_Hooks {
 	 * @return void
 	 */
 	public function on_booking_canceled( ?array $booking ): void {
-		if ( $this->is_importing() || ! $booking ) {
+		if ( ! $this->should_sync( 'sync_appointments' ) || ! $booking ) {
 			return;
 		}
 
@@ -121,7 +121,7 @@ trait Amelia_Hooks {
 	 * @return void
 	 */
 	public function on_booking_rescheduled( array $appointment ): void {
-		if ( $this->is_importing() ) {
+		if ( ! $this->should_sync( 'sync_appointments' ) ) {
 			return;
 		}
 

@@ -20,6 +20,7 @@ class QueueManagerTest extends TestCase {
 		global $wpdb;
 		$this->wpdb = new \WP_DB_Stub();
 		$wpdb       = $this->wpdb;
+		Queue_Manager::reset();
 	}
 
 	// ─── push() ────────────────────────────────────────────
@@ -110,6 +111,30 @@ class QueueManagerTest extends TestCase {
 		$result = Queue_Manager::get_pending( 'crm', 'contact' );
 
 		$this->assertEmpty( $result );
+	}
+
+	// ─── reset() ──────────────────────────────────────────
+
+	public function test_reset_allows_repo_reinit_with_new_wpdb(): void {
+		$this->wpdb->insert_id = 1;
+
+		// First push — uses current $wpdb.
+		Queue_Manager::push( 'crm', 'contact', 'create', 10 );
+		$count_before = count( $this->wpdb->calls );
+
+		// Reset and swap $wpdb.
+		Queue_Manager::reset();
+		global $wpdb;
+		$new_wpdb           = new \WP_DB_Stub();
+		$new_wpdb->insert_id = 1;
+		$wpdb               = $new_wpdb;
+
+		// Second push — should use new $wpdb.
+		Queue_Manager::push( 'crm', 'contact', 'create', 20 );
+
+		// Old wpdb should NOT have new calls; new one should.
+		$this->assertSame( $count_before, count( $this->wpdb->calls ) );
+		$this->assertNotEmpty( $new_wpdb->calls );
 	}
 
 	// ─── Helpers ───────────────────────────────────────────

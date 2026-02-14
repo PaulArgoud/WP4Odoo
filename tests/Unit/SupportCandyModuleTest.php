@@ -19,6 +19,8 @@ class SupportCandyModuleTest extends TestCase {
 	protected function setUp(): void {
 		global $wpdb;
 		$wpdb = new \WP_DB_Stub();
+		// Simulate required tables exist (SHOW TABLES LIKE returns the name).
+		$wpdb->get_var_return = 'wp_wpsc_ticket';
 
 		$GLOBALS['_wp_options']              = [];
 		$GLOBALS['_wp_users']                = [];

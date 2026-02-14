@@ -12,6 +12,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`poll_entity_changes()` helper** — New `Module_Base::poll_entity_changes(string $entity_type, array $items, string $id_field)` extracts the SHA-256 hash-based change detection loop from Bookly and Ecwid cron traits into a reusable method. Detects creates, updates (hash mismatch), and deletes (missing items) against the entity map. 5 new tests in `ModuleBaseHelpersTest`
 - **`Odoo_Accounting_Formatter::build_invoice_lines()`** — Shared static method for converting line item arrays into Odoo One2many `(0, 0, {...})` tuples with fallback to a single total line. Used by WP-Invoice and Sprout Invoices handlers (key normalization + delegation). 6 new tests in `OdooAccountingFormatterTest`
 
+- **Table existence checks** — `check_dependency()` now verifies that required third-party database tables exist before declaring a module available. New `get_required_tables()` override in Amelia, Bookly, PMPro, ShopWP, and SupportCandy modules. Missing tables produce a warning notice and prevent module boot
+- **System cron recommendation** — Polling modules (Bookly, Ecwid) now show an informational notice when `DISABLE_WP_CRON` is not set, recommending a system cron job for reliable 5-minute intervals. New `uses_cron_polling()` override in Module_Helpers trait
+- **Queue_Manager::reset()** — New static method for test isolation, clears the internal singleton repository. Added to `Module_Test_Case::reset_static_caches()`
+
+### Fixed
+- **Amelia hooks inconsistency** — `on_booking_canceled()` and `on_booking_rescheduled()` now use `should_sync('sync_appointments')` instead of bare `is_importing()`, aligning with all other hook callbacks
+
 ### Changed
 - **SimplePay_Hooks** — Deduplicated `on_payment_succeeded()` and `on_invoice_payment_succeeded()` (95% identical) into a shared `process_stripe_payment()` method
 - **Bookly_Cron_Hooks / Ecwid_Cron_Hooks** — `poll()` methods now delegate to `poll_entity_changes()` from `Module_Base` instead of duplicating the hash-diff loop

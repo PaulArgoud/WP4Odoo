@@ -441,9 +441,84 @@ trait Module_Helpers {
 			];
 		}
 
+		// Table existence check for modules that access third-party DB tables directly.
+		$missing_tables = $this->check_required_tables();
+		if ( ! empty( $missing_tables ) ) {
+			$notices[] = [
+				'type'    => 'warning',
+				'message' => sprintf(
+					/* translators: %1$s: plugin name, %2$s: comma-separated list of missing table names */
+					__( '%1$s database tables missing: %2$s. The plugin may not be fully installed.', 'wp4odoo' ),
+					$plugin_name,
+					implode( ', ', $missing_tables )
+				),
+			];
+		}
+
+		// System cron recommendation for polling modules.
+		if ( $this->uses_cron_polling() && ( ! defined( 'DISABLE_WP_CRON' ) || ! DISABLE_WP_CRON ) ) {
+			$notices[] = [
+				'type'    => 'info',
+				'message' => __( 'This module relies on WP-Cron polling. For reliable 5-minute intervals, set up a system cron job and define DISABLE_WP_CRON in wp-config.php.', 'wp4odoo' ),
+			];
+		}
+
 		return [
-			'available' => true,
+			'available' => empty( $missing_tables ),
 			'notices'   => $notices,
 		];
+	}
+
+	/**
+	 * Get the list of third-party database tables required by this module.
+	 *
+	 * Modules that access plugin tables directly via $wpdb should override
+	 * this method to declare their table dependencies. Table names should
+	 * NOT include the WordPress prefix (it will be prepended automatically).
+	 *
+	 * @return array<int, string> Table names without prefix (e.g. ['amelia_services']).
+	 */
+	protected function get_required_tables(): array {
+		return [];
+	}
+
+	/**
+	 * Whether this module uses WP-Cron polling for change detection.
+	 *
+	 * Polling modules (e.g. Bookly, Ecwid) override this to return true,
+	 * which triggers an informational notice recommending system cron.
+	 *
+	 * @return bool
+	 */
+	protected function uses_cron_polling(): bool {
+		return false;
+	}
+
+	/**
+	 * Check that all required third-party tables exist.
+	 *
+	 * @return array<int, string> List of missing table names (empty if all present).
+	 */
+	private function check_required_tables(): array {
+		$tables = $this->get_required_tables();
+		if ( empty( $tables ) ) {
+			return [];
+		}
+
+		global $wpdb;
+
+		$missing = [];
+		foreach ( $tables as $table ) {
+			$full_name = $wpdb->prefix . $table;
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+			$exists = $wpdb->get_var(
+				$wpdb->prepare( 'SHOW TABLES LIKE %s', $full_name )
+			);
+			if ( null === $exists ) {
+				$missing[] = $table;
+			}
+		}
+
+		return $missing;
 	}
 }

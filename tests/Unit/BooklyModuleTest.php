@@ -186,7 +186,9 @@ class BooklyModuleTest extends TestCase {
 	public function test_dependency_available_when_class_exists(): void {
 		$status = $this->module->get_dependency_status();
 		$this->assertTrue( $status['available'] );
-		$this->assertEmpty( $status['notices'] );
+		// Cron polling info notice is expected (uses_cron_polling() → true).
+		$warnings = array_filter( $status['notices'], fn( $n ) => 'warning' === $n['type'] || 'error' === $n['type'] );
+		$this->assertEmpty( $warnings );
 	}
 
 	// ─── Boot Guard ─────────────────────────────────────────

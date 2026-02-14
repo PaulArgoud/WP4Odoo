@@ -104,6 +104,18 @@ class SupportCandy_Module extends Helpdesk_Module_Base {
 	}
 
 	/**
+	 * Third-party tables accessed directly via $wpdb.
+	 *
+	 * @return array<int, string>
+	 */
+	protected function get_required_tables(): array {
+		return [
+			'wpsc_ticket',
+			'wpsc_ticketmeta',
+		];
+	}
+
+	/**
 	 * Get settings field definitions for the admin UI.
 	 *
 	 * @return array<string, array<string, string>>

@@ -117,6 +117,17 @@ class ShopWP_Module extends Module_Base {
 	}
 
 	/**
+	 * Third-party tables accessed directly via $wpdb.
+	 *
+	 * @return array<int, string>
+	 */
+	protected function get_required_tables(): array {
+		return [
+			'shopwp_variants',
+		];
+	}
+
+	/**
 	 * Get settings field definitions for the admin UI.
 	 *
 	 * @return array<string, array<string, string>>

@@ -145,6 +145,17 @@ class PMPro_Module extends Membership_Module_Base {
 	}
 
 	/**
+	 * Third-party tables accessed directly via $wpdb.
+	 *
+	 * @return array<int, string>
+	 */
+	protected function get_required_tables(): array {
+		return [
+			'pmpro_memberships_users',
+		];
+	}
+
+	/**
 	 * Get settings field definitions for the admin UI.
 	 *
 	 * @return array<string, array<string, string>>
