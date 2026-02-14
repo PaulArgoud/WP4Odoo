@@ -174,6 +174,10 @@ class VersionBoundsTest extends TestCase {
 	// ─── Cron polling notice ─────────────────────────────
 
 	public function test_cron_polling_module_shows_info_notice(): void {
+		if ( defined( 'DISABLE_WP_CRON' ) && DISABLE_WP_CRON ) {
+			$this->markTestSkipped( 'DISABLE_WP_CRON already defined by another test — notice is suppressed.' );
+		}
+
 		global $wpdb;
 		$wpdb = new \WP_DB_Stub();
 
