@@ -50,7 +50,7 @@ trait Ajax_Setup_Handlers {
 
 		// Store the Odoo version for display and compat report links.
 		if ( ! empty( $result['version'] ) ) {
-			update_option( 'wp4odoo_odoo_version', sanitize_text_field( $result['version'] ) );
+			update_option( 'wp4odoo_odoo_version', sanitize_text_field( $result['version'] ), false );
 		}
 
 		// Add human-readable warning for missing models.

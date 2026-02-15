@@ -124,7 +124,7 @@ class Failure_Notifier {
 			admin_url( 'admin.php?page=wp4odoo&tab=health' )
 		);
 
-		update_option( 'wp4odoo_last_cb_email', time() );
+		update_option( 'wp4odoo_last_cb_email', time(), false );
 
 		if ( ! wp_mail( $admin_email, $subject, $message ) ) {
 			$this->logger->error(

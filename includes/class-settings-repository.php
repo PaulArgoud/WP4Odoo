@@ -256,7 +256,7 @@ class Settings_Repository {
 	 * @return bool
 	 */
 	public function save_module_settings( string $id, array $settings ): bool {
-		return update_option( 'wp4odoo_module_' . $id . '_settings', $settings );
+		return update_option( 'wp4odoo_module_' . $id . '_settings', $settings, false );
 	}
 
 	/**
@@ -297,10 +297,10 @@ class Settings_Repository {
 	 */
 	public function save_webhook_token( string $token ): bool {
 		if ( '' === $token ) {
-			return update_option( self::OPT_WEBHOOK_TOKEN, '' );
+			return update_option( self::OPT_WEBHOOK_TOKEN, '', false );
 		}
 
-		return update_option( self::OPT_WEBHOOK_TOKEN, API\Odoo_Auth::encrypt( $token ) );
+		return update_option( self::OPT_WEBHOOK_TOKEN, API\Odoo_Auth::encrypt( $token ), false );
 	}
 
 	// ── Failure tracking ───────────────────────────────────
@@ -321,7 +321,7 @@ class Settings_Repository {
 	 * @return bool
 	 */
 	public function save_consecutive_failures( int $count ): bool {
-		return update_option( self::OPT_CONSECUTIVE_FAILURES, $count );
+		return update_option( self::OPT_CONSECUTIVE_FAILURES, $count, false );
 	}
 
 	/**
@@ -340,7 +340,7 @@ class Settings_Repository {
 	 * @return bool
 	 */
 	public function save_last_failure_email( int $timestamp ): bool {
-		return update_option( self::OPT_LAST_FAILURE_EMAIL, $timestamp );
+		return update_option( self::OPT_LAST_FAILURE_EMAIL, $timestamp, false );
 	}
 
 	// ── Onboarding / Checklist ─────────────────────────────
@@ -360,7 +360,7 @@ class Settings_Repository {
 	 * @return bool
 	 */
 	public function dismiss_onboarding(): bool {
-		return update_option( self::OPT_ONBOARDING_DISMISSED, true );
+		return update_option( self::OPT_ONBOARDING_DISMISSED, true, false );
 	}
 
 	/**
@@ -378,7 +378,7 @@ class Settings_Repository {
 	 * @return bool
 	 */
 	public function dismiss_checklist(): bool {
-		return update_option( self::OPT_CHECKLIST_DISMISSED, true );
+		return update_option( self::OPT_CHECKLIST_DISMISSED, true, false );
 	}
 
 	/**
@@ -396,7 +396,7 @@ class Settings_Repository {
 	 * @return bool
 	 */
 	public function confirm_webhooks(): bool {
-		return update_option( self::OPT_CHECKLIST_WEBHOOKS, true );
+		return update_option( self::OPT_CHECKLIST_WEBHOOKS, true, false );
 	}
 
 	// ── Cron health ───────────────────────────────────────
@@ -416,7 +416,7 @@ class Settings_Repository {
 	 * @return bool
 	 */
 	public function touch_cron_run(): bool {
-		return update_option( self::OPT_LAST_CRON_RUN, time() );
+		return update_option( self::OPT_LAST_CRON_RUN, time(), false );
 	}
 
 	/**

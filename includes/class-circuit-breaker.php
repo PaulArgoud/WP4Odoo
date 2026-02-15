@@ -298,7 +298,8 @@ class Circuit_Breaker {
 					[
 						'opened_at' => $now,
 						'failures'  => $count,
-					]
+					],
+					false
 				);
 
 				$this->logger->warning(

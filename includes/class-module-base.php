@@ -897,6 +897,13 @@ abstract class Module_Base {
 	 */
 	protected function poll_entity_changes( string $entity_type, array $items, string $id_field = 'id' ): void {
 		$existing = $this->entity_map()->get_module_entity_mappings( $this->id, $entity_type );
+
+		if ( count( $existing ) >= Entity_Map_Repository::POLL_LIMIT ) {
+			$this->logger->warning(
+				sprintf( 'Polling hit the %d-row safety limit for %s/%s. Some entities may be excluded from sync.', Entity_Map_Repository::POLL_LIMIT, $this->id, $entity_type )
+			);
+		}
+
 		$seen_ids = [];
 
 		foreach ( $items as $item ) {

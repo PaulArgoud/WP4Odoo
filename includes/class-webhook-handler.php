@@ -34,10 +34,17 @@ class Webhook_Handler {
 	private const RATE_LIMIT_WINDOW = 60;
 
 	/**
-	 * Deduplication window in seconds.
+	 * Deduplication window in seconds (30 minutes).
 	 *
 	 * Identical webhook payloads received within this window
 	 * are treated as duplicates and not re-enqueued.
+	 *
+	 * 30 minutes is intentionally generous: Odoo automated actions
+	 * and workflow triggers can fire multiple webhooks for the same
+	 * record change within seconds/minutes. The window must be long
+	 * enough to catch delayed retries but short enough that genuine
+	 * rapid updates (e.g. operator editing a record twice) are not
+	 * silently dropped.
 	 */
 	private const DEDUP_WINDOW = 1800;
 

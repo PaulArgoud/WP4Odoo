@@ -39,6 +39,13 @@ class Entity_Map_Repository {
 	private const MAX_CACHE_SIZE = 5000;
 
 	/**
+	 * Maximum rows returned by get_module_entity_mappings().
+	 *
+	 * Safety cap to prevent unbounded memory usage during polling.
+	 */
+	public const POLL_LIMIT = 50000;
+
+	/**
 	 * Per-request lookup cache.
 	 *
 	 * Keys use the format "{module}:{entity_type}:wp:{wp_id}" or
@@ -374,11 +381,13 @@ class Entity_Map_Repository {
 
 		// Safety LIMIT prevents loading unbounded rows on high-volume sites.
 		// Polling modules (Bookly, Ecwid) typically have < 10k entities.
-		$rows = $wpdb->get_results(
+		$limit = self::POLL_LIMIT;
+		$rows  = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT wp_id, odoo_id, sync_hash FROM {$table} WHERE module = %s AND entity_type = %s LIMIT 50000", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is from $wpdb->prefix, safe.
+				"SELECT wp_id, odoo_id, sync_hash FROM {$table} WHERE module = %s AND entity_type = %s LIMIT %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is from $wpdb->prefix, safe.
 				$module,
-				$entity_type
+				$entity_type,
+				$limit
 			)
 		);
 
