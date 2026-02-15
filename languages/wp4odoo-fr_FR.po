@@ -5,8 +5,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: WordPress For Odoo 2.0.0\n"
-"Report-Msgid-Bugs-To: support@avalia.io\n"
-"POT-Creation-Date: 2026-02-15 21:03+0100\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-02-15 21:41+0100\n"
 "PO-Revision-Date: 2026-02-15 12:00+0100\n"
 "Last-Translator: \n"
 "Language-Team: French\n"
@@ -74,20 +74,20 @@ msgid "Contacts (base) + CRM (crm) for leads"
 msgstr "Contacts (base) + CRM (crm) pour les pistes"
 
 #: admin/views/tab-connection.php:30
-msgid "Sales:"
-msgstr "Ventes :"
-
-#: admin/views/tab-connection.php:30
 msgid "Sales (sale_management) + Invoicing (account)"
 msgstr "Ventes (sale_management) + Facturation (account)"
 
-#: admin/views/tab-connection.php:31
-msgid "WooCommerce:"
-msgstr "WooCommerce :"
+#: admin/views/tab-connection.php:30
+msgid "Sales:"
+msgstr "Ventes :"
 
 #: admin/views/tab-connection.php:31
 msgid "Inventory (stock) + Sales (sale_management) + Invoicing (account)"
 msgstr "Inventaire (stock) + Ventes (sale_management) + Facturation (account)"
+
+#: admin/views/tab-connection.php:31
+msgid "WooCommerce:"
+msgstr "WooCommerce :"
 
 #: admin/views/tab-connection.php:41
 msgid "Odoo Connection"
@@ -1501,6 +1501,52 @@ msgstr "Récupérer les produits de service Odoo dans les services Bookly."
 msgid "Booking"
 msgstr "Réservation"
 
+#: includes/modules/class-buddyboss-module.php:112
+#, fuzzy
+msgid "BuddyBoss module enabled but BuddyPress is not active."
+msgstr "Module Bookly activé mais Bookly n'est pas actif."
+
+#: includes/modules/class-buddyboss-module.php:156
+#, fuzzy
+msgid "Sync profiles"
+msgstr "Rôle synchronisé"
+
+#: includes/modules/class-buddyboss-module.php:158
+#, fuzzy
+msgid "Push BuddyBoss community profiles to Odoo as contacts."
+msgstr ""
+"Envoyer les abonnés FluentCRM vers Odoo comme contacts de publipostage."
+
+#: includes/modules/class-buddyboss-module.php:161
+#, fuzzy
+msgid "Pull profiles from Odoo"
+msgstr "Récupérer les factures depuis Odoo"
+
+#: includes/modules/class-buddyboss-module.php:163
+#, fuzzy
+msgid "Pull contact changes from Odoo back to BuddyBoss profiles."
+msgstr "Récupérer les modifications d'événements depuis Odoo vers WordPress."
+
+#: includes/modules/class-buddyboss-module.php:166
+#: includes/modules/class-learndash-module.php:166
+msgid "Sync groups"
+msgstr "Synchroniser les groupes"
+
+#: includes/modules/class-buddyboss-module.php:168
+#, fuzzy
+msgid "Push BuddyBoss groups to Odoo as partner categories (tags)."
+msgstr ""
+"Envoyer les étiquettes FluentCRM vers Odoo comme catégories de partenaires."
+
+#: includes/modules/class-buddyboss-module.php:171
+#, fuzzy
+msgid "Sync group memberships"
+msgstr "Synchroniser les adhésions"
+
+#: includes/modules/class-buddyboss-module.php:173
+msgid "Include group category tags on profile sync to Odoo."
+msgstr "Inclure les étiquettes de catégorie de groupe lors de la synchronisation des profils vers Odoo."
+
 #: includes/modules/class-charitable-handler.php:94
 #: includes/modules/class-givewp-handler.php:84
 msgid "Donation"
@@ -1760,7 +1806,8 @@ msgstr "Synchroniser les abonnés"
 
 #: includes/modules/class-fluentcrm-module.php:156
 msgid "Push FluentCRM subscribers to Odoo as mailing contacts."
-msgstr "Envoyer les abonnés FluentCRM vers Odoo comme contacts de publipostage."
+msgstr ""
+"Envoyer les abonnés FluentCRM vers Odoo comme contacts de publipostage."
 
 #: includes/modules/class-fluentcrm-module.php:159
 msgid "Sync lists"
@@ -1776,7 +1823,8 @@ msgstr "Synchroniser les étiquettes"
 
 #: includes/modules/class-fluentcrm-module.php:166
 msgid "Push FluentCRM tags to Odoo as partner categories."
-msgstr "Envoyer les étiquettes FluentCRM vers Odoo comme catégories de partenaires."
+msgstr ""
+"Envoyer les étiquettes FluentCRM vers Odoo comme catégories de partenaires."
 
 #: includes/modules/class-fluentcrm-module.php:169
 msgid "Pull subscribers from Odoo"
@@ -1784,7 +1832,9 @@ msgstr "Récupérer les abonnés depuis Odoo"
 
 #: includes/modules/class-fluentcrm-module.php:171
 msgid "Pull mailing contact changes from Odoo back to FluentCRM."
-msgstr "Récupérer les modifications de contacts de publipostage depuis Odoo vers FluentCRM."
+msgstr ""
+"Récupérer les modifications de contacts de publipostage depuis Odoo vers "
+"FluentCRM."
 
 #: includes/modules/class-fluentcrm-module.php:174
 msgid "Pull lists from Odoo"
@@ -1792,7 +1842,9 @@ msgstr "Récupérer les listes depuis Odoo"
 
 #: includes/modules/class-fluentcrm-module.php:176
 msgid "Pull mailing list changes from Odoo back to FluentCRM."
-msgstr "Récupérer les modifications de listes de diffusion depuis Odoo vers FluentCRM."
+msgstr ""
+"Récupérer les modifications de listes de diffusion depuis Odoo vers "
+"FluentCRM."
 
 #: includes/modules/class-form-handler.php:83
 #, php-format
@@ -1906,6 +1958,127 @@ msgstr ""
 #, php-format
 msgid "%s is not active."
 msgstr "%s n'est pas actif."
+
+#: includes/modules/class-funnelkit-module.php:107
+#, fuzzy
+msgid "FunnelKit module enabled but FunnelKit is not active."
+msgstr "Module Amelia activé mais Amelia n'est pas actif."
+
+#: includes/modules/class-funnelkit-module.php:145
+#, fuzzy
+msgid "Sync contacts"
+msgstr "Synchroniser les utilisateurs comme contacts"
+
+#: includes/modules/class-funnelkit-module.php:147
+#, fuzzy
+msgid "Push FunnelKit contacts to Odoo as CRM leads."
+msgstr ""
+"Envoyer les rendez-vous Amelia vers Odoo en tant qu'événements de calendrier."
+
+#: includes/modules/class-funnelkit-module.php:150
+#, fuzzy
+msgid "Sync steps"
+msgstr "Synchroniser les listes"
+
+#: includes/modules/class-funnelkit-module.php:152
+#, fuzzy
+msgid "Push FunnelKit funnel steps to Odoo as CRM stages."
+msgstr ""
+"Envoyer les étiquettes FluentCRM vers Odoo comme catégories de partenaires."
+
+#: includes/modules/class-funnelkit-module.php:155
+#, fuzzy
+msgid "Pull contacts from Odoo"
+msgstr "Récupérer les billets depuis Odoo"
+
+#: includes/modules/class-funnelkit-module.php:157
+#, fuzzy
+msgid "Pull CRM lead changes from Odoo back to FunnelKit contacts."
+msgstr ""
+"Récupérer les modifications de listes de diffusion depuis Odoo vers "
+"FluentCRM."
+
+#: includes/modules/class-funnelkit-module.php:160
+#, fuzzy
+msgid "Odoo pipeline ID"
+msgstr "Champ Odoo"
+
+#: includes/modules/class-funnelkit-module.php:162
+msgid "The Odoo CRM team (pipeline) ID to assign stages to."
+msgstr "L'ID de l'équipe CRM Odoo (pipeline) à laquelle affecter les étapes."
+
+#: includes/modules/class-gamipress-module.php:109
+#, fuzzy
+msgid "GamiPress module enabled but GamiPress is not active."
+msgstr "Module MemberPress activé mais MemberPress n'est pas actif."
+
+#: includes/modules/class-gamipress-module.php:152
+#: includes/modules/class-wc-points-rewards-module.php:132
+msgid "Sync point balances"
+msgstr "Synchroniser les soldes de points"
+
+#: includes/modules/class-gamipress-module.php:154
+#, fuzzy
+msgid ""
+"Push GamiPress point balances to Odoo loyalty cards. Only balances are "
+"synced — earning history stays in WordPress."
+msgstr ""
+"Envoyer les soldes WC Points & Rewards vers les cartes de fidélité Odoo. "
+"Seuls les soldes sont synchronisés — l'historique des transactions reste "
+"dans WooCommerce."
+
+#: includes/modules/class-gamipress-module.php:157
+#, fuzzy
+msgid "Pull point updates from Odoo"
+msgstr "Récupérer les mises à jour de soldes depuis Odoo"
+
+#: includes/modules/class-gamipress-module.php:159
+#, fuzzy
+msgid "Pull loyalty card point changes from Odoo back to GamiPress."
+msgstr ""
+"Récupérer les changements de points des cartes de fidélité depuis Odoo vers "
+"WooCommerce."
+
+#: includes/modules/class-gamipress-module.php:162
+#, fuzzy
+msgid "Sync achievement types"
+msgstr "Synchroniser les expéditions"
+
+#: includes/modules/class-gamipress-module.php:164
+#, fuzzy
+msgid "Push GamiPress achievement types to Odoo as service products."
+msgstr ""
+"Envoyer les recettes WP Recipe Maker vers Odoo en tant que produits de "
+"service."
+
+#: includes/modules/class-gamipress-module.php:167
+#, fuzzy
+msgid "Sync rank types"
+msgstr "Synchroniser les recettes"
+
+#: includes/modules/class-gamipress-module.php:169
+#, fuzzy
+msgid "Push GamiPress rank types to Odoo as service products."
+msgstr "Envoyer les groupes LearnDash vers Odoo comme produits de service."
+
+#: includes/modules/class-gamipress-module.php:172
+#: includes/modules/class-wc-points-rewards-module.php:142
+msgid "Odoo Loyalty Program ID"
+msgstr "ID du programme de fidélité Odoo"
+
+#: includes/modules/class-gamipress-module.php:174
+#, fuzzy
+msgid ""
+"The ID of the Odoo loyalty program to sync points with. Create a Loyalty "
+"program in Odoo first, then enter its ID here."
+msgstr ""
+"L'ID du programme de fidélité Odoo avec lequel synchroniser. Créez d'abord "
+"un programme de fidélité dans Odoo, puis entrez son ID ici."
+
+#: includes/modules/class-gamipress-module.php:278
+#: includes/modules/class-wc-points-rewards-module.php:284
+msgid "Odoo Loyalty Program ID not configured."
+msgstr "ID du programme de fidélité Odoo non configuré."
 
 #: includes/modules/class-givewp-module.php:96
 msgid "GiveWP module enabled but GiveWP is not active."
@@ -2088,10 +2261,6 @@ msgstr "Synchroniser les cours"
 #: includes/modules/class-learndash-module.php:163
 msgid "Push LearnDash courses to Odoo as service products."
 msgstr "Envoyer les cours LearnDash vers Odoo comme produits de service."
-
-#: includes/modules/class-learndash-module.php:166
-msgid "Sync groups"
-msgstr "Synchroniser les groupes"
 
 #: includes/modules/class-learndash-module.php:168
 msgid "Push LearnDash groups to Odoo as service products."
@@ -2602,10 +2771,6 @@ msgstr ""
 "Module WC Points & Rewards activé mais WooCommerce Points & Rewards n'est "
 "pas actif."
 
-#: includes/modules/class-wc-points-rewards-module.php:132
-msgid "Sync point balances"
-msgstr "Synchroniser les soldes de points"
-
 #: includes/modules/class-wc-points-rewards-module.php:134
 msgid ""
 "Push WC Points & Rewards balances to Odoo loyalty cards. Only balances are "
@@ -2625,10 +2790,6 @@ msgstr ""
 "Récupérer les changements de points des cartes de fidélité depuis Odoo vers "
 "WooCommerce."
 
-#: includes/modules/class-wc-points-rewards-module.php:142
-msgid "Odoo Loyalty Program ID"
-msgstr "ID du programme de fidélité Odoo"
-
 #: includes/modules/class-wc-points-rewards-module.php:144
 msgid ""
 "The ID of the Odoo loyalty program to sync with. Create a Loyalty program in "
@@ -2636,10 +2797,6 @@ msgid ""
 msgstr ""
 "L'ID du programme de fidélité Odoo avec lequel synchroniser. Créez d'abord "
 "un programme de fidélité dans Odoo, puis entrez son ID ici."
-
-#: includes/modules/class-wc-points-rewards-module.php:284
-msgid "Odoo Loyalty Program ID not configured."
-msgstr "ID du programme de fidélité Odoo non configuré."
 
 #: includes/modules/class-wc-pull-coordinator.php:246
 msgid "Shipment sync is disabled."

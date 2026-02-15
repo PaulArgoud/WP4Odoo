@@ -5,7 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [3.2.0] - Unreleased
+## [3.2.5] - Unreleased
+
+### Added
+- **FunnelKit module** — New funnel/sales pipeline module for FunnelKit (ex-WooFunnels) 3.0+. Syncs contacts → `crm.lead` (bidirectional) with stage progression, funnel steps → `crm.stage` (push-only). Configurable Odoo pipeline ID, filterable stage mapping via `wp4odoo_funnelkit_stage_map`
+- **GamiPress module** — New gamification/loyalty module for GamiPress 2.6+. Syncs point balances → `loyalty.card` (bidirectional, find-or-create by partner+program), achievement types → `product.template` (push-only), rank types → `product.template` (push-only). Same loyalty.card pattern as WC Points & Rewards
+- **BuddyBoss module** — New community module for BuddyBoss/BuddyPress 2.4+. Syncs profiles → `res.partner` (bidirectional, enriched with xprofile fields), groups → `res.partner.category` (push-only). Group membership reflected as partner category tags via Many2many `[(6, 0, [ids])]` tuples
+
+## [3.2.0] - 2026-02-15
 
 ### Fixed
 - **WC Bookings silent push failure** — Entity type `'product'` was not declared in WC_Bookings_Module's `$odoo_models` (only `'service'` and `'booking'`), causing every booking product push to silently fail. Changed to `'service'`

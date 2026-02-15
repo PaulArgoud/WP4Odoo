@@ -1082,5 +1082,92 @@ if ( ! function_exists( 'wp_all_import_get_import_id' ) ) {
 	}
 }
 
+// ─── BuddyBoss / BuddyPress stubs ───────────────────────
+
+if ( ! defined( 'BP_VERSION' ) ) {
+	define( 'BP_VERSION', '2.6.0' );
+}
+
+if ( ! function_exists( 'buddypress' ) ) {
+	/** @return stdClass */
+	function buddypress(): stdClass { return new stdClass(); }
+}
+
+if ( ! function_exists( 'bp_get_profile_field_data' ) ) {
+	/**
+	 * @param array $args
+	 * @return string
+	 */
+	function bp_get_profile_field_data( array $args = [] ): string { return ''; }
+}
+
+if ( ! function_exists( 'xprofile_set_field_data' ) ) {
+	/**
+	 * @param string $field
+	 * @param int    $user_id
+	 * @param mixed  $value
+	 * @return bool
+	 */
+	function xprofile_set_field_data( string $field, int $user_id, $value ): bool { return true; }
+}
+
+if ( ! function_exists( 'groups_get_group' ) ) {
+	/**
+	 * @param int $group_id
+	 * @return object|null
+	 */
+	function groups_get_group( int $group_id ) { return null; }
+}
+
+if ( ! function_exists( 'groups_get_user_groups' ) ) {
+	/**
+	 * @param int $user_id
+	 * @return array{groups: array<int>, total: int}
+	 */
+	function groups_get_user_groups( int $user_id ): array { return [ 'groups' => [], 'total' => 0 ]; }
+}
+
+// ─── GamiPress stubs ─────────────────────────────────────
+
+if ( ! defined( 'GAMIPRESS_VERSION' ) ) {
+	define( 'GAMIPRESS_VERSION', '2.8.0' );
+}
+
+if ( ! function_exists( 'gamipress' ) ) {
+	/** @return stdClass */
+	function gamipress(): stdClass { return new stdClass(); }
+}
+
+if ( ! function_exists( 'gamipress_get_user_points' ) ) {
+	/**
+	 * @param int    $user_id     WordPress user ID.
+	 * @param string $points_type Points type slug.
+	 * @return int
+	 */
+	function gamipress_get_user_points( int $user_id, string $points_type = 'points' ): int { return 0; }
+}
+
+if ( ! function_exists( 'gamipress_award_points_to_user' ) ) {
+	/**
+	 * @param int    $user_id     WordPress user ID.
+	 * @param int    $points      Points to award.
+	 * @param string $points_type Points type slug.
+	 * @param array  $args        Additional arguments.
+	 * @return void
+	 */
+	function gamipress_award_points_to_user( int $user_id, int $points, string $points_type = 'points', array $args = [] ): void {}
+}
+
+if ( ! function_exists( 'gamipress_deduct_points_to_user' ) ) {
+	/**
+	 * @param int    $user_id     WordPress user ID.
+	 * @param int    $points      Points to deduct.
+	 * @param string $points_type Points type slug.
+	 * @param array  $args        Additional arguments.
+	 * @return void
+	 */
+	function gamipress_deduct_points_to_user( int $user_id, int $points, string $points_type = 'points', array $args = [] ): void {}
+}
+
 // WP_CLI\Utils namespace stub loaded from separate file (PHP namespace rules).
 require_once __DIR__ . '/phpstan-wp-cli-stubs.php';

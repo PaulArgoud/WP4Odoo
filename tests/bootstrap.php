@@ -90,6 +90,7 @@ $GLOBALS['_wc_composites']           = [];
 $GLOBALS['_affwp_affiliates']        = [];
 $GLOBALS['_affwp_referrals']         = [];
 $GLOBALS['_wpai_import_id']          = 0;
+$GLOBALS['_gamipress_points']        = [];
 
 // ─── Load stubs ─────────────────────────────────────────
 // Stubs must be loaded before the autoloader so that external
@@ -134,6 +135,9 @@ require_once __DIR__ . '/stubs/affiliatewp-classes.php';
 require_once __DIR__ . '/stubs/wpai-classes.php';
 require_once __DIR__ . '/stubs/tutorlms-classes.php';
 require_once __DIR__ . '/stubs/fluentcrm-classes.php';
+require_once __DIR__ . '/stubs/buddyboss-classes.php';
+require_once __DIR__ . '/stubs/gamipress-classes.php';
+require_once __DIR__ . '/stubs/funnelkit-classes.php';
 
 // ─── Composer autoloader ────────────────────────────────
 

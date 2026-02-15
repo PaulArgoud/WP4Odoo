@@ -37,6 +37,9 @@ enum Odoo_Model: string {
 	/** CRM leads / opportunities. */
 	case Lead = 'crm.lead';
 
+	/** CRM stages (pipeline). */
+	case CrmStage = 'crm.stage';
+
 	// ─── Sales ─────────────────────────────────────────────
 
 	/** Sale orders. */

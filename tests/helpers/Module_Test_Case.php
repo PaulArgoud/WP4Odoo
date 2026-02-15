@@ -65,6 +65,7 @@ abstract class Module_Test_Case extends TestCase {
 		'_wc_composites',
 		'_affwp_affiliates',
 		'_affwp_referrals',
+		'_gamipress_points',
 	];
 
 	/**

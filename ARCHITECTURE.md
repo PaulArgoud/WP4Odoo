@@ -2,7 +2,7 @@
 
 ## Overview
 
-Modular WordPress plugin providing bidirectional synchronization between WordPress/WooCommerce and Odoo ERP (v14+). The plugin covers 35 modules across 21 domains: CRM, Sales & Invoicing, WooCommerce, WooCommerce Subscriptions, WC Bundle BOM, WC Points & Rewards, Easy Digital Downloads, Memberships (WC Memberships + MemberPress + PMPro + RCP), Donations (GiveWP + WP Charitable + WP Simple Pay), Forms (7 plugins), WP Recipe Maker, LMS (LearnDash + LifterLMS + TutorLMS), Booking (Amelia + Bookly), Events (The Events Calendar + Event Tickets), Invoicing (Sprout Invoices + WP-Invoice), E-Commerce (WP Crowdfunding + Ecwid + ShopWP), Helpdesk (Awesome Support + SupportCandy), HR (WP Job Manager), Affiliates (AffiliateWP), Marketing CRM (FluentCRM), and Meta-modules (ACF + WP All Import).
+Modular WordPress plugin providing bidirectional synchronization between WordPress/WooCommerce and Odoo ERP (v14+). The plugin covers 38 modules across 24 domains: CRM, Sales & Invoicing, WooCommerce, WooCommerce Subscriptions, WC Bundle BOM, WC Points & Rewards, Easy Digital Downloads, Memberships (WC Memberships + MemberPress + PMPro + RCP), Donations (GiveWP + WP Charitable + WP Simple Pay), Forms (7 plugins), WP Recipe Maker, LMS (LearnDash + LifterLMS + TutorLMS), Booking (Amelia + Bookly), Events (The Events Calendar + Event Tickets), Invoicing (Sprout Invoices + WP-Invoice), E-Commerce (WP Crowdfunding + Ecwid + ShopWP), Helpdesk (Awesome Support + SupportCandy), HR (WP Job Manager), Affiliates (AffiliateWP), Marketing CRM (FluentCRM), Funnels (FunnelKit), Gamification (GamiPress), Community (BuddyBoss), and Meta-modules (ACF + WP All Import).
 
 ![WP4ODOO Full Architecture](assets/images/architecture-full.svg)
 
@@ -199,6 +199,21 @@ WordPress For Odoo/
 │   │   ├── class-fluentcrm-handler.php     # FluentCRM: custom DB tables (fc_subscribers, fc_lists, fc_tags), $wpdb queries
 │   │   ├── trait-fluentcrm-hooks.php       # FluentCRM: subscriber/list/tag creation/update hooks
 │   │   │
+│   │   ├── # ─── FunnelKit (Funnels / Sales pipeline) ─────
+│   │   ├── trait-funnelkit-hooks.php       # FunnelKit: hook callbacks (contact created/updated, step saved)
+│   │   ├── class-funnelkit-handler.php     # FunnelKit: contact/step data load, stage resolution, bwf_contact DB
+│   │   ├── class-funnelkit-module.php      # FunnelKit: CRM pipeline sync coordinator (uses FunnelKit_Hooks trait)
+│   │   │
+│   │   ├── # ─── GamiPress (Gamification / Loyalty) ───────
+│   │   ├── trait-gamipress-hooks.php       # GamiPress: hook callbacks (points awarded/deducted, achievement/rank earned)
+│   │   ├── class-gamipress-handler.php     # GamiPress: points/achievement/rank data load, loyalty card formatting
+│   │   ├── class-gamipress-module.php      # GamiPress: gamification sync coordinator (uses GamiPress_Hooks trait)
+│   │   │
+│   │   ├── # ─── BuddyBoss (Community) ────────────────────
+│   │   ├── trait-buddyboss-hooks.php       # BuddyBoss: hook callbacks (profile updated, group saved, member changed)
+│   │   ├── class-buddyboss-handler.php     # BuddyBoss: profile/group data load, xprofile fields, M2M category tags
+│   │   ├── class-buddyboss-module.php      # BuddyBoss: community sync coordinator (uses BuddyBoss_Hooks trait)
+│   │   │
 │   │   ├── # ─── Meta-modules (enrichment / interception) ──
 │   │   ├── class-acf-handler.php             # ACF: type conversions, enrich push/pull, write ACF fields
 │   │   ├── class-acf-module.php              # ACF: filter-based enrichment, mapping configurator, no own entity types
@@ -271,7 +286,7 @@ WordPress For Odoo/
 ├── templates/
 │   └── customer-portal.php           #   Customer portal HTML template (orders/invoices tabs)
 │
-├── tests/                             # 2972 unit tests (4597 assertions) + 26 integration tests (wp-env)
+├── tests/                             # 3350 unit tests (5136 assertions) + 26 integration tests (wp-env)
 │   ├── bootstrap.php                 #   Unit test bootstrap: constants, stub loading, plugin class requires
 │   ├── bootstrap-integration.php     #   Integration test bootstrap: loads WP test framework (wp-env)
 │   ├── stubs/
@@ -311,6 +326,9 @@ WordPress For Odoo/
 │   │   ├── affiliatewp-classes.php     # AffiliateWP, affwp_get_affiliate
 │   │   ├── tutorlms-classes.php        # TUTOR_VERSION constant
 │   │   ├── fluentcrm-classes.php       # FLUENTCRM, FLUENTCRM_PLUGIN_VERSION, FluentCrm\App\Models stubs
+│   │   ├── funnelkit-classes.php          # FunnelKit: WFFN_VERSION constant
+│   │   ├── gamipress-classes.php          # GamiPress: GAMIPRESS_VERSION, gamipress(), points/achievement functions
+│   │   ├── buddyboss-classes.php          # BuddyBoss: BP_VERSION, buddypress(), xprofile/groups functions
 │   │   ├── wpai-classes.php            # PMXI_VERSION, wp_all_import_get_import_id
 │   │   └── i18n-classes.php            # WPML + Polylang stubs (constants, classes, functions)
 │   ├── helpers/
@@ -451,7 +469,10 @@ WordPress For Odoo/
 │       ├── WPInvoiceHandlerTest.php    #   18 tests for WP_Invoice_Handler
 │       ├── StockHandlerTest.php        #   10 tests for Stock_Handler
 │       ├── TutorLMSModuleTest.php      #   66 tests for TutorLMS_Module + Handler + Hooks
-│       └── FluentCRMModuleTest.php     #   69 tests for FluentCRM_Module + Handler + Hooks
+│       ├── FluentCRMModuleTest.php     #   69 tests for FluentCRM_Module + Handler + Hooks
+│       ├── FunnelKitModuleTest.php    #   73 tests — FunnelKit contact/step sync, stage resolution, dedup
+│       ├── GamiPressModuleTest.php    #   86 tests — GamiPress points/achievement/rank sync, loyalty card resolution
+│       └── BuddyBossModuleTest.php    #   76 tests — BuddyBoss profile/group sync, xprofile fields, M2M tags
 │
 ├── uninstall.php                      # Cleanup on plugin uninstall
 │
@@ -529,6 +550,9 @@ Module_Base (abstract)
 ├── Job_Manager_Module          → hr.job                                             [bidirectional]
 ├── AffiliateWP_Module          → res.partner (vendor), account.move (in_invoice)    [WP → Odoo]
 ├── FluentCRM_Module            → mailing.contact, mailing.list, res.partner.category  [bidirectional]
+├── FunnelKit_Module            → crm.lead, crm.stage                               [bidirectional]
+├── GamiPress_Module            → loyalty.card, product.template                     [bidirectional]
+├── BuddyBoss_Module            → res.partner, res.partner.category                  [bidirectional]
 ├── ACF_Module                  → (meta-module: enriches other modules' pipelines)   [bidirectional]
 ├── WP_All_Import_Module        → (meta-module: routes imports to sync queue)        [WP → Odoo]
 └── [Custom_Module]             → extensible via action hook
@@ -539,7 +563,7 @@ Module_Base (abstract)
 - **Memberships**: WC Memberships, MemberPress, PMPro, and RCP are mutually exclusive (all target `membership.membership_line`). Priority (highest number wins): WC Memberships (20) > PMPro (15) > RCP (12) > MemberPress (10).
 - **Invoicing**: Sprout Invoices and WP-Invoice are mutually exclusive (both target `account.move` for invoicing). Priority: Sprout Invoices (10) > WP-Invoice (5).
 - **Helpdesk**: Awesome Support and SupportCandy are mutually exclusive (both target `helpdesk.ticket` / `project.task`). Priority: SupportCandy (15) > Awesome Support (10).
-- All other modules are independent and can coexist freely (LMS, Subscriptions, Points & Rewards, Events, Booking, Donations, Forms, WPRM, Crowdfunding, BOM, AffiliateWP, FluentCRM, ACF, WP All Import, Job Manager).
+- All other modules are independent and can coexist freely (LMS, Subscriptions, Points & Rewards, Events, Booking, Donations, Forms, WPRM, Crowdfunding, BOM, AffiliateWP, FluentCRM, FunnelKit, GamiPress, BuddyBoss, ACF, WP All Import, Job Manager).
 
 **Module_Base provides:**
 - Version bounds: `PLUGIN_MIN_VERSION` (blocks boot if too old) and `PLUGIN_TESTED_UP_TO` (warns if newer than tested). Subclasses override `get_plugin_version()` to return the detected plugin version. Patch-level normalization ensures `10.5.0` is within `10.5` range. `Module_Registry` enforces MIN before boot and collects TESTED warnings for the admin notice.
@@ -1562,6 +1586,55 @@ All user inputs are sanitized with:
 - Detection: `defined('FLUENTCRM')`, version from `FLUENTCRM_PLUGIN_VERSION`
 
 **Settings:** `sync_subscribers` (bool), `sync_lists` (bool), `sync_tags` (bool), `pull_subscribers` (bool), `pull_lists` (bool)
+
+### FunnelKit (ex-WooFunnels) — COMPLETE
+
+**Files:** `class-funnelkit-module.php`, `trait-funnelkit-hooks.php`, `class-funnelkit-handler.php`
+
+**Odoo models:** `crm.lead` (contacts — bidirectional), `crm.stage` (funnel steps — push-only)
+
+**Key features:**
+- Funnel contacts → `crm.lead` (bidirectional): push on `bwfan_contact_created` / `bwfan_contact_updated`, pull stage changes back
+- Funnel steps → `crm.stage` (push-only): push on `save_post_wffn_step`
+- Configurable Odoo CRM pipeline ID (`odoo_pipeline_id` setting) for team assignment
+- Filterable stage mapping via `wp4odoo_funnelkit_stage_map` hook
+- Custom DB table access: reads `{prefix}bwf_contact` + `bwf_contact_meta` via `$wpdb->prepare()`
+- Dedup: contacts by `email_from`, steps by `name`
+
+**Settings:** `sync_contacts` (bool), `sync_steps` (bool), `pull_contacts` (bool), `odoo_pipeline_id` (int)
+
+### GamiPress — COMPLETE
+
+**Files:** `class-gamipress-module.php`, `trait-gamipress-hooks.php`, `class-gamipress-handler.php`
+
+**Odoo models:** `loyalty.card` (points — bidirectional), `product.template` (achievements + ranks — push-only)
+
+**Key features:**
+- Point balances → `loyalty.card` (bidirectional): find-or-create by partner_id + program_id (same pattern as WC Points & Rewards)
+- Achievement types → `product.template` (push-only, service type): push on `gamipress_award_achievement`
+- Rank types → `product.template` (push-only, service type): push on `gamipress_update_user_rank`
+- Points push on `gamipress_award_points_to_user` / `gamipress_deduct_points_to_user`
+- Pull: awards/deducts points delta via `gamipress_award_points_to_user()` / `gamipress_deduct_points_to_user()` with `'odoo-sync'` reason
+- Dedup: achievements/ranks by `name`
+
+**Settings:** `sync_points` (bool), `pull_points` (bool), `sync_achievements` (bool), `sync_ranks` (bool), `odoo_program_id` (int)
+
+### BuddyBoss / BuddyPress — COMPLETE
+
+**Files:** `class-buddyboss-module.php`, `trait-buddyboss-hooks.php`, `class-buddyboss-handler.php`
+
+**Odoo models:** `res.partner` (profiles — bidirectional), `res.partner.category` (groups — push-only)
+
+**Key features:**
+- Community profiles → `res.partner` (bidirectional): push on `xprofile_updated_profile` / `bp_core_activated_user`, enriched with xprofile field data
+- Groups → `res.partner.category` (push-only): push on `groups_group_after_save`
+- Group membership reflected as partner category tags via Many2many `[(6, 0, [ids])]` tuples
+- Re-pushes profile when group membership changes (`groups_member_after_save`)
+- Profile pull: splits name → first/last, updates user meta + xprofile fields
+- Detection: `defined('BP_VERSION')` — supports both BuddyPress and BuddyBoss
+- Dedup: profiles by `email`, groups by `name`
+
+**Settings:** `sync_profiles` (bool), `pull_profiles` (bool), `sync_groups` (bool), `sync_group_members` (bool)
 
 ### ACF (Advanced Custom Fields) — COMPLETE
 
