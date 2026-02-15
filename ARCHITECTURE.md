@@ -519,9 +519,9 @@ Module_Base (abstract)
 
 **Mutual exclusivity rules:**
 - **Commerce**: WooCommerce, EDD, Sales, Ecwid, and ShopWP are mutually exclusive (all share `sale.order` / `product.product` for commerce). Priority: WC > EDD > Sales = Ecwid = ShopWP.
-- **Memberships**: WC Memberships, MemberPress, PMPro, and RCP are mutually exclusive (all target `membership.membership_line`). Priority: MemberPress (10) > RCP (12) > PMPro (15) > WC Memberships (20).
-- **Invoicing**: Sprout Invoices and WP-Invoice are mutually exclusive (both target `account.move` for invoicing). Priority: WP-Invoice (5) > Sprout Invoices (10).
-- **Helpdesk**: Awesome Support and SupportCandy are mutually exclusive (both target `helpdesk.ticket` / `project.task`). Priority: Awesome Support (10) > SupportCandy (15).
+- **Memberships**: WC Memberships, MemberPress, PMPro, and RCP are mutually exclusive (all target `membership.membership_line`). Priority (highest number wins): WC Memberships (20) > PMPro (15) > RCP (12) > MemberPress (10).
+- **Invoicing**: Sprout Invoices and WP-Invoice are mutually exclusive (both target `account.move` for invoicing). Priority: Sprout Invoices (10) > WP-Invoice (5).
+- **Helpdesk**: Awesome Support and SupportCandy are mutually exclusive (both target `helpdesk.ticket` / `project.task`). Priority: SupportCandy (15) > Awesome Support (10).
 - All other modules are independent and can coexist freely (LMS, Subscriptions, Points & Rewards, Events, Booking, Donations, Forms, WPRM, Crowdfunding, BOM, AffiliateWP, ACF, WP All Import, Job Manager).
 
 **Module_Base provides:**
@@ -777,7 +777,7 @@ Shared abstract base `Helpdesk_Module_Base` extends `Module_Base`, providing dua
 
 **Pull flow:** Read ticket from Odoo → extract `stage_id` Many2one name → keyword heuristic ("close"/"done"/"resolved"/"solved"/"cancel"/"fermé"/"terminé"/"résolu" → closed, else → open) → update WP ticket status. Only status updates pulled (no create/delete from Odoo). Filterable via `wp4odoo_helpdesk_reverse_stage_map`.
 
-**Exclusive group:** `helpdesk` — Awesome Support (priority 10) wins over SupportCandy (priority 15).
+**Exclusive group:** `helpdesk` — SupportCandy (priority 15) wins over Awesome Support (priority 10).
 
 | Class / Trait | Role |
 |-------|------|

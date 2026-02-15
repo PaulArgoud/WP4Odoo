@@ -24,6 +24,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Logger context truncation** — `truncate_context()` JSON-encoded the full array then truncated the string, producing invalid JSON. Now truncates the array first, then encodes
 - **Empty encryption key warning** — `Odoo_Auth` now logs a warning via `error_log()` when the encryption key is empty, aiding diagnosis of misconfigured installations
 - **CLI `--format` validation** — `queue stats` and `queue list` subcommands now reject unsupported `--format` values with a clear error
+- **Ecwid cron orphan on deactivation** — `wp4odoo_ecwid_poll` cron event was cleared on uninstall but not on plugin deactivation, leaving an orphaned cron entry. Added to `deactivate()`
+- **Exclusive group priority documentation** — ARCHITECTURE.md listed membership, invoicing, and helpdesk exclusive group priorities in reverse order (lower number shown as winning). Corrected to reflect actual `>=` logic where highest number wins
 
 ### Added
 - **Compatibility report link** — TESTED_UP_TO version warnings now include a "Report compatibility" link that opens a pre-filled WPForms form with module name, WP4Odoo version, third-party plugin version, WordPress version, PHP version, and Odoo major version. Shown in both the global admin notice banner and per-module notices on the Modules tab. Filterable via `wp4odoo_compat_report_url`
