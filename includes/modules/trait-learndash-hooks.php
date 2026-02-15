@@ -54,11 +54,7 @@ trait LearnDash_Hooks {
 	 * @return void
 	 */
 	public function on_transaction_created( int $transaction_id ): void {
-		if ( ! $this->should_sync( 'sync_transactions' ) ) {
-			return;
-		}
-
-		Queue_Manager::push( 'learndash', 'transaction', 'create', $transaction_id );
+		$this->push_entity( 'learndash', 'transaction', 'sync_transactions', $transaction_id );
 	}
 
 	/**

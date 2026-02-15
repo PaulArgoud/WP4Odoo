@@ -8,13 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [3.1.5] - Unreleased
 
 ### Changed
-- **Handler base classes** — Extracted 4 abstract handler base classes to eliminate duplicated constructor, logger, and shared helper logic across 10 handler files:
+- **Handler base classes** — Extracted 5 abstract handler base classes to eliminate duplicated constructor, logger, and shared helper logic across 13 handler files:
   - `Membership_Handler_Base` — shared by MemberPress, PMPro, RCP handlers (constructor + logger)
   - `Donation_Handler_Base` — shared by GiveWP, Charitable, SimplePay handlers (constructor + logger + `load_form_by_cpt()` + `format_donation()` dual-model routing)
   - `LMS_Handler_Base` — shared by LearnDash, LifterLMS handlers (constructor + logger + `build_invoice()` + `build_sale_order()`)
   - `Helpdesk_Handler_Base` — shared by Awesome Support, SupportCandy handlers (constructor + logger + `PRIORITY_MAP` + `map_priority()` + `parse_ticket_from_odoo()`)
-- **`push_entity()` helper** — New `Module_Helpers::push_entity(module, entity, setting_key, wp_id)` consolidates the repeated guard + map + queue pattern into a single method. Simplified 6 hook callbacks across MemberPress, PMPro, and RCP traits
-- **Handler tests** — 9 handler test classes refactored to extend `Module_Test_Case`, removing ~100 lines of duplicated `$wpdb` stub initialization and global store resets
+  - `Booking_Handler_Base` — shared by Amelia, Bookly, WC Bookings handlers (constructor + logger)
+- **`push_entity()` helper** — `Module_Helpers::push_entity(module, entity, setting_key, wp_id)` consolidates the repeated guard + map + queue pattern into a single method. Now used by 24 hook callbacks across 19 trait files (was 6 across 3). Removed unused `Queue_Manager` imports from 10 traits
+- **`LMS_Module_Base` abstract class** — Converted `LMS_Helpers` trait to `LMS_Module_Base` abstract class extending `Module_Base`, aligning with `Membership_Module_Base`, `Booking_Module_Base`, etc. LearnDash and LifterLMS modules now extend this intermediate base class instead of using a trait
+- **CLI `match` expressions** — Converted `queue()` and `module()` subcommand dispatch from `switch` to PHP 8.0 `match` expressions in `CLI`
+- **Handler tests** — 9 handler test classes refactored to extend `Module_Test_Case`, removing ~100 lines of duplicated `$wpdb` stub initialization and global store resets. 8 new tests: 4 for `push_entity()`, 2 for `Booking_Handler_Base`, 2 for `LMS_Module_Base`
 
 ## [3.1.0] - 2026-02-15
 
@@ -27,6 +30,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Table existence checks** — `check_dependency()` now verifies that required third-party database tables exist before declaring a module available. New `get_required_tables()` override in Amelia, Bookly, PMPro, ShopWP, and SupportCandy modules. Missing tables produce a warning notice and prevent module boot
 - **System cron recommendation** — Polling modules (Bookly, Ecwid) now show an informational notice when `DISABLE_WP_CRON` is not set, recommending a system cron job for reliable 5-minute intervals. New `uses_cron_polling()` override in Module_Helpers trait
 - **Queue_Manager::reset()** — New static method for test isolation, clears the internal singleton repository. Added to `Module_Test_Case::reset_static_caches()`
+- **Graceful degradation for third-party hooks** — All ~87 third-party hook callbacks are now wrapped with `safe_callback()` in `Module_Base`. If a third-party plugin update causes a callback to crash (`\Throwable`), the exception is caught and logged as `critical` instead of crashing the WordPress request. WP-Cron polling (Bookly, Ecwid) also has individual try/catch around each poll operation. 9 new tests in `SafeCallbackTest`
+- **Defensive version bounds** — Each module now declares `PLUGIN_MIN_VERSION` and `PLUGIN_TESTED_UP_TO` constants. At boot, `check_dependency()` blocks modules whose third-party plugin is below minimum (error notice), and warns when the plugin version exceeds the last tested version (warning notice). Patch-version normalization (e.g. `10.5.0` within `10.5` range). Admin notice banner on the settings page for untested versions. `Module_Registry` enforces version gating before boot. 17 new tests in `VersionBoundsTest`
+- **AffiliateWP module** — Push-only sync of AffiliateWP affiliates and referral commissions to Odoo. Affiliates synced as `res.partner` (vendor), referrals as vendor bills (`account.move` with `move_type=in_invoice`). First `in_invoice` support in the plugin. Auto-sync affiliate before referral push. Auto-post vendor bills when referral is paid (optional). Status mapping: unpaid→draft, paid→posted, rejected→cancel. 3 settings (sync_affiliates, sync_referrals, auto_post_bills). 62 new tests
+- **Odoo_Accounting_Formatter::for_vendor_bill()** — New static method for formatting vendor bill data (`in_invoice`). No `product_id` in lines (name + price_unit only). Filter hook `wp4odoo_vendor_bill_line_data`
+- **WP All Import interceptor module** — Meta-module that intercepts WP All Import CSV/XML imports via `pmxi_saved_post` hook and routes imported records to the correct module's sync queue. Ensures Odoo sync even when WP All Import's "speed optimization" disables standard WordPress hooks. Static routing table (18 post types → modules), filterable via `wp4odoo_wpai_routing_table`. Import completion summary logging. Queue dedup handles double-enqueue safely. 30 new tests
 
 ### Security
 - **OpenSSL encryption upgraded to AES-256-GCM** — OpenSSL fallback encryption (when libsodium is unavailable) now uses AES-256-GCM (authenticated encryption with associated data) instead of AES-256-CBC. Backward-compatible decryption of existing CBC-encrypted values. Re-encrypted on next save
@@ -58,13 +66,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **WP_Invoice_Handler / Sprout_Invoices_Handler** — `build_invoice_lines()` now normalizes plugin-specific keys and delegates to `Odoo_Accounting_Formatter::build_invoice_lines()`
 - **22 hook traits** — Replaced `is_importing()` + `$settings` guard clauses with `should_sync()` calls across all third-party hook callbacks
 
-### Added (continued)
-- **Graceful degradation for third-party hooks** — All ~87 third-party hook callbacks are now wrapped with `safe_callback()` in `Module_Base`. If a third-party plugin update causes a callback to crash (`\Throwable`), the exception is caught and logged as `critical` instead of crashing the WordPress request. WP-Cron polling (Bookly, Ecwid) also has individual try/catch around each poll operation. 9 new tests in `SafeCallbackTest`
-- **Defensive version bounds** — Each module now declares `PLUGIN_MIN_VERSION` and `PLUGIN_TESTED_UP_TO` constants. At boot, `check_dependency()` blocks modules whose third-party plugin is below minimum (error notice), and warns when the plugin version exceeds the last tested version (warning notice). Patch-version normalization (e.g. `10.5.0` within `10.5` range). Admin notice banner on the settings page for untested versions. `Module_Registry` enforces version gating before boot. 17 new tests in `VersionBoundsTest`
-- **AffiliateWP module** — Push-only sync of AffiliateWP affiliates and referral commissions to Odoo. Affiliates synced as `res.partner` (vendor), referrals as vendor bills (`account.move` with `move_type=in_invoice`). First `in_invoice` support in the plugin. Auto-sync affiliate before referral push. Auto-post vendor bills when referral is paid (optional). Status mapping: unpaid→draft, paid→posted, rejected→cancel. 3 settings (sync_affiliates, sync_referrals, auto_post_bills). 62 new tests
-- **Odoo_Accounting_Formatter::for_vendor_bill()** — New static method for formatting vendor bill data (`in_invoice`). No `product_id` in lines (name + price_unit only). Filter hook `wp4odoo_vendor_bill_line_data`
-- **WP All Import interceptor module** — Meta-module that intercepts WP All Import CSV/XML imports via `pmxi_saved_post` hook and routes imported records to the correct module's sync queue. Ensures Odoo sync even when WP All Import's "speed optimization" disables standard WordPress hooks. Static routing table (18 post types → modules), filterable via `wp4odoo_wpai_routing_table`. Import completion summary logging. Queue dedup handles double-enqueue safely. 30 new tests
-
 ## [3.0.5] - 2026-02-14
 
 ### Added
@@ -89,7 +90,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Module_Base infrastructure** — `_wp_entity_id` injected into `$wp_data` in `push_to_odoo()` for filter consumers. New `wp4odoo_after_save_{module}_{entity}` action fired after `save_wp_data()` in `pull_from_odoo()` for meta-module post-save writes
 - **WC Product Bundles / Composite Products → Odoo Manufacturing BOM module** — Push-only sync of WC bundles and composite products as Manufacturing BOMs (`mrp.bom`) with One2many `bom_line_ids`. Cross-module entity_map lookup for product resolution, transient retry for unmapped products, configurable BOM type (phantom kit / normal manufacture)
 - **Odoo_Model enum** — Added `MrpBom` (`mrp.bom`) and `MrpBomLine` (`mrp.bom.line`) cases
-
 - **Health endpoint** — `GET /wp-json/wp4odoo/v1/health` returns system status (queue depth, failed count, circuit breaker state, module counts, version, timestamp). Protected by webhook token authentication. Status: `healthy` / `degraded` (CB open or 100+ failed jobs)
 - **Batch API pipeline** — `Sync_Engine` now groups `wp_to_odoo` create jobs by module+entity_type and processes groups of 2+ via `push_batch_creates()`, which calls `Odoo_Client::create_batch()` in a single RPC call. Falls back to individual creates on batch error
 - **Idempotent creates** — `Module_Base::push_to_odoo()` now calls `get_dedup_domain()` before creating: if a matching record exists in Odoo, it switches to update (prevents duplicates from retried creates). CRM dedup by email, WooCommerce dedup by SKU (`default_code`)

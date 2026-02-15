@@ -3,8 +3,6 @@ declare( strict_types=1 );
 
 namespace WP4Odoo\Modules;
 
-use WP4Odoo\Queue_Manager;
-
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -40,17 +38,10 @@ trait WC_Points_Rewards_Hooks {
 	 * @return void
 	 */
 	public function on_points_change( int $user_id ): void {
-		if ( ! $this->should_sync( 'sync_balances' ) ) {
-			return;
-		}
-
 		if ( $user_id <= 0 ) {
 			return;
 		}
 
-		$odoo_id = $this->get_mapping( 'balance', $user_id ) ?? 0;
-		$action  = $odoo_id ? 'update' : 'create';
-
-		Queue_Manager::push( 'wc_points_rewards', 'balance', $action, $user_id, $odoo_id );
+		$this->push_entity( 'wc_points_rewards', 'balance', 'sync_balances', $user_id );
 	}
 }

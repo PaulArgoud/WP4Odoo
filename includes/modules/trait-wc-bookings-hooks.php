@@ -62,10 +62,6 @@ trait WC_Bookings_Hooks {
 	 * @return void
 	 */
 	public function on_product_save( int $post_id ): void {
-		if ( ! $this->should_sync( 'sync_products' ) ) {
-			return;
-		}
-
 		if ( wp_is_post_revision( $post_id ) || wp_is_post_autosave( $post_id ) ) {
 			return;
 		}
@@ -83,10 +79,7 @@ trait WC_Bookings_Hooks {
 			return;
 		}
 
-		$odoo_id = $this->get_mapping( 'product', $post_id ) ?? 0;
-		$action  = $odoo_id ? 'update' : 'create';
-
-		Queue_Manager::push( 'wc_bookings', 'product', $action, $post_id, $odoo_id );
+		$this->push_entity( 'wc_bookings', 'product', 'sync_products', $post_id );
 	}
 
 	/**

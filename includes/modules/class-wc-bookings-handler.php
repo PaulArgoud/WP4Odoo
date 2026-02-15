@@ -4,7 +4,6 @@ declare( strict_types=1 );
 namespace WP4Odoo\Modules;
 
 use WP4Odoo\CPT_Helper;
-use WP4Odoo\Logger;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -22,23 +21,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @package WP4Odoo
  * @since   3.0.0
  */
-class WC_Bookings_Handler {
-
-	/**
-	 * Logger instance.
-	 *
-	 * @var Logger
-	 */
-	private Logger $logger;
-
-	/**
-	 * Constructor.
-	 *
-	 * @param Logger $logger Logger instance.
-	 */
-	public function __construct( Logger $logger ) {
-		$this->logger = $logger;
-	}
+class WC_Bookings_Handler extends Booking_Handler_Base {
 
 	// ─── Push: products (services) ──────────────────────────
 

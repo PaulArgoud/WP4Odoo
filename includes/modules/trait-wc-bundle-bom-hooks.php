@@ -3,8 +3,6 @@ declare( strict_types=1 );
 
 namespace WP4Odoo\Modules;
 
-use WP4Odoo\Queue_Manager;
-
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -33,10 +31,6 @@ trait WC_Bundle_BOM_Hooks {
 	 * @return void
 	 */
 	public function on_bundle_save( int $post_id ): void {
-		if ( ! $this->should_sync( 'sync_bundles' ) ) {
-			return;
-		}
-
 		if ( wp_is_post_revision( $post_id ) || wp_is_post_autosave( $post_id ) ) {
 			return;
 		}
@@ -49,9 +43,6 @@ trait WC_Bundle_BOM_Hooks {
 			return;
 		}
 
-		$odoo_id = $this->get_mapping( 'bom', $post_id ) ?? 0;
-		$action  = $odoo_id ? 'update' : 'create';
-
-		Queue_Manager::push( 'wc_bundle_bom', 'bom', $action, $post_id, $odoo_id );
+		$this->push_entity( 'wc_bundle_bom', 'bom', 'sync_bundles', $post_id );
 	}
 }

@@ -3,8 +3,6 @@ declare( strict_types=1 );
 
 namespace WP4Odoo\Modules;
 
-use WP4Odoo\Queue_Manager;
-
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -52,18 +50,11 @@ trait AffiliateWP_Hooks {
 	 * @return void
 	 */
 	public function on_affiliate_status_change( int $affiliate_id, string $new_status, string $old_status ): void {
-		if ( $this->is_importing() ) {
-			return;
-		}
-
 		if ( 'active' !== $new_status ) {
 			return;
 		}
 
-		$odoo_id = $this->get_mapping( 'affiliate', $affiliate_id ) ?? 0;
-		$action  = $odoo_id ? 'update' : 'create';
-
-		Queue_Manager::push( 'affiliatewp', 'affiliate', $action, $affiliate_id, $odoo_id );
+		$this->push_entity( 'affiliatewp', 'affiliate', 'sync_affiliates', $affiliate_id );
 	}
 
 	/**
@@ -78,17 +69,10 @@ trait AffiliateWP_Hooks {
 	 * @return void
 	 */
 	public function on_referral_status_change( int $referral_id, string $new_status, string $old_status ): void {
-		if ( $this->is_importing() ) {
-			return;
-		}
-
 		if ( ! in_array( $new_status, [ 'unpaid', 'paid' ], true ) ) {
 			return;
 		}
 
-		$odoo_id = $this->get_mapping( 'referral', $referral_id ) ?? 0;
-		$action  = $odoo_id ? 'update' : 'create';
-
-		Queue_Manager::push( 'affiliatewp', 'referral', $action, $referral_id, $odoo_id );
+		$this->push_entity( 'affiliatewp', 'referral', 'sync_referrals', $referral_id );
 	}
 }

@@ -84,18 +84,11 @@ trait Membership_Hooks {
 	 * @return void
 	 */
 	public function on_membership_saved( $plan, array $args ): void {
-		if ( ! $this->should_sync( 'sync_memberships' ) ) {
-			return;
-		}
-
 		$membership_id = (int) ( $args['user_membership_id'] ?? 0 );
 		if ( ! $membership_id ) {
 			return;
 		}
 
-		$odoo_id = $this->get_mapping( 'membership', $membership_id ) ?? 0;
-		$action  = $odoo_id ? 'update' : 'create';
-
-		Queue_Manager::push( 'memberships', 'membership', $action, $membership_id, $odoo_id );
+		$this->push_entity( 'memberships', 'membership', 'sync_memberships', $membership_id );
 	}
 }

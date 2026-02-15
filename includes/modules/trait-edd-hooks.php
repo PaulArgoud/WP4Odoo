@@ -32,19 +32,12 @@ trait EDD_Hooks {
 	 * @return void
 	 */
 	public function on_download_save( int $post_id ): void {
-		if ( ! $this->should_sync( 'sync_downloads' ) ) {
-			return;
-		}
-
 		// Skip autosaves and revisions.
 		if ( wp_is_post_revision( $post_id ) || wp_is_post_autosave( $post_id ) ) {
 			return;
 		}
 
-		$odoo_id = $this->get_mapping( 'download', $post_id );
-		$action  = $odoo_id ? 'update' : 'create';
-
-		Queue_Manager::push( 'edd', 'download', $action, $post_id, $odoo_id ?? 0 );
+		$this->push_entity( 'edd', 'download', 'sync_downloads', $post_id );
 	}
 
 	/**

@@ -3,8 +3,6 @@ declare( strict_types=1 );
 
 namespace WP4Odoo\Modules;
 
-use WP4Odoo\Queue_Manager;
-
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -53,18 +51,11 @@ trait GiveWP_Hooks {
 	 * @return void
 	 */
 	public function on_donation_status_change( int $payment_id, string $new_status, string $old_status ): void {
-		if ( ! $this->should_sync( 'sync_donations' ) ) {
-			return;
-		}
-
 		// Only sync completed or refunded donations.
 		if ( ! in_array( $new_status, [ 'publish', 'refunded' ], true ) ) {
 			return;
 		}
 
-		$odoo_id = $this->get_mapping( 'donation', $payment_id ) ?? 0;
-		$action  = $odoo_id ? 'update' : 'create';
-
-		Queue_Manager::push( 'givewp', 'donation', $action, $payment_id, $odoo_id );
+		$this->push_entity( 'givewp', 'donation', 'sync_donations', $payment_id );
 	}
 }

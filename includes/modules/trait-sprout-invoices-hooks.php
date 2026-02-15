@@ -3,8 +3,6 @@ declare( strict_types=1 );
 
 namespace WP4Odoo\Modules;
 
-use WP4Odoo\Queue_Manager;
-
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -45,17 +43,10 @@ trait Sprout_Invoices_Hooks {
 	 * @return void
 	 */
 	public function on_payment( int $payment_id ): void {
-		if ( ! $this->should_sync( 'sync_payments' ) ) {
-			return;
-		}
-
 		if ( 'sa_payment' !== get_post_type( $payment_id ) ) {
 			return;
 		}
 
-		$odoo_id = $this->get_mapping( 'payment', $payment_id ) ?? 0;
-		$action  = $odoo_id ? 'update' : 'create';
-
-		Queue_Manager::push( 'sprout_invoices', 'payment', $action, $payment_id, $odoo_id );
+		$this->push_entity( 'sprout_invoices', 'payment', 'sync_payments', $payment_id );
 	}
 }

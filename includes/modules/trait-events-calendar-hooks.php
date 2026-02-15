@@ -3,8 +3,6 @@ declare( strict_types=1 );
 
 namespace WP4Odoo\Modules;
 
-use WP4Odoo\Queue_Manager;
-
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -44,10 +42,6 @@ trait Events_Calendar_Hooks {
 	 * @return void
 	 */
 	public function on_ticket_save( int $post_id ): void {
-		if ( ! $this->should_sync( 'sync_tickets' ) ) {
-			return;
-		}
-
 		if ( wp_is_post_revision( $post_id ) || wp_is_post_autosave( $post_id ) ) {
 			return;
 		}
@@ -56,10 +50,7 @@ trait Events_Calendar_Hooks {
 			return;
 		}
 
-		$odoo_id = $this->get_mapping( 'ticket', $post_id ) ?? 0;
-		$action  = $odoo_id ? 'update' : 'create';
-
-		Queue_Manager::push( 'events_calendar', 'ticket', $action, $post_id, $odoo_id );
+		$this->push_entity( 'events_calendar', 'ticket', 'sync_tickets', $post_id );
 	}
 
 	/**
@@ -72,10 +63,6 @@ trait Events_Calendar_Hooks {
 	 * @return void
 	 */
 	public function on_rsvp_attendee_created( int $attendee_id, int $order_id, int $product_id, int $order_attendee_id ): void {
-		if ( ! $this->should_sync( 'sync_attendees' ) ) {
-			return;
-		}
-
-		Queue_Manager::push( 'events_calendar', 'attendee', 'create', $attendee_id, 0 );
+		$this->push_entity( 'events_calendar', 'attendee', 'sync_attendees', $attendee_id );
 	}
 }

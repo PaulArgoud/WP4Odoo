@@ -126,13 +126,13 @@ WordPress For Odoo/
 │   │   ├── class-wc-bookings-module.php      # WC Bookings: extends Booking_Module_Base (uses WC_Bookings_Hooks trait)
 │   │   │
 │   │   ├── # ─── LMS (LearnDash + LifterLMS) ─────────────────
-│   │   ├── trait-lms-helpers.php             # LMS shared: enrollment loading pipeline (synthetic ID → partner → product → sale order)
+│   │   ├── class-lms-module-base.php         # LMS shared: enrollment loading pipeline (synthetic ID → partner → product → sale order)
 │   │   ├── trait-learndash-hooks.php         # LearnDash: hook callbacks (course/group save, transaction, enrollment)
 │   │   ├── class-learndash-handler.php       # LearnDash: course/group/transaction/enrollment data load
-│   │   ├── class-learndash-module.php        # LearnDash: push sync coordinator (uses LearnDash_Hooks + LMS_Helpers traits)
+│   │   ├── class-learndash-module.php        # LearnDash: push sync coordinator (extends LMS_Module_Base, uses LearnDash_Hooks trait)
 │   │   ├── trait-lifterlms-hooks.php         # LifterLMS: hook callbacks (course/membership save, order, enrollment)
 │   │   ├── class-lifterlms-handler.php       # LifterLMS: course/membership/order/enrollment data load
-│   │   ├── class-lifterlms-module.php        # LifterLMS: push sync coordinator (uses LifterLMS_Hooks + LMS_Helpers traits)
+│   │   ├── class-lifterlms-module.php        # LifterLMS: push sync coordinator (extends LMS_Module_Base, uses LifterLMS_Hooks trait)
 │   │   │
 │   │   ├── # ─── WC Subscriptions ─────────────────────────────
 │   │   ├── trait-wc-subscriptions-hooks.php  # WCS: hook callbacks (product save, subscription status, renewal)
@@ -480,8 +480,9 @@ Module_Base (abstract)
 ├── Helpdesk_Module_Base (abstract)
 │   ├── Awesome_Support_Module  → helpdesk.ticket / project.task                     [bidirectional]
 │   └── SupportCandy_Module     → helpdesk.ticket / project.task                     [bidirectional]
-├── LearnDash_Module            → product.product, account.move, sale.order          [bidirectional]
-├── LifterLMS_Module            → product.product, account.move, sale.order          [bidirectional]
+├── LMS_Module_Base (abstract)
+│   ├── LearnDash_Module        → product.product, account.move, sale.order          [bidirectional]
+│   └── LifterLMS_Module        → product.product, account.move, sale.order          [bidirectional]
 ├── WC_Subscriptions_Module     → product.product, sale.subscription, account.move   [bidirectional]
 ├── Events_Calendar_Module      → event.event / calendar.event, product.product,     [bidirectional]
 │                                 event.registration
@@ -550,7 +551,7 @@ Both patterns are intentional and follow a clear convention:
 
 ### Abstract Method Naming Convention
 
-Intermediate base classes (`Membership_Module_Base`, `Dual_Accounting_Module_Base`, `Booking_Module_Base`) define abstract methods for subclass configuration. Two naming prefixes distinguish their purpose:
+Intermediate base classes (`Membership_Module_Base`, `Dual_Accounting_Module_Base`, `Booking_Module_Base`, `Helpdesk_Module_Base`, `LMS_Module_Base`) define abstract methods for subclass configuration. Two naming prefixes distinguish their purpose:
 
 - **`handler_*()`** — delegates to the handler class for data operations (load, save, parse, delete). These methods interact with the WordPress database or plugin APIs. Examples: `handler_load_level()`, `handler_load_child()`, `handler_parse_service_from_odoo()`, `handler_save_service()`.
 
@@ -1248,7 +1249,7 @@ All user inputs are sanitized with:
 
 ### LearnDash — COMPLETE
 
-**Files:** `class-learndash-module.php` (push sync coordinator, uses `LearnDash_Hooks` trait), `trait-learndash-hooks.php` (hook callbacks), `class-learndash-handler.php` (data load via LearnDash functions, invoice/sale order formatting)
+**Files:** `class-learndash-module.php` (extends `LMS_Module_Base`, uses `LearnDash_Hooks` trait), `trait-learndash-hooks.php` (hook callbacks), `class-learndash-handler.php` (data load via LearnDash functions, invoice/sale order formatting)
 
 **Odoo models:** `product.product` (courses + groups), `account.move` (transactions as invoices), `sale.order` (enrollments)
 
@@ -1266,7 +1267,7 @@ All user inputs are sanitized with:
 
 ### LifterLMS — COMPLETE
 
-**Files:** `class-lifterlms-module.php` (push sync coordinator, uses `LifterLMS_Hooks` trait), `trait-lifterlms-hooks.php` (hook callbacks), `class-lifterlms-handler.php` (data load via LifterLMS classes, invoice/sale order formatting)
+**Files:** `class-lifterlms-module.php` (extends `LMS_Module_Base`, uses `LifterLMS_Hooks` trait), `trait-lifterlms-hooks.php` (hook callbacks), `class-lifterlms-handler.php` (data load via LifterLMS classes, invoice/sale order formatting)
 
 **Odoo models:** `product.product` (courses + memberships), `account.move` (orders as invoices), `sale.order` (enrollments)
 

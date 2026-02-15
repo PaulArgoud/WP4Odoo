@@ -3,8 +3,6 @@ declare( strict_types=1 );
 
 namespace WP4Odoo\Modules;
 
-use WP4Odoo\Module_Base;
-
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -30,10 +28,9 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @package WP4Odoo
  * @since   2.6.5
  */
-class LifterLMS_Module extends Module_Base {
+class LifterLMS_Module extends LMS_Module_Base {
 
 	use LifterLMS_Hooks;
-	use LMS_Helpers;
 
 	protected const PLUGIN_MIN_VERSION  = '7.0';
 	protected const PLUGIN_TESTED_UP_TO = '9.2';
@@ -429,7 +426,7 @@ class LifterLMS_Module extends Module_Base {
 	/**
 	 * Load and resolve an enrollment with Odoo references.
 	 *
-	 * Delegates to LMS_Helpers::load_enrollment_from_synthetic().
+	 * Delegates to LMS_Module_Base::load_enrollment_from_synthetic().
 	 *
 	 * @param int $synthetic_id Synthetic enrollment ID (user_id * 1M + course_id).
 	 * @return array<string, mixed>

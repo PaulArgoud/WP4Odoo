@@ -3,8 +3,6 @@ declare( strict_types=1 );
 
 namespace WP4Odoo\Modules;
 
-use WP4Odoo\Queue_Manager;
-
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -36,10 +34,6 @@ trait WC_Subscriptions_Hooks {
 	 * @return void
 	 */
 	public function on_product_save( int $post_id ): void {
-		if ( ! $this->should_sync( 'sync_products' ) ) {
-			return;
-		}
-
 		if ( wp_is_post_revision( $post_id ) || wp_is_post_autosave( $post_id ) ) {
 			return;
 		}
@@ -57,10 +51,7 @@ trait WC_Subscriptions_Hooks {
 			return;
 		}
 
-		$odoo_id = $this->get_mapping( 'product', $post_id ) ?? 0;
-		$action  = $odoo_id ? 'update' : 'create';
-
-		Queue_Manager::push( 'wc_subscriptions', 'product', $action, $post_id, $odoo_id );
+		$this->push_entity( 'wc_subscriptions', 'product', 'sync_products', $post_id );
 	}
 
 	/**
@@ -72,15 +63,7 @@ trait WC_Subscriptions_Hooks {
 	 * @return void
 	 */
 	public function on_subscription_status_updated( $subscription, string $new_status, string $old_status ): void {
-		if ( ! $this->should_sync( 'sync_subscriptions' ) ) {
-			return;
-		}
-
-		$sub_id  = (int) $subscription->get_id();
-		$odoo_id = $this->get_mapping( 'subscription', $sub_id ) ?? 0;
-		$action  = $odoo_id ? 'update' : 'create';
-
-		Queue_Manager::push( 'wc_subscriptions', 'subscription', $action, $sub_id, $odoo_id );
+		$this->push_entity( 'wc_subscriptions', 'subscription', 'sync_subscriptions', (int) $subscription->get_id() );
 	}
 
 	/**
@@ -93,12 +76,8 @@ trait WC_Subscriptions_Hooks {
 	 * @return void
 	 */
 	public function on_renewal_payment_complete( $subscription, $last_order ): void {
-		if ( ! $this->should_sync( 'sync_renewals' ) ) {
-			return;
-		}
-
 		$order_id = (int) $last_order->get_id();
 
-		Queue_Manager::push( 'wc_subscriptions', 'renewal', 'create', $order_id, 0 );
+		$this->push_entity( 'wc_subscriptions', 'renewal', 'sync_renewals', $order_id );
 	}
 }

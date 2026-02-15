@@ -3,8 +3,6 @@ declare( strict_types=1 );
 
 namespace WP4Odoo\Modules;
 
-use WP4Odoo\Queue_Manager;
-
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -35,18 +33,11 @@ trait WP_Invoice_Hooks {
 	 * @return void
 	 */
 	public function on_invoice_save( int $invoice_id ): void {
-		if ( ! $this->should_sync( 'sync_invoices' ) ) {
-			return;
-		}
-
 		if ( 'wpi_object' !== get_post_type( $invoice_id ) ) {
 			return;
 		}
 
-		$odoo_id = $this->get_mapping( 'invoice', $invoice_id ) ?? 0;
-		$action  = $odoo_id ? 'update' : 'create';
-
-		Queue_Manager::push( 'wp_invoice', 'invoice', $action, $invoice_id, $odoo_id );
+		$this->push_entity( 'wp_invoice', 'invoice', 'sync_invoices', $invoice_id );
 	}
 
 	/**
@@ -59,17 +50,10 @@ trait WP_Invoice_Hooks {
 	 * @return void
 	 */
 	public function on_payment( int $invoice_id ): void {
-		if ( ! $this->should_sync( 'sync_invoices' ) ) {
-			return;
-		}
-
 		if ( 'wpi_object' !== get_post_type( $invoice_id ) ) {
 			return;
 		}
 
-		$odoo_id = $this->get_mapping( 'invoice', $invoice_id ) ?? 0;
-		$action  = $odoo_id ? 'update' : 'create';
-
-		Queue_Manager::push( 'wp_invoice', 'invoice', $action, $invoice_id, $odoo_id );
+		$this->push_entity( 'wp_invoice', 'invoice', 'sync_invoices', $invoice_id );
 	}
 }

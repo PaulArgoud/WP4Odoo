@@ -56,14 +56,7 @@ trait LifterLMS_Hooks {
 	 * @return void
 	 */
 	public function on_order_completed( int $order_id ): void {
-		if ( ! $this->should_sync( 'sync_orders' ) ) {
-			return;
-		}
-
-		$odoo_id = $this->get_mapping( 'order', $order_id ) ?? 0;
-		$action  = $odoo_id ? 'update' : 'create';
-
-		Queue_Manager::push( 'lifterlms', 'order', $action, $order_id, $odoo_id );
+		$this->push_entity( 'lifterlms', 'order', 'sync_orders', $order_id );
 	}
 
 	/**
@@ -76,13 +69,9 @@ trait LifterLMS_Hooks {
 	 * @return void
 	 */
 	public function on_enrollment( int $user_id, int $course_id ): void {
-		if ( ! $this->should_sync( 'sync_enrollments' ) ) {
-			return;
-		}
-
 		$synthetic_id = self::encode_synthetic_id( $user_id, $course_id );
 
-		Queue_Manager::push( 'lifterlms', 'enrollment', 'create', $synthetic_id );
+		$this->push_entity( 'lifterlms', 'enrollment', 'sync_enrollments', $synthetic_id );
 	}
 
 	/**

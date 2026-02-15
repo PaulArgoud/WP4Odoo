@@ -3,8 +3,6 @@ declare( strict_types=1 );
 
 namespace WP4Odoo\Modules;
 
-use WP4Odoo\Module_Base;
-
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -23,10 +21,9 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @package WP4Odoo
  * @since   2.6.0
  */
-class LearnDash_Module extends Module_Base {
+class LearnDash_Module extends LMS_Module_Base {
 
 	use LearnDash_Hooks;
-	use LMS_Helpers;
 
 	protected const PLUGIN_MIN_VERSION  = '4.0';
 	protected const PLUGIN_TESTED_UP_TO = '4.20';
@@ -413,7 +410,7 @@ class LearnDash_Module extends Module_Base {
 	/**
 	 * Load and resolve an enrollment with Odoo references.
 	 *
-	 * Delegates to LMS_Helpers::load_enrollment_from_synthetic().
+	 * Delegates to LMS_Module_Base::load_enrollment_from_synthetic().
 	 *
 	 * @param int $synthetic_id Synthetic enrollment ID (user_id * 1M + course_id).
 	 * @return array<string, mixed>

@@ -65,6 +65,13 @@ class ModuleBaseHelpersTestModule extends Module_Base {
 	public function test_poll_entity_changes( string $entity_type, array $items, string $id_field = 'id' ): void {
 		$this->poll_entity_changes( $entity_type, $items, $id_field );
 	}
+
+	/**
+	 * Expose push_entity() for testing.
+	 */
+	public function test_push_entity( string $module, string $entity_type, string $setting_key, int $wp_id ): void {
+		$this->push_entity( $module, $entity_type, $setting_key, $wp_id );
+	}
 }
 
 /**
@@ -219,6 +226,59 @@ class ModuleBaseHelpersTest extends TestCase {
 		$this->assertSame( 100, $update['odoo_id'] );
 	}
 
+	// ─── push_entity() ─────────────────────────────────
+
+	public function test_push_entity_queues_create_when_no_mapping(): void {
+		$this->module->test_settings  = [ 'sync_products' => true ];
+		$this->module->test_importing = false;
+
+		// No existing mapping → create.
+		$this->module->test_push_entity( 'helpers_test', 'product', 'sync_products', 42 );
+
+		$inserts = $this->get_queue_inserts();
+		$this->assertCount( 1, $inserts );
+		$this->assertSame( 'create', $inserts[0]['action'] );
+		$this->assertSame( 42, $inserts[0]['wp_id'] );
+		$this->assertSame( 0, $inserts[0]['odoo_id'] );
+	}
+
+	public function test_push_entity_queues_update_when_mapping_exists(): void {
+		$this->module->test_settings  = [ 'sync_products' => true ];
+		$this->module->test_importing = false;
+
+		// Seed the entity map cache so get_mapping() returns 99
+		// without hitting $wpdb->get_var() (which would also affect enqueue dedup).
+		$this->seed_entity_map_cache( 'helpers_test', 'product', 42, 99 );
+
+		$this->module->test_push_entity( 'helpers_test', 'product', 'sync_products', 42 );
+
+		$inserts = $this->get_queue_inserts();
+		$this->assertCount( 1, $inserts );
+		$this->assertSame( 'update', $inserts[0]['action'] );
+		$this->assertSame( 42, $inserts[0]['wp_id'] );
+		$this->assertSame( 99, $inserts[0]['odoo_id'] );
+	}
+
+	public function test_push_entity_skips_when_importing(): void {
+		$this->module->test_settings  = [ 'sync_products' => true ];
+		$this->module->test_importing = true;
+
+		$this->module->test_push_entity( 'helpers_test', 'product', 'sync_products', 42 );
+
+		$inserts = $this->get_queue_inserts();
+		$this->assertEmpty( $inserts );
+	}
+
+	public function test_push_entity_skips_when_setting_disabled(): void {
+		$this->module->test_settings  = [ 'sync_products' => false ];
+		$this->module->test_importing = false;
+
+		$this->module->test_push_entity( 'helpers_test', 'product', 'sync_products', 42 );
+
+		$inserts = $this->get_queue_inserts();
+		$this->assertEmpty( $inserts );
+	}
+
 	// ─── Helpers ────────────────────────────────────────
 
 	/**
@@ -236,5 +296,29 @@ class ModuleBaseHelpersTest extends TestCase {
 		);
 
 		return array_values( array_map( fn( $call ) => $call['args'][1], $inserts ) );
+	}
+
+	/**
+	 * Seed the Entity_Map_Repository internal cache via Reflection.
+	 *
+	 * This avoids setting $wpdb->get_var_return which would also affect
+	 * the Sync_Queue_Repository dedup queries inside enqueue().
+	 *
+	 * @param string $module      Module identifier.
+	 * @param string $entity_type Entity type.
+	 * @param int    $wp_id       WordPress ID.
+	 * @param int    $odoo_id     Odoo ID.
+	 */
+	private function seed_entity_map_cache( string $module, string $entity_type, int $wp_id, int $odoo_id ): void {
+		$ref = new \ReflectionProperty( $this->module, 'entity_map' );
+		$entity_map = $ref->getValue( $this->module );
+
+		$cache_ref = new \ReflectionProperty( $entity_map, 'cache' );
+		$cache     = $cache_ref->getValue( $entity_map );
+
+		$cache["{$module}:{$entity_type}:wp:{$wp_id}"]     = $odoo_id;
+		$cache["{$module}:{$entity_type}:odoo:{$odoo_id}"] = $wp_id;
+
+		$cache_ref->setValue( $entity_map, $cache );
 	}
 }

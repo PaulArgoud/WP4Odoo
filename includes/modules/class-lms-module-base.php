@@ -3,25 +3,24 @@ declare( strict_types=1 );
 
 namespace WP4Odoo\Modules;
 
+use WP4Odoo\Module_Base;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
 /**
- * LMS Helpers — shared enrollment loading logic for LMS modules.
+ * Abstract base class for LMS modules (LearnDash, LifterLMS).
  *
- * Both LearnDash and LifterLMS use identical enrollment resolution:
- * decode synthetic ID → load enrollment → resolve partner → resolve
- * course product → format sale order. This trait extracts that shared
- * pipeline so each module delegates instead of duplicating.
- *
- * Expected to be composed into Module_Base subclasses that also use
- * Module_Helpers (provides resolve_partner_from_email, get_mapping).
+ * Provides shared enrollment loading logic: decode synthetic ID →
+ * load enrollment → resolve partner → resolve course product →
+ * format sale order. Each LMS module delegates to this pipeline
+ * via handler callables.
  *
  * @package WP4Odoo
- * @since   3.0.5
+ * @since   3.2.0
  */
-trait LMS_Helpers {
+abstract class LMS_Module_Base extends Module_Base {
 
 	/**
 	 * Load and resolve an enrollment with Odoo references.

@@ -204,26 +204,14 @@ class CLI {
 	public function queue( array $args, array $assoc_args ): void {
 		$sub = $args[0] ?? 'stats';
 
-		switch ( $sub ) {
-			case 'stats':
-				$this->queue_stats( $assoc_args );
-				break;
-			case 'list':
-				$this->queue_list( $assoc_args );
-				break;
-			case 'retry':
-				$this->queue_retry();
-				break;
-			case 'cleanup':
-				$this->queue_cleanup( $assoc_args );
-				break;
-			case 'cancel':
-				$job_id = isset( $args[1] ) ? (int) $args[1] : 0;
-				$this->queue_cancel( $job_id );
-				break;
-			default:
-				\WP_CLI::error( sprintf( 'Unknown subcommand: %s. Available: stats, list, retry, cleanup, cancel', $sub ) );
-		}
+		match ( $sub ) {
+			'stats'   => $this->queue_stats( $assoc_args ),
+			'list'    => $this->queue_list( $assoc_args ),
+			'retry'   => $this->queue_retry(),
+			'cleanup' => $this->queue_cleanup( $assoc_args ),
+			'cancel'  => $this->queue_cancel( isset( $args[1] ) ? (int) $args[1] : 0 ),
+			default   => \WP_CLI::error( sprintf( 'Unknown subcommand: %s. Available: stats, list, retry, cleanup, cancel', $sub ) ),
+		};
 	}
 
 	/**
@@ -347,21 +335,12 @@ class CLI {
 	public function module( array $args ): void {
 		$sub = $args[0] ?? 'list';
 
-		switch ( $sub ) {
-			case 'list':
-				$this->module_list();
-				break;
-			case 'enable':
-				$id = $args[1] ?? '';
-				$this->module_toggle( $id, true );
-				break;
-			case 'disable':
-				$id = $args[1] ?? '';
-				$this->module_toggle( $id, false );
-				break;
-			default:
-				\WP_CLI::error( sprintf( 'Unknown subcommand: %s. Available: list, enable, disable', $sub ) );
-		}
+		match ( $sub ) {
+			'list'    => $this->module_list(),
+			'enable'  => $this->module_toggle( $args[1] ?? '', true ),
+			'disable' => $this->module_toggle( $args[1] ?? '', false ),
+			default   => \WP_CLI::error( sprintf( 'Unknown subcommand: %s. Available: list, enable, disable', $sub ) ),
+		};
 	}
 
 	// ─── Queue helpers ──────────────────────────────────────

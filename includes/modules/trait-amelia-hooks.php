@@ -147,18 +147,11 @@ trait Amelia_Hooks {
 	 * @return void
 	 */
 	public function on_service_saved( array $service ): void {
-		if ( ! $this->should_sync( 'sync_services' ) ) {
-			return;
-		}
-
 		$service_id = (int) ( $service['id'] ?? 0 );
 		if ( $service_id <= 0 ) {
 			return;
 		}
 
-		$odoo_id = $this->get_mapping( 'service', $service_id );
-		$action  = $odoo_id ? 'update' : 'create';
-
-		Queue_Manager::push( 'amelia', 'service', $action, $service_id, $odoo_id ?? 0 );
+		$this->push_entity( 'amelia', 'service', 'sync_services', $service_id );
 	}
 }
