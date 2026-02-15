@@ -70,19 +70,27 @@ class Contact_Refiner {
 
 		// Resolve country code to Odoo res.country ID.
 		if ( ! empty( $odoo_values['country_id'] ) && is_string( $odoo_values['country_id'] ) ) {
-			$code                      = strtoupper( $odoo_values['country_id'] );
-			$country                   = $this->client()->search( 'res.country', [ [ 'code', '=', $code ] ], 0, 1 );
+			try {
+				$code    = strtoupper( $odoo_values['country_id'] );
+				$country = $this->client()->search( 'res.country', [ [ 'code', '=', $code ] ], 0, 1 );
+			} catch ( \RuntimeException $e ) {
+				$country = [];
+			}
 			$odoo_values['country_id'] = ! empty( $country ) ? (int) $country[0] : false;
 
 			// Resolve state within that country.
 			if ( ! empty( $odoo_values['state_id'] ) && is_string( $odoo_values['state_id'] ) && ! empty( $country ) ) {
-				$state_name              = $odoo_values['state_id'];
-				$state                   = $this->client()->search(
-					'res.country.state',
-					[ [ 'country_id', '=', (int) $country[0] ], [ 'name', 'ilike', $state_name ] ],
-					0,
-					1
-				);
+				try {
+					$state_name = $odoo_values['state_id'];
+					$state      = $this->client()->search(
+						'res.country.state',
+						[ [ 'country_id', '=', (int) $country[0] ], [ 'name', 'ilike', $state_name ] ],
+						0,
+						1
+					);
+				} catch ( \RuntimeException $e ) {
+					$state = [];
+				}
 				$odoo_values['state_id'] = ! empty( $state ) ? (int) $state[0] : false;
 			} else {
 				$odoo_values['state_id'] = false;
@@ -148,7 +156,11 @@ class Contact_Refiner {
 			return null;
 		}
 
-		$records = $this->client()->read( $model, [ $id ], [ $field ] );
+		try {
+			$records = $this->client()->read( $model, [ $id ], [ $field ] );
+		} catch ( \RuntimeException $e ) {
+			return null;
+		}
 
 		if ( ! empty( $records[0][ $field ] ) ) {
 			return (string) $records[0][ $field ];

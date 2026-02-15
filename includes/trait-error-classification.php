@@ -28,7 +28,7 @@ trait Error_Classification {
 	 * @param \RuntimeException $e The exception to classify.
 	 * @return Error_Type
 	 */
-	private static function classify_exception( \RuntimeException $e ): Error_Type {
+	protected static function classify_exception( \RuntimeException $e ): Error_Type {
 		$code    = $e->getCode();
 		$message = strtolower( $e->getMessage() );
 

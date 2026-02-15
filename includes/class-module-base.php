@@ -342,13 +342,16 @@ abstract class Module_Base {
 		$values_list = [];
 		$item_map    = []; // Ordered list of items that passed validation.
 
+		// Batch lookup: single DB query instead of N individual get_mapping() calls.
+		$wp_ids            = array_column( $items, 'wp_id' );
+		$existing_mappings = $this->entity_map->get_odoo_ids_batch( $this->id, $entity_type, $wp_ids );
+
 		foreach ( $items as $item ) {
 			$wp_id = $item['wp_id'];
 
 			// Skip if already mapped (might have been created since enqueue).
-			$existing = $this->get_mapping( $entity_type, $wp_id );
-			if ( $existing ) {
-				$results[ $wp_id ] = Sync_Result::success( $existing );
+			if ( isset( $existing_mappings[ $wp_id ] ) ) {
+				$results[ $wp_id ] = Sync_Result::success( $existing_mappings[ $wp_id ] );
 				continue;
 			}
 

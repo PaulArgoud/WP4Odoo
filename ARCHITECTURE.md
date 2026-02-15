@@ -252,6 +252,9 @@ WordPress For Odoo/
 │   ├── class-module-registry.php      # Module registration, mutual exclusivity, lifecycle
 │   ├── class-module-base.php          # Abstract base class for modules (push/pull, mapping, anti-loop)
 │   ├── trait-module-helpers.php       # Shared helpers: auto_post_invoice (→bool), ensure_entity_synced, synthetic IDs, partner_service, translation_service, resolve_partner_from_user/email, check_dependency (version bounds + table existence + cron polling notice)
+│   ├── trait-error-classification.php # Error_Classification trait: classify RuntimeException → Error_Type (transient vs permanent)
+│   ├── trait-push-lock.php           # Push_Lock trait: MySQL advisory lock around push_to_odoo() create path (TOCTOU prevention)
+│   ├── trait-poll-support.php        # Poll_Support trait: targeted entity_map loading + last_polled_at deletion detection
 │   ├── class-entity-map-repository.php # DB access for wp4odoo_entity_map (batch lookups, LRU cache)
 │   ├── class-sync-queue-repository.php # DB access for wp4odoo_sync_queue (atomic dedup via transaction)
 │   ├── class-partner-service.php       # Shared res.partner lookup/creation service (advisory lock dedup)
@@ -294,7 +297,7 @@ WordPress For Odoo/
 ├── templates/
 │   └── customer-portal.php           #   Customer portal HTML template (orders/invoices tabs)
 │
-├── tests/                             # 3513 unit tests (5337 assertions) + 26 integration tests (wp-env)
+├── tests/                             # 3546 unit tests (5403 assertions) + 26 integration tests (wp-env)
 │   ├── bootstrap.php                 #   Unit test bootstrap: constants, stub loading, plugin class requires
 │   ├── bootstrap-integration.php     #   Integration test bootstrap: loads WP test framework (wp-env)
 │   ├── stubs/
@@ -484,7 +487,10 @@ WordPress For Odoo/
 │       ├── GamiPressModuleTest.php    #   86 tests — GamiPress points/achievement/rank sync, loyalty card resolution
 │       ├── BuddyBossModuleTest.php    #   76 tests — BuddyBoss profile/group sync, xprofile fields, M2M tags
 │       ├── KnowledgeModuleTest.php     #  62 tests for Knowledge module
-│       └── WPERPModuleTest.php         # 101 tests for WP ERP module
+│       ├── WPERPModuleTest.php         # 101 tests for WP ERP module
+│       ├── ErrorClassificationTest.php # 19 tests for Error_Classification trait
+│       ├── PushDedupLockTest.php      #   6 tests for Push_Lock advisory lock
+│       └── DatabaseMigrationTest.php  #   8 tests for Database_Migration (migration 6)
 │
 ├── uninstall.php                      # Cleanup on plugin uninstall
 │

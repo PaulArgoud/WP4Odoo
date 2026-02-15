@@ -58,6 +58,16 @@ class Field_Mapper {
 	 * @param string $format    Optional PHP date format. Defaults to WP date+time format.
 	 * @return string Formatted date string, or empty string on failure.
 	 */
+	/**
+	 * Cached WP date+time format string.
+	 *
+	 * Avoids repeated get_option() calls when converting multiple dates
+	 * in a batch (e.g. 50 orders with date fields).
+	 *
+	 * @var string
+	 */
+	private static string $wp_datetime_format = '';
+
 	public static function odoo_date_to_wp( string $odoo_date, string $format = '' ): string {
 		if ( empty( $odoo_date ) || 'false' === $odoo_date ) {
 			return '';
@@ -76,7 +86,10 @@ class Field_Mapper {
 		$dt->setTimezone( wp_timezone() );
 
 		if ( empty( $format ) ) {
-			$format = get_option( 'date_format', 'Y-m-d' ) . ' ' . get_option( 'time_format', 'H:i:s' );
+			if ( '' === self::$wp_datetime_format ) {
+				self::$wp_datetime_format = get_option( 'date_format', 'Y-m-d' ) . ' ' . get_option( 'time_format', 'H:i:s' );
+			}
+			$format = self::$wp_datetime_format;
 		}
 
 		return $dt->format( $format );

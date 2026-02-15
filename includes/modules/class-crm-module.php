@@ -197,32 +197,37 @@ class CRM_Module extends Module_Base {
 	 * @return \WP4Odoo\Sync_Result
 	 */
 	public function push_to_odoo( string $entity_type, string $action, int $wp_id, int $odoo_id = 0, array $payload = [] ): \WP4Odoo\Sync_Result {
-		// Handle archive payload.
-		if ( 'contact' === $entity_type && ! empty( $payload['_archive'] ) ) {
-			if ( $odoo_id > 0 ) {
-				$model = $this->get_odoo_model( $entity_type );
-				$this->client()->write( $model, [ $odoo_id ], [ 'active' => false ] );
-				$this->logger->info( 'Archived Odoo contact.', compact( 'wp_id', 'odoo_id' ) );
+		try {
+			// Handle archive payload.
+			if ( 'contact' === $entity_type && ! empty( $payload['_archive'] ) ) {
+				if ( $odoo_id > 0 ) {
+					$model = $this->get_odoo_model( $entity_type );
+					$this->client()->write( $model, [ $odoo_id ], [ 'active' => false ] );
+					$this->logger->info( 'Archived Odoo contact.', compact( 'wp_id', 'odoo_id' ) );
+				}
+				$this->remove_mapping( $entity_type, $wp_id );
+				return \WP4Odoo\Sync_Result::success( $odoo_id );
 			}
-			$this->remove_mapping( $entity_type, $wp_id );
-			return \WP4Odoo\Sync_Result::success( $odoo_id );
-		}
 
-		// Email dedup on create: search Odoo by email before creating.
-		if ( 'contact' === $entity_type && 'create' === $action && 0 === $odoo_id ) {
-			$wp_data = $this->load_wp_data( $entity_type, $wp_id );
-			$email   = $wp_data['user_email'] ?? '';
+			// Email dedup on create: search Odoo by email before creating.
+			if ( 'contact' === $entity_type && 'create' === $action && 0 === $odoo_id ) {
+				$wp_data = $this->load_wp_data( $entity_type, $wp_id );
+				$email   = $wp_data['user_email'] ?? '';
 
-			if ( ! empty( $email ) ) {
-				$model    = $this->get_odoo_model( $entity_type );
-				$existing = $this->client()->search( $model, [ [ 'email', '=', $email ] ], 0, 1 );
+				if ( ! empty( $email ) ) {
+					$model    = $this->get_odoo_model( $entity_type );
+					$existing = $this->client()->search( $model, [ [ 'email', '=', $email ] ], 0, 1 );
 
-				if ( ! empty( $existing ) ) {
-					$odoo_id = (int) $existing[0];
-					$action  = 'update';
-					$this->logger->info( 'Email match found in Odoo, converting create to update.', compact( 'email', 'odoo_id' ) );
+					if ( ! empty( $existing ) ) {
+						$odoo_id = (int) $existing[0];
+						$action  = 'update';
+						$this->logger->info( 'Email match found in Odoo, converting create to update.', compact( 'email', 'odoo_id' ) );
+					}
 				}
 			}
+		} catch ( \RuntimeException $e ) {
+			$error_type = self::classify_exception( $e );
+			return \WP4Odoo\Sync_Result::failure( $e->getMessage(), $error_type, $odoo_id > 0 ? $odoo_id : null );
 		}
 
 		return parent::push_to_odoo( $entity_type, $action, $wp_id, $odoo_id, $payload );

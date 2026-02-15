@@ -17,6 +17,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Push dedup advisory lock** — `push_to_odoo()` now acquires a MySQL advisory lock before the search-before-create path, preventing TOCTOU race conditions where concurrent workers could create duplicate Odoo records for the same entity
 - **Optimized cron polling** — `poll_entity_changes()` now uses targeted entity_map loading (`IN (wp_ids)`) instead of loading all rows, and detects deletions via `last_polled_at` timestamps instead of in-memory set comparison. New DB migration adds `last_polled_at` column to `entity_map`
 
+### Changed
+- **Sync_Engine method extraction** — Extracted `should_continue_batching()` and `process_fetched_batch()` from `run_with_lock()` for readability and testability
+- **Module_Base trait extraction** — Extracted 3 focused traits from `Module_Base`: `Error_Classification` (exception → Error_Type classification), `Push_Lock` (advisory lock for push dedup), `Poll_Support` (targeted poll with `last_polled_at`). Module_Base uses all 3 via `use` statements
+- **CRM_Module error classification** — `push_to_odoo()` override now catches `\RuntimeException` and classifies errors via `Error_Classification::classify_exception()` instead of treating all failures as transient
+- **Contact_Refiner resilience** — All refinement methods (`refine_name`, `refine_country`, `refine_state`) now catch `\Throwable` and return unmodified data on failure, preventing a single refinement error from blocking the entire sync
+- **Batch creates N+1 fix** — `push_batch_creates()` now passes the pre-resolved `$module` instance to `process_single_job()` instead of re-resolving from `Module_Registry` for each job in the batch
+- **Field_Mapper date format cache** — `convert_date()` now caches the Odoo date format string across calls, avoiding redundant format resolution per field
+
+### Tests
+- **33 new unit tests** — 3 new test files:
+  - `ErrorClassificationTest` (19 tests) — Error_Classification trait: HTTP 5xx → transient, access denied → permanent, network errors → transient, default → transient
+  - `PushDedupLockTest` (6 tests) — Push_Lock trait: advisory lock acquire/release, lock on create path, no lock on update path, lock timeout → transient error
+  - `DatabaseMigrationTest` (8 tests) — Migration 6: `last_polled_at` column addition, index creation, idempotency
+
 ## [3.2.0] - 2026-02-15
 
 ### Fixed

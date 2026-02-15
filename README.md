@@ -25,7 +25,7 @@ Modular WordPress plugin that creates a seamless, bidirectional bridge between W
 - **WP-CLI** — Full command suite: `wp wp4odoo status|test|sync|queue|module` for headless management
 - **WPML / Polylang Translation Sync** — Multilingual product sync via WPML or Polylang: pushes translated names/descriptions to Odoo with language context, pulls translations back to create/update translated posts. Category and attribute value translations included
 - **Extensible** — Register custom modules via `wp4odoo_register_modules`; filter data with `wp4odoo_map_to_odoo_*` / `wp4odoo_map_from_odoo_*`; map ACF custom fields to Odoo via the ACF meta-module
-- **Multilingual** — 686 translatable strings, ships with English, French, and Spanish. Translation-ready via `.po`/`.mo`
+- **Multilingual** — 688 translatable strings, ships with English, French, and Spanish. Translation-ready via `.po`/`.mo`
 
 ## Requirements
 
