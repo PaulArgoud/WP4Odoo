@@ -237,13 +237,15 @@ class Webhook_Handler {
 			 */
 			do_action( 'wp4odoo_webhook_enqueue_failed', $module, $entity_type, $odoo_id, $e );
 
-			return new \WP_REST_Response(
+			$response = new \WP_REST_Response(
 				[
 					'success' => false,
 					'error'   => __( 'Internal enqueue error.', 'wp4odoo' ),
 				],
 				503
 			);
+			$response->header( 'Retry-After', '60' );
+			return $response;
 		}
 
 		$this->logger->info(

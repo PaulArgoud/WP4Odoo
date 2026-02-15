@@ -17,7 +17,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 ?>
-<div class="wp4odoo-checklist" data-nonce="<?php echo esc_attr( wp_create_nonce( 'wp4odoo_admin' ) ); ?>">
+<div class="wp4odoo-checklist" data-nonce="<?php echo esc_attr( wp_create_nonce( 'wp4odoo_setup' ) ); ?>">
 	<div class="wp4odoo-checklist-header">
 		<strong><?php esc_html_e( 'Setup Checklist', 'wp4odoo' ); ?></strong>
 		<span class="wp4odoo-checklist-progress-text">

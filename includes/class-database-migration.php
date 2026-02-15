@@ -57,6 +57,7 @@ final class Database_Migration {
 			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			PRIMARY KEY (id),
 			KEY idx_status_priority (status, priority, scheduled_at),
+			KEY idx_status_module (status, module, priority, created_at),
 			KEY idx_module_entity (module, entity_type),
 			KEY idx_dedup_wp (module, entity_type, direction, status, wp_id),
 			KEY idx_dedup_odoo (module, entity_type, direction, status, odoo_id),

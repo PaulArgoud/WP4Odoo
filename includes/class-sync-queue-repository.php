@@ -431,6 +431,10 @@ class Sync_Queue_Repository {
 		$table  = $this->table();
 		$cutoff = gmdate( 'Y-m-d H:i:s', time() - max( 60, $timeout_seconds ) );
 
+		// Wrap both UPDATEs in a transaction so jobs cannot end up in
+		// an inconsistent state if the process crashes between them.
+		$wpdb->query( 'START TRANSACTION' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+
 		// Increment attempts. Jobs under max_attempts → pending (retry).
 		$retried = (int) $wpdb->query(
 			$wpdb->prepare(
@@ -446,6 +450,8 @@ class Sync_Queue_Repository {
 				$cutoff
 			)
 		);
+
+		$wpdb->query( 'COMMIT' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 
 		return $retried + $failed;
 	}

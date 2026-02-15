@@ -32,6 +32,32 @@ class Admin_Ajax {
 	private \WP4Odoo\Query_Service $query_service;
 
 	/**
+	 * Map each AJAX action (without wp4odoo_ prefix) to its nonce domain.
+	 *
+	 * Limits blast radius: a leaked nonce only authorises its own domain.
+	 */
+	private const ACTION_NONCE_MAP = [
+		'test_connection'      => 'wp4odoo_setup',
+		'dismiss_onboarding'   => 'wp4odoo_setup',
+		'dismiss_checklist'    => 'wp4odoo_setup',
+		'confirm_webhooks'     => 'wp4odoo_setup',
+		'detect_languages'     => 'wp4odoo_setup',
+		'fetch_odoo_taxes'     => 'wp4odoo_setup',
+		'fetch_odoo_carriers'  => 'wp4odoo_setup',
+		'retry_failed'         => 'wp4odoo_monitor',
+		'cleanup_queue'        => 'wp4odoo_monitor',
+		'cancel_job'           => 'wp4odoo_monitor',
+		'purge_logs'           => 'wp4odoo_monitor',
+		'fetch_logs'           => 'wp4odoo_monitor',
+		'fetch_queue'          => 'wp4odoo_monitor',
+		'queue_stats'          => 'wp4odoo_monitor',
+		'toggle_module'        => 'wp4odoo_module',
+		'save_module_settings' => 'wp4odoo_module',
+		'bulk_import_products' => 'wp4odoo_module',
+		'bulk_export_products' => 'wp4odoo_module',
+	];
+
+	/**
 	 * Mapping from Odoo model names to the Odoo app that provides them.
 	 *
 	 * Used in debug-mode warnings to help users identify which Odoo
@@ -86,10 +112,19 @@ class Admin_Ajax {
 	/**
 	 * Verify nonce and capability. Dies on failure.
 	 *
+	 * Resolves the nonce domain from the current AJAX action via
+	 * ACTION_NONCE_MAP, falling back to 'wp4odoo_admin' for any
+	 * unrecognised action (backward compatibility).
+	 *
 	 * @return void
 	 */
 	protected function verify_request(): void {
-		check_ajax_referer( 'wp4odoo_admin' );
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Action read for nonce domain lookup only.
+		$action = isset( $_REQUEST['action'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['action'] ) ) : '';
+		$method = str_replace( 'wp4odoo_', '', $action );
+		$nonce  = self::ACTION_NONCE_MAP[ $method ] ?? 'wp4odoo_admin';
+
+		check_ajax_referer( $nonce );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_send_json_error(
@@ -179,15 +214,27 @@ class Admin_Ajax {
 		}
 
 		// Resolve hostname to IP for validation.
-		$ip = gethostbyname( $host );
+		// Uses dns_get_record() instead of gethostbyname() to support both
+		// IPv4 and IPv6 resolution without blocking on slow DNS.
+		$ip = $host;
+		if ( ! filter_var( $host, FILTER_VALIDATE_IP ) ) {
+			$dns = dns_get_record( $host, DNS_A | DNS_AAAA );
+			if ( empty( $dns ) ) {
+				return '';
+			}
+			$ip = $dns[0]['ip'] ?? $dns[0]['ipv6'] ?? '';
+			if ( '' === $ip ) {
+				return '';
+			}
+		}
 
-		// gethostbyname returns the hostname unchanged on failure.
-		if ( $ip === $host && ! filter_var( $host, FILTER_VALIDATE_IP ) ) {
+		// Reject private and reserved IP ranges (both IPv4 and IPv6).
+		if ( ! filter_var( $ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE ) ) {
 			return '';
 		}
 
-		// Reject private and reserved IP ranges.
-		if ( ! filter_var( $ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE ) ) {
+		// Explicit IPv6 loopback check (::1 may not be caught by FILTER_FLAG_NO_RES_RANGE on all PHP builds).
+		if ( '::1' === $ip ) {
 			return '';
 		}
 

@@ -18,6 +18,40 @@
 		return div.innerHTML;
 	}
 
+	/**
+	 * Resolve the domain-specific nonce for a given AJAX action.
+	 *
+	 * Falls back to wp4odooAdmin.nonce (setup domain) for backward
+	 * compatibility when wp4odooAdmin.nonces is unavailable.
+	 *
+	 * @param {string} action Full WP AJAX action name (e.g. 'wp4odoo_test_connection').
+	 * @return {string} Nonce token.
+	 */
+	function wp4odooNonce( action ) {
+		var map = {
+			wp4odoo_test_connection:      'setup',
+			wp4odoo_dismiss_onboarding:   'setup',
+			wp4odoo_dismiss_checklist:    'setup',
+			wp4odoo_confirm_webhooks:     'setup',
+			wp4odoo_detect_languages:     'setup',
+			wp4odoo_fetch_odoo_taxes:     'setup',
+			wp4odoo_fetch_odoo_carriers:  'setup',
+			wp4odoo_retry_failed:         'monitor',
+			wp4odoo_cleanup_queue:        'monitor',
+			wp4odoo_cancel_job:           'monitor',
+			wp4odoo_purge_logs:           'monitor',
+			wp4odoo_fetch_logs:           'monitor',
+			wp4odoo_fetch_queue:          'monitor',
+			wp4odoo_queue_stats:          'monitor',
+			wp4odoo_toggle_module:        'module',
+			wp4odoo_save_module_settings: 'module',
+			wp4odoo_bulk_import_products: 'module',
+			wp4odoo_bulk_export_products: 'module'
+		};
+		var domain = map[ action ] || 'setup';
+		return ( wp4odooAdmin.nonces && wp4odooAdmin.nonces[ domain ] ) || wp4odooAdmin.nonce;
+	}
+
 	var WP4Odoo = {
 
 		/**
@@ -62,7 +96,7 @@
 
 			$.post( wp4odooAdmin.ajaxurl, $.extend( {
 				action: action,
-				_ajax_nonce: wp4odooAdmin.nonce
+				_ajax_nonce: wp4odooNonce( action )
 			}, data ), function( response ) {
 				if ( $button ) {
 					$button.prop( 'disabled', false ).removeClass( 'updating-message' );
@@ -179,7 +213,7 @@
 
 				$.post( wp4odooAdmin.ajaxurl, {
 					action: 'wp4odoo_toggle_module',
-					_ajax_nonce: wp4odooAdmin.nonce,
+					_ajax_nonce: wp4odooNonce( 'wp4odoo_toggle_module' ),
 					module_id: moduleId,
 					enabled: enabled ? 1 : 0
 				}, function( response ) {

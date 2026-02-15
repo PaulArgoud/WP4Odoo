@@ -95,7 +95,12 @@ class Admin {
 			'wp4odooAdmin',
 			[
 				'ajaxurl' => admin_url( 'admin-ajax.php' ),
-				'nonce'   => wp_create_nonce( 'wp4odoo_admin' ),
+				'nonce'   => wp_create_nonce( 'wp4odoo_setup' ),
+				'nonces'  => [
+					'setup'   => wp_create_nonce( 'wp4odoo_setup' ),
+					'monitor' => wp_create_nonce( 'wp4odoo_monitor' ),
+					'module'  => wp_create_nonce( 'wp4odoo_module' ),
+				],
 				'i18n'    => [
 					'testing'            => __( 'Testing...', 'wp4odoo' ),
 					'connectionOk'       => __( 'Connection successful!', 'wp4odoo' ),
@@ -185,7 +190,7 @@ class Admin {
 			'<div class="notice notice-info is-dismissible wp4odoo-setup-notice" data-nonce="%s">'
 			. '<p><strong>%s</strong> %s <a href="%s">%s</a></p>'
 			. '</div>',
-			esc_attr( wp_create_nonce( 'wp4odoo_admin' ) ),
+			esc_attr( wp_create_nonce( 'wp4odoo_setup' ) ),
 			esc_html__( 'WordPress For Odoo', 'wp4odoo' ),
 			esc_html__( 'is almost ready! Configure your Odoo connection to get started.', 'wp4odoo' ),
 			esc_url( $settings_url ),

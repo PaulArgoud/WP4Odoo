@@ -211,7 +211,12 @@ class Sync_Engine {
 
 			// Recover any jobs left in 'processing' from a previous crash
 			// BEFORE fetching, so recovered jobs are eligible for this batch.
-			$this->queue_repo->recover_stale_processing( $this->settings->get_stale_timeout() );
+			// Rate-limited to once per minute to avoid redundant table scans.
+			$last_recovery = (int) get_transient( 'wp4odoo_last_stale_recovery' );
+			if ( time() - $last_recovery >= 60 ) {
+				$this->queue_repo->recover_stale_processing( $this->settings->get_stale_timeout() );
+				set_transient( 'wp4odoo_last_stale_recovery', time(), 120 );
+			}
 
 			$jobs       = null !== $module
 				? $this->queue_repo->fetch_pending_for_module( $module, $batch, $now )
@@ -285,6 +290,16 @@ class Sync_Engine {
 				} catch ( \Throwable $e ) {
 					$this->handle_failure( $job, $e->getMessage() );
 					++$this->batch_failures;
+
+					// If memory is exhausted after the error, stop the batch
+					// to prevent cascading OOM failures on subsequent jobs.
+					if ( $this->is_memory_exhausted() ) {
+						$this->logger->warning(
+							'Memory threshold reached after job failure, stopping batch.',
+							[ 'job_id' => $job->id ]
+						);
+						break;
+					}
 				} finally {
 					$this->logger->set_correlation_id( null );
 				}

@@ -307,8 +307,24 @@ abstract class Module_Base {
 		$code    = $e->getCode();
 		$message = strtolower( $e->getMessage() );
 
-		// HTTP 5xx and 429 are transient (server overload / temporary unavailability).
-		if ( 429 === $code || ( $code >= 500 && $code < 600 ) ) {
+		// Odoo business errors are permanent (won't be fixed by retrying).
+		// Check BEFORE status code since some Odoo versions wrap these in HTTP 500.
+		if ( str_contains( $message, 'access denied' )
+			|| str_contains( $message, 'accesserror' )
+			|| str_contains( $message, 'validationerror' )
+			|| str_contains( $message, 'userinputerror' )
+			|| str_contains( $message, 'missing required' )
+			|| str_contains( $message, 'constraint' ) ) {
+			return Error_Type::Permanent;
+		}
+
+		// HTTP 429 (rate limit) and 503 (maintenance) are always transient.
+		if ( 429 === $code || 503 === $code ) {
+			return Error_Type::Transient;
+		}
+
+		// Other HTTP 5xx: transient (server overload / temporary unavailability).
+		if ( $code >= 500 && $code < 600 ) {
 			return Error_Type::Transient;
 		}
 
@@ -318,15 +334,6 @@ abstract class Module_Base {
 			|| str_contains( $message, 'connection refused' )
 			|| str_contains( $message, 'could not resolve' ) ) {
 			return Error_Type::Transient;
-		}
-
-		// Odoo business errors are permanent (won't be fixed by retrying).
-		if ( str_contains( $message, 'access denied' )
-			|| str_contains( $message, 'accesserror' )
-			|| str_contains( $message, 'validationerror' )
-			|| str_contains( $message, 'missing required' )
-			|| str_contains( $message, 'constraint' ) ) {
-			return Error_Type::Permanent;
 		}
 
 		// Default: treat unknown errors as transient for safety (allows retry).
@@ -738,7 +745,19 @@ abstract class Module_Base {
 	 * @param int    $wp_id      WordPress entity ID.
 	 * @return void
 	 */
+	/**
+	 * Maximum entries per model in the translation buffer.
+	 *
+	 * Prevents unbounded memory growth during large pull batches.
+	 * When exceeded, buffer is flushed early before accumulating more.
+	 */
+	private const TRANSLATION_BUFFER_MAX = 5000;
+
 	protected function accumulate_pull_translation( string $odoo_model, int $odoo_id, int $wp_id ): void {
+		if ( isset( $this->translation_buffer[ $odoo_model ] )
+			&& count( $this->translation_buffer[ $odoo_model ] ) >= self::TRANSLATION_BUFFER_MAX ) {
+			$this->flush_pull_translations();
+		}
 		$this->translation_buffer[ $odoo_model ][ $odoo_id ] = $wp_id;
 	}
 
