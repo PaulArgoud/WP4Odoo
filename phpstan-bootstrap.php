@@ -3,7 +3,7 @@
  * PHPStan bootstrap — defines plugin constants and stubs
  * that are normally set up by the main wp4odoo.php entry point.
  *
- * @package WP4Odoo
+ * @package WP4Odoo 
  */
 
 define( 'WP4ODOO_VERSION', '3.1.0' );

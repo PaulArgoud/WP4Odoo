@@ -4,7 +4,7 @@
  * Plugin URI: https://github.com/PaulArgoud/wordpress-for-odoo
  * Description: Modular WordPress/WooCommerce sync with Odoo ERP (v14+). 33 modules — CRM, Sales, WooCommerce, WooCommerce Subscriptions, WC Bundle BOM, WC Points & Rewards, WC Bookings, EDD, Ecwid, ShopWP, WP Crowdfunding, Memberships, MemberPress, Restrict Content Pro, Paid Memberships Pro, GiveWP, Charitable, WP Simple Pay, WP Recipe Maker, Forms (7 plugins), Amelia, Bookly, LearnDash, LifterLMS, The Events Calendar, Sprout Invoices, WP-Invoice, WP Job Manager, Awesome Support, SupportCandy, AffiliateWP, ACF — covering contacts, leads, orders, invoices, products, donations, bookings, recipes, LMS courses, recurring subscriptions, events, manufacturing BOMs, helpdesk tickets, affiliate commissions. Async queue, webhooks, customer portal, WP-CLI, encrypted credentials.
  * Version: 3.1.0
- * Requires at least: 6.0
+ * Requires at least: 6.0 
  * Requires PHP: 8.2
  * Author: Paul ARGOUD
  * Author URI: https://paul.argoud.net

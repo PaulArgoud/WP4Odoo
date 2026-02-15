@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.1.5] - Unreleased
 
-## [3.1.0] - 2026-02-15
+## [3.1.0] - 2026-02-15 
 
 ### Added
 - **`should_sync()` helper** — New `Module_Base::should_sync(string $setting_key)` consolidates the repeated `is_importing()` + settings check pattern into a single guard clause. Applied across ~40 hook callbacks in 22 trait files, replacing ~80 lines of duplicated guard logic. 6 new tests in `ModuleBaseHelpersTest`

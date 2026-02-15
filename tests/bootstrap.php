@@ -4,7 +4,7 @@
  *
  * Defines constants, loads stub files, and registers the plugin autoloader
  * so that classes can be tested without a full WordPress environment.
- *
+ * 
  * Stub files live in tests/stubs/:
  *   wp-classes.php   — WP_Error, WP_REST_*, WP_User, WP_CLI, AJAX helpers
  *   wp-functions.php — WordPress function stubs (options, hooks, users, posts…)
