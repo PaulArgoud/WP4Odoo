@@ -343,6 +343,9 @@ class OdooAuthTest extends TestCase {
 			public function get_uid(): ?int {
 				return 1;
 			}
+			public function get_server_version(): ?string {
+				return null;
+			}
 		};
 
 		$result = Odoo_Auth::probe_models( $transport, [ 'crm.lead', 'sale.order' ] );
@@ -374,6 +377,9 @@ class OdooAuthTest extends TestCase {
 			}
 			public function get_uid(): ?int {
 				return 1;
+			}
+			public function get_server_version(): ?string {
+				return null;
 			}
 		};
 
@@ -412,6 +418,10 @@ class OdooAuthTest extends TestCase {
 
 			public function get_uid(): ?int {
 				return 1;
+			}
+
+			public function get_server_version(): ?string {
+				return null;
 			}
 		};
 	}

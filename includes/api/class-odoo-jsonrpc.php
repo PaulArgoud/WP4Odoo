@@ -52,11 +52,16 @@ class Odoo_JsonRPC extends Odoo_Transport_Base {
 
 		$this->uid = (int) $result['uid'];
 
+		if ( ! empty( $result['server_version'] ) ) {
+			$this->server_version = (string) $result['server_version'];
+		}
+
 		$this->logger->debug(
 			'Authenticated successfully.',
 			[
-				'uid' => $this->uid,
-				'url' => $this->url,
+				'uid'            => $this->uid,
+				'url'            => $this->url,
+				'server_version' => $this->server_version,
 			]
 		);
 

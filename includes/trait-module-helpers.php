@@ -437,14 +437,16 @@ trait Module_Helpers {
 
 		if ( '' !== $version && '' !== $tested && version_compare( $version, $tested_cmp, '>' ) ) {
 			$notices[] = [
-				'type'    => 'warning',
-				'message' => sprintf(
+				'type'           => 'warning',
+				'message'        => sprintf(
 					/* translators: %1$s: plugin name, %2$s: detected version, %3$s: last tested version */
 					__( '%1$s %2$s has not been tested (tested up to %3$s). Incompatibilities may occur.', 'wp4odoo' ),
 					$plugin_name,
 					$version,
 					$tested
 				),
+				'plugin_name'    => $plugin_name,
+				'plugin_version' => $version,
 			];
 		}
 

@@ -275,11 +275,26 @@ class Admin {
 		}
 
 		$messages = [];
-		foreach ( $warnings as $notices ) {
+		foreach ( $warnings as $module_id => $notices ) {
 			foreach ( $notices as $notice ) {
-				if ( 'warning' === $notice['type'] ) {
-					$messages[] = $notice['message'];
+				if ( 'warning' !== $notice['type'] ) {
+					continue;
 				}
+
+				// TESTED_UP_TO notices include plugin_name/plugin_version for the report URL.
+				/** @var array{type: string, message: string, plugin_name?: string, plugin_version?: string} $notice */
+				$report_url = '';
+				if ( isset( $notice['plugin_name'], $notice['plugin_version'] ) ) {
+					$report_url = self::build_compat_report_url(
+						$module_id,
+						$notice['plugin_name'],
+						$notice['plugin_version']
+					);
+				}
+				$messages[] = [
+					'text'       => $notice['message'],
+					'report_url' => $report_url,
+				];
 			}
 		}
 
@@ -291,9 +306,63 @@ class Admin {
 		echo esc_html__( 'WordPress For Odoo — Untested plugin versions detected:', 'wp4odoo' );
 		echo '</strong></p><ul>';
 		foreach ( $messages as $msg ) {
-			echo '<li>' . esc_html( $msg ) . '</li>';
+			echo '<li>' . esc_html( $msg['text'] );
+			if ( strlen( $msg['report_url'] ) > 0 ) {
+				printf(
+					' <a href="%s" target="_blank" rel="noopener noreferrer">%s</a>',
+					esc_url( $msg['report_url'] ),
+					esc_html__( 'Report compatibility', 'wp4odoo' )
+				);
+			}
+			echo '</li>';
 		}
 		echo '</ul></div>';
+	}
+
+	/**
+	 * Build a pre-filled compatibility report URL for untested plugin versions.
+	 *
+	 * @param string $module_id      Module identifier.
+	 * @param string $plugin_name    Third-party plugin name.
+	 * @param string $plugin_version Detected plugin version.
+	 * @return string Filterable report URL.
+	 */
+	public static function build_compat_report_url( string $module_id, string $plugin_name, string $plugin_version ): string {
+		$form_id  = 34221;
+		$base_url = 'https://paul.argoud.net/wp4odoo-plugin-wordpress-odoo-synchronisation-woocommerce/#forms';
+
+		// Field 1 is a select — WPForms dynamic population matches on choice label.
+		$module      = wp4odoo()->module_registry()->get( $module_id );
+		$module_name = $module ? $module->get_name() : $module_id;
+
+		$params = [
+			"wpf{$form_id}_1" => $module_name,
+			"wpf{$form_id}_2" => WP4ODOO_VERSION,
+			"wpf{$form_id}_3" => $plugin_name . ' ' . $plugin_version,
+			"wpf{$form_id}_6" => get_bloginfo( 'version' ),
+			"wpf{$form_id}_7" => PHP_VERSION,
+		];
+
+		// Field 9 is a number field — send the major version (e.g. 17).
+		$odoo_version = (string) get_option( 'wp4odoo_odoo_version', '' );
+		if ( '' !== $odoo_version ) {
+			$major = (int) $odoo_version;
+			if ( $major > 0 ) {
+				$params[ "wpf{$form_id}_9" ] = (string) $major;
+			}
+		}
+
+		$url = $base_url . '#forms?' . http_build_query( $params );
+
+		/**
+		 * Filters the compatibility report URL shown in version warnings.
+		 *
+		 * @param string $url            Pre-filled form URL.
+		 * @param string $module_id      Module identifier.
+		 * @param string $plugin_name    Third-party plugin name.
+		 * @param string $plugin_version Detected plugin version.
+		 */
+		return (string) apply_filters( 'wp4odoo_compat_report_url', $url, $module_id, $plugin_name, $plugin_version );
 	}
 
 	/**

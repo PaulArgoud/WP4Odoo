@@ -71,6 +71,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 			<?php foreach ( $dep_notices as $notice ) : ?>
 				<p class="notice notice-<?php echo esc_attr( $notice['type'] ); ?>" style="margin: 10px 0 0; padding: 8px 12px;">
 					<?php echo esc_html( $notice['message'] ); ?>
+					<?php if ( ! empty( $notice['plugin_name'] ) ) : ?>
+						<a href="<?php echo esc_url( \WP4Odoo\Admin\Admin::build_compat_report_url( $module_id, $notice['plugin_name'], $notice['plugin_version'] ?? '' ) ); ?>" target="_blank" rel="noopener noreferrer">
+							<?php esc_html_e( 'Report compatibility', 'wp4odoo' ); ?>
+						</a>
+					<?php endif; ?>
 				</p>
 			<?php endforeach; ?>
 

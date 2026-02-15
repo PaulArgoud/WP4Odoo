@@ -44,4 +44,13 @@ interface Transport {
 	 * @return int|null
 	 */
 	public function get_uid(): ?int;
+
+	/**
+	 * Get the Odoo server version string.
+	 *
+	 * Available after a successful authenticate() call.
+	 *
+	 * @return string|null e.g. '17.0' or null if not yet known.
+	 */
+	public function get_server_version(): ?string;
 }

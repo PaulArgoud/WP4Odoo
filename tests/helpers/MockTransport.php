@@ -80,4 +80,13 @@ class MockTransport implements Transport {
 	public function get_uid(): ?int {
 		return 1;
 	}
+
+	/**
+	 * Get the Odoo server version string.
+	 *
+	 * @return string|null Always returns null (stub).
+	 */
+	public function get_server_version(): ?string {
+		return null;
+	}
 }

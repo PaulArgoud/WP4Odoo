@@ -237,6 +237,7 @@ class Odoo_Auth {
 
 			$result['success'] = true;
 			$result['uid']     = $uid;
+			$result['version'] = $transport->get_server_version();
 			$result['message'] = __( 'Connection successful.', 'wp4odoo' );
 
 			// Probe model availability if requested.
@@ -247,9 +248,10 @@ class Odoo_Auth {
 			$logger->info(
 				'Connection test successful.',
 				[
-					'url'      => $url,
-					'database' => $database,
-					'uid'      => $uid,
+					'url'            => $url,
+					'database'       => $database,
+					'uid'            => $uid,
+					'server_version' => $result['version'],
 				]
 			);
 		} catch ( \Throwable $e ) {

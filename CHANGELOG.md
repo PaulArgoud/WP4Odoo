@@ -25,6 +25,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Empty encryption key warning** — `Odoo_Auth` now logs a warning via `error_log()` when the encryption key is empty, aiding diagnosis of misconfigured installations
 - **CLI `--format` validation** — `queue stats` and `queue list` subcommands now reject unsupported `--format` values with a clear error
 
+### Added
+- **Compatibility report link** — TESTED_UP_TO version warnings now include a "Report compatibility" link that opens a pre-filled WPForms form with module name, WP4Odoo version, third-party plugin version, WordPress version, PHP version, and Odoo major version. Shown in both the global admin notice banner and per-module notices on the Modules tab. Filterable via `wp4odoo_compat_report_url`
+- **Odoo version detection** — `Transport` interface gains `get_server_version(): ?string`. JSON-RPC extracts `server_version` from the authenticate response; XML-RPC calls `version()` on `/xmlrpc/2/common` after auth. `test_connection()` now populates the `version` field. The AJAX handler stores the version in `wp4odoo_odoo_version` option for use in compat reports and diagnostics
+
 ### Changed
 - **Log module filter** — Expanded the log viewer module dropdown from ~20 hardcoded entries to all 33 sync modules plus 5 system modules, organized in `<optgroup>` sections
 - **Log level i18n** — Log level labels (Debug, Info, Warning, Error, Critical) in the sync settings tab are now translatable

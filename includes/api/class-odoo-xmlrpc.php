@@ -51,11 +51,26 @@ class Odoo_XmlRPC extends Odoo_Transport_Base {
 
 		$this->uid = (int) $result;
 
+		// Fetch the server version from /xmlrpc/2/common version().
+		try {
+			$version_info = $this->xmlrpc_call( '/xmlrpc/2/common', 'version', [] );
+			if ( is_array( $version_info ) && ! empty( $version_info['server_version'] ) ) {
+				$this->server_version = (string) $version_info['server_version'];
+			}
+		} catch ( \Throwable $e ) {
+			// Non-critical — log and continue.
+			$this->logger->debug(
+				'Could not retrieve Odoo version via XML-RPC.',
+				[ 'error' => $e->getMessage() ]
+			);
+		}
+
 		$this->logger->debug(
 			'Authenticated successfully via XML-RPC.',
 			[
-				'uid' => $this->uid,
-				'url' => $this->url,
+				'uid'            => $this->uid,
+				'url'            => $this->url,
+				'server_version' => $this->server_version,
 			]
 		);
 

@@ -44,6 +44,13 @@ abstract class Odoo_Transport_Base implements Transport {
 	protected ?int $uid = null;
 
 	/**
+	 * Odoo server version string (e.g. '17.0').
+	 *
+	 * @var string|null
+	 */
+	protected ?string $server_version = null;
+
+	/**
 	 * API key or password.
 	 *
 	 * @var string
@@ -87,6 +94,15 @@ abstract class Odoo_Transport_Base implements Transport {
 	 */
 	public function get_uid(): ?int {
 		return $this->uid;
+	}
+
+	/**
+	 * Get the Odoo server version string.
+	 *
+	 * @return string|null e.g. '17.0' or null if not yet known.
+	 */
+	public function get_server_version(): ?string {
+		return $this->server_version;
 	}
 
 	/**

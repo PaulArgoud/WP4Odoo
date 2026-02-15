@@ -19,7 +19,7 @@ WordPress For Odoo/
 │
 ├── includes/
 │   ├── api/
-│   │   ├── interface-transport.php         # Transport interface (authenticate, execute_kw, get_uid)
+│   │   ├── interface-transport.php         # Transport interface (authenticate, execute_kw, get_uid, get_server_version)
 │   │   ├── class-odoo-transport-base.php  # Abstract base: shared properties, constructor, ensure_authenticated()
 │   │   ├── trait-retryable-http.php       # Retryable_Http trait (single-attempt HTTP POST, fail-fast for queue-level retry)
 │   │   ├── class-odoo-client.php          # High-level client (CRUD, search, fields_get, reset(), session re-auth on 403)
@@ -633,6 +633,7 @@ interface Transport {
     public function authenticate( string $username ): int;
     public function execute_kw( string $model, string $method, array $args, array $kwargs ): mixed;
     public function get_uid(): ?int;
+    public function get_server_version(): ?string;
 }
 
 trait Retryable_Http {
@@ -656,6 +657,8 @@ POST /jsonrpc           POST /xmlrpc/2/common (auth)
 `Odoo_Client::call()` includes automatic session re-authentication: if an API call throws a session-related error (HTTP 403, "session expired", "access denied"), the client resets the transport, re-authenticates, and retries the call once. This handles long-running batch processing where Odoo sessions may expire mid-sync.
 
 The protocol is configurable in options (`wp4odoo_connection.protocol`). JSON-RPC is the default for Odoo 17+.
+
+**Server version detection:** Both transports capture the Odoo server version during authentication. JSON-RPC extracts `server_version` from the `/web/session/authenticate` response. XML-RPC calls `version()` on `/xmlrpc/2/common` after auth (non-blocking try/catch). The version is stored in `Odoo_Transport_Base::$server_version` and accessible via `get_server_version(): ?string`. On successful connection test, the AJAX handler persists the version in `wp4odoo_odoo_version` option for use in compatibility reporting and diagnostics.
 
 ### 5. Entity Mapping
 
@@ -971,7 +974,7 @@ All user inputs are sanitized with:
 | Logs | `tab-logs.php` | Filter bar (level, module, dates), AJAX paginated log table, purge |
 
 **Key classes:**
-- `Admin` — orchestrator: menu registration, asset enqueuing, plugin settings link, activation redirect, setup notice, backup warning banner
+- `Admin` — orchestrator: menu registration, asset enqueuing, plugin settings link, activation redirect, setup notice, backup warning banner, version warnings with compatibility report links (`build_compat_report_url()`)
 - `Settings_Page` — Settings API registration, tab rendering (dynamic `render_tab()` dispatcher), setup checklist, sanitize callbacks
 - `Admin_Ajax` — 15 handlers: test_connection, retry_failed, cleanup_queue, cancel_job, purge_logs, fetch_logs, queue_stats, toggle_module, save_module_settings, bulk_import_products, bulk_export_products, fetch_queue, dismiss_onboarding, dismiss_checklist, confirm_webhooks
 
@@ -1643,6 +1646,7 @@ Auto-dismissed when all steps completed. Dismiss via × button persisted in `wp4
 | `wp4odoo_wpai_routing_table` | Customize WP All Import post type → module routing |
 | `wp4odoo_odoo_locale` | Customize WP locale → Odoo locale mapping |
 | `wp4odoo_translatable_fields_{module}` | Customize translatable field list per module |
+| `wp4odoo_compat_report_url` | Customize the compatibility report URL for TESTED_UP_TO notices |
 
 ## Cron
 
