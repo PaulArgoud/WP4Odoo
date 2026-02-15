@@ -5,7 +5,7 @@ namespace WP4Odoo\Tests\Unit;
 
 use WP4Odoo\Logger;
 use WP4Odoo\Modules\Awesome_Support_Handler;
-use PHPUnit\Framework\TestCase;
+use WP4Odoo\Tests\Module_Test_Case;
 
 /**
  * Unit tests for Awesome_Support_Handler.
@@ -13,18 +13,12 @@ use PHPUnit\Framework\TestCase;
  * Tests ticket loading, status saving, Odoo data parsing,
  * and priority mapping.
  */
-class AwesomeSupportHandlerTest extends TestCase {
+class AwesomeSupportHandlerTest extends Module_Test_Case {
 
 	private Awesome_Support_Handler $handler;
 
 	protected function setUp(): void {
-		global $wpdb;
-		$wpdb = new \WP_DB_Stub();
-
-		$GLOBALS['_wp_options']   = [];
-		$GLOBALS['_wp_posts']     = [];
-		$GLOBALS['_wp_post_meta'] = [];
-
+		parent::setUp();
 		$this->handler = new Awesome_Support_Handler( new Logger( 'test' ) );
 	}
 

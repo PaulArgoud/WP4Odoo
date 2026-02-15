@@ -154,6 +154,29 @@ trait Module_Helpers {
 		$this->push_to_odoo( $entity_type, 'create', $wp_id );
 	}
 
+	/**
+	 * Guard + map + push an entity to the sync queue.
+	 *
+	 * Common pattern used by hook traits: checks the settings toggle,
+	 * resolves the existing Odoo mapping, and queues a create or update.
+	 *
+	 * @param string $module      Module slug (e.g., 'pmpro', 'rcp').
+	 * @param string $entity_type Entity type (e.g., 'level', 'payment').
+	 * @param string $setting_key Settings toggle key (e.g., 'sync_levels').
+	 * @param int    $wp_id       WordPress entity ID.
+	 * @return void
+	 */
+	protected function push_entity( string $module, string $entity_type, string $setting_key, int $wp_id ): void {
+		if ( ! $this->should_sync( $setting_key ) ) {
+			return;
+		}
+
+		$odoo_id = $this->get_mapping( $entity_type, $wp_id ) ?? 0;
+		$action  = $odoo_id ? 'update' : 'create';
+
+		Queue_Manager::push( $module, $entity_type, $action, $wp_id, $odoo_id );
+	}
+
 	// ─── Utility helpers ───────────────────────────────────
 
 	/**

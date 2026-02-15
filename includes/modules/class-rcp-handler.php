@@ -3,8 +3,6 @@ declare( strict_types=1 );
 
 namespace WP4Odoo\Modules;
 
-use WP4Odoo\Logger;
-
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -25,7 +23,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @package WP4Odoo
  * @since   2.6.5
  */
-class RCP_Handler {
+class RCP_Handler extends Membership_Handler_Base {
 
 	/**
 	 * Payment status mapping: RCP → Odoo account.move state.
@@ -50,22 +48,6 @@ class RCP_Handler {
 		'canceled' => 'cancelled',
 		'expired'  => 'old',
 	];
-
-	/**
-	 * Logger instance.
-	 *
-	 * @var Logger
-	 */
-	private Logger $logger;
-
-	/**
-	 * Constructor.
-	 *
-	 * @param Logger $logger Logger instance.
-	 */
-	public function __construct( Logger $logger ) {
-		$this->logger = $logger;
-	}
 
 	// ─── Load level ────────────────────────────────────────
 

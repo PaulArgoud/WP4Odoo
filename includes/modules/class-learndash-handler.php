@@ -4,7 +4,6 @@ declare( strict_types=1 );
 namespace WP4Odoo\Modules;
 
 use WP4Odoo\CPT_Helper;
-use WP4Odoo\Logger;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -22,23 +21,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @package WP4Odoo
  * @since   2.6.0
  */
-class LearnDash_Handler {
-
-	/**
-	 * Logger instance.
-	 *
-	 * @var Logger
-	 */
-	private Logger $logger;
-
-	/**
-	 * Constructor.
-	 *
-	 * @param Logger $logger Logger instance.
-	 */
-	public function __construct( Logger $logger ) {
-		$this->logger = $logger;
-	}
+class LearnDash_Handler extends LMS_Handler_Base {
 
 	// ─── Load course ───────────────────────────────────────
 
@@ -167,30 +150,16 @@ class LearnDash_Handler {
 	 * @return array<string, mixed> Odoo account.move data.
 	 */
 	public function format_invoice( array $data, int $product_odoo_id, int $partner_id, bool $auto_post ): array {
-		$course_name = '';
-		$course_id   = $data['course_id'] ?? 0;
-		if ( $course_id > 0 ) {
-			$course_post = get_post( $course_id );
-			if ( $course_post ) {
-				$course_name = $course_post->post_title;
-			}
-		}
-
-		$invoice = Odoo_Accounting_Formatter::for_account_move(
-			$partner_id,
+		return $this->build_invoice(
+			$data['course_id'] ?? 0,
 			$product_odoo_id,
+			$partner_id,
 			(float) ( $data['amount'] ?? 0 ),
 			substr( $data['created_at'] ?? '', 0, 10 ),
 			sprintf( 'LD-TXN-%d', $data['transaction_id'] ?? 0 ),
-			$course_name,
-			__( 'LearnDash course', 'wp4odoo' )
+			__( 'LearnDash course', 'wp4odoo' ),
+			$auto_post
 		);
-
-		if ( $auto_post ) {
-			$invoice['_auto_validate'] = true;
-		}
-
-		return $invoice;
 	}
 
 	// ─── Format sale order ─────────────────────────────────
@@ -205,22 +174,7 @@ class LearnDash_Handler {
 	 * @return array<string, mixed> Odoo sale.order data.
 	 */
 	public function format_sale_order( int $product_odoo_id, int $partner_id, string $date, string $course_name = '' ): array {
-		return [
-			'partner_id' => $partner_id,
-			'date_order' => $date,
-			'state'      => 'sale',
-			'order_line' => [
-				[
-					0,
-					0,
-					[
-						'product_id' => $product_odoo_id,
-						'quantity'   => 1,
-						'name'       => $course_name ?: __( 'LearnDash enrollment', 'wp4odoo' ),
-					],
-				],
-			],
-		];
+		return $this->build_sale_order( $product_odoo_id, $partner_id, $date, $course_name ?: __( 'LearnDash enrollment', 'wp4odoo' ) );
 	}
 
 	// ─── Parse course from Odoo ───────────────────────────

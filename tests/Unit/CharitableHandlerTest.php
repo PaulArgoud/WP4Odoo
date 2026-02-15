@@ -3,24 +3,20 @@ declare( strict_types=1 );
 
 namespace WP4Odoo\Tests\Unit;
 
-use PHPUnit\Framework\TestCase;
 use WP4Odoo\Modules\Charitable_Handler;
 use WP4Odoo\Logger;
+use WP4Odoo\Tests\Module_Test_Case;
 
 /**
  * @covers \WP4Odoo\Modules\Charitable_Handler
  */
-class CharitableHandlerTest extends TestCase {
+class CharitableHandlerTest extends Module_Test_Case {
 
 	private Charitable_Handler $handler;
 
 	protected function setUp(): void {
+		parent::setUp();
 		$this->handler = new Charitable_Handler( new Logger( 'test' ) );
-
-		// Reset global stores.
-		$GLOBALS['_wp_posts']     = [];
-		$GLOBALS['_wp_post_meta'] = [];
-		$GLOBALS['_wp_options']   = [];
 	}
 
 	// ─── Helpers ────────────────────────────────────────────

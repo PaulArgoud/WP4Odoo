@@ -5,29 +5,19 @@ namespace WP4Odoo\Tests\Unit;
 
 use WP4Odoo\Logger;
 use WP4Odoo\Modules\MemberPress_Handler;
-use PHPUnit\Framework\TestCase;
+use WP4Odoo\Tests\Module_Test_Case;
 
 /**
  * Unit tests for MemberPress_Handler.
  *
  * Tests plan/transaction/subscription loading and status mapping.
  */
-class MemberPressHandlerTest extends TestCase {
+class MemberPressHandlerTest extends Module_Test_Case {
 
 	private MemberPress_Handler $handler;
-	private \WP_DB_Stub $wpdb;
 
 	protected function setUp(): void {
-		global $wpdb;
-		$this->wpdb = new \WP_DB_Stub();
-		$wpdb       = $this->wpdb;
-
-		$GLOBALS['_wp_options']          = [];
-		$GLOBALS['_wp_posts']            = [];
-		$GLOBALS['_wp_post_meta']        = [];
-		$GLOBALS['_mepr_transactions']   = [];
-		$GLOBALS['_mepr_subscriptions']  = [];
-
+		parent::setUp();
 		$this->handler = new MemberPress_Handler( new Logger( 'test' ) );
 	}
 

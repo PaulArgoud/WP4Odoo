@@ -4,29 +4,19 @@ declare( strict_types=1 );
 namespace WP4Odoo\Tests\Unit;
 
 use WP4Odoo\Modules\LifterLMS_Handler;
-use PHPUnit\Framework\TestCase;
+use WP4Odoo\Tests\Module_Test_Case;
 
 /**
  * Unit tests for LifterLMS_Handler.
  *
  * Tests data loading, invoice/order formatting, status mapping, and helpers.
  */
-class LifterLMSHandlerTest extends TestCase {
+class LifterLMSHandlerTest extends Module_Test_Case {
 
 	private LifterLMS_Handler $handler;
 
 	protected function setUp(): void {
-		global $wpdb;
-		$wpdb = new \WP_DB_Stub();
-
-		$GLOBALS['_wp_options']       = [];
-		$GLOBALS['_wp_posts']         = [];
-		$GLOBALS['_wp_post_meta']     = [];
-		$GLOBALS['_wp_users']         = [];
-		$GLOBALS['_wp_user_meta']     = [];
-		$GLOBALS['_llms_orders']      = [];
-		$GLOBALS['_llms_enrollments'] = [];
-
+		parent::setUp();
 		$this->handler = new LifterLMS_Handler( new \WP4Odoo\Logger( 'lifterlms', wp4odoo_test_settings() ) );
 	}
 

@@ -5,7 +5,7 @@ namespace WP4Odoo\Tests\Unit;
 
 use WP4Odoo\Logger;
 use WP4Odoo\Modules\SupportCandy_Handler;
-use PHPUnit\Framework\TestCase;
+use WP4Odoo\Tests\Module_Test_Case;
 
 /**
  * Unit tests for SupportCandy_Handler.
@@ -13,24 +13,14 @@ use PHPUnit\Framework\TestCase;
  * Tests ticket loading from custom tables, status saving,
  * Odoo data parsing, and priority mapping.
  */
-class SupportCandyHandlerTest extends TestCase {
+class SupportCandyHandlerTest extends Module_Test_Case {
 
 	private SupportCandy_Handler $handler;
 
-	/** @var \WP_DB_Stub */
-	private \WP_DB_Stub $wpdb;
-
 	protected function setUp(): void {
-		global $wpdb;
-		$this->wpdb         = new \WP_DB_Stub();
+		parent::setUp();
 		$this->wpdb->prefix = 'wp_';
-		$wpdb               = $this->wpdb;
-
-		$GLOBALS['_wp_options']              = [];
-		$GLOBALS['_supportcandy_tickets']    = [];
-		$GLOBALS['_supportcandy_ticketmeta'] = [];
-
-		$this->handler = new SupportCandy_Handler( new Logger( 'test' ) );
+		$this->handler      = new SupportCandy_Handler( new Logger( 'test' ) );
 	}
 
 	// ─── load_ticket ───────────────────────────────────

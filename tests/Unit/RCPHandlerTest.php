@@ -4,28 +4,19 @@ declare( strict_types=1 );
 namespace WP4Odoo\Tests\Unit;
 
 use WP4Odoo\Modules\RCP_Handler;
-use PHPUnit\Framework\TestCase;
+use WP4Odoo\Tests\Module_Test_Case;
 
 /**
  * Unit tests for RCP_Handler.
  *
  * Tests data loading, status mapping, and level ID helpers.
  */
-class RCPHandlerTest extends TestCase {
+class RCPHandlerTest extends Module_Test_Case {
 
 	private RCP_Handler $handler;
-	private \WP_DB_Stub $wpdb;
 
 	protected function setUp(): void {
-		global $wpdb;
-		$this->wpdb = new \WP_DB_Stub();
-		$wpdb       = $this->wpdb;
-
-		$GLOBALS['_wp_options']      = [];
-		$GLOBALS['_rcp_levels']      = [];
-		$GLOBALS['_rcp_payments']    = [];
-		$GLOBALS['_rcp_memberships'] = [];
-
+		parent::setUp();
 		$this->handler = new RCP_Handler( new \WP4Odoo\Logger( 'rcp', wp4odoo_test_settings() ) );
 	}
 

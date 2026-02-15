@@ -3,9 +3,6 @@ declare( strict_types=1 );
 
 namespace WP4Odoo\Modules;
 
-use WP4Odoo\Logger;
-use WP4Odoo\Field_Mapper;
-
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -19,35 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @package WP4Odoo
  * @since   3.0.0
  */
-class SupportCandy_Handler {
-
-	/**
-	 * Priority map: SupportCandy priority → Odoo priority.
-	 *
-	 * @var array<string, string>
-	 */
-	private const PRIORITY_MAP = [
-		'low'    => '0',
-		'medium' => '1',
-		'high'   => '2',
-		'urgent' => '3',
-	];
-
-	/**
-	 * Logger instance.
-	 *
-	 * @var Logger
-	 */
-	private Logger $logger;
-
-	/**
-	 * Constructor.
-	 *
-	 * @param Logger $logger Logger instance.
-	 */
-	public function __construct( Logger $logger ) {
-		$this->logger = $logger;
-	}
+class SupportCandy_Handler extends Helpdesk_Handler_Base {
 
 	/**
 	 * Load a SupportCandy ticket by ID.
@@ -114,21 +83,6 @@ class SupportCandy_Handler {
 	}
 
 	/**
-	 * Parse an Odoo ticket record for pull.
-	 *
-	 * @param array<string, mixed> $odoo_data   Raw Odoo record.
-	 * @param bool                 $is_helpdesk Whether model is helpdesk.ticket.
-	 * @return array<string, mixed>
-	 */
-	public function parse_ticket_from_odoo( array $odoo_data, bool $is_helpdesk ): array {
-		$stage_name = Field_Mapper::many2one_to_name( $odoo_data['stage_id'] ?? null ) ?? '';
-
-		return [
-			'_stage_name' => $stage_name,
-		];
-	}
-
-	/**
 	 * Get a ticket meta value.
 	 *
 	 * @param int    $ticket_id Ticket ID.
@@ -150,15 +104,5 @@ class SupportCandy_Handler {
 		);
 
 		return is_string( $value ) ? $value : '';
-	}
-
-	/**
-	 * Map a priority string to an Odoo priority value.
-	 *
-	 * @param string $priority SupportCandy priority.
-	 * @return string Odoo priority ('0'-'3').
-	 */
-	private function map_priority( string $priority ): string {
-		return self::PRIORITY_MAP[ strtolower( $priority ) ] ?? '0';
 	}
 }

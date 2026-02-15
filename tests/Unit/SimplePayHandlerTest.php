@@ -3,24 +3,20 @@ declare( strict_types=1 );
 
 namespace WP4Odoo\Tests\Unit;
 
-use PHPUnit\Framework\TestCase;
 use WP4Odoo\Modules\SimplePay_Handler;
 use WP4Odoo\Logger;
+use WP4Odoo\Tests\Module_Test_Case;
 
 /**
  * @covers \WP4Odoo\Modules\SimplePay_Handler
  */
-class SimplePayHandlerTest extends TestCase {
+class SimplePayHandlerTest extends Module_Test_Case {
 
 	private SimplePay_Handler $handler;
 
 	protected function setUp(): void {
+		parent::setUp();
 		$this->handler = new SimplePay_Handler( new Logger( 'test' ) );
-
-		// Reset global stores.
-		$GLOBALS['_wp_posts']     = [];
-		$GLOBALS['_wp_post_meta'] = [];
-		$GLOBALS['_wp_options']   = [];
 	}
 
 	// ─── Helpers ────────────────────────────────────────────

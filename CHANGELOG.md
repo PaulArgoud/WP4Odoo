@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.1.5] - Unreleased
 
+### Changed
+- **Handler base classes** — Extracted 4 abstract handler base classes to eliminate duplicated constructor, logger, and shared helper logic across 10 handler files:
+  - `Membership_Handler_Base` — shared by MemberPress, PMPro, RCP handlers (constructor + logger)
+  - `Donation_Handler_Base` — shared by GiveWP, Charitable, SimplePay handlers (constructor + logger + `load_form_by_cpt()` + `format_donation()` dual-model routing)
+  - `LMS_Handler_Base` — shared by LearnDash, LifterLMS handlers (constructor + logger + `build_invoice()` + `build_sale_order()`)
+  - `Helpdesk_Handler_Base` — shared by Awesome Support, SupportCandy handlers (constructor + logger + `PRIORITY_MAP` + `map_priority()` + `parse_ticket_from_odoo()`)
+- **`push_entity()` helper** — New `Module_Helpers::push_entity(module, entity, setting_key, wp_id)` consolidates the repeated guard + map + queue pattern into a single method. Simplified 6 hook callbacks across MemberPress, PMPro, and RCP traits
+- **Handler tests** — 9 handler test classes refactored to extend `Module_Test_Case`, removing ~100 lines of duplicated `$wpdb` stub initialization and global store resets
+
 ## [3.1.0] - 2026-02-15
 
 ### Added

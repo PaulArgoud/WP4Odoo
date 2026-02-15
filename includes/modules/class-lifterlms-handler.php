@@ -4,7 +4,6 @@ declare( strict_types=1 );
 namespace WP4Odoo\Modules;
 
 use WP4Odoo\CPT_Helper;
-use WP4Odoo\Logger;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -28,7 +27,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @package WP4Odoo
  * @since   2.6.5
  */
-class LifterLMS_Handler {
+class LifterLMS_Handler extends LMS_Handler_Base {
 
 	/**
 	 * Order status mapping: LifterLMS → Odoo account.move state.
@@ -45,22 +44,6 @@ class LifterLMS_Handler {
 		'llms-expired'   => 'cancel',
 		'llms-failed'    => 'cancel',
 	];
-
-	/**
-	 * Logger instance.
-	 *
-	 * @var Logger
-	 */
-	private Logger $logger;
-
-	/**
-	 * Constructor.
-	 *
-	 * @param Logger $logger Logger instance.
-	 */
-	public function __construct( Logger $logger ) {
-		$this->logger = $logger;
-	}
 
 	// ─── Load course ───────────────────────────────────────
 
@@ -196,30 +179,16 @@ class LifterLMS_Handler {
 	 * @return array<string, mixed> Odoo account.move data.
 	 */
 	public function format_invoice( array $data, int $product_odoo_id, int $partner_id, bool $auto_post ): array {
-		$product_name = '';
-		$product_id   = $data['product_id'] ?? 0;
-		if ( $product_id > 0 ) {
-			$product_post = get_post( $product_id );
-			if ( $product_post ) {
-				$product_name = $product_post->post_title;
-			}
-		}
-
-		$invoice = Odoo_Accounting_Formatter::for_account_move(
-			$partner_id,
+		return $this->build_invoice(
+			$data['product_id'] ?? 0,
 			$product_odoo_id,
+			$partner_id,
 			(float) ( $data['total'] ?? 0 ),
 			substr( $data['date'] ?? '', 0, 10 ),
 			sprintf( 'LLMS-ORD-%d', $data['order_id'] ?? 0 ),
-			$product_name,
-			__( 'LifterLMS course', 'wp4odoo' )
+			__( 'LifterLMS course', 'wp4odoo' ),
+			$auto_post
 		);
-
-		if ( $auto_post ) {
-			$invoice['_auto_validate'] = true;
-		}
-
-		return $invoice;
 	}
 
 	// ─── Format sale order ─────────────────────────────────
@@ -234,22 +203,7 @@ class LifterLMS_Handler {
 	 * @return array<string, mixed> Odoo sale.order data.
 	 */
 	public function format_sale_order( int $product_odoo_id, int $partner_id, string $date, string $course_name = '' ): array {
-		return [
-			'partner_id' => $partner_id,
-			'date_order' => $date,
-			'state'      => 'sale',
-			'order_line' => [
-				[
-					0,
-					0,
-					[
-						'product_id' => $product_odoo_id,
-						'quantity'   => 1,
-						'name'       => $course_name ?: __( 'LifterLMS enrollment', 'wp4odoo' ),
-					],
-				],
-			],
-		];
+		return $this->build_sale_order( $product_odoo_id, $partner_id, $date, $course_name ?: __( 'LifterLMS enrollment', 'wp4odoo' ) );
 	}
 
 	// ─── Product ID helpers ────────────────────────────────

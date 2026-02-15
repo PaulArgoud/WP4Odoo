@@ -3,8 +3,6 @@ declare( strict_types=1 );
 
 namespace WP4Odoo\Modules;
 
-use WP4Odoo\Logger;
-
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -20,7 +18,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @package WP4Odoo
  * @since   2.0.0
  */
-class Charitable_Handler {
+class Charitable_Handler extends Donation_Handler_Base {
 
 	/**
 	 * Donation status mapping: WP Charitable → Odoo.
@@ -35,22 +33,6 @@ class Charitable_Handler {
 		'charitable-cancelled'   => 'draft',
 		'charitable-preapproval' => 'pending',
 	];
-
-	/**
-	 * Logger instance.
-	 *
-	 * @var Logger
-	 */
-	private Logger $logger;
-
-	/**
-	 * Constructor.
-	 *
-	 * @param Logger $logger Logger instance.
-	 */
-	public function __construct( Logger $logger ) {
-		$this->logger = $logger;
-	}
 
 	// ─── Donor name extraction ────────────────────────────
 
@@ -75,17 +57,7 @@ class Charitable_Handler {
 	 * @return array<string, mixed> Campaign data for field mapping, or empty if not found.
 	 */
 	public function load_campaign( int $post_id ): array {
-		$post = get_post( $post_id );
-		if ( ! $post || 'campaign' !== $post->post_type ) {
-			$this->logger->warning( 'Charitable campaign not found.', [ 'post_id' => $post_id ] );
-			return [];
-		}
-
-		return [
-			'form_name'  => $post->post_title,
-			'list_price' => 0.0,
-			'type'       => 'service',
-		];
+		return $this->load_form_by_cpt( $post_id, 'campaign', 'Charitable campaign' );
 	}
 
 	// ─── Load donation ────────────────────────────────────
@@ -119,11 +91,7 @@ class Charitable_Handler {
 		$date = substr( $post->post_date, 0, 10 );
 		$ref  = 'charitable-donation-' . $donation_id;
 
-		if ( $use_donation_model ) {
-			return Odoo_Accounting_Formatter::for_donation_model( $partner_id, $campaign_odoo_id, $amount, $date, $ref );
-		}
-
-		return Odoo_Accounting_Formatter::for_account_move( $partner_id, $campaign_odoo_id, $amount, $date, $ref, $campaign_title, __( 'Donation', 'wp4odoo' ) );
+		return $this->format_donation( $partner_id, $campaign_odoo_id, $amount, $date, $ref, $campaign_title, __( 'Donation', 'wp4odoo' ), $use_donation_model );
 	}
 
 	// ─── Status mapping ───────────────────────────────────

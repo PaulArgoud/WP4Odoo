@@ -3,9 +3,6 @@ declare( strict_types=1 );
 
 namespace WP4Odoo\Modules;
 
-use WP4Odoo\Logger;
-use WP4Odoo\Field_Mapper;
-
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -19,37 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @package WP4Odoo
  * @since   3.0.0
  */
-class Awesome_Support_Handler {
-
-	/**
-	 * Priority map: WP priority → Odoo priority string.
-	 *
-	 * Odoo helpdesk.ticket priority: '0' = low, '1' = medium, '2' = high, '3' = urgent.
-	 *
-	 * @var array<string, string>
-	 */
-	private const PRIORITY_MAP = [
-		'low'    => '0',
-		'medium' => '1',
-		'high'   => '2',
-		'urgent' => '3',
-	];
-
-	/**
-	 * Logger instance.
-	 *
-	 * @var Logger
-	 */
-	private Logger $logger;
-
-	/**
-	 * Constructor.
-	 *
-	 * @param Logger $logger Logger instance.
-	 */
-	public function __construct( Logger $logger ) {
-		$this->logger = $logger;
-	}
+class Awesome_Support_Handler extends Helpdesk_Handler_Base {
 
 	/**
 	 * Load an Awesome Support ticket by ID.
@@ -95,33 +62,5 @@ class Awesome_Support_Handler {
 		\wpas_update_ticket_status( $ticket_id, $wp_status );
 
 		return true;
-	}
-
-	/**
-	 * Parse an Odoo ticket record for pull.
-	 *
-	 * Extracts the stage_id Many2one name for status resolution
-	 * by the base class.
-	 *
-	 * @param array<string, mixed> $odoo_data   Raw Odoo record.
-	 * @param bool                 $is_helpdesk Whether model is helpdesk.ticket.
-	 * @return array<string, mixed>
-	 */
-	public function parse_ticket_from_odoo( array $odoo_data, bool $is_helpdesk ): array {
-		$stage_name = Field_Mapper::many2one_to_name( $odoo_data['stage_id'] ?? null ) ?? '';
-
-		return [
-			'_stage_name' => $stage_name,
-		];
-	}
-
-	/**
-	 * Map a WP priority string to an Odoo priority value.
-	 *
-	 * @param string $wp_priority Priority from post meta.
-	 * @return string Odoo priority ('0'-'3').
-	 */
-	private function map_priority( string $wp_priority ): string {
-		return self::PRIORITY_MAP[ strtolower( $wp_priority ) ] ?? '0';
 	}
 }

@@ -3,8 +3,6 @@ declare( strict_types=1 );
 
 namespace WP4Odoo\Modules;
 
-use WP4Odoo\Queue_Manager;
-
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -33,18 +31,11 @@ trait PMPro_Hooks {
 	 * @return void
 	 */
 	public function on_level_saved( int $level_id ): void {
-		if ( ! $this->should_sync( 'sync_levels' ) ) {
-			return;
-		}
-
 		if ( $level_id <= 0 ) {
 			return;
 		}
 
-		$odoo_id = $this->get_mapping( 'level', $level_id ) ?? 0;
-		$action  = $odoo_id ? 'update' : 'create';
-
-		Queue_Manager::push( 'pmpro', 'level', $action, $level_id, $odoo_id );
+		$this->push_entity( 'pmpro', 'level', 'sync_levels', $level_id );
 	}
 
 	/**
@@ -78,20 +69,12 @@ trait PMPro_Hooks {
 	 * @return void
 	 */
 	private function process_order( $morder ): void {
-		if ( ! $this->should_sync( 'sync_orders' ) ) {
-			return;
-		}
-
 		// Only sync successful or refunded orders.
 		if ( ! in_array( $morder->status, [ 'success', 'refunded' ], true ) ) {
 			return;
 		}
 
-		$order_id = (int) $morder->id;
-		$odoo_id  = $this->get_mapping( 'order', $order_id ) ?? 0;
-		$action   = $odoo_id ? 'update' : 'create';
-
-		Queue_Manager::push( 'pmpro', 'order', $action, $order_id, $odoo_id );
+		$this->push_entity( 'pmpro', 'order', 'sync_orders', (int) $morder->id );
 	}
 
 	/**
@@ -138,9 +121,6 @@ trait PMPro_Hooks {
 			return;
 		}
 
-		$odoo_id = $this->get_mapping( 'membership', $row_id ) ?? 0;
-		$action  = $odoo_id ? 'update' : 'create';
-
-		Queue_Manager::push( 'pmpro', 'membership', $action, $row_id, $odoo_id );
+		$this->push_entity( 'pmpro', 'membership', 'sync_memberships', $row_id );
 	}
 }

@@ -3,8 +3,6 @@ declare( strict_types=1 );
 
 namespace WP4Odoo\Modules;
 
-use WP4Odoo\Queue_Manager;
-
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -45,20 +43,12 @@ trait MemberPress_Hooks {
 	 * @return void
 	 */
 	public function on_transaction_store( $txn ): void {
-		if ( ! $this->should_sync( 'sync_transactions' ) ) {
-			return;
-		}
-
 		// Only sync completed or refunded transactions.
 		if ( ! in_array( $txn->status, [ 'complete', 'refunded' ], true ) ) {
 			return;
 		}
 
-		$txn_id  = (int) $txn->id;
-		$odoo_id = $this->get_mapping( 'transaction', $txn_id ) ?? 0;
-		$action  = $odoo_id ? 'update' : 'create';
-
-		Queue_Manager::push( 'memberpress', 'transaction', $action, $txn_id, $odoo_id );
+		$this->push_entity( 'memberpress', 'transaction', 'sync_transactions', (int) $txn->id );
 	}
 
 	/**
@@ -70,14 +60,6 @@ trait MemberPress_Hooks {
 	 * @return void
 	 */
 	public function on_subscription_status_change( string $old_status, string $new_status, $sub ): void {
-		if ( ! $this->should_sync( 'sync_subscriptions' ) ) {
-			return;
-		}
-
-		$sub_id  = (int) $sub->id;
-		$odoo_id = $this->get_mapping( 'subscription', $sub_id ) ?? 0;
-		$action  = $odoo_id ? 'update' : 'create';
-
-		Queue_Manager::push( 'memberpress', 'subscription', $action, $sub_id, $odoo_id );
+		$this->push_entity( 'memberpress', 'subscription', 'sync_subscriptions', (int) $sub->id );
 	}
 }

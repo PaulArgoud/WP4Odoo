@@ -5,29 +5,19 @@ namespace WP4Odoo\Tests\Unit;
 
 use WP4Odoo\Logger;
 use WP4Odoo\Modules\PMPro_Handler;
-use PHPUnit\Framework\TestCase;
+use WP4Odoo\Tests\Module_Test_Case;
 
 /**
  * Unit tests for PMPro_Handler.
  *
  * Tests level/order/membership loading and status mapping.
  */
-class PMProHandlerTest extends TestCase {
+class PMProHandlerTest extends Module_Test_Case {
 
 	private PMPro_Handler $handler;
-	private \WP_DB_Stub $wpdb;
 
 	protected function setUp(): void {
-		global $wpdb;
-		$this->wpdb = new \WP_DB_Stub();
-		$wpdb       = $this->wpdb;
-
-		$GLOBALS['_wp_options']    = [];
-		$GLOBALS['_wp_posts']      = [];
-		$GLOBALS['_wp_post_meta']  = [];
-		$GLOBALS['_pmpro_levels']  = [];
-		$GLOBALS['_pmpro_orders']  = [];
-
+		parent::setUp();
 		$this->handler = new PMPro_Handler( new Logger( 'test' ) );
 	}
 

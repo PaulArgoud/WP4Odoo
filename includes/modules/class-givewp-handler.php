@@ -3,8 +3,6 @@ declare( strict_types=1 );
 
 namespace WP4Odoo\Modules;
 
-use WP4Odoo\Logger;
-
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -20,7 +18,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @package WP4Odoo
  * @since   2.0.0
  */
-class GiveWP_Handler {
+class GiveWP_Handler extends Donation_Handler_Base {
 
 	/**
 	 * Donation status mapping: GiveWP → Odoo.
@@ -32,22 +30,6 @@ class GiveWP_Handler {
 		'refunded' => 'refunded',
 		'pending'  => 'pending',
 	];
-
-	/**
-	 * Logger instance.
-	 *
-	 * @var Logger
-	 */
-	private Logger $logger;
-
-	/**
-	 * Constructor.
-	 *
-	 * @param Logger $logger Logger instance.
-	 */
-	public function __construct( Logger $logger ) {
-		$this->logger = $logger;
-	}
 
 	// ─── Donor name extraction ────────────────────────────
 
@@ -70,17 +52,7 @@ class GiveWP_Handler {
 	 * @return array<string, mixed> Form data for field mapping, or empty if not found.
 	 */
 	public function load_form( int $post_id ): array {
-		$post = get_post( $post_id );
-		if ( ! $post || 'give_forms' !== $post->post_type ) {
-			$this->logger->warning( 'GiveWP form not found.', [ 'post_id' => $post_id ] );
-			return [];
-		}
-
-		return [
-			'form_name'  => $post->post_title,
-			'list_price' => 0.0,
-			'type'       => 'service',
-		];
+		return $this->load_form_by_cpt( $post_id, 'give_forms', 'GiveWP form' );
 	}
 
 	// ─── Load donation ─────────────────────────────────────
@@ -109,11 +81,7 @@ class GiveWP_Handler {
 		$date       = substr( $post->post_date, 0, 10 );
 		$ref        = 'give-payment-' . $payment_id;
 
-		if ( $use_donation_model ) {
-			return Odoo_Accounting_Formatter::for_donation_model( $partner_id, $form_odoo_id, $amount, $date, $ref );
-		}
-
-		return Odoo_Accounting_Formatter::for_account_move( $partner_id, $form_odoo_id, $amount, $date, $ref, $form_title, __( 'Donation', 'wp4odoo' ) );
+		return $this->format_donation( $partner_id, $form_odoo_id, $amount, $date, $ref, $form_title, __( 'Donation', 'wp4odoo' ), $use_donation_model );
 	}
 
 	// ─── Status mapping ────────────────────────────────────

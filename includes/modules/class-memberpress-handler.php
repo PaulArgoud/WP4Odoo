@@ -3,8 +3,6 @@ declare( strict_types=1 );
 
 namespace WP4Odoo\Modules;
 
-use WP4Odoo\Logger;
-
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -20,7 +18,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @package WP4Odoo
  * @since   1.9.9
  */
-class MemberPress_Handler {
+class MemberPress_Handler extends Membership_Handler_Base {
 
 	/**
 	 * Transaction status mapping: MemberPress → Odoo account.move state.
@@ -47,22 +45,6 @@ class MemberPress_Handler {
 		'paused'    => 'waiting',
 		'stopped'   => 'cancelled',
 	];
-
-	/**
-	 * Logger instance.
-	 *
-	 * @var Logger
-	 */
-	private Logger $logger;
-
-	/**
-	 * Constructor.
-	 *
-	 * @param Logger $logger Logger instance.
-	 */
-	public function __construct( Logger $logger ) {
-		$this->logger = $logger;
-	}
 
 	// ─── Load plan ──────────────────────────────────────────
 

@@ -3,8 +3,6 @@ declare( strict_types=1 );
 
 namespace WP4Odoo\Modules;
 
-use WP4Odoo\Logger;
-
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -21,7 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @package WP4Odoo
  * @since   2.0.0
  */
-class SimplePay_Handler {
+class SimplePay_Handler extends Donation_Handler_Base {
 
 	/**
 	 * Meta field mapping: data key => meta key.
@@ -39,22 +37,6 @@ class SimplePay_Handler {
 		'form_title'   => '_spay_form_title',
 		'type'         => '_spay_type',
 	];
-
-	/**
-	 * Logger instance.
-	 *
-	 * @var Logger
-	 */
-	private Logger $logger;
-
-	/**
-	 * Constructor.
-	 *
-	 * @param Logger $logger Logger instance.
-	 */
-	public function __construct( Logger $logger ) {
-		$this->logger = $logger;
-	}
 
 	// ─── Donor name extraction ────────────────────────────
 
@@ -267,17 +249,7 @@ class SimplePay_Handler {
 	 * @return array<string, mixed> Form data for field mapping, or empty if not found.
 	 */
 	public function load_form( int $post_id ): array {
-		$post = get_post( $post_id );
-		if ( ! $post || 'simple-pay' !== $post->post_type ) {
-			$this->logger->warning( 'WP Simple Pay form not found.', [ 'post_id' => $post_id ] );
-			return [];
-		}
-
-		return [
-			'form_name'  => $post->post_title,
-			'list_price' => 0.0,
-			'type'       => 'service',
-		];
+		return $this->load_form_by_cpt( $post_id, 'simple-pay', 'WP Simple Pay form' );
 	}
 
 	// ─── Load payment ─────────────────────────────────────
@@ -311,10 +283,6 @@ class SimplePay_Handler {
 			$date = substr( $post->post_date, 0, 10 );
 		}
 
-		if ( $use_donation_model ) {
-			return Odoo_Accounting_Formatter::for_donation_model( $partner_id, $form_odoo_id, $amount, $date, $ref );
-		}
-
-		return Odoo_Accounting_Formatter::for_account_move( $partner_id, $form_odoo_id, $amount, $date, $ref, $form_title, __( 'Payment', 'wp4odoo' ) );
+		return $this->format_donation( $partner_id, $form_odoo_id, $amount, $date, $ref, $form_title, __( 'Payment', 'wp4odoo' ), $use_donation_model );
 	}
 }

@@ -33,14 +33,7 @@ trait RCP_Hooks {
 	 * @return void
 	 */
 	public function on_level_saved( int $level_id ): void {
-		if ( ! $this->should_sync( 'sync_levels' ) ) {
-			return;
-		}
-
-		$odoo_id = $this->get_mapping( 'level', $level_id ) ?? 0;
-		$action  = $odoo_id ? 'update' : 'create';
-
-		Queue_Manager::push( 'rcp', 'level', $action, $level_id, $odoo_id );
+		$this->push_entity( 'rcp', 'level', 'sync_levels', $level_id );
 	}
 
 	/**
@@ -53,10 +46,6 @@ trait RCP_Hooks {
 	 * @return void
 	 */
 	public function on_payment_created( int $payment_id, array $args = [] ): void {
-		if ( ! $this->should_sync( 'sync_payments' ) ) {
-			return;
-		}
-
 		// Only sync completed payments.
 		$status = $args['status'] ?? '';
 		if ( 'complete' !== $status ) {
@@ -73,15 +62,7 @@ trait RCP_Hooks {
 	 * @return void
 	 */
 	public function on_membership_activated( \RCP_Membership $membership ): void {
-		if ( ! $this->should_sync( 'sync_memberships' ) ) {
-			return;
-		}
-
-		$membership_id = $membership->get_id();
-		$odoo_id       = $this->get_mapping( 'membership', $membership_id ) ?? 0;
-		$action        = $odoo_id ? 'update' : 'create';
-
-		Queue_Manager::push( 'rcp', 'membership', $action, $membership_id, $odoo_id );
+		$this->push_entity( 'rcp', 'membership', 'sync_memberships', $membership->get_id() );
 	}
 
 	/**
