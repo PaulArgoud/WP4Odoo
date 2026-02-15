@@ -467,6 +467,32 @@ class WooCommerce_Module extends Module_Base {
 		return $result;
 	}
 
+	// ─── Map to Odoo ──────────────────────────────────────
+
+	/**
+	 * Map WP data to Odoo values, enriching products with gallery images.
+	 *
+	 * @param string $entity_type Entity type.
+	 * @param array  $wp_data     WordPress data from load_wp_data().
+	 * @return array Odoo-ready data.
+	 */
+	public function map_to_odoo( string $entity_type, array $wp_data ): array {
+		$mapped = parent::map_to_odoo( $entity_type, $wp_data );
+
+		if ( 'product' === $entity_type ) {
+			$settings = $this->get_settings();
+			if ( ! empty( $settings['sync_product_images'] ) ) {
+				$wp_id   = (int) ( $wp_data['ID'] ?? $wp_data['id'] ?? 0 );
+				$gallery = $this->image_handler->export_gallery( $wp_id );
+				if ( ! empty( $gallery ) ) {
+					$mapped['product_image_ids'] = $gallery;
+				}
+			}
+		}
+
+		return $mapped;
+	}
+
 	// ─── Data Loading (delegates to handlers) ───────────────
 
 	/**

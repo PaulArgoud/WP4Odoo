@@ -193,4 +193,23 @@ class JobManagerModuleTest extends TestCase {
 		$this->module->boot();
 		$this->assertTrue( true );
 	}
+
+	// ─── Translatable Fields ──────────────────────────────
+
+	public function test_translatable_fields_for_job(): void {
+		$method = new \ReflectionMethod( $this->module, 'get_translatable_fields' );
+
+		$fields = $method->invoke( $this->module, 'job' );
+
+		$this->assertSame(
+			[ 'name' => 'post_title', 'description' => 'post_content' ],
+			$fields
+		);
+	}
+
+	public function test_translatable_fields_empty_for_unknown_type(): void {
+		$method = new \ReflectionMethod( $this->module, 'get_translatable_fields' );
+
+		$this->assertSame( [], $method->invoke( $this->module, 'unknown' ) );
+	}
 }

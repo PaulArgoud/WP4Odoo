@@ -295,4 +295,29 @@ class EventsCalendarModuleTest extends TestCase {
 		$this->module->boot();
 		$this->assertTrue( true );
 	}
+
+	// ─── Translatable Fields ──────────────────────────────
+
+	public function test_translatable_fields_for_event(): void {
+		$method = new \ReflectionMethod( $this->module, 'get_translatable_fields' );
+
+		$fields = $method->invoke( $this->module, 'event' );
+
+		$this->assertSame(
+			[ 'name' => 'post_title', 'description' => 'post_content' ],
+			$fields
+		);
+	}
+
+	public function test_translatable_fields_empty_for_ticket(): void {
+		$method = new \ReflectionMethod( $this->module, 'get_translatable_fields' );
+
+		$this->assertSame( [], $method->invoke( $this->module, 'ticket' ) );
+	}
+
+	public function test_translatable_fields_empty_for_attendee(): void {
+		$method = new \ReflectionMethod( $this->module, 'get_translatable_fields' );
+
+		$this->assertSame( [], $method->invoke( $this->module, 'attendee' ) );
+	}
 }

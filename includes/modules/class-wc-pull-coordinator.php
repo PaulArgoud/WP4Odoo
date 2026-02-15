@@ -311,6 +311,7 @@ class WC_Pull_Coordinator {
 	 */
 	public function on_product_pulled( int $wp_id, int $odoo_id ): void {
 		$this->maybe_pull_product_image( $wp_id );
+		$this->maybe_pull_gallery_images( $wp_id );
 		$this->enqueue_variants_for_template( $odoo_id, $wp_id );
 		$this->maybe_apply_pricelist_price( $wp_id, $odoo_id );
 
@@ -353,6 +354,56 @@ class WC_Pull_Coordinator {
 		$product_name = $this->last_odoo_data['name'] ?? '';
 
 		$this->image_handler->import_featured_image( $wp_product_id, $image_data, $product_name );
+	}
+
+	/**
+	 * Import gallery images for a product if image sync is enabled.
+	 *
+	 * Reads product_image_ids (One2many → product.image) from the
+	 * captured Odoo data, fetches the image records with base64 data,
+	 * and delegates to Image_Handler::import_gallery().
+	 *
+	 * @param int $wp_product_id WC product ID.
+	 * @return void
+	 */
+	private function maybe_pull_gallery_images( int $wp_product_id ): void {
+		$settings = ( $this->settings_fn )();
+
+		if ( empty( $settings['sync_product_images'] ) ) {
+			return;
+		}
+
+		$image_ids = $this->last_odoo_data['product_image_ids'] ?? [];
+
+		if ( ! is_array( $image_ids ) || empty( $image_ids ) ) {
+			$this->image_handler->import_gallery( $wp_product_id, [] );
+			return;
+		}
+
+		// Read the product.image records to get base64 image data.
+		try {
+			$records = ( $this->client_fn )()->read( 'product.image', $image_ids, [ 'name', 'image_1920' ] );
+		} catch ( \Throwable $e ) {
+			$this->logger->warning(
+				'Failed to read gallery images from Odoo.',
+				[
+					'wp_product_id' => $wp_product_id,
+					'error'         => $e->getMessage(),
+				]
+			);
+			return;
+		}
+
+		// Normalize field name: Odoo stores the image in image_1920.
+		$gallery_data = [];
+		foreach ( $records as $record ) {
+			$gallery_data[] = [
+				'name'  => $record['name'] ?? '',
+				'image' => $record['image_1920'] ?? '',
+			];
+		}
+
+		$this->image_handler->import_gallery( $wp_product_id, $gallery_data );
 	}
 
 	/**

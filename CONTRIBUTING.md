@@ -112,7 +112,7 @@ Key conventions:
 
 ### Static Analysis
 
-PHPStan level 5 is required to pass:
+PHPStan level 6 is required to pass:
 
 ```bash
 composer phpstan            # or: php -d memory_limit=1G vendor/bin/phpstan analyse --memory-limit=1G

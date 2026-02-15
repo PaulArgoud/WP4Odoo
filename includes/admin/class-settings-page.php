@@ -24,7 +24,7 @@ class Settings_Page {
 	 *
 	 * @var array<int, string>
 	 */
-	private const TAB_SLUGS = [ 'connection', 'sync', 'modules', 'queue', 'logs' ];
+	private const TAB_SLUGS = [ 'connection', 'sync', 'modules', 'queue', 'logs', 'health' ];
 
 	/**
 	 * Query service instance.
@@ -45,6 +45,7 @@ class Settings_Page {
 			'modules'    => __( 'Modules', 'wp4odoo' ),
 			'queue'      => __( 'Queue', 'wp4odoo' ),
 			'logs'       => __( 'Logs', 'wp4odoo' ),
+			'health'     => __( 'Health', 'wp4odoo' ),
 		];
 	}
 
@@ -427,5 +428,28 @@ class Settings_Page {
 		$log_data = $this->query_service->get_log_entries( $filters, $page, $per_page );
 
 		include WP4ODOO_PLUGIN_DIR . 'admin/views/tab-logs.php';
+	}
+
+	// ─── Health tab ────────────────────────────────────────────
+
+	/**
+	 * Render the Health tab.
+	 *
+	 * @return void
+	 */
+	public function render_tab_health(): void {
+		$queue_stats    = \WP4Odoo\Queue_Manager::get_stats();
+		$health_metrics = \WP4Odoo\Queue_Manager::get_health_metrics();
+		$cb_state       = get_option( 'wp4odoo_cb_state', [] );
+
+		$registry         = \WP4Odoo_Plugin::instance()->module_registry();
+		$booted_count     = $registry->get_booted_count();
+		$version_warnings = $registry->get_version_warnings();
+
+		$settings     = wp4odoo()->settings();
+		$cron_warning = $settings->get_cron_warning();
+		$next_cron    = wp_next_scheduled( 'wp4odoo_scheduled_sync' );
+
+		include WP4ODOO_PLUGIN_DIR . 'admin/views/tab-health.php';
 	}
 }

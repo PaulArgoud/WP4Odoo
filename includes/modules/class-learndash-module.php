@@ -211,6 +211,25 @@ class LearnDash_Module extends LMS_Module_Base {
 		return defined( 'LEARNDASH_VERSION' ) ? LEARNDASH_VERSION : '';
 	}
 
+	// ─── Translation ──────────────────────────────────────
+
+	/**
+	 * Translatable fields for courses and groups (name + description).
+	 *
+	 * @param string $entity_type Entity type.
+	 * @return array<string, string> Odoo field => WP field.
+	 */
+	protected function get_translatable_fields( string $entity_type ): array {
+		if ( 'course' === $entity_type || 'group' === $entity_type ) {
+			return [
+				'name'             => 'post_title',
+				'description_sale' => 'post_content',
+			];
+		}
+
+		return [];
+	}
+
 	// ─── Deduplication ─────────────────────────────────────
 
 	/**

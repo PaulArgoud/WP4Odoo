@@ -5,8 +5,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: WordPress For Odoo 2.0.0\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-02-15 10:14+0100\n"
+"Report-Msgid-Bugs-To: support@avalia.io\n"
+"POT-Creation-Date: 2026-02-15 18:32+0100\n"
 "PO-Revision-Date: 2026-02-15 12:00+0100\n"
 "Last-Translator: \n"
 "Language-Team: Spanish\n"
@@ -15,14 +15,6 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-
-#: wp4odoo.php:297
-msgid "Every 5 Minutes"
-msgstr "Cada 5 minutos"
-
-#: wp4odoo.php:301
-msgid "Every 15 Minutes"
-msgstr "Cada 15 minutos"
 
 #: admin/views/page-settings.php:16 includes/admin/class-admin.php:189
 #: includes/admin/class-admin.php:233
@@ -33,7 +25,6 @@ msgstr "WordPress For Odoo"
 msgid "Setup Checklist"
 msgstr "Lista de verificación"
 
-#. translators: 1: completed steps, 2: total steps
 #: admin/views/partial-checklist.php:27
 #, php-format
 msgid "%1$d / %2$d completed"
@@ -84,20 +75,20 @@ msgid "Contacts (base) + CRM (crm) for leads"
 msgstr "Contactos (base) + CRM (crm) para oportunidades"
 
 #: admin/views/tab-connection.php:30
-msgid "Sales:"
-msgstr "Ventas:"
-
-#: admin/views/tab-connection.php:30
 msgid "Sales (sale_management) + Invoicing (account)"
 msgstr "Ventas (sale_management) + Facturación (account)"
 
-#: admin/views/tab-connection.php:31
-msgid "WooCommerce:"
-msgstr "WooCommerce:"
+#: admin/views/tab-connection.php:30
+msgid "Sales:"
+msgstr "Ventas:"
 
 #: admin/views/tab-connection.php:31
 msgid "Inventory (stock) + Sales (sale_management) + Invoicing (account)"
 msgstr "Inventario (stock) + Ventas (sale_management) + Facturación (account)"
+
+#: admin/views/tab-connection.php:31
+msgid "WooCommerce:"
+msgstr "WooCommerce:"
 
 #: admin/views/tab-connection.php:41
 msgid "Odoo Connection"
@@ -231,7 +222,6 @@ msgstr "Token"
 msgid "Copy"
 msgstr "Copiar"
 
-#. translators: %s: header name
 #: admin/views/tab-connection.php:170
 #, php-format
 msgid "Configure this token in Odoo as the %s header."
@@ -261,13 +251,11 @@ msgstr ""
 "Cree un nuevo webhook para cada modelo que desee sincronizar (p. ej. "
 "res.partner, sale.order)."
 
-#. translators: %s: webhook URL
 #: admin/views/tab-connection.php:197
 #, php-format
 msgid "Set the URL to: %s"
 msgstr "Establezca la URL: %s"
 
-#. translators: %s: header name
 #: admin/views/tab-connection.php:206
 #, php-format
 msgid "Add a custom header %s with the token shown above."
@@ -306,6 +294,91 @@ msgstr ""
 #: admin/views/tab-connection.php:219
 msgid "Use the following Python code template:"
 msgstr "Utilice la siguiente plantilla de código Python:"
+
+#: admin/views/tab-health.php:27
+msgid "Degraded"
+msgstr "Degradado"
+
+#: admin/views/tab-health.php:28
+msgid "Healthy"
+msgstr "Operativo"
+
+#: admin/views/tab-health.php:31 includes/admin/class-settings-page.php:48
+msgid "Health"
+msgstr "Salud"
+
+#: admin/views/tab-health.php:36
+msgid "System Status"
+msgstr "Estado del sistema"
+
+#: admin/views/tab-health.php:44
+msgid "Active modules"
+msgstr "Módulos activos"
+
+#: admin/views/tab-health.php:48 admin/views/tab-health.php:167
+#: admin/views/tab-queue.php:23 admin/views/tab-queue.php:35
+#: includes/admin/class-admin.php:116
+msgid "Pending"
+msgstr "Pendiente"
+
+#: admin/views/tab-health.php:57
+msgid "Average latency"
+msgstr "Latencia media"
+
+#: admin/views/tab-health.php:61
+msgid "Success rate"
+msgstr "Tasa de éxito"
+
+#: admin/views/tab-health.php:70
+msgid "Circuit Breaker"
+msgstr "Disyuntor"
+
+#: admin/views/tab-health.php:74
+msgid "Open"
+msgstr "Abierto"
+
+#: admin/views/tab-health.php:80
+#, php-format
+msgid "%1$d failures — opened %2$s"
+msgstr "%1$d fallos — abierto el %2$s"
+
+#: admin/views/tab-health.php:88
+msgid "Closed"
+msgstr "Cerrado"
+
+#: admin/views/tab-health.php:96
+msgid "Next cron run"
+msgstr "Próxima ejecución cron"
+
+#: admin/views/tab-health.php:104
+#, php-format
+msgid "in %s"
+msgstr "en %s"
+
+#: admin/views/tab-health.php:108
+msgid "overdue"
+msgstr "atrasado"
+
+#: admin/views/tab-health.php:113
+msgid "Not scheduled"
+msgstr "No programado"
+
+#: admin/views/tab-health.php:122
+msgid "Cron status"
+msgstr "Estado del cron"
+
+#: admin/views/tab-health.php:133
+msgid "Compatibility warnings"
+msgstr "Avisos de compatibilidad"
+
+#: admin/views/tab-health.php:162
+msgid "Queue Depth by Module"
+msgstr "Profundidad de la cola por módulo"
+
+#: admin/views/tab-health.php:166 admin/views/tab-logs.php:96
+#: admin/views/tab-queue.php:82
+msgid "Module"
+msgstr "Módulo"
 
 #: admin/views/tab-logs.php:16 includes/admin/class-settings-page.php:47
 msgid "Logs"
@@ -517,10 +590,6 @@ msgstr "Purgar registros"
 msgid "Level"
 msgstr "Nivel"
 
-#: admin/views/tab-logs.php:96 admin/views/tab-queue.php:82
-msgid "Module"
-msgstr "Módulo"
-
 #: admin/views/tab-logs.php:97 includes/modules/class-lead-manager.php:129
 msgid "Message"
 msgstr "Mensaje"
@@ -556,70 +625,63 @@ msgstr "WP → Odoo"
 msgid "Odoo → WP"
 msgstr "Odoo → WP"
 
-#. translators: %s: module name
 #: admin/views/tab-modules.php:64
 #, php-format
 msgid "Enable %s module"
 msgstr "Activar el módulo %s"
 
-#: admin/views/tab-modules.php:77 includes/admin/class-admin.php:311
+#: admin/views/tab-modules.php:76 includes/admin/class-admin.php:314
 msgid "Report compatibility"
 msgstr "Informar compatibilidad"
 
-#. translators: %s: name of the conflicting active module
-#: admin/views/tab-modules.php:88
+#: admin/views/tab-modules.php:87
 #, php-format
 msgid "Cannot be active simultaneously with \"%s\"."
 msgstr "No puede estar activo simultáneamente con «%s»."
 
-#: admin/views/tab-modules.php:189
+#: admin/views/tab-modules.php:188
 msgid "Target module"
 msgstr "Módulo destino"
 
-#: admin/views/tab-modules.php:190
+#: admin/views/tab-modules.php:189
 msgid "Entity type"
 msgstr "Tipo de entidad"
 
-#: admin/views/tab-modules.php:191
+#: admin/views/tab-modules.php:190
 msgid "ACF field"
 msgstr "Campo ACF"
 
-#: admin/views/tab-modules.php:192
+#: admin/views/tab-modules.php:191
 msgid "Odoo field"
 msgstr "Campo Odoo"
 
-#: admin/views/tab-modules.php:193 admin/views/tab-queue.php:83
+#: admin/views/tab-modules.php:192 admin/views/tab-queue.php:83
 msgid "Type"
 msgstr "Tipo"
 
-#: admin/views/tab-modules.php:203
+#: admin/views/tab-modules.php:202
 msgid "— Select —"
 msgstr "— Seleccionar —"
 
-#: admin/views/tab-modules.php:244 includes/admin/class-admin.php:127
+#: admin/views/tab-modules.php:243 includes/admin/class-admin.php:127
 msgid "Remove"
 msgstr "Eliminar"
 
-#: admin/views/tab-modules.php:252
+#: admin/views/tab-modules.php:251
 msgid "Add mapping"
 msgstr "Añadir asignación"
 
-#: admin/views/tab-modules.php:275
+#: admin/views/tab-modules.php:274
 msgid "Detect languages"
 msgstr "Detectar idiomas"
 
-#: admin/views/tab-modules.php:313
+#: admin/views/tab-modules.php:312
 msgid "Save settings"
 msgstr "Guardar ajustes"
 
-#: admin/views/tab-modules.php:323
+#: admin/views/tab-modules.php:322
 msgid "No modules registered."
 msgstr "No hay módulos registrados."
-
-#: admin/views/tab-queue.php:23 admin/views/tab-queue.php:35
-#: includes/admin/class-admin.php:116
-msgid "Pending"
-msgstr "Pendiente"
 
 #: admin/views/tab-queue.php:24 admin/views/tab-queue.php:39
 #: includes/admin/class-admin.php:117
@@ -648,8 +710,6 @@ msgstr "Limpiar (> 7 días)"
 msgid "Refresh"
 msgstr "Actualizar"
 
-#. translators: %s: datetime string
-#. translators: %s: formatted date/time of the last synchronization
 #: admin/views/tab-queue.php:68 includes/admin/class-admin.php:114
 #, php-format
 msgid "Last sync: %s"
@@ -688,7 +748,6 @@ msgstr "No hay trabajos en la cola."
 msgid "Cancel"
 msgstr "Cancelar"
 
-#. translators: %s: number of items
 #: admin/views/tab-queue.php:149
 #, php-format
 msgid "%s item(s)"
@@ -799,7 +858,6 @@ msgstr "Exportar todos los productos a Odoo"
 msgid "Permission denied."
 msgstr "Permiso denegado."
 
-#. translators: %s: comma-separated list of Odoo model names with module hints
 #: includes/admin/class-admin-ajax.php:122
 #, php-format
 msgid ""
@@ -937,11 +995,11 @@ msgstr ""
 "Una copia de seguridad completa (WordPress + Odoo) le permite revertir en "
 "caso de problema."
 
-#: includes/admin/class-admin.php:303
+#: includes/admin/class-admin.php:306
 msgid "WordPress For Odoo — Untested plugin versions detected:"
 msgstr "WordPress For Odoo — Versiones de plugins no probadas detectadas:"
 
-#: includes/admin/class-admin.php:366
+#: includes/admin/class-admin.php:378
 msgid "Settings"
 msgstr "Ajustes"
 
@@ -949,7 +1007,6 @@ msgstr "Ajustes"
 msgid "No products found in Odoo."
 msgstr "No se encontraron productos en Odoo."
 
-#. translators: 1: number of products enqueued, 2: total number of products
 #: includes/admin/class-bulk-handler.php:112
 #, php-format
 msgid ""
@@ -959,7 +1016,6 @@ msgstr ""
 "%1$d producto(s) en cola para importación (%2$d encontrados en Odoo). "
 "Operación expirada — ejecute de nuevo para continuar."
 
-#. translators: 1: number of products enqueued, 2: total number of products
 #: includes/admin/class-bulk-handler.php:118
 #, php-format
 msgid "%1$d product(s) enqueued for import (%2$d found in Odoo)."
@@ -969,7 +1025,6 @@ msgstr "%1$d producto(s) en cola para importar (%2$d encontrados en Odoo)."
 msgid "No WooCommerce products found."
 msgstr "No se encontraron productos de WooCommerce."
 
-#. translators: %d: number of products enqueued
 #: includes/admin/class-bulk-handler.php:188
 #, php-format
 msgid ""
@@ -979,7 +1034,6 @@ msgstr ""
 "%d producto(s) en cola para exportación. Operación expirada — ejecute de "
 "nuevo para continuar."
 
-#. translators: %d: number of products enqueued
 #: includes/admin/class-bulk-handler.php:193
 #, php-format
 msgid "%d product(s) enqueued for export."
@@ -989,19 +1043,19 @@ msgstr "%d producto(s) puesto(s) en cola para exportación."
 msgid "Connection"
 msgstr "Conexión"
 
-#: includes/admin/class-settings-page.php:128
+#: includes/admin/class-settings-page.php:129
 msgid "Connect to Odoo"
 msgstr "Conectar con Odoo"
 
-#: includes/admin/class-settings-page.php:134
+#: includes/admin/class-settings-page.php:135
 msgid "Enable a module"
 msgstr "Activar un módulo"
 
-#: includes/admin/class-settings-page.php:140
+#: includes/admin/class-settings-page.php:141
 msgid "Configure webhooks in Odoo"
 msgstr "Configurar webhooks en Odoo"
 
-#: includes/admin/class-settings-page.php:245
+#: includes/admin/class-settings-page.php:246
 msgid ""
 "The Odoo URL must point to a public address. Private IPs and localhost are "
 "not allowed."
@@ -1014,19 +1068,16 @@ msgstr ""
 msgid "Missing module identifier."
 msgstr "Identificador de módulo no encontrado."
 
-#. translators: %s: module identifier
 #: includes/admin/trait-ajax-module-handlers.php:51
 #, php-format
 msgid "Module \"%s\" enabled."
 msgstr "Módulo «%s» activado."
 
-#. translators: %s: module identifier
 #: includes/admin/trait-ajax-module-handlers.php:56
 #, php-format
 msgid "Module \"%s\" disabled."
 msgstr "Módulo «%s» desactivado."
 
-#. translators: 1: enabled module name, 2: comma-separated disabled module names
 #: includes/admin/trait-ajax-module-handlers.php:83
 #, php-format
 msgid ""
@@ -1050,13 +1101,11 @@ msgid "No translation plugin detected (WPML or Polylang required)."
 msgstr ""
 "No se detectó ningún plugin de traducción (se requiere WPML o Polylang)."
 
-#. translators: %d: number of jobs
 #: includes/admin/trait-ajax-monitor-handlers.php:39
 #, php-format
 msgid "%d job(s) retried."
 msgstr "%d trabajo(s) reintentado(s)."
 
-#. translators: %d: number of deleted jobs
 #: includes/admin/trait-ajax-monitor-handlers.php:62
 #, php-format
 msgid "%d job(s) deleted."
@@ -1070,13 +1119,12 @@ msgstr "Trabajo cancelado."
 msgid "Unable to cancel this job."
 msgstr "No se puede cancelar este trabajo."
 
-#. translators: %d: number of deleted log entries
 #: includes/admin/trait-ajax-monitor-handlers.php:111
 #, php-format
 msgid "%d log entry(ies) deleted."
 msgstr "%d entrada(s) de registro eliminada(s)."
 
-#: includes/admin/trait-ajax-setup-handlers.php:114
+#: includes/admin/trait-ajax-setup-handlers.php:119
 msgid "Webhooks marked as configured."
 msgstr "Webhooks marcados como configurados."
 
@@ -1084,7 +1132,7 @@ msgstr "Webhooks marcados como configurados."
 msgid "Missing connection credentials."
 msgstr "Faltan las credenciales de conexión."
 
-#: includes/api/class-odoo-auth.php:240
+#: includes/api/class-odoo-auth.php:241
 msgid "Connection successful."
 msgstr "Conexión exitosa."
 
@@ -1100,47 +1148,42 @@ msgstr "Credenciales de Odoo no configuradas."
 msgid "Authentication failed: invalid credentials."
 msgstr "Error de autenticación: credenciales no válidas."
 
-#. translators: %d: HTTP status code
-#: includes/api/class-odoo-jsonrpc.php:128
+#: includes/api/class-odoo-jsonrpc.php:133
 #, php-format
 msgid "Invalid JSON response from Odoo (HTTP %d)."
 msgstr "Respuesta JSON no válida de Odoo (HTTP %d)."
 
-#: includes/api/class-odoo-jsonrpc.php:137
+#: includes/api/class-odoo-jsonrpc.php:142
 msgid "Unknown RPC error"
 msgstr "Error RPC desconocido"
 
-#. translators: %s: error message from Odoo
-#: includes/api/class-odoo-jsonrpc.php:157
+#: includes/api/class-odoo-jsonrpc.php:162
 #, php-format
 msgid "Odoo RPC error: %s"
 msgstr "Error RPC de Odoo: %s"
 
-#: includes/api/class-odoo-transport-base.php:101
+#: includes/api/class-odoo-transport-base.php:117
 msgid "Not authenticated. Call authenticate() first."
 msgstr "No autenticado. Llame primero a authenticate()."
 
-#: includes/api/class-odoo-xmlrpc.php:129
+#: includes/api/class-odoo-xmlrpc.php:144
 msgid "Failed to parse XML-RPC response from Odoo."
 msgstr "Error al analizar la respuesta XML-RPC de Odoo."
 
-#: includes/api/class-odoo-xmlrpc.php:136
+#: includes/api/class-odoo-xmlrpc.php:151
 msgid "Unknown XML-RPC fault"
 msgstr "Error XML-RPC desconocido"
 
-#. translators: %s: error message from Odoo
-#: includes/api/class-odoo-xmlrpc.php:155
+#: includes/api/class-odoo-xmlrpc.php:170
 #, php-format
 msgid "Odoo XML-RPC error: %s"
 msgstr "Error XML-RPC de Odoo: %s"
 
-#. translators: %s: error message from HTTP request
 #: includes/api/trait-retryable-http.php:46
 #, php-format
 msgid "HTTP error: %s"
 msgstr "Error HTTP: %s"
 
-#. translators: 1: HTTP status code, 2: endpoint
 #: includes/api/trait-retryable-http.php:64
 #, php-format
 msgid "Server error HTTP %1$d on %2$s."
@@ -1166,13 +1209,11 @@ msgstr ""
 msgid "Retry all failed jobs?"
 msgstr "¿Reintentar todos los trabajos fallidos?"
 
-#. translators: %d: number of consecutive failures
 #: includes/class-failure-notifier.php:117
 #, php-format
 msgid "[WP4Odoo] %d consecutive sync failures"
 msgstr "[WP4Odoo] %d fallos de sincronización consecutivos"
 
-#. translators: 1: number of failures, 2: queue admin URL
 #: includes/class-failure-notifier.php:123
 #, php-format
 msgid ""
@@ -1186,7 +1227,6 @@ msgstr ""
 "\n"
 "Por favor, revise la cola de sincronización en %2$s"
 
-#. translators: 1: entity type, 2: module identifier
 #: includes/class-module-base.php:1037
 #, php-format
 msgid "Entity type \"%1$s\" is not registered in module \"%2$s\"."
@@ -1210,19 +1250,16 @@ msgstr ""
 "sincronización programada puede retrasarse. Considere configurar una tarea "
 "cron del sistema."
 
-#. translators: %s: module identifier
 #: includes/class-sync-engine.php:347
 #, php-format
 msgid "Module \"%s\" not found or not registered."
 msgstr "Módulo «%s» no encontrado o no registrado."
 
-#. translators: %d: job ID
 #: includes/class-sync-engine.php:360
 #, php-format
 msgid "Invalid JSON payload in job #%d."
 msgstr "Payload JSON no válido en el trabajo #%d."
 
-#. translators: 1: direction value, 2: job ID
 #: includes/class-sync-engine.php:398
 #, php-format
 msgid "Invalid sync direction \"%1$s\" in job #%2$d."
@@ -1236,7 +1273,6 @@ msgstr "Campos obligatorios faltantes: module, entity_type, odoo_id."
 msgid "Internal enqueue error."
 msgstr "Error interno de encolamiento."
 
-#. translators: %s: module identifier
 #: includes/class-webhook-handler.php:341
 #, php-format
 msgid "Module \"%s\" not found."
@@ -1287,7 +1323,6 @@ msgstr ""
 msgid "Affiliate commission"
 msgstr "Comisión de afiliado"
 
-#. translators: 1: referral ID, 2: referral description
 #: includes/modules/class-affiliatewp-handler.php:78
 #, php-format
 msgid "Commission #%1$d — %2$s"
@@ -1403,7 +1438,6 @@ msgstr ""
 "ID del proyecto Odoo (Community). Se usa cuando helpdesk.ticket no está "
 "disponible."
 
-#. translators: %1$s: service name, %2$s: customer name
 #: includes/modules/class-booking-module-base.php:298
 #, php-format
 msgid "%1$s — %2$s"
@@ -1531,19 +1565,16 @@ msgstr "Activar formulario de oportunidades"
 msgid "Enable the [wp4odoo_lead_form] shortcode."
 msgstr "Activar el shortcode [wp4odoo_lead_form]."
 
-#. translators: %s: funding goal amount.
 #: includes/modules/class-crowdfunding-handler.php:102
 #, php-format
 msgid "Funding goal: %s"
 msgstr "Objetivo de financiación: %s"
 
-#. translators: %s: campaign end date.
 #: includes/modules/class-crowdfunding-handler.php:107
 #, php-format
 msgid "End date: %s"
 msgstr "Fecha de fin: %s"
 
-#. translators: %s: minimum pledge amount.
 #: includes/modules/class-crowdfunding-handler.php:112
 #, php-format
 msgid "Min pledge: %s"
@@ -1557,7 +1588,6 @@ msgstr "Módulo WP Crowdfunding activado pero WP Crowdfunding no está activo."
 msgid "Push crowdfunding campaigns to Odoo as service products."
 msgstr "Enviar las campañas de crowdfunding a Odoo como productos de servicio."
 
-#. translators: %s: order number.
 #: includes/modules/class-ecwid-handler.php:109
 #, php-format
 msgid "Order %s"
@@ -1677,7 +1707,6 @@ msgstr "Obtener entradas desde Odoo"
 msgid "Pull ticket product changes from Odoo back to WordPress."
 msgstr "Obtener cambios de entradas desde Odoo hacia WordPress."
 
-#. translators: %s: form title
 #: includes/modules/class-form-handler.php:88
 #, php-format
 msgid "Gravity Forms: %s"
@@ -1693,37 +1722,31 @@ msgstr "Gravity Forms: %s"
 msgid "Unknown Form"
 msgstr "Formulario desconocido"
 
-#. translators: %s: form title
 #: includes/modules/class-form-handler.php:144
 #, php-format
 msgid "WPForms: %s"
 msgstr "WPForms: %s"
 
-#. translators: %s: form title
 #: includes/modules/class-form-handler.php:176
 #, php-format
 msgid "Contact Form 7: %s"
 msgstr "Contact Form 7: %s"
 
-#. translators: %s: form title
 #: includes/modules/class-form-handler.php:216
 #, php-format
 msgid "Fluent Forms: %s"
 msgstr "Fluent Forms: %s"
 
-#. translators: %s: form title
 #: includes/modules/class-form-handler.php:255
 #, php-format
 msgid "Formidable: %s"
 msgstr "Formidable: %s"
 
-#. translators: %s: form title
 #: includes/modules/class-form-handler.php:289
 #, php-format
 msgid "Ninja Forms: %s"
 msgstr "Ninja Forms: %s"
 
-#. translators: %s: form title
 #: includes/modules/class-form-handler.php:347
 #, php-format
 msgid "Forminator: %s"
@@ -1792,7 +1815,6 @@ msgstr ""
 "Al menos un plugin de formularios debe estar instalado y activado para usar "
 "este módulo."
 
-#. translators: %s: form plugin name
 #: includes/modules/class-forms-module.php:452
 #, php-format
 msgid "%s is not active."
@@ -1847,13 +1869,11 @@ msgstr "No se encontraron facturas."
 msgid "No invoices found in Trash."
 msgstr "No se encontraron facturas en la papelera."
 
-#. translators: %s: job location (e.g. "Paris, France").
 #: includes/modules/class-job-manager-handler.php:149
 #, php-format
 msgid "Location: %s"
 msgstr "Ubicación: %s"
 
-#. translators: %s: company name.
 #: includes/modules/class-job-manager-handler.php:153
 #, php-format
 msgid "Company: %s"
@@ -2181,7 +2201,6 @@ msgstr ""
 "Enviar el estado de membresía de los usuarios a las líneas de membresía de "
 "Odoo."
 
-#. translators: %s: login URL
 #: includes/modules/class-portal-manager.php:76
 #, php-format
 msgid "Please <a href=\"%s\">log in</a> to access your customer portal."
@@ -2378,7 +2397,6 @@ msgstr ""
 msgid "Pull ticket status changes from Odoo back to SupportCandy."
 msgstr "Obtener cambios de estado de tickets desde Odoo hacia SupportCandy."
 
-#. translators: %d: number of persons
 #: includes/modules/class-wc-bookings-handler.php:102
 #, php-format
 msgid "Persons: %d"
@@ -2658,7 +2676,6 @@ msgstr ""
 msgid "WP All Import module enabled but WP All Import is not active."
 msgstr "Módulo WP All Import activado pero WP All Import no está activo."
 
-#. translators: %s: invoice ID/reference.
 #: includes/modules/class-wp-invoice-handler.php:154
 #, php-format
 msgid "Invoice %s"
@@ -2677,25 +2694,21 @@ msgid "Automatically confirm invoices in Odoo for paid invoices."
 msgstr ""
 "Confirmar automáticamente las facturas en Odoo para las facturas pagadas."
 
-#. translators: %s: number of servings (e.g. "4" or "4 persons").
 #: includes/modules/class-wprm-handler.php:95
 #, php-format
 msgid "Servings: %s"
 msgstr "Porciones: %s"
 
-#. translators: %s: preparation time in minutes (e.g. "15min").
 #: includes/modules/class-wprm-handler.php:100
 #, php-format
 msgid "Prep: %smin"
 msgstr "Preparación: %smin"
 
-#. translators: %s: cooking time in minutes (e.g. "30min").
 #: includes/modules/class-wprm-handler.php:105
 #, php-format
 msgid "Cook: %smin"
 msgstr "Cocción: %smin"
 
-#. translators: %s: total time in minutes (e.g. "45min").
 #: includes/modules/class-wprm-handler.php:110
 #, php-format
 msgid "Total: %smin"
@@ -2730,7 +2743,6 @@ msgstr "Módulo Ecwid activado pero Ecwid no está activo."
 msgid "WC Bookings module enabled but WooCommerce Bookings is not active."
 msgstr "Módulo WC Bookings activado pero WooCommerce Bookings no está activo."
 
-#. translators: 1: import ID, 2: number of records
 #: includes/modules/trait-wpai-hooks.php:108
 #, php-format
 msgid "WP All Import #%1$d: enqueued %2$d records for Odoo sync."
@@ -2738,19 +2750,16 @@ msgstr ""
 "WP All Import #%1$d: %2$d registros puestos en cola para la sincronización "
 "Odoo."
 
-#. translators: %s: plugin name
 #: includes/trait-module-helpers.php:399
 #, php-format
 msgid "%s must be installed and activated to use this module."
 msgstr "%s debe estar instalado y activado para usar este módulo."
 
-#. translators: %1$s: plugin name, %2$s: detected version, %3$s: minimum version
 #: includes/trait-module-helpers.php:420
 #, php-format
 msgid "%1$s %2$s is not supported (minimum required: %3$s)."
 msgstr "%1$s %2$s no es compatible (mínimo requerido: %3$s)."
 
-#. translators: %1$s: plugin name, %2$s: detected version, %3$s: last tested version
 #: includes/trait-module-helpers.php:443
 #, php-format
 msgid ""
@@ -2760,7 +2769,6 @@ msgstr ""
 "%1$s %2$s no ha sido probado (probado hasta %3$s). Pueden ocurrir "
 "incompatibilidades."
 
-#. translators: %1$s: plugin name, %2$s: comma-separated list of missing table names
 #: includes/trait-module-helpers.php:460
 #, php-format
 msgid ""
@@ -2785,3 +2793,11 @@ msgstr "Referencia"
 #: templates/customer-portal.php:40 templates/customer-portal.php:85
 msgid "Total"
 msgstr "Total"
+
+#: wp4odoo.php:298
+msgid "Every 5 Minutes"
+msgstr "Cada 5 minutos"
+
+#: wp4odoo.php:302
+msgid "Every 15 Minutes"
+msgstr "Cada 15 minutos"

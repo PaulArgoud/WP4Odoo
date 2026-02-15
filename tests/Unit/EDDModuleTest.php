@@ -187,4 +187,29 @@ class EDDModuleTest extends TestCase {
 		$status = $this->module->get_dependency_status();
 		$this->assertEmpty( $status['notices'] );
 	}
+
+	// ─── Translatable Fields ──────────────────────────────
+
+	public function test_translatable_fields_for_download(): void {
+		$method = new \ReflectionMethod( $this->module, 'get_translatable_fields' );
+
+		$fields = $method->invoke( $this->module, 'download' );
+
+		$this->assertSame(
+			[ 'name' => 'post_title', 'description_sale' => 'post_content' ],
+			$fields
+		);
+	}
+
+	public function test_translatable_fields_empty_for_order(): void {
+		$method = new \ReflectionMethod( $this->module, 'get_translatable_fields' );
+
+		$this->assertSame( [], $method->invoke( $this->module, 'order' ) );
+	}
+
+	public function test_translatable_fields_empty_for_invoice(): void {
+		$method = new \ReflectionMethod( $this->module, 'get_translatable_fields' );
+
+		$this->assertSame( [], $method->invoke( $this->module, 'invoice' ) );
+	}
 }

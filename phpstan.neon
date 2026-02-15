@@ -2,12 +2,16 @@ includes:
     - vendor/szepeviktor/phpstan-wordpress/extension.neon
 
 parameters:
-    level: 5
+    level: 6
     paths:
         - includes/
     bootstrapFiles:
         - phpstan-bootstrap.php
     ignoreErrors:
+        # WordPress hook callbacks and Settings API methods use untyped arrays
+        # whose value types are dictated by WordPress core (e.g. plugin_action_links,
+        # sanitize_callback). Typing each one adds PHPDoc noise with no safety gain.
+        - identifier: missingType.iterableValue
         # Portal_Manager::$logger is injected for future use (consistent with Lead_Manager pattern)
         - identifier: property.onlyWritten
           path: includes/modules/class-portal-manager.php

@@ -124,4 +124,85 @@ class ImageHandlerTest extends TestCase {
 	private function register_temp_file( string $filename ): void {
 		$this->temp_files[] = trailingslashit( sys_get_temp_dir() ) . $filename;
 	}
+
+	// ─── Gallery: import ────────────────────────────────────
+
+	public function test_import_gallery_returns_zero_for_empty_data(): void {
+		$this->assertSame( 0, $this->handler->import_gallery( 100, [] ) );
+	}
+
+	public function test_import_gallery_skips_invalid_records(): void {
+		$result = $this->handler->import_gallery( 100, [
+			[ 'name' => 'bad', 'image' => '' ],
+			[ 'name' => 'bad2', 'image' => 42 ],
+		] );
+
+		$this->assertSame( 0, $result );
+	}
+
+	public function test_import_gallery_processes_valid_images(): void {
+		$png    = $this->create_minimal_png();
+		$base64 = base64_encode( $png );
+
+		$this->register_temp_file( 'gallery-100-0-odoo.png' );
+
+		$result = $this->handler->import_gallery( 100, [
+			[ 'name' => 'Gallery Image', 'image' => $base64 ],
+		] );
+
+		$this->assertSame( 1, $result );
+	}
+
+	public function test_import_gallery_skips_unchanged_images(): void {
+		$png    = $this->create_minimal_png();
+		$base64 = base64_encode( $png );
+		$hash   = hash( 'sha256', $base64 );
+
+		$this->register_temp_file( 'gallery-100-0-odoo.png' );
+
+		// First import — creates attachment.
+		$this->handler->import_gallery( 100, [
+			[ 'name' => 'Image', 'image' => $base64 ],
+		] );
+
+		// Second import with same data — should skip (0 imported).
+		$result = $this->handler->import_gallery( 100, [
+			[ 'name' => 'Image', 'image' => $base64 ],
+		] );
+
+		$this->assertSame( 0, $result );
+	}
+
+	// ─── Gallery: export ────────────────────────────────────
+
+	public function test_export_gallery_returns_empty_when_no_gallery(): void {
+		$this->assertSame( [], $this->handler->export_gallery( 100 ) );
+	}
+
+	public function test_export_gallery_builds_one2many_tuples(): void {
+		// Create a temp file to simulate an attachment.
+		$png  = $this->create_minimal_png();
+		$path = trailingslashit( sys_get_temp_dir() ) . 'export-test.png';
+		file_put_contents( $path, $png );
+		$this->temp_files[] = $path;
+
+		// Simulate a WC product with gallery meta and attached file.
+		$GLOBALS['_wp_post_meta'][300] = [
+			'_product_image_gallery' => '500',
+		];
+		$GLOBALS['_wp_attached_files'][500] = $path;
+		$GLOBALS['_wp_posts'][500] = (object) [
+			'ID'         => 500,
+			'post_title' => 'Gallery Export Image',
+			'post_type'  => 'attachment',
+		];
+
+		$tuples = $this->handler->export_gallery( 300 );
+
+		$this->assertNotEmpty( $tuples );
+		$this->assertSame( 0, $tuples[0][0] );
+		$this->assertSame( 0, $tuples[0][1] );
+		$this->assertSame( 'Gallery Export Image', $tuples[0][2]['name'] );
+		$this->assertNotEmpty( $tuples[0][2]['image'] );
+	}
 }

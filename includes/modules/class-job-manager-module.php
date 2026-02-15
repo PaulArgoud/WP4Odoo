@@ -153,6 +153,25 @@ class Job_Manager_Module extends Module_Base {
 		return defined( 'JOB_MANAGER_VERSION' ) ? JOB_MANAGER_VERSION : '';
 	}
 
+	// ─── Translation ──────────────────────────────────────
+
+	/**
+	 * Translatable fields for jobs (name + description).
+	 *
+	 * @param string $entity_type Entity type.
+	 * @return array<string, string> Odoo field => WP field.
+	 */
+	protected function get_translatable_fields( string $entity_type ): array {
+		if ( 'job' === $entity_type ) {
+			return [
+				'name'        => 'post_title',
+				'description' => 'post_content',
+			];
+		}
+
+		return [];
+	}
+
 	// ─── Deduplication ─────────────────────────────────────
 
 	/**

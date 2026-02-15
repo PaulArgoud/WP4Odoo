@@ -728,4 +728,40 @@ class LearnDashModuleTest extends TestCase {
 		);
 		$this->assertEmpty( $inserts, 'Queue should be empty.' );
 	}
+
+	// ─── Translatable Fields ──────────────────────────────
+
+	public function test_translatable_fields_for_course(): void {
+		$method = new \ReflectionMethod( $this->module, 'get_translatable_fields' );
+
+		$fields = $method->invoke( $this->module, 'course' );
+
+		$this->assertSame(
+			[ 'name' => 'post_title', 'description_sale' => 'post_content' ],
+			$fields
+		);
+	}
+
+	public function test_translatable_fields_for_group(): void {
+		$method = new \ReflectionMethod( $this->module, 'get_translatable_fields' );
+
+		$fields = $method->invoke( $this->module, 'group' );
+
+		$this->assertSame(
+			[ 'name' => 'post_title', 'description_sale' => 'post_content' ],
+			$fields
+		);
+	}
+
+	public function test_translatable_fields_empty_for_transaction(): void {
+		$method = new \ReflectionMethod( $this->module, 'get_translatable_fields' );
+
+		$this->assertSame( [], $method->invoke( $this->module, 'transaction' ) );
+	}
+
+	public function test_translatable_fields_empty_for_enrollment(): void {
+		$method = new \ReflectionMethod( $this->module, 'get_translatable_fields' );
+
+		$this->assertSame( [], $method->invoke( $this->module, 'enrollment' ) );
+	}
 }

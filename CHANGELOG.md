@@ -30,8 +30,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - **Compatibility report link** — TESTED_UP_TO version warnings now include a "Report compatibility" link that opens a pre-filled WPForms form with module name, WP4Odoo version, third-party plugin version, WordPress version, PHP version, and Odoo major version. Shown in both the global admin notice banner and per-module notices on the Modules tab. Filterable via `wp4odoo_compat_report_url`
 - **Odoo version detection** — `Transport` interface gains `get_server_version(): ?string`. JSON-RPC extracts `server_version` from the authenticate response; XML-RPC calls `version()` on `/xmlrpc/2/common` after auth. `test_connection()` now populates the `version` field. The AJAX handler stores the version in `wp4odoo_odoo_version` option for use in compat reports and diagnostics
+- **Gallery images sync** — `Image_Handler` now supports product gallery images (`product_image_ids` ↔ `_product_image_gallery`). `import_gallery()` pulls Odoo `product.image` records with per-slot SHA-256 hash tracking and orphan cleanup. `export_gallery()` builds One2many `[0, 0, {...}]` tuples for push. Integrated into WC_Pull_Coordinator and WooCommerce_Module
+- **Health dashboard tab** — New "Health" tab in admin settings showing system status at a glance: active modules, pending queue depth, average latency, success rate, circuit breaker state, next cron run, cron warnings, compatibility warnings, and queue depth by module
+- **Translatable fields for 4 modules** — EDD, Events Calendar, LearnDash, and Job Manager modules now override `get_translatable_fields()`, enabling automatic WPML/Polylang translation pull for their primary content fields
 
 ### Changed
+- **PHPStan level 6** — Raised static analysis from level 5 to level 6 (adds missing typehint enforcement). Global `missingType.iterableValue` suppression for WordPress API conformance
 - **Log module filter** — Expanded the log viewer module dropdown from ~20 hardcoded entries to all 33 sync modules plus 5 system modules, organized in `<optgroup>` sections
 - **Log level i18n** — Log level labels (Debug, Info, Warning, Error, Critical) in the sync settings tab are now translatable
 - **Admin JS i18n** — Hardcoded English strings in `admin.js` (server error, unknown error, completed, remove) replaced with localized strings via `wp_localize_script`

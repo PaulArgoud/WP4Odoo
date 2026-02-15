@@ -210,6 +210,25 @@ class Events_Calendar_Module extends Module_Base {
 		return class_exists( 'Tribe__Events__Main' ) ? \Tribe__Events__Main::VERSION : '';
 	}
 
+	// ─── Translation ──────────────────────────────────────
+
+	/**
+	 * Translatable fields for events (name + description).
+	 *
+	 * @param string $entity_type Entity type.
+	 * @return array<string, string> Odoo field => WP field.
+	 */
+	protected function get_translatable_fields( string $entity_type ): array {
+		if ( 'event' === $entity_type ) {
+			return [
+				'name'        => 'post_title',
+				'description' => 'post_content',
+			];
+		}
+
+		return [];
+	}
+
 	// ─── Deduplication ─────────────────────────────────────
 
 	/**

@@ -10,11 +10,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Handles product image import from Odoo (image_1920 → WC featured image).
+ * Handles product image import/export between Odoo and WooCommerce.
  *
- * Decodes base64 image data from Odoo, creates a WordPress media library
- * attachment, and sets it as the WooCommerce product thumbnail.
- * Tracks image changes via a SHA-256 hash stored in post meta to avoid
+ * Featured image: Odoo image_1920 ↔ WC product thumbnail.
+ * Gallery images: Odoo product_image_ids (product.image) ↔ WC _product_image_gallery.
+ *
+ * Decodes base64 image data from Odoo, creates WordPress media library
+ * attachments, and sets them as product thumbnails or gallery images.
+ * Tracks image changes via SHA-256 hashes stored in post meta to avoid
  * re-downloading unchanged images.
  *
  * @package WP4Odoo
@@ -23,11 +26,18 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Image_Handler {
 
 	/**
-	 * Post meta key for the image content hash.
+	 * Post meta key for the featured image content hash.
 	 *
 	 * @var string
 	 */
 	private const IMAGE_HASH_META = '_wp4odoo_image_hash';
+
+	/**
+	 * Post meta key for gallery image hashes (JSON-encoded position→hash map).
+	 *
+	 * @var string
+	 */
+	private const GALLERY_HASHES_META = '_wp4odoo_gallery_hashes';
 
 	/**
 	 * Maximum allowed size for decoded image data (bytes).
@@ -322,5 +332,216 @@ class Image_Handler {
 		wp_update_attachment_metadata( $attachment_id, $metadata );
 
 		return $attachment_id;
+	}
+
+	// ─── Gallery Images ────────────────────────────────────────
+
+	/**
+	 * Import gallery images for a WooCommerce product from Odoo data.
+	 *
+	 * Reads product_image_ids from Odoo (pre-resolved to base64 records),
+	 * compares hashes, creates/updates attachments, and stores the gallery
+	 * in WooCommerce's _product_image_gallery meta.
+	 *
+	 * @param int   $wp_product_id WooCommerce product ID.
+	 * @param array $gallery_data  Array of gallery records, each with 'name' and 'image' (base64).
+	 * @return int Number of gallery images imported/updated.
+	 */
+	public function import_gallery( int $wp_product_id, array $gallery_data ): int {
+		if ( empty( $gallery_data ) ) {
+			$this->maybe_clear_gallery( $wp_product_id );
+			return 0;
+		}
+
+		$stored_hashes  = $this->get_gallery_hashes( $wp_product_id );
+		$new_hashes     = [];
+		$attachment_ids = [];
+		$imported       = 0;
+
+		foreach ( $gallery_data as $index => $record ) {
+			$image_b64 = $record['image'] ?? '';
+			$name      = $record['name'] ?? '';
+
+			if ( empty( $image_b64 ) || ! is_string( $image_b64 ) ) {
+				continue;
+			}
+
+			$hash = hash( 'sha256', $image_b64 );
+			$key  = (string) $index;
+
+			// Skip unchanged images — reuse existing attachment.
+			if ( isset( $stored_hashes[ $key ] ) && $stored_hashes[ $key ]['hash'] === $hash ) {
+				$attachment_ids[]   = $stored_hashes[ $key ]['attachment_id'];
+				$new_hashes[ $key ] = $stored_hashes[ $key ];
+				continue;
+			}
+
+			// Size guard.
+			$estimated_size = (int) ( strlen( $image_b64 ) * 3 / 4 );
+			if ( $estimated_size > self::MAX_IMAGE_BYTES ) {
+				$this->logger->warning(
+					'Gallery image exceeds size limit, skipping.',
+					[
+						'wp_product_id' => $wp_product_id,
+						'index'         => $index,
+					]
+				);
+				continue;
+			}
+
+			$decoded = base64_decode( $image_b64, true );
+			if ( false === $decoded || '' === $decoded ) {
+				continue;
+			}
+
+			$mime      = $this->detect_mime_type( $decoded );
+			$extension = $this->mime_to_extension( $mime );
+			$slug      = '' !== $name ? sanitize_title( $name ) : 'gallery-' . $wp_product_id . '-' . $index;
+			$filename  = $slug . '-odoo.' . $extension;
+
+			// Delete previous attachment for this slot if it exists.
+			if ( isset( $stored_hashes[ $key ] ) && $stored_hashes[ $key ]['attachment_id'] > 0 ) {
+				wp_delete_attachment( $stored_hashes[ $key ]['attachment_id'], true );
+			}
+
+			$attachment_id = $this->create_attachment( $decoded, $filename, $mime, $wp_product_id );
+			if ( 0 === $attachment_id ) {
+				continue;
+			}
+
+			$attachment_ids[]   = $attachment_id;
+			$new_hashes[ $key ] = [
+				'hash'          => $hash,
+				'attachment_id' => $attachment_id,
+			];
+			++$imported;
+		}
+
+		// Delete orphaned attachments (slots that no longer exist).
+		foreach ( $stored_hashes as $key => $data ) {
+			if ( ! isset( $new_hashes[ $key ] ) && $data['attachment_id'] > 0 ) {
+				wp_delete_attachment( $data['attachment_id'], true );
+			}
+		}
+
+		// Update WooCommerce gallery meta.
+		update_post_meta( $wp_product_id, '_product_image_gallery', implode( ',', $attachment_ids ) );
+		update_post_meta( $wp_product_id, self::GALLERY_HASHES_META, wp_json_encode( $new_hashes ) );
+
+		if ( $imported > 0 ) {
+			$this->logger->info(
+				'Gallery images imported from Odoo.',
+				[
+					'wp_product_id' => $wp_product_id,
+					'imported'      => $imported,
+					'total'         => count( $attachment_ids ),
+				]
+			);
+		}
+
+		return $imported;
+	}
+
+	/**
+	 * Export gallery images for a WooCommerce product as Odoo One2many tuples.
+	 *
+	 * Reads the _product_image_gallery meta, reads each attachment file,
+	 * base64-encodes it, and returns One2many write tuples for product_image_ids.
+	 *
+	 * @param int $wp_product_id WooCommerce product ID.
+	 * @return array Array of [0, 0, {'name': ..., 'image': ...}] tuples.
+	 */
+	public function export_gallery( int $wp_product_id ): array {
+		$gallery_meta = get_post_meta( $wp_product_id, '_product_image_gallery', true );
+
+		if ( empty( $gallery_meta ) ) {
+			return [];
+		}
+
+		$attachment_ids = array_filter( array_map( 'intval', explode( ',', $gallery_meta ) ) );
+		$tuples         = [];
+
+		foreach ( $attachment_ids as $attachment_id ) {
+			$file_path = get_attached_file( $attachment_id );
+
+			if ( empty( $file_path ) || ! file_exists( $file_path ) ) {
+				continue;
+			}
+
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Reading local attachment file.
+			$binary = file_get_contents( $file_path );
+
+			if ( false === $binary || '' === $binary ) {
+				continue;
+			}
+
+			// Size guard.
+			if ( strlen( $binary ) > self::MAX_IMAGE_BYTES ) {
+				continue;
+			}
+
+			$name    = get_the_title( $attachment_id ) ?: 'gallery-image';
+			$encoded = base64_encode( $binary );
+
+			$tuples[] = [
+				0,
+				0,
+				[
+					'name'  => $name,
+					'image' => $encoded,
+				],
+			];
+		}
+
+		return $tuples;
+	}
+
+	/**
+	 * Clear gallery images if they were set by Odoo sync.
+	 *
+	 * @param int $wp_product_id Product ID.
+	 * @return void
+	 */
+	private function maybe_clear_gallery( int $wp_product_id ): void {
+		$stored_hashes = $this->get_gallery_hashes( $wp_product_id );
+
+		if ( empty( $stored_hashes ) ) {
+			return;
+		}
+
+		foreach ( $stored_hashes as $data ) {
+			if ( $data['attachment_id'] > 0 ) {
+				wp_delete_attachment( $data['attachment_id'], true );
+			}
+		}
+
+		delete_post_meta( $wp_product_id, '_product_image_gallery' );
+		delete_post_meta( $wp_product_id, self::GALLERY_HASHES_META );
+
+		$this->logger->info(
+			'Cleared product gallery (Odoo images removed).',
+			[ 'wp_product_id' => $wp_product_id ]
+		);
+	}
+
+	/**
+	 * Get stored gallery hashes from post meta.
+	 *
+	 * @param int $wp_product_id Product ID.
+	 * @return array<string, array{hash: string, attachment_id: int}>
+	 */
+	private function get_gallery_hashes( int $wp_product_id ): array {
+		$json = get_post_meta( $wp_product_id, self::GALLERY_HASHES_META, true );
+
+		if ( empty( $json ) ) {
+			return [];
+		}
+
+		$decoded = json_decode( $json, true );
+		if ( ! is_array( $decoded ) ) {
+			return [];
+		}
+
+		return $decoded;
 	}
 }

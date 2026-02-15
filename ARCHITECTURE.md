@@ -46,7 +46,7 @@ WordPress For Odoo/
 │   │   ├── class-product-handler.php         # WooCommerce: product CRUD with currency guard
 │   │   ├── class-order-handler.php           # WooCommerce: order CRUD + Odoo status mapping
 │   │   ├── class-variant-handler.php         # WooCommerce: variant import (product.product → WC variations)
-│   │   ├── class-image-handler.php           # WooCommerce: product image import (Odoo image_1920 → WC thumbnail)
+│   │   ├── class-image-handler.php           # WooCommerce: product image import (featured + gallery) from Odoo
 │   │   ├── class-currency-guard.php          # WooCommerce: static currency mismatch detection utility
 │   │   ├── class-exchange-rate-service.php   # WooCommerce: Odoo exchange rate fetching + caching + conversion
 │   │   ├── class-pricelist-handler.php      # WooCommerce: pricelist price import (product.pricelist → WC sale_price)
@@ -210,7 +210,7 @@ WordPress For Odoo/
 │   │   ├── trait-ajax-module-handlers.php   # AJAX: module settings + bulk operations (4 handlers)
 │   │   ├── trait-ajax-setup-handlers.php    # AJAX: connection testing + onboarding (4 handlers)
 │   │   ├── class-admin-ajax.php       # AJAX coordinator: hook registration, request verification (uses 3 traits)
-│   │   └── class-settings-page.php    # Settings API, 5-tab rendering, setup checklist, sanitize callbacks
+│   │   └── class-settings-page.php    # Settings API, 6-tab rendering, setup checklist, sanitize callbacks
 │   │
 │   ├── class-sync-result.php          # Value object: success/fail, ?int entity_id, error message, Error_Type
 │   ├── class-error-type.php           # Backed enum: Transient, Permanent (retry strategy)
@@ -237,7 +237,7 @@ WordPress For Odoo/
 │   └── class-logger.php              # DB-backed logger with level filtering, 4KB context truncation
 │
 ├── admin/
-│   ├── css/admin.css                  # Admin styles (~400 lines)
+│   ├── css/admin.css                  # Admin styles (~560 lines)
 │   ├── js/admin.js                    # Admin JS: AJAX interactions (~570 lines)
 │   └── views/                         # Admin page templates
 │       ├── page-settings.php          #   Main wrapper (h1 + checklist + nav-tabs + render_tab() dispatch)
@@ -246,7 +246,8 @@ WordPress For Odoo/
 │       ├── tab-sync.php               #   Sync settings + logging settings
 │       ├── tab-modules.php            #   Module cards with AJAX toggles + inline settings panels
 │       ├── tab-queue.php              #   Stats cards + paginated jobs table
-│       └── tab-logs.php               #   Filter bar + AJAX paginated log table
+│       ├── tab-logs.php               #   Filter bar + AJAX paginated log table
+│       └── tab-health.php             #   Health dashboard (system status, queue stats, circuit breaker, cron)
 │
 ├── assets/                            # Frontend assets
 │   ├── css/frontend.css              #   Lead form styling
@@ -261,7 +262,7 @@ WordPress For Odoo/
 ├── templates/
 │   └── customer-portal.php           #   Customer portal HTML template (orders/invoices tabs)
 │
-├── tests/                             # 2941 unit tests (4540 assertions) + 26 integration tests (wp-env)
+├── tests/                             # 2961 unit tests (4564 assertions) + 26 integration tests (wp-env)
 │   ├── bootstrap.php                 #   Unit test bootstrap: constants, stub loading, plugin class requires
 │   ├── bootstrap-integration.php     #   Integration test bootstrap: loads WP test framework (wp-env)
 │   ├── stubs/
@@ -322,7 +323,7 @@ WordPress For Odoo/
 │       ├── WooCommerceModuleTest.php    #   24 tests for WooCommerce_Module
 │       ├── VariantHandlerTest.php       #   7 tests for Variant_Handler
 │       ├── BulkSyncTest.php             #   17 tests for bulk import/export
-│       ├── ImageHandlerTest.php         #   9 tests for Image_Handler
+│       ├── ImageHandlerTest.php         #   15 tests for Image_Handler
 │       ├── CurrencyTest.php             #   9 tests for multi-currency support
 │       ├── LoggerTest.php               #   33 tests for Logger
 │       ├── SyncEngineTest.php           #   16 tests for Sync_Engine
@@ -330,7 +331,7 @@ WordPress For Odoo/
 │       ├── OdooClientTest.php           #   21 tests for Odoo_Client
 │       ├── QueryServiceTest.php         #   15 tests for Query_Service
 │       ├── ContactRefinerTest.php       #   19 tests for Contact_Refiner
-│       ├── SettingsPageTest.php         #   20 tests for Settings_Page
+│       ├── SettingsPageTest.php         #   22 tests for Settings_Page
 │       ├── CLITest.php                  #   15 tests for CLI
 │       ├── OrderHandlerTest.php         #   9 tests for Order_Handler
 │       ├── ProductHandlerTest.php       #   7 tests for Product_Handler
@@ -963,7 +964,7 @@ All user inputs are sanitized with:
 
 ## Admin UI
 
-5-tab settings interface accessible via top-level "Odoo Connector" menu:
+6-tab settings interface accessible via top-level "Odoo Connector" menu:
 
 | Tab | Template | Features |
 |-----|----------|----------|
@@ -972,10 +973,11 @@ All user inputs are sanitized with:
 | Modules | `tab-modules.php` | Card grid with AJAX toggle switches, inline settings panels, dependency check, sync direction badges |
 | Queue | `tab-queue.php` | 4 status cards, jobs table with server-side pagination, retry/cleanup/cancel |
 | Logs | `tab-logs.php` | Filter bar (level, module, dates), AJAX paginated log table, purge |
+| Health | `tab-health.php` | System status banner, stats grid (modules/queue/latency/success rate), circuit breaker, cron status, compatibility warnings, queue depth by module |
 
 **Key classes:**
 - `Admin` — orchestrator: menu registration, asset enqueuing, plugin settings link, activation redirect, setup notice, backup warning banner, version warnings with compatibility report links (`build_compat_report_url()`)
-- `Settings_Page` — Settings API registration, tab rendering (dynamic `render_tab()` dispatcher), setup checklist, sanitize callbacks
+- `Settings_Page` — Settings API registration, 6-tab rendering (dynamic `render_tab()` dispatcher), setup checklist, health dashboard, sanitize callbacks
 - `Admin_Ajax` — 15 handlers: test_connection, retry_failed, cleanup_queue, cancel_job, purge_logs, fetch_logs, queue_stats, toggle_module, save_module_settings, bulk_import_products, bulk_export_products, fetch_queue, dismiss_onboarding, dismiss_checklist, confirm_webhooks
 
 ## Modules Detail
@@ -1024,7 +1026,7 @@ All user inputs are sanitized with:
 
 ### WooCommerce — COMPLETE
 
-**Files:** `class-woocommerce-module.php` (sync coordinator, uses `WooCommerce_Hooks` trait), `trait-woocommerce-hooks.php` (WC hook callbacks), `class-product-handler.php` (product CRUD), `class-order-handler.php` (order CRUD + status mapping), `class-variant-handler.php` (variant import), `class-image-handler.php` (product image pull), `class-pricelist-handler.php` (pricelist price pull), `class-shipment-handler.php` (shipment tracking pull), `class-currency-guard.php` (currency mismatch detection), `class-exchange-rate-service.php` (Odoo exchange rates), `class-invoice-helper.php` (shared with Sales + EDD)
+**Files:** `class-woocommerce-module.php` (sync coordinator, uses `WooCommerce_Hooks` trait), `trait-woocommerce-hooks.php` (WC hook callbacks), `class-product-handler.php` (product CRUD), `class-order-handler.php` (order CRUD + status mapping), `class-variant-handler.php` (variant import), `class-image-handler.php` (featured image + gallery image pull/push), `class-pricelist-handler.php` (pricelist price pull), `class-shipment-handler.php` (shipment tracking pull), `class-currency-guard.php` (currency mismatch detection), `class-exchange-rate-service.php` (Odoo exchange rates), `class-invoice-helper.php` (shared with Sales + EDD)
 
 **Odoo models:** `product.template`, `product.product`, `product.category`, `sale.order`, `stock.quant`, `account.move`, `product.pricelist`, `product.pricelist.item`, `stock.picking`
 
@@ -1040,10 +1042,11 @@ All user inputs are sanitized with:
 - **Exchange rate conversion**: optional `convert_currency` setting; prices converted via `Exchange_Rate_Service` (Odoo `res.currency` rates, 1-hour cache, stampede-protected fetch)
 - **Pricelist price pull**: imports computed prices from Odoo pricelists (`product.pricelist`) as WC sale prices; transient-cached (5min), currency guard integration, pricelist tracking meta
 - **Shipment tracking pull**: imports completed shipments (`stock.picking`) from Odoo into WC order meta (AST-compatible format); SHA-256 hash change detection, HPOS compatible
+- **Product gallery images**: bidirectional sync of Odoo `product_image_ids` (One2many → `product.image`) ↔ WC `_product_image_gallery` meta; hash-based change detection per position (`_wp4odoo_gallery_hashes` JSON meta); push exports gallery attachments as base64 One2many tuples
 - **Category pull**: `Product_Handler` resolves Odoo `categ_id` Many2one to WP `product_cat` terms during product pull; `WC_Pull_Coordinator` accumulates category mappings for translation flush
 - **Attribute value translation**: `Variant_Handler` tracks attribute value Odoo IDs in `entity_map`; accumulated per-taxonomy for translated term name pull
 
-**Settings:** `sync_products`, `sync_orders`, `sync_stock`, `sync_product_images`, `sync_pricelist`, `sync_shipments`, `convert_currency`, `auto_confirm_orders` — `sync_products` and `sync_orders` are checked at callback level (each hook checks the relevant setting before enqueuing)
+**Settings:** `sync_products`, `sync_orders`, `sync_stock`, `sync_product_images`, `sync_gallery_images`, `sync_pricelist`, `sync_shipments`, `convert_currency`, `auto_confirm_orders` — `sync_products` and `sync_orders` are checked at callback level (each hook checks the relevant setting before enqueuing)
 
 
 
@@ -1060,6 +1063,7 @@ All user inputs are sanitized with:
 - Partner resolution via `Partner_Service`
 - Invoices via shared `Invoice_Helper`
 - Status mapping filterable via `apply_filters('wp4odoo_edd_order_status_map', ...)` and `apply_filters('wp4odoo_edd_odoo_status_map', ...)`
+- Translation pull support: `get_translatable_fields()` maps `name → post_title`, `description_sale → post_content` for downloads
 
 **Settings:** `sync_downloads`, `sync_orders`, `auto_confirm_orders`
 
@@ -1282,6 +1286,7 @@ All user inputs are sanitized with:
 - Enrollments → sale orders via synthetic ID encoding (`Module_Base::encode_synthetic_id()` / `decode_synthetic_id()`)
 - Product auto-sync: `ensure_product_synced()` pushes course before dependent transaction/enrollment
 - Uses `Partner_Service` for user → Odoo partner resolution
+- Translation pull support: `get_translatable_fields()` maps `name → post_title`, `description_sale → post_content` for courses and groups
 
 **Settings:** `sync_courses`, `sync_groups`, `sync_transactions`, `sync_enrollments`, `auto_post_invoices`
 
@@ -1357,6 +1362,7 @@ All user inputs are sanitized with:
 - Event auto-sync: `ensure_event_synced_for_attendee()` pushes event before dependent attendee
 - Attendee → Odoo partner resolution via `Partner_Service::get_or_create()`
 - Different field mapping per model: `date_begin`/`date_end`/`date_tz` (event.event) vs `start`/`stop`/`allday` (calendar.event)
+- Translation pull support: `get_translatable_fields()` maps `name → post_title`, `description → post_content` for events
 
 **Settings:** `sync_events`, `sync_tickets`, `sync_attendees`
 
@@ -1457,6 +1463,7 @@ All user inputs are sanitized with:
 - Department pull: Odoo `department_id` Many2one → `job_listing_category` taxonomy term
 - Description builder: post content + location + company meta (same `\n\n` pattern as WPRM)
 - Hooks: `save_post_job_listing` (WP Job Manager cron handles expiry via post status change, caught by the same hook)
+- Translation pull support: `get_translatable_fields()` maps `name → post_title`, `description → post_content` for jobs
 
 **Settings:** `sync_jobs`, `pull_jobs`
 

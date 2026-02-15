@@ -193,6 +193,25 @@ class EDD_Module extends Module_Base {
 		return 'bidirectional';
 	}
 
+	// ─── Translation ──────────────────────────────────────
+
+	/**
+	 * Translatable fields for downloads (name + description).
+	 *
+	 * @param string $entity_type Entity type.
+	 * @return array<string, string> Odoo field => WP field.
+	 */
+	protected function get_translatable_fields( string $entity_type ): array {
+		if ( 'download' === $entity_type ) {
+			return [
+				'name'             => 'post_title',
+				'description_sale' => 'post_content',
+			];
+		}
+
+		return [];
+	}
+
 	// ─── Deduplication ─────────────────────────────────────
 
 	/**

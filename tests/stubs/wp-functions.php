@@ -465,7 +465,7 @@ if ( ! function_exists( 'wp_delete_post' ) ) {
 
 if ( ! function_exists( 'get_attached_file' ) ) {
 	function get_attached_file( $attachment_id, $unfiltered = false ) {
-		return false;
+		return $GLOBALS['_wp_attached_files'][ $attachment_id ] ?? false;
 	}
 }
 
@@ -656,6 +656,10 @@ if ( ! function_exists( 'wp_create_nonce' ) ) {
 
 if ( ! function_exists( 'get_the_title' ) ) {
 	function get_the_title( $post = 0 ) {
+		$id = is_object( $post ) ? ( $post->ID ?? 0 ) : (int) $post;
+		if ( $id > 0 && isset( $GLOBALS['_wp_posts'][ $id ] ) ) {
+			return $GLOBALS['_wp_posts'][ $id ]->post_title ?? 'Test Page';
+		}
 		return 'Test Page';
 	}
 }

@@ -33,6 +33,19 @@ class SettingsPageTest extends TestCase {
 		$this->page = new Settings_Page();
 	}
 
+	// ─── Tab structure ────────────────────────────────────────────
+
+	public function test_health_tab_is_registered(): void {
+		$ref  = new \ReflectionMethod( $this->page, 'get_tabs' );
+		$tabs = $ref->invoke( $this->page );
+
+		$this->assertArrayHasKey( 'health', $tabs );
+	}
+
+	public function test_render_tab_health_method_exists(): void {
+		$this->assertTrue( method_exists( $this->page, 'render_tab_health' ) );
+	}
+
 	// ─── sanitize_connection tests ─────────────────────────────
 
 	/**
