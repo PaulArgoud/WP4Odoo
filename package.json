@@ -6,7 +6,7 @@
 		"wp-env:start": "wp-env start",
 		"wp-env:stop": "wp-env stop",
 		"wp-env:destroy": "wp-env destroy",
-		"test:integration": "wp-env run tests-cli --env-cwd=wp-content/plugins/wordpress-for-odoo vendor/bin/phpunit -c phpunit-integration.xml"
+		"test:integration": "wp-env run tests-cli --env-cwd=wp-content/plugins/wp4odoo vendor/bin/phpunit -c phpunit-integration.xml"
 	},
 	"devDependencies": {
 		"@wordpress/env": "10.39.0"
