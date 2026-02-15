@@ -239,28 +239,7 @@ class Sync_Engine {
 			while ( $iteration < self::MAX_BATCH_ITERATIONS ) {
 				++$iteration;
 
-				if ( ( microtime( true ) - $start_time ) >= self::BATCH_TIME_LIMIT ) {
-					$this->logger->info(
-						'Multi-batch: time limit reached between batches.',
-						[
-							'elapsed'    => round( microtime( true ) - $start_time, 2 ),
-							'processed'  => $processed,
-							'iterations' => $iteration - 1,
-						]
-					);
-					break;
-				}
-
-				if ( $this->is_memory_exhausted() ) {
-					$this->logger->warning(
-						'Multi-batch: memory threshold reached between batches.',
-						[ 'memory_usage_mb' => round( memory_get_usage( true ) / 1048576, 1 ) ]
-					);
-					break;
-				}
-
-				if ( ! $this->circuit_breaker->is_available() ) {
-					$this->logger->info( 'Multi-batch: circuit breaker opened mid-run.' );
+				if ( ! $this->should_continue_batching( $start_time, $processed, $iteration ) ) {
 					break;
 				}
 
@@ -278,81 +257,11 @@ class Sync_Engine {
 					$touched_modules[ $job->module ] = true;
 				}
 
-				// Batch-create optimization: group eligible creates by module+entity.
-				$batched_job_ids = [];
-				if ( ! $this->dry_run ) {
-					$processed += $this->process_batch_creates( $jobs, $batched_job_ids );
-				}
+				$result     = $this->process_fetched_batch( $jobs, $start_time );
+				$processed += $result['processed'];
 
-				foreach ( $jobs as $job ) {
-					// Skip jobs already processed by batch creates.
-					if ( isset( $batched_job_ids[ (int) $job->id ] ) ) {
-						continue;
-					}
-
-					if ( ( microtime( true ) - $start_time ) >= self::BATCH_TIME_LIMIT ) {
-						$this->logger->info(
-							'Batch time limit reached, deferring remaining jobs.',
-							[
-								'elapsed'   => round( microtime( true ) - $start_time, 2 ),
-								'processed' => $processed,
-							]
-						);
-						break 2; // Exit both foreach and while.
-					}
-
-					if ( $this->is_memory_exhausted() ) {
-						$this->logger->warning(
-							'Memory threshold reached, deferring remaining jobs.',
-							[
-								'memory_usage_mb' => round( memory_get_usage( true ) / 1048576, 1 ),
-								'processed'       => $processed,
-							]
-						);
-						break 2;
-					}
-
-					// Atomically claim the job. If another process (e.g. a concurrent
-					// process_module_queue) already claimed it, skip silently.
-					if ( ! $this->queue_repo->claim_job( (int) $job->id ) ) {
-						continue;
-					}
-
-					$this->logger->set_correlation_id( $job->correlation_id ?? null );
-
-					try {
-						$result = $this->process_job( $job );
-
-						if ( $result->succeeded() ) {
-							$this->queue_repo->update_status(
-								(int) $job->id,
-								'completed',
-								[
-									'processed_at' => current_time( 'mysql', true ),
-								]
-							);
-							++$processed;
-							++$this->batch_successes;
-						} else {
-							$this->handle_failure( $job, $result->get_message(), $result->get_error_type(), $result->get_entity_id() );
-							++$this->batch_failures;
-						}
-					} catch ( \Throwable $e ) {
-						$this->handle_failure( $job, $e->getMessage() );
-						++$this->batch_failures;
-
-						// If memory is exhausted after the error, stop the batch
-						// to prevent cascading OOM failures on subsequent jobs.
-						if ( $this->is_memory_exhausted() ) {
-							$this->logger->warning(
-								'Memory threshold reached after job failure, stopping batch.',
-								[ 'job_id' => $job->id ]
-							);
-							break 2;
-						}
-					} finally {
-						$this->logger->set_correlation_id( null );
-					}
+				if ( $result['should_stop'] ) {
+					break;
 				}
 			}
 
@@ -467,6 +376,152 @@ class Sync_Engine {
 				(int) $job->id
 			)
 		);
+	}
+
+	/**
+	 * Check whether the multi-batch loop should continue.
+	 *
+	 * Returns false when any termination condition is met: time limit,
+	 * memory threshold, or circuit breaker opening mid-run.
+	 *
+	 * @param float $start_time Wall-clock start time (microtime).
+	 * @param int   $processed  Jobs processed so far.
+	 * @param int   $iteration  Current iteration number.
+	 * @return bool True if the next batch should be fetched.
+	 */
+	private function should_continue_batching( float $start_time, int $processed, int $iteration ): bool {
+		if ( ( microtime( true ) - $start_time ) >= self::BATCH_TIME_LIMIT ) {
+			$this->logger->info(
+				'Multi-batch: time limit reached between batches.',
+				[
+					'elapsed'    => round( microtime( true ) - $start_time, 2 ),
+					'processed'  => $processed,
+					'iterations' => $iteration - 1,
+				]
+			);
+			return false;
+		}
+
+		if ( $this->is_memory_exhausted() ) {
+			$this->logger->warning(
+				'Multi-batch: memory threshold reached between batches.',
+				[ 'memory_usage_mb' => round( memory_get_usage( true ) / 1048576, 1 ) ]
+			);
+			return false;
+		}
+
+		if ( ! $this->circuit_breaker->is_available() ) {
+			$this->logger->info( 'Multi-batch: circuit breaker opened mid-run.' );
+			return false;
+		}
+
+		return true;
+	}
+
+	/**
+	 * Process a single fetched batch of jobs.
+	 *
+	 * Runs the batch-create optimization first, then processes remaining
+	 * jobs one-by-one. Returns the number of successfully processed jobs
+	 * and whether the outer loop should stop.
+	 *
+	 * @param array<int, object> $jobs       Fetched job rows.
+	 * @param float              $start_time Wall-clock start time (microtime).
+	 * @return array{processed: int, should_stop: bool}
+	 */
+	private function process_fetched_batch( array $jobs, float $start_time ): array {
+		$processed = 0;
+
+		// Batch-create optimization: group eligible creates by module+entity.
+		$batched_job_ids = [];
+		if ( ! $this->dry_run ) {
+			$processed += $this->process_batch_creates( $jobs, $batched_job_ids );
+		}
+
+		foreach ( $jobs as $job ) {
+			// Skip jobs already processed by batch creates.
+			if ( isset( $batched_job_ids[ (int) $job->id ] ) ) {
+				continue;
+			}
+
+			if ( ( microtime( true ) - $start_time ) >= self::BATCH_TIME_LIMIT ) {
+				$this->logger->info(
+					'Batch time limit reached, deferring remaining jobs.',
+					[
+						'elapsed'   => round( microtime( true ) - $start_time, 2 ),
+						'processed' => $processed,
+					]
+				);
+				return [
+					'processed'   => $processed,
+					'should_stop' => true,
+				];
+			}
+
+			if ( $this->is_memory_exhausted() ) {
+				$this->logger->warning(
+					'Memory threshold reached, deferring remaining jobs.',
+					[
+						'memory_usage_mb' => round( memory_get_usage( true ) / 1048576, 1 ),
+						'processed'       => $processed,
+					]
+				);
+				return [
+					'processed'   => $processed,
+					'should_stop' => true,
+				];
+			}
+
+			// Atomically claim the job. If another process (e.g. a concurrent
+			// process_module_queue) already claimed it, skip silently.
+			if ( ! $this->queue_repo->claim_job( (int) $job->id ) ) {
+				continue;
+			}
+
+			$this->logger->set_correlation_id( $job->correlation_id ?? null );
+
+			try {
+				$result = $this->process_job( $job );
+
+				if ( $result->succeeded() ) {
+					$this->queue_repo->update_status(
+						(int) $job->id,
+						'completed',
+						[
+							'processed_at' => current_time( 'mysql', true ),
+						]
+					);
+					++$processed;
+					++$this->batch_successes;
+				} else {
+					$this->handle_failure( $job, $result->get_message(), $result->get_error_type(), $result->get_entity_id() );
+					++$this->batch_failures;
+				}
+			} catch ( \Throwable $e ) {
+				$this->handle_failure( $job, $e->getMessage() );
+				++$this->batch_failures;
+
+				// If memory is exhausted after the error, stop the batch
+				// to prevent cascading OOM failures on subsequent jobs.
+				if ( $this->is_memory_exhausted() ) {
+					$this->logger->warning(
+						'Memory threshold reached after job failure, stopping batch.',
+						[ 'job_id' => $job->id ]
+					);
+					return [
+						'processed'   => $processed,
+						'should_stop' => true,
+					];
+				}
+			} finally {
+				$this->logger->set_correlation_id( null );
+			}
+		}
+
+		return [
+			'processed'   => $processed,
+			'should_stop' => false,
+		];
 	}
 
 	/**
@@ -689,15 +744,6 @@ class Sync_Engine {
 		return '1' === (string) $result;
 	}
 
-	/**
-	 * Release the processing lock.
-	 *
-	 * Logs a warning if the lock was not held or could not be released
-	 * (e.g. database connection dropped after processing).
-	 *
-	 * @param string $lock_name Lock name (global or per-module).
-	 * @return void
-	 */
 	/**
 	 * Check whether memory usage exceeds the safety threshold.
 	 *

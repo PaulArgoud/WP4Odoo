@@ -25,6 +25,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 abstract class Module_Base {
 
 	use Module_Helpers;
+	use Error_Classification;
+	use Push_Lock;
+	use Poll_Support;
 
 	/**
 	 * Unique module identifier (e.g., 'crm', 'sales', 'woocommerce').
@@ -320,87 +323,6 @@ abstract class Module_Base {
 			$error_type = self::classify_exception( $e );
 			return Sync_Result::failure( $e->getMessage(), $error_type, $odoo_id > 0 ? $odoo_id : null );
 		}
-	}
-
-	/**
-	 * Classify a runtime exception into an Error_Type.
-	 *
-	 * Connection errors (HTTP 5xx, timeout, network) are Transient.
-	 * Business errors (AccessError, ValidationError, missing fields) are Permanent.
-	 *
-	 * @param \RuntimeException $e The exception to classify.
-	 * @return Error_Type
-	 */
-	private static function classify_exception( \RuntimeException $e ): Error_Type {
-		$code    = $e->getCode();
-		$message = strtolower( $e->getMessage() );
-
-		// Odoo business errors are permanent (won't be fixed by retrying).
-		// Check BEFORE status code since some Odoo versions wrap these in HTTP 500.
-		if ( str_contains( $message, 'access denied' )
-			|| str_contains( $message, 'accesserror' )
-			|| str_contains( $message, 'validationerror' )
-			|| str_contains( $message, 'userinputerror' )
-			|| str_contains( $message, 'missing required' )
-			|| str_contains( $message, 'constraint' ) ) {
-			return Error_Type::Permanent;
-		}
-
-		// HTTP 429 (rate limit) and 503 (maintenance) are always transient.
-		if ( 429 === $code || 503 === $code ) {
-			return Error_Type::Transient;
-		}
-
-		// Other HTTP 5xx: transient (server overload / temporary unavailability).
-		if ( $code >= 500 && $code < 600 ) {
-			return Error_Type::Transient;
-		}
-
-		// Network / timeout errors from wp_remote_post.
-		if ( str_contains( $message, 'http error' )
-			|| str_contains( $message, 'timed out' )
-			|| str_contains( $message, 'connection refused' )
-			|| str_contains( $message, 'could not resolve' ) ) {
-			return Error_Type::Transient;
-		}
-
-		// Default: treat unknown errors as transient for safety (allows retry).
-		return Error_Type::Transient;
-	}
-
-	/**
-	 * Acquire an advisory lock for push dedup protection.
-	 *
-	 * Prevents TOCTOU race in the search-before-create path of push_to_odoo().
-	 * Same proven pattern as Partner_Service::get_or_create().
-	 *
-	 * @param string $lock_name MySQL advisory lock name.
-	 * @return bool True if lock acquired within 5 seconds.
-	 */
-	private function acquire_push_lock( string $lock_name ): bool {
-		global $wpdb;
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
-		$result = $wpdb->get_var(
-			$wpdb->prepare( 'SELECT GET_LOCK( %s, %d )', $lock_name, 5 )
-		);
-
-		return '1' === (string) $result;
-	}
-
-	/**
-	 * Release an advisory lock for push dedup protection.
-	 *
-	 * @param string $lock_name MySQL advisory lock name.
-	 * @return void
-	 */
-	private function release_push_lock( string $lock_name ): void {
-		global $wpdb;
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
-		$wpdb->get_var(
-			$wpdb->prepare( 'SELECT RELEASE_LOCK( %s )', $lock_name )
-		);
 	}
 
 	/**
@@ -801,14 +723,6 @@ abstract class Module_Base {
 	}
 
 	/**
-	 * Accumulate a pulled record for batch translation at end of batch.
-	 *
-	 * @param string $odoo_model Odoo model name.
-	 * @param int    $odoo_id    Odoo record ID.
-	 * @param int    $wp_id      WordPress entity ID.
-	 * @return void
-	 */
-	/**
 	 * Maximum entries per model in the translation buffer.
 	 *
 	 * Prevents unbounded memory growth during large pull batches.
@@ -816,6 +730,14 @@ abstract class Module_Base {
 	 */
 	private const TRANSLATION_BUFFER_MAX = 5000;
 
+	/**
+	 * Accumulate a pulled record for batch translation at end of batch.
+	 *
+	 * @param string $odoo_model Odoo model name.
+	 * @param int    $odoo_id    Odoo record ID.
+	 * @param int    $wp_id      WordPress entity ID.
+	 * @return void
+	 */
 	protected function accumulate_pull_translation( string $odoo_model, int $odoo_id, int $wp_id ): void {
 		if ( isset( $this->translation_buffer[ $odoo_model ] )
 			&& count( $this->translation_buffer[ $odoo_model ] ) >= self::TRANSLATION_BUFFER_MAX ) {
@@ -963,60 +885,6 @@ abstract class Module_Base {
 
 		$settings = $this->get_settings();
 		return ! empty( $settings[ $setting_key ] );
-	}
-
-	/**
-	 * Detect changes in a set of entities via hash comparison and enqueue sync jobs.
-	 *
-	 * Compares current entity data against entity_map records using SHA-256
-	 * hashes to detect creates, updates, and deletions. Used by WP-Cron
-	 * polling modules (Bookly, Ecwid) that have no real-time hooks.
-	 *
-	 * @param string            $entity_type Entity type (e.g. 'service', 'product').
-	 * @param array<int, array> $items       Current items from the data source.
-	 * @param string            $id_field    Name of the ID field in each item.
-	 * @return void
-	 */
-	protected function poll_entity_changes( string $entity_type, array $items, string $id_field = 'id' ): void {
-		$poll_start = current_time( 'mysql', true );
-
-		// Extract WP IDs from items for targeted loading.
-		$wp_ids = [];
-		foreach ( $items as $item ) {
-			$wp_ids[] = (int) ( $item[ $id_field ] ?? 0 );
-		}
-
-		// Targeted loading: only fetch mappings for the current items' IDs
-		// instead of loading all module/entity_type rows (up to 50 000).
-		$existing = $this->entity_map()->get_mappings_for_wp_ids( $this->id, $entity_type, $wp_ids );
-
-		$seen_ids = [];
-
-		foreach ( $items as $item ) {
-			$wp_id      = (int) ( $item[ $id_field ] ?? 0 );
-			$seen_ids[] = $wp_id;
-
-			$hash_data = $item;
-			unset( $hash_data[ $id_field ] );
-			$hash = $this->generate_sync_hash( $hash_data );
-
-			if ( ! isset( $existing[ $wp_id ] ) ) {
-				Queue_Manager::push( $this->id, $entity_type, 'create', $wp_id );
-			} elseif ( $existing[ $wp_id ]['sync_hash'] !== $hash ) {
-				Queue_Manager::push( $this->id, $entity_type, 'update', $wp_id, $existing[ $wp_id ]['odoo_id'] );
-			}
-		}
-
-		// Mark all seen items as polled for deletion detection.
-		$this->entity_map()->mark_polled( $this->id, $entity_type, $seen_ids, $poll_start );
-
-		// Detect deletions: mappings that were previously polled but NOT
-		// seen this cycle. Pre-migration rows (last_polled_at IS NULL) are
-		// excluded to avoid false positives during bootstrapping.
-		$stale = $this->entity_map()->get_stale_poll_mappings( $this->id, $entity_type, $poll_start );
-		foreach ( $stale as $wp_id => $map ) {
-			Queue_Manager::push( $this->id, $entity_type, 'delete', $wp_id, $map['odoo_id'] );
-		}
 	}
 
 	// -------------------------------------------------------------------------
