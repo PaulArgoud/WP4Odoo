@@ -3,6 +3,7 @@ declare( strict_types=1 );
 
 namespace WP4Odoo\Modules;
 
+use WP4Odoo\Error_Classification;
 use WP4Odoo\Error_Type;
 use WP4Odoo\Field_Mapper;
 use WP4Odoo\I18n\Translation_Service;
@@ -25,6 +26,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @since   2.9.0
  */
 class WC_Pull_Coordinator {
+	use Error_Classification;
 
 	/**
 	 * Logger instance.
@@ -255,7 +257,8 @@ class WC_Pull_Coordinator {
 				[ 'sale_id', 'state', 'picking_type_code' ]
 			);
 		} catch ( \Throwable $e ) {
-			return Sync_Result::failure( $e->getMessage(), Error_Type::Transient );
+			$error_type = $e instanceof \RuntimeException ? static::classify_exception( $e ) : Error_Type::Transient;
+			return Sync_Result::failure( $e->getMessage(), $error_type );
 		}
 
 		if ( empty( $records ) ) {

@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Retry visibility** — Queue admin tab now shows a "Scheduled" column with human-readable countdown (e.g. "2 hours") for pending jobs with future `scheduled_at`, or "Now" for immediately-ready jobs
 - **Module dependency graph** — New `Module_Base::get_required_modules()` method declares inter-module dependencies. WC Subscriptions, WC Bookings, WC Bundle BOM, WC Points & Rewards, and WC Memberships now require the WooCommerce module to be active. `Module_Registry` enforces this at boot time and generates an admin warning if a dependency is missing
 
+### Changed
+- **Error classification in module catch blocks** — WC Points & Rewards, GamiPress, WC Pull Coordinator, and Stock Handler now use `Error_Classification::classify_exception()` instead of hardcoded `Error_Type::Transient` in catch blocks. Permanent errors (validation, access denied) are no longer retried unnecessarily
+
 ### Fixed
 - **uninstall.php** — Added missing `wp4odoo_log_cleanup` cron event cleanup (previously only `wp4odoo_scheduled_sync` was cleared)
 

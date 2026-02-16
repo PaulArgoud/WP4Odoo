@@ -386,7 +386,8 @@ class WC_Points_Rewards_Module extends Module_Base {
 				}
 			} catch ( \Exception $e ) {
 				$this->logger->error( 'Loyalty card search failed.', [ 'error' => $e->getMessage() ] );
-				return \WP4Odoo\Sync_Result::failure( $e->getMessage(), \WP4Odoo\Error_Type::Transient );
+				$error_type = $e instanceof \RuntimeException ? static::classify_exception( $e ) : \WP4Odoo\Error_Type::Transient;
+				return \WP4Odoo\Sync_Result::failure( $e->getMessage(), $error_type );
 			}
 		}
 
@@ -418,7 +419,8 @@ class WC_Points_Rewards_Module extends Module_Base {
 			}
 		} catch ( \Exception $e ) {
 			$this->logger->error( 'Loyalty card push failed.', [ 'error' => $e->getMessage() ] );
-			return \WP4Odoo\Sync_Result::failure( $e->getMessage(), \WP4Odoo\Error_Type::Transient );
+			$error_type = $e instanceof \RuntimeException ? static::classify_exception( $e ) : \WP4Odoo\Error_Type::Transient;
+			return \WP4Odoo\Sync_Result::failure( $e->getMessage(), $error_type );
 		}
 
 		return \WP4Odoo\Sync_Result::success( $odoo_id );

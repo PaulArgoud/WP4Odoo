@@ -4,6 +4,7 @@ declare( strict_types=1 );
 namespace WP4Odoo\Modules;
 
 use WP4Odoo\API\Odoo_Client;
+use WP4Odoo\Error_Classification;
 use WP4Odoo\Error_Type;
 use WP4Odoo\Logger;
 use WP4Odoo\Sync_Result;
@@ -25,6 +26,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @since   3.2.0
  */
 class Stock_Handler {
+	use Error_Classification;
 
 	/**
 	 * Odoo version threshold for quant-based inventory adjustment.
@@ -97,13 +99,14 @@ class Stock_Handler {
 				]
 			);
 
+			$error_type = $e instanceof \RuntimeException ? static::classify_exception( $e ) : Error_Type::Transient;
 			return Sync_Result::failure(
 				sprintf(
 					/* translators: %s: error message */
 					__( 'Stock push failed: %s', 'wp4odoo' ),
 					$e->getMessage()
 				),
-				Error_Type::Transient
+				$error_type
 			);
 		}
 	}
