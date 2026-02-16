@@ -5,11 +5,11 @@
 ![MySQL 8.0+](https://img.shields.io/badge/MySQL-8.0%2B-4479A1?logo=mysql&logoColor=white)
 ![MariaDB 10.5+](https://img.shields.io/badge/MariaDB-10.5%2B-003545?logo=mariadb&logoColor=white)
 ![WordPress 6.0+](https://img.shields.io/badge/WordPress-6.0%2B-21759B?logo=wordpress&logoColor=white)
-![40 Modules](https://img.shields.io/badge/Modules-40-success)
+![47 Modules](https://img.shields.io/badge/Modules-47-success)
 ![Odoo 14+](https://img.shields.io/badge/Odoo-14%2B-714B67?logo=odoo&logoColor=white)
 ![License: GPL v2+](https://img.shields.io/badge/License-GPL%20v2%2B-blue)
 
-Modular WordPress plugin that creates a seamless, bidirectional bridge between WordPress/WooCommerce and Odoo ERP (v14+). Built on a clean, extensible architecture with 40 integration modules, an async sync queue, and full WP-CLI support. Ships in **3 languages** (English, French, Spanish).
+Modular WordPress plugin that creates a seamless, bidirectional bridge between WordPress/WooCommerce and Odoo ERP (v14+). Built on a clean, extensible architecture with 47 integration modules, an async sync queue, and full WP-CLI support. Ships in **3 languages** (English, French, Spanish).
 
 **Target users:** WordPress agencies and businesses running Odoo as their ERP who need reliable, real-time data flow between their website and back-office.
 
@@ -75,6 +75,7 @@ Each Odoo domain is encapsulated in an independent module extending `Module_Base
 | **Bookly Booking**                  |  ↔️  | Contacts, Calendar                    |  ⚠️  | Service sync (bidirectional), booking sync (push) via WP-Cron, hash detection                                   |
 | **BuddyBoss / BuddyPress**          |  ↔️  | Contacts                              |  ❌  | Profile ↔ res.partner (xprofile enrichment), groups → res.partner.category, M2M tags                            |
 | **CRM**                             |  ↔️  | Contacts, CRM                         |  ⚠️  | Contact sync, lead form shortcode, email dedup, archive-on-delete                                               |
+| **Dokan**                           |  ↔️  | Contacts, Purchase, Invoicing         |  ❌  | Vendor ↔ res.partner (supplier), sub-orders → purchase.order, commissions → vendor bills, withdrawals → payments. Requires WooCommerce |
 | **Easy Digital Downloads**          |  ↔️  | Contacts, Sales, Invoicing            |  ❌  | Download/order sync, status mapping, invoice pull                                                               |
 | **Ecwid**                           |  ➡️  | Contacts, Sales                       |  ❌  | Product/order sync via WP-Cron polling, REST API, hash-based detection                                          |
 | **Events Calendar**                 |  ↔️  | Contacts, Events (+ Calendar)         |  ⚠️  | Event/ticket/attendee sync, dual-model (event.event or calendar.event)                                          |
@@ -86,17 +87,23 @@ Each Odoo domain is encapsulated in an independent module extending `Module_Base
 | **Knowledge**                       |  ↔️  | Knowledge (Odoo Enterprise)           |  ❌  | WordPress posts ↔ knowledge.article, HTML body, parent hierarchy, category filter, translation support          |
 | **LearnDash**                       |  ↔️  | Contacts, Sales, Invoicing            |  ❌  | Course/group/transaction/enrollment sync, auto-post invoices, course/group pull                                 |
 | **LifterLMS**                       |  ↔️  | Contacts, Sales, Invoicing            |  ❌  | Course/membership/order/enrollment sync, auto-post invoices, course/membership pull                             |
+| **Mailchimp for WP (MC4WP)**       |  ↔️  | Contacts, Email Marketing             |  ⚠️  | Subscriber ↔ mailing.contact, list ↔ mailing.list, M2M list assignment, email dedup                            |
+| **MailPoet**                        |  ↔️  | Contacts, Email Marketing             |  ⚠️  | Subscriber ↔ mailing.contact, list ↔ mailing.list, M2M list assignment, name split, email dedup                |
 | **MemberPress**                     |  ➡️  | Contacts, Members, Invoicing          |  ❌  | Plan/txn/sub sync, auto-post invoices, status mapping                                                           |
 | **Paid Memberships Pro**            |  ➡️  | Contacts, Members, Invoicing          |  ❌  | Level/order/membership sync, auto-post invoices, status mapping                                                 |
 | **Restrict Content Pro**            |  ➡️  | Contacts, Members, Invoicing          |  ❌  | Level/payment/membership sync, auto-post invoices, status mapping                                               |
 | **Sales**                           |  ⬅️  | Contacts, Sales, Invoicing            |  ❌  | Order/invoice CPTs, customer portal shortcode, currency display                                                 |
 | **ShopWP**                          |  ➡️  | Products                              |  ❌  | Shopify product sync via CPT + custom table, variant price/SKU                                                  |
 | **Sprout Invoices**                 |  ↔️  | Contacts, Invoicing                   |  ⚠️  | Invoice/payment sync, status mapping, auto-posting, One2many line items, pull                                   |
+| **SureCart**                        |  ↔️  | Contacts, Sales, Subscriptions        |  ❌  | Product ↔ product.template, order ↔ sale.order, subscription → sale.subscription. Alternative to WooCommerce   |
 | **SupportCandy**                    |  ↔️  | Contacts, Helpdesk (+ Project)        |  ⚠️  | Ticket/status sync, dual-model, custom table data access, stage heuristic                                       |
 | **TutorLMS**                        |  ↔️  | Contacts, Sales, Invoicing            |  ❌  | Course/order/enrollment sync, auto-post invoices, bidirectional course pull                                     |
+| **WC B2B / Wholesale Suite**        |  ➡️  | Contacts, Sales, Invoicing            |  ❌  | Company accounts → res.partner (is_company), wholesale pricing → pricelist rules, payment terms. Requires WooCommerce |
 | **WC Bookings**                     |  ↔️  | Contacts, Calendar                    |  ⚠️  | Booking product/booking sync, all-day support, persons count, status filter                                     |
 | **WC Points & Rewards**             |  ↔️  | Contacts, Loyalty                     |  ❌  | Point balance sync via loyalty.card, find-or-create by partner+program                                          |
 | **WC Product Bundles & Composites** |  ➡️  | Contacts, Manufacturing               |  ❌  | Product bundle/composite sync as manufacturing BOMs (mrp.bom), phantom/normal type                              |
+| **WC Vendors**                      |  ↔️  | Contacts, Purchase, Invoicing         |  ❌  | Vendor ↔ res.partner (supplier), sub-orders → purchase.order, commissions → vendor bills, payouts → payments. Requires WooCommerce |
+| **WCFM Marketplace**               |  ↔️  | Contacts, Purchase, Invoicing         |  ❌  | Vendor ↔ res.partner (supplier), sub-orders → purchase.order, commissions → vendor bills, withdrawals → payments. Requires WooCommerce |
 | **WooCommerce**                     |  ↔️  | Contacts, Sales, Inventory, Invoicing |  ❌  | Product/order/stock/category sync, variants, image + gallery, tax + shipping mapping, exchange rates, bulk ops  |
 | **WooCommerce Memberships**         |  ↔️  | Contacts, Members                     |  ❌  | Plan sync (bidirectional), membership status/date pull, reverse status mapping                                  |
 | **WooCommerce Subscriptions**       |  ↔️  | Contacts, Subscriptions, Invoicing    |  ❌  | Subscription/renewal sync, dual-model (sale.subscription / account.move)                                        |
@@ -109,7 +116,7 @@ Each Odoo domain is encapsulated in an independent module extending `Module_Base
 | **WP Simple Pay**                   |  ➡️  | Contacts, Invoicing (+ OCA Donation)  |  ⚠️  | Stripe payment sync, webhook capture, dual-model, auto-validate, recurring                                      |
 | **WP-Invoice**                      |  ➡️  | Contacts, Invoicing                   |  ⚠️  | Invoice sync, auto-posting for paid invoices, One2many line items                                               |
 
-> ⁴ **[One App Free](https://www.odoo.com/pricing)**: with CRM as your free app, CRM and Forms modules work. With Invoicing as your free app, GiveWP, WP Charitable, WP Simple Pay, Sprout Invoices, and WP-Invoice work. With Calendar as your free app, Amelia, Bookly, WC Bookings, and Events Calendar (fallback mode) work (partial — no Contacts). With Helpdesk as your free app, Awesome Support and SupportCandy work (partial — no Contacts). Sales, WooCommerce, WooCommerce Subscriptions (Enterprise), WC Product Bundles & Composites, WC Points & Rewards, Memberships (MemberPress/PMPro/RCP/WC Memberships), LMS (LearnDash/LifterLMS/TutorLMS), GamiPress, BuddyBoss, Ecwid, WP ERP, Knowledge (Enterprise), and WP Recipe Maker require 2–4 apps.
+> ⁴ **[One App Free](https://www.odoo.com/pricing)**: with CRM as your free app, CRM and Forms modules work. With Email Marketing as your free app, FluentCRM, MailPoet, and Mailchimp for WP work. With Invoicing as your free app, GiveWP, WP Charitable, WP Simple Pay, Sprout Invoices, and WP-Invoice work. With Calendar as your free app, Amelia, Bookly, WC Bookings, and Events Calendar (fallback mode) work (partial — no Contacts). With Helpdesk as your free app, Awesome Support and SupportCandy work (partial — no Contacts). Sales, WooCommerce, WooCommerce Subscriptions (Enterprise), WC Product Bundles & Composites, WC Points & Rewards, Memberships (MemberPress/PMPro/RCP/WC Memberships), LMS (LearnDash/LifterLMS/TutorLMS), GamiPress, BuddyBoss, Ecwid, SureCart, WC B2B, Marketplace (Dokan/WCFM/WC Vendors), WP ERP, Knowledge (Enterprise), and WP Recipe Maker require 2–4 apps.
 
 ## Usage
 
