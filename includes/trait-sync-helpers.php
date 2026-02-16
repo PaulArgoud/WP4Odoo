@@ -20,7 +20,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * protected properties/methods through $this.
  *
  * @package WP4Odoo
- * @since   3.3.0
+ * @since   3.4.0
  */
 trait Sync_Helpers {
 

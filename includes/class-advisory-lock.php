@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * duplicated boilerplate in Push_Lock, Partner_Service, and Sync_Engine.
  *
  * @package WP4Odoo
- * @since   3.3.0
+ * @since   3.4.0
  */
 class Advisory_Lock {
 

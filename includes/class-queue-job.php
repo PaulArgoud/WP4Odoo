@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * {prefix}wp4odoo_sync_queue table.
  *
  * @package WP4Odoo
- * @since   3.3.0
+ * @since   3.4.0
  */
 readonly class Queue_Job {
 
