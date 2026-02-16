@@ -24,16 +24,6 @@ class Webhook_Handler {
 	private const API_NAMESPACE = 'wp4odoo/v1';
 
 	/**
-	 * Maximum webhook requests per IP within the rate limit window.
-	 */
-	private const RATE_LIMIT_MAX = 20;
-
-	/**
-	 * Rate limit window in seconds.
-	 */
-	private const RATE_LIMIT_WINDOW = 60;
-
-	/**
 	 * Deduplication window in seconds (30 minutes).
 	 *
 	 * Identical webhook payloads received within this window
@@ -63,13 +53,21 @@ class Webhook_Handler {
 	private Settings_Repository $settings;
 
 	/**
+	 * Rate limiter instance.
+	 *
+	 * @var Rate_Limiter
+	 */
+	private Rate_Limiter $rate_limiter;
+
+	/**
 	 * Constructor.
 	 *
 	 * @param Settings_Repository $settings Settings repository.
 	 */
 	public function __construct( Settings_Repository $settings ) {
-		$this->settings = $settings;
-		$this->logger   = new Logger( 'webhook', $settings );
+		$this->settings     = $settings;
+		$this->logger       = new Logger( 'webhook', $settings );
+		$this->rate_limiter = new Rate_Limiter( 'wp4odoo_rl_', 20, 60, $this->logger );
 	}
 
 	/**
@@ -402,7 +400,7 @@ class Webhook_Handler {
 		$ip = $this->get_client_ip( $request );
 
 		// Rate limiting (before token check to protect against brute-force).
-		$rate_check = $this->check_rate_limit( $ip );
+		$rate_check = $this->rate_limiter->check( $ip );
 		if ( is_wp_error( $rate_check ) ) {
 			return $rate_check;
 		}
@@ -521,41 +519,5 @@ class Webhook_Handler {
 		}
 
 		return $remote_addr;
-	}
-
-	/**
-	 * Check the per-IP rate limit for webhook requests.
-	 *
-	 * Uses transients for persistent rate limiting across PHP processes.
-	 * On sites with a persistent object cache (Redis/Memcached),
-	 * transients are backed by the cache. On sites without one,
-	 * they fall back to the database — still persistent across requests.
-	 *
-	 * @param string $ip Client IP address.
-	 * @return true|\WP_Error True if under limit, WP_Error if exceeded.
-	 */
-	private function check_rate_limit( string $ip ): true|\WP_Error {
-		$key   = 'wp4odoo_rl_' . md5( $ip );
-		$count = (int) get_transient( $key );
-
-		if ( $count >= self::RATE_LIMIT_MAX ) {
-			$this->logger->warning(
-				'Rate limit exceeded for webhook endpoint.',
-				[
-					'ip'    => $ip,
-					'count' => $count,
-				]
-			);
-
-			return new \WP_Error(
-				'wp4odoo_rate_limited',
-				__( 'Too many requests. Please try again later.', 'wp4odoo' ),
-				[ 'status' => 429 ]
-			);
-		}
-
-		set_transient( $key, $count + 1, self::RATE_LIMIT_WINDOW );
-
-		return true;
 	}
 }

@@ -151,7 +151,8 @@ WordPress For Odoo/
 │   │   ├── # ─── WC Points & Rewards ─────────────────────────
 │   │   ├── trait-wc-points-rewards-hooks.php  # Points: on_points_change (all 3 WC hooks)
 │   │   ├── class-wc-points-rewards-handler.php # Points: balance load/save, Odoo formatting, float→int rounding
-│   │   ├── class-wc-points-rewards-module.php # Points: bidirectional, custom find-or-create loyalty.card
+│   │   ├── class-wc-points-rewards-module.php # Points: bidirectional, uses Loyalty_Card_Resolver trait
+│   │   ├── trait-loyalty-card-resolver.php     # Shared find-or-create loyalty.card logic (WC Points & GamiPress)
 │   │   │
 │   │   ├── # ─── Events Calendar ──────────────────────────────
 │   │   ├── trait-events-calendar-hooks.php   # Events Calendar: hook callbacks (event save, ticket save, attendee created)
@@ -265,10 +266,13 @@ WordPress For Odoo/
 │   ├── class-query-service.php        # Paginated queries with column projection (queue jobs, log entries) — injectable instance
 │   ├── class-field-mapper.php         # Type conversions (Many2one, dates, HTML)
 │   ├── class-cpt-helper.php           # Shared CPT register/load/save/parse helpers
-│   ├── class-webhook-handler.php      # REST API endpoints for Odoo webhooks, rate limiting, HMAC signature
+│   ├── class-webhook-handler.php      # REST API endpoints for Odoo webhooks, HMAC signature
+│   ├── class-rate-limiter.php        # Transient-based rate limiter (extracted from Webhook_Handler)
 │   ├── class-schema-cache.php        # fields_get() cache (memory + transient) for field validation
 │   ├── class-reconciler.php          # Entity map reconciliation against live Odoo records
 │   ├── class-cli.php                 # WP-CLI commands (loaded only in CLI context)
+│   ├── trait-cli-queue-commands.php   # CLI queue subcommands (stats, list, retry, cleanup, cancel)
+│   ├── trait-cli-module-commands.php  # CLI module subcommands (list, enable, disable)
 │   └── class-logger.php              # DB-backed logger with level filtering, 4KB context truncation
 │
 ├── admin/
@@ -1551,7 +1555,7 @@ All user inputs are sanitized with:
 
 ### WC Points & Rewards — COMPLETE
 
-**Files:** `class-wc-points-rewards-module.php` (bidirectional sync coordinator, uses `WC_Points_Rewards_Hooks` trait), `trait-wc-points-rewards-hooks.php` (hook callbacks: `on_points_change`), `class-wc-points-rewards-handler.php` (balance data load/save, Odoo formatting, float→int rounding)
+**Files:** `class-wc-points-rewards-module.php` (bidirectional sync coordinator, uses `WC_Points_Rewards_Hooks` + `Loyalty_Card_Resolver` traits), `trait-wc-points-rewards-hooks.php` (hook callbacks: `on_points_change`), `class-wc-points-rewards-handler.php` (balance data load/save, Odoo formatting, float→int rounding), `trait-loyalty-card-resolver.php` (shared find-or-create loyalty.card by partner+program, also used by GamiPress)
 
 **Odoo models:** `loyalty.card` (customer point balances)
 

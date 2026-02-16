@@ -32,6 +32,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 class GamiPress_Module extends Module_Base {
 
 	use GamiPress_Hooks;
+	use Loyalty_Card_Resolver;
 
 	protected const PLUGIN_MIN_VERSION  = '2.6';
 	protected const PLUGIN_TESTED_UP_TO = '3.0';
@@ -300,7 +301,8 @@ class GamiPress_Module extends Module_Base {
 		}
 
 		// Resolve or create the Odoo loyalty.card.
-		return $this->resolve_or_create_card( $wp_id, $partner_id, $program_id, $data, $odoo_id );
+		$odoo_values = $this->handler->format_loyalty_card( (int) ( $data['points'] ?? 0 ), $partner_id, $program_id );
+		return $this->resolve_or_create_card( 'points', $wp_id, $partner_id, $program_id, $odoo_values, $odoo_id );
 	}
 
 	// ─── Pull override ────────────────────────────────────
@@ -421,98 +423,5 @@ class GamiPress_Module extends Module_Base {
 		}
 
 		return [];
-	}
-
-	// ─── Loyalty card resolution ──────────────────────────
-
-	/**
-	 * Resolve or create an Odoo loyalty.card for a user.
-	 *
-	 * Lookup order:
-	 * 1. Check entity_map for existing mapping.
-	 * 2. Search Odoo by partner_id + program_id.
-	 * 3. Create a new loyalty.card.
-	 * Then write the current points balance.
-	 *
-	 * @param int                  $wp_id      WordPress user ID.
-	 * @param int                  $partner_id Odoo partner ID.
-	 * @param int                  $program_id Odoo loyalty.program ID.
-	 * @param array<string, mixed> $data       Points data.
-	 * @param int                  $odoo_id    Known Odoo loyalty.card ID (0 if unknown).
-	 * @return \WP4Odoo\Sync_Result
-	 */
-	private function resolve_or_create_card( int $wp_id, int $partner_id, int $program_id, array $data, int $odoo_id ): \WP4Odoo\Sync_Result {
-		$client      = $this->client();
-		$odoo_values = $this->handler->format_loyalty_card( (int) ( $data['points'] ?? 0 ), $partner_id, $program_id );
-
-		// 1. Check entity_map.
-		if ( $odoo_id <= 0 ) {
-			$odoo_id = $this->get_mapping( 'points', $wp_id ) ?? 0;
-		}
-
-		// 2. Search Odoo if not mapped.
-		if ( $odoo_id <= 0 ) {
-			try {
-				$ids = $client->search(
-					'loyalty.card',
-					[
-						[ 'partner_id', '=', $partner_id ],
-						[ 'program_id', '=', $program_id ],
-					],
-					0,
-					1
-				);
-
-				if ( ! empty( $ids ) ) {
-					$odoo_id = (int) $ids[0];
-					$this->save_mapping( 'points', $wp_id, $odoo_id );
-					$this->logger->info(
-						'Found existing Odoo loyalty card.',
-						[
-							'user_id' => $wp_id,
-							'card_id' => $odoo_id,
-						]
-					);
-				}
-			} catch ( \Exception $e ) {
-				$this->logger->error( 'Loyalty card search failed.', [ 'error' => $e->getMessage() ] );
-				$error_type = $e instanceof \RuntimeException ? static::classify_exception( $e ) : \WP4Odoo\Error_Type::Transient;
-				return \WP4Odoo\Sync_Result::failure( $e->getMessage(), $error_type );
-			}
-		}
-
-		try {
-			if ( $odoo_id > 0 ) {
-				// Update existing card — only write points (partner/program don't change).
-				$client->write( 'loyalty.card', [ $odoo_id ], [ 'points' => $odoo_values['points'] ] );
-				$this->save_mapping( 'points', $wp_id, $odoo_id );
-				$this->logger->info(
-					'Updated Odoo loyalty card points.',
-					[
-						'user_id' => $wp_id,
-						'card_id' => $odoo_id,
-						'points'  => $odoo_values['points'],
-					]
-				);
-			} else {
-				// 3. Create new card.
-				$odoo_id = $client->create( 'loyalty.card', $odoo_values );
-				$this->save_mapping( 'points', $wp_id, $odoo_id );
-				$this->logger->info(
-					'Created Odoo loyalty card.',
-					[
-						'user_id' => $wp_id,
-						'card_id' => $odoo_id,
-						'points'  => $odoo_values['points'],
-					]
-				);
-			}
-		} catch ( \Exception $e ) {
-			$this->logger->error( 'Loyalty card push failed.', [ 'error' => $e->getMessage() ] );
-			$error_type = $e instanceof \RuntimeException ? static::classify_exception( $e ) : \WP4Odoo\Error_Type::Transient;
-			return \WP4Odoo\Sync_Result::failure( $e->getMessage(), $error_type );
-		}
-
-		return \WP4Odoo\Sync_Result::success( $odoo_id );
 	}
 }

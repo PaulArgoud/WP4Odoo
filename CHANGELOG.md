@@ -14,6 +14,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - **Error classification in module catch blocks** — WC Points & Rewards, GamiPress, WC Pull Coordinator, and Stock Handler now use `Error_Classification::classify_exception()` instead of hardcoded `Error_Type::Transient` in catch blocks. Permanent errors (validation, access denied) are no longer retried unnecessarily
+- **Loyalty_Card_Resolver trait extraction** — Extracted shared find-or-create loyalty.card logic from WC Points & Rewards and GamiPress into a reusable `Loyalty_Card_Resolver` trait (~75 LOC deduplication)
+- **CLI trait extraction** — Extracted queue subcommands (stats, list, retry, cleanup, cancel) and module subcommands (list, enable, disable) from `CLI` class into `CLI_Queue_Commands` and `CLI_Module_Commands` traits for testability and separation of concerns
+- **Rate_Limiter extraction** — Extracted transient-based rate limiting from `Webhook_Handler` into a standalone `Rate_Limiter` class, parameterized by prefix, max requests, and window duration for reusability
 
 ### Fixed
 - **uninstall.php** — Added missing `wp4odoo_log_cleanup` cron event cleanup (previously only `wp4odoo_scheduled_sync` was cleared)
