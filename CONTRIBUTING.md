@@ -299,6 +299,8 @@ Describe the use case first, then the proposed solution. Explain how it fits wit
 
 ## Questions?
 
-If something isn't covered here, open an issue with the `question` label or reach out at [paul.argoud.net](https://paul.argoud.net).
+If something isn't covered here, start a thread in [GitHub Discussions](https://github.com/PaulArgoud/WP4Odoo/discussions), open an issue with the `question` label, or reach out at [paul.argoud.net](https://paul.argoud.net).
+
+Discussions is also the right place to **report plugin compatibility** (e.g. a newer version of a third-party plugin works fine with WP4Odoo) or to **suggest new integrations**.
 
 Thank you for helping make WP4Odoo better!
