@@ -105,6 +105,7 @@ if ( ! class_exists( 'WC_Order' ) ) {
 		 * @return mixed
 		 */
 		public function get_meta( string $key, bool $single = true ) { return ''; }
+		public function get_parent_id(): int { return 0; }
 		public function add_order_note( string $note ): int { return 0; }
 		public function save(): int { return 0; }
 	}
@@ -997,6 +998,80 @@ if ( ! function_exists( 'affwp_get_referral' ) ) {
 	function affwp_get_referral( $referral_id = 0 ) { return false; }
 }
 
+// ─── Dokan stubs ─────────────────────────────────────────
+
+if ( ! defined( 'DOKAN_PLUGIN_VERSION' ) ) {
+	define( 'DOKAN_PLUGIN_VERSION', '4.0.0' );
+}
+
+if ( ! function_exists( 'dokan' ) ) {
+	/** @return stdClass */
+	function dokan() { return new stdClass(); }
+}
+
+if ( ! function_exists( 'dokan_get_seller_id_by_order' ) ) {
+	/**
+	 * @param int $order_id
+	 * @return int
+	 */
+	function dokan_get_seller_id_by_order( $order_id ) { return 0; }
+}
+
+if ( ! function_exists( 'dokan_get_earning_by_order' ) ) {
+	/**
+	 * @param int    $order_id
+	 * @param string $context
+	 * @return float
+	 */
+	function dokan_get_earning_by_order( $order_id, $context = 'seller' ) { return 0.0; }
+}
+
+if ( ! function_exists( 'dokan_get_withdraw' ) ) {
+	/**
+	 * @param int $withdraw_id
+	 * @return object|false
+	 */
+	function dokan_get_withdraw( $withdraw_id ) { return false; }
+}
+
+// ─── WCFM stubs ──────────────────────────────────────────
+
+if ( ! defined( 'WCFM_VERSION' ) ) {
+	define( 'WCFM_VERSION', '6.7.0' );
+}
+
+if ( ! function_exists( 'wcfm_get_vendor_store_name' ) ) {
+	/**
+	 * @param int $vendor_id
+	 * @return string
+	 */
+	function wcfm_get_vendor_store_name( $vendor_id ) { return ''; }
+}
+
+if ( ! function_exists( 'wcfm_get_vendor_id_by_order' ) ) {
+	/**
+	 * @param int $order_id
+	 * @return int
+	 */
+	function wcfm_get_vendor_id_by_order( $order_id ) { return 0; }
+}
+
+if ( ! function_exists( 'wcfm_get_commission' ) ) {
+	/**
+	 * @param int $commission_id
+	 * @return object|false
+	 */
+	function wcfm_get_commission( $commission_id ) { return false; }
+}
+
+if ( ! function_exists( 'wcfm_get_withdrawal' ) ) {
+	/**
+	 * @param int $withdrawal_id
+	 * @return object|false
+	 */
+	function wcfm_get_withdrawal( $withdrawal_id ) { return false; }
+}
+
 // ─── WPML stubs ─────────────────────────────────────────
 
 if ( ! defined( 'ICL_SITEPRESS_VERSION' ) ) {
@@ -1168,6 +1243,24 @@ if ( ! function_exists( 'gamipress_deduct_points_to_user' ) ) {
 	 */
 	function gamipress_deduct_points_to_user( int $user_id, int $points, string $points_type = 'points', array $args = [] ): void {}
 }
+
+// ─── SureCart stubs ──────────────────────────────────────
+
+if ( ! defined( 'SURECART_VERSION' ) ) {
+	define( 'SURECART_VERSION', '3.0.0' );
+}
+
+// SureCart namespace stub loaded from separate file (PHP namespace rules).
+require_once __DIR__ . '/phpstan-surecart-stubs.php';
+
+// ─── MailPoet stubs ──────────────────────────────────────
+
+if ( ! defined( 'MAILPOET_VERSION' ) ) {
+	define( 'MAILPOET_VERSION', '5.0.0' );
+}
+
+// MailPoet namespace stub loaded from separate file (PHP namespace rules).
+require_once __DIR__ . '/phpstan-mailpoet-stubs.php';
 
 // WP_CLI\Utils namespace stub loaded from separate file (PHP namespace rules).
 require_once __DIR__ . '/phpstan-wp-cli-stubs.php';

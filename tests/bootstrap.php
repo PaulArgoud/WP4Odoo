@@ -89,8 +89,18 @@ $GLOBALS['_wc_bundles']              = [];
 $GLOBALS['_wc_composites']           = [];
 $GLOBALS['_affwp_affiliates']        = [];
 $GLOBALS['_affwp_referrals']         = [];
+$GLOBALS['_dokan_vendors']           = [];
+$GLOBALS['_dokan_orders']            = [];
+$GLOBALS['_dokan_withdraws']         = [];
+$GLOBALS['_wcfm_vendors']            = [];
+$GLOBALS['_wcfm_commissions']        = [];
+$GLOBALS['_wcfm_withdrawals']        = [];
+$GLOBALS['_wcfm_orders']             = [];
 $GLOBALS['_wpai_import_id']          = 0;
 $GLOBALS['_gamipress_points']        = [];
+$GLOBALS['_surecart_products']       = [];
+$GLOBALS['_surecart_orders']         = [];
+$GLOBALS['_surecart_subscriptions']  = [];
 
 // ─── Load stubs ─────────────────────────────────────────
 // Stubs must be loaded before the autoloader so that external
@@ -122,6 +132,7 @@ require_once __DIR__ . '/stubs/shopwp-classes.php';
 require_once __DIR__ . '/stubs/learndash-classes.php';
 require_once __DIR__ . '/stubs/lifterlms-classes.php';
 require_once __DIR__ . '/stubs/wc-subscriptions-classes.php';
+require_once __DIR__ . '/stubs/wholesale-suite-classes.php';
 require_once __DIR__ . '/stubs/events-calendar-classes.php';
 require_once __DIR__ . '/stubs/wc-bookings-classes.php';
 require_once __DIR__ . '/stubs/job-manager-classes.php';
@@ -132,14 +143,18 @@ require_once __DIR__ . '/stubs/awesome-support-classes.php';
 require_once __DIR__ . '/stubs/supportcandy-classes.php';
 require_once __DIR__ . '/stubs/wc-bundles-classes.php';
 require_once __DIR__ . '/stubs/affiliatewp-classes.php';
+require_once __DIR__ . '/stubs/dokan-classes.php';
+require_once __DIR__ . '/stubs/wcfm-classes.php';
 require_once __DIR__ . '/stubs/wpai-classes.php';
 require_once __DIR__ . '/stubs/tutorlms-classes.php';
 require_once __DIR__ . '/stubs/fluentcrm-classes.php';
+require_once __DIR__ . '/stubs/mailpoet-classes.php';
 require_once __DIR__ . '/stubs/buddyboss-classes.php';
 require_once __DIR__ . '/stubs/gamipress-classes.php';
 require_once __DIR__ . '/stubs/funnelkit-classes.php';
 require_once __DIR__ . '/stubs/wperp-classes.php';
 require_once __DIR__ . '/stubs/knowledge-classes.php';
+require_once __DIR__ . '/stubs/surecart-classes.php';
 
 // ─── Composer autoloader ────────────────────────────────
 

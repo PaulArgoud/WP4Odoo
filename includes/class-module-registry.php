@@ -113,6 +113,7 @@ class Module_Registry {
 			[ 'tutorlms', Modules\TutorLMS_Module::class, fn() => defined( 'TUTOR_VERSION' ) ],
 			[ 'lifterlms', Modules\LifterLMS_Module::class, fn() => defined( 'LLMS_VERSION' ) ],
 			[ 'wc_subscriptions', Modules\WC_Subscriptions_Module::class, fn() => class_exists( 'WC_Subscriptions' ) ],
+			[ 'wc_b2b', Modules\WC_B2B_Module::class, fn() => defined( 'WWP_PLUGIN_VERSION' ) || class_exists( 'B2bking' ) ],
 			[ 'wc_points_rewards', Modules\WC_Points_Rewards_Module::class, fn() => class_exists( 'WC_Points_Rewards' ) ],
 			[ 'wc_bookings', Modules\WC_Bookings_Module::class, fn() => class_exists( 'WC_Product_Booking' ) ],
 			[ 'events_calendar', Modules\Events_Calendar_Module::class, fn() => class_exists( 'Tribe__Events__Main' ) ],
@@ -124,9 +125,14 @@ class Module_Registry {
 			[ 'wp_invoice', Modules\WP_Invoice_Module::class, fn() => class_exists( 'WPI_Invoice' ) ],
 
 			// E-commerce group (secondary).
+			[ 'surecart', Modules\SureCart_Module::class, fn() => defined( 'SURECART_VERSION' ) ],
 			[ 'ecwid', Modules\Ecwid_Module::class, fn() => defined( 'ECWID_PLUGIN_DIR' ) ],
 			[ 'shopwp', Modules\ShopWP_Module::class, fn() => defined( 'SHOPWP_PLUGIN_DIR' ) ],
 			[ 'crowdfunding', Modules\Crowdfunding_Module::class, fn() => function_exists( 'wpneo_crowdfunding_init' ) ],
+
+			// Marketplace group.
+			[ 'dokan', Modules\Dokan_Module::class, fn() => defined( 'DOKAN_PLUGIN_VERSION' ) ],
+			[ 'wcfm', Modules\WCFM_Module::class, fn() => defined( 'WCFM_VERSION' ) ],
 
 			// Helpdesk group.
 			[ 'awesome_support', Modules\Awesome_Support_Module::class, fn() => defined( 'WPAS_VERSION' ) ],
@@ -137,6 +143,7 @@ class Module_Registry {
 
 			// Marketing CRM.
 			[ 'fluentcrm', Modules\FluentCRM_Module::class, fn() => defined( 'FLUENTCRM' ) ],
+			[ 'mailpoet', Modules\MailPoet_Module::class, fn() => defined( 'MAILPOET_VERSION' ) ],
 
 			// Funnel / Sales pipeline.
 			[ 'funnelkit', Modules\FunnelKit_Module::class, fn() => defined( 'WFFN_VERSION' ) ],
