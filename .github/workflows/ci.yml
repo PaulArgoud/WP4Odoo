@@ -38,6 +38,9 @@ jobs:
       - name: Install Composer dependencies
         run: composer install --no-interaction --prefer-dist
 
+      - name: Audit Composer dependencies
+        run: composer audit --no-dev
+
       - name: Run PHPCS
         run: php vendor/bin/phpcs
 

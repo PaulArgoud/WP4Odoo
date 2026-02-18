@@ -232,12 +232,11 @@ class Sync_Engine {
 
 			// Recover any jobs left in 'processing' from a previous crash
 			// BEFORE fetching, so recovered jobs are eligible for this batch.
-			// Rate-limited to once per minute to avoid redundant table scans.
-			$recovery_key  = 'wp4odoo_last_stale_recovery_' . get_current_blog_id();
-			$last_recovery = (int) get_transient( $recovery_key );
-			if ( time() - $last_recovery >= 60 ) {
+			// Rate-limited to once per minute via atomic wp_cache_add() to
+			// prevent concurrent workers from running recovery in parallel.
+			$recovery_key = 'wp4odoo_stale_recovery_' . get_current_blog_id();
+			if ( wp_cache_add( $recovery_key, time(), '', 60 ) ) {
 				$this->queue_repo->recover_stale_processing( $this->settings->get_stale_timeout() );
-				set_transient( $recovery_key, time(), 120 );
 			}
 
 			$start_time = microtime( true );

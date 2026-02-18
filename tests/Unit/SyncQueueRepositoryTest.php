@@ -430,7 +430,7 @@ class SyncQueueRepositoryTest extends TestCase {
 
 		$prepare = $this->get_calls( 'prepare' );
 		$this->assertNotEmpty( $prepare );
-		$this->assertStringContainsString( "IN ('completed', 'failed')", $prepare[0]['args'][0] );
+		$this->assertStringContainsString( 'IN (%s, %s)', $prepare[0]['args'][0] );
 	}
 
 	public function test_cleanup_uses_limit_in_query(): void {
@@ -520,7 +520,7 @@ class SyncQueueRepositoryTest extends TestCase {
 
 	// ─── recover_stale_processing() ─────────────────────────
 
-	public function test_recover_stale_processing_does_not_increment_attempts(): void {
+	public function test_recover_stale_processing_increments_attempts(): void {
 		// Simulate one stale processing job recovered + zero at max_attempts.
 		$this->wpdb->query_return_sequence = [
 			1, // START TRANSACTION
@@ -534,16 +534,18 @@ class SyncQueueRepositoryTest extends TestCase {
 		// Should recover 1 job total (1 retried + 0 failed).
 		$this->assertSame( 1, $result );
 
-		// Verify the recovery UPDATE SQL does NOT contain 'attempts = attempts + 1'
-		// or any explicit attempts increment — it should only set status and error_message.
+		// Verify the recovery UPDATE SQL increments attempts to prevent
+		// infinite stale recovery loops for persistently failing jobs.
 		$queries = $this->get_calls( 'query' );
+		$found   = false;
 		foreach ( $queries as $call ) {
 			$sql = $call['args'][0];
-			if ( str_contains( $sql, "status = 'pending'" ) && str_contains( $sql, 'Recovered' ) ) {
-				$this->assertStringNotContainsString( 'attempts = attempts + 1', $sql, 'Recovery should NOT increment attempts' );
-				$this->assertStringNotContainsString( 'attempts + 1', $sql, 'Recovery should NOT increment attempts' );
+			if ( str_contains( $sql, 'Recovered' ) ) {
+				$this->assertStringContainsString( 'attempts = attempts + 1', $sql, 'Recovery should increment attempts' );
+				$found = true;
 			}
 		}
+		$this->assertTrue( $found, 'Recovery UPDATE query not found' );
 	}
 
 	// ─── Helpers ───────────────────────────────────────────

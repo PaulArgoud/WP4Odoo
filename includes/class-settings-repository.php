@@ -26,7 +26,10 @@ class Settings_Repository {
 	/**
 	 * Instance-level cache to avoid repeated get_option() calls.
 	 *
-	 * @var array<string, array>
+	 * Keyed by blog ID to prevent stale data when switch_to_blog()
+	 * changes the active site in multisite environments.
+	 *
+	 * @var array<int, array<string, array>>
 	 */
 	private array $cache = [];
 
@@ -75,8 +78,10 @@ class Settings_Repository {
 	 * @return array
 	 */
 	public function get_connection(): array {
-		if ( isset( $this->cache['connection'] ) ) {
-			return $this->cache['connection'];
+		$blog_id = (int) get_current_blog_id();
+
+		if ( isset( $this->cache[ $blog_id ]['connection'] ) ) {
+			return $this->cache[ $blog_id ]['connection'];
 		}
 
 		$stored = get_option( self::OPT_CONNECTION, [] );
@@ -90,7 +95,7 @@ class Settings_Repository {
 		$merged['timeout']    = Settings_Validator::clamp( $merged['timeout'], 5, 120 );
 		$merged['company_id'] = max( 0, (int) ( $merged['company_id'] ?? 0 ) );
 
-		$this->cache['connection'] = $merged;
+		$this->cache[ $blog_id ]['connection'] = $merged;
 		return $merged;
 	}
 
@@ -105,7 +110,8 @@ class Settings_Repository {
 	 * @return bool
 	 */
 	public function save_connection( array $data ): bool {
-		unset( $this->cache['connection'] );
+		$blog_id = (int) get_current_blog_id();
+		unset( $this->cache[ $blog_id ]['connection'] );
 		$data = $this->validate_connection( $data );
 		return update_option( self::OPT_CONNECTION, $data );
 	}
@@ -136,8 +142,10 @@ class Settings_Repository {
 	 * @return array
 	 */
 	public function get_sync_settings(): array {
-		if ( isset( $this->cache['sync'] ) ) {
-			return $this->cache['sync'];
+		$blog_id = (int) get_current_blog_id();
+
+		if ( isset( $this->cache[ $blog_id ]['sync'] ) ) {
+			return $this->cache[ $blog_id ]['sync'];
 		}
 
 		$stored = get_option( self::OPT_SYNC_SETTINGS, [] );
@@ -153,7 +161,7 @@ class Settings_Repository {
 		$merged['sync_interval'] = Settings_Validator::enum( $merged['sync_interval'], [ 'wp4odoo_five_minutes', 'wp4odoo_fifteen_minutes' ], 'wp4odoo_five_minutes' );
 		$merged['stale_timeout'] = Settings_Validator::clamp( $merged['stale_timeout'], 60, 3600 );
 
-		$this->cache['sync'] = $merged;
+		$this->cache[ $blog_id ]['sync'] = $merged;
 		return $merged;
 	}
 
@@ -167,7 +175,8 @@ class Settings_Repository {
 	 * @return bool
 	 */
 	public function save_sync_settings( array $data ): bool {
-		unset( $this->cache['sync'] );
+		$blog_id = (int) get_current_blog_id();
+		unset( $this->cache[ $blog_id ]['sync'] );
 		$data = $this->validate_sync_settings( $data );
 		return update_option( self::OPT_SYNC_SETTINGS, $data );
 	}
@@ -234,8 +243,10 @@ class Settings_Repository {
 	 * @return array
 	 */
 	public function get_log_settings(): array {
-		if ( isset( $this->cache['log'] ) ) {
-			return $this->cache['log'];
+		$blog_id = (int) get_current_blog_id();
+
+		if ( isset( $this->cache[ $blog_id ]['log'] ) ) {
+			return $this->cache[ $blog_id ]['log'];
 		}
 
 		$stored = get_option( self::OPT_LOG_SETTINGS, [] );
@@ -248,7 +259,7 @@ class Settings_Repository {
 		$merged['level']          = Settings_Validator::enum( $merged['level'], [ 'debug', 'info', 'warning', 'error', 'critical' ], 'info' );
 		$merged['retention_days'] = Settings_Validator::clamp( $merged['retention_days'], 1, 365 );
 
-		$this->cache['log'] = $merged;
+		$this->cache[ $blog_id ]['log'] = $merged;
 		return $merged;
 	}
 
@@ -261,7 +272,8 @@ class Settings_Repository {
 	 * @return bool
 	 */
 	public function save_log_settings( array $data ): bool {
-		unset( $this->cache['log'] );
+		$blog_id = (int) get_current_blog_id();
+		unset( $this->cache[ $blog_id ]['log'] );
 		$data = $this->validate_log_settings( $data );
 		return update_option( self::OPT_LOG_SETTINGS, $data );
 	}

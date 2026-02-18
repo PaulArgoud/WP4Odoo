@@ -24,6 +24,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 trait Sync_Job_Tracking {
 
 	/**
+	 * Maximum retry delay in seconds.
+	 *
+	 * Caps the exponential backoff to prevent unreasonable delays
+	 * when max_attempts is set to a high value.
+	 */
+	private const MAX_RETRY_DELAY = 3600;
+
+	/**
 	 * Failure counter for the current batch run.
 	 *
 	 * @var int
@@ -69,7 +77,7 @@ trait Sync_Job_Tracking {
 		$should_retry = Error_Type::Transient === $error_type && $attempts < (int) $job->max_attempts;
 
 		if ( $should_retry ) {
-			$delay     = (int) ( pow( 2, $attempts ) * 60 ) + random_int( 0, 60 );
+			$delay     = min( (int) ( pow( 2, $attempts ) * 60 ) + random_int( 0, 60 ), self::MAX_RETRY_DELAY );
 			$scheduled = gmdate( 'Y-m-d H:i:s', time() + $delay );
 
 			$extra = [

@@ -181,7 +181,6 @@ require_once __DIR__ . '/stubs/food-ordering-classes.php';
 require_once __DIR__ . '/stubs/survey-quiz-classes.php';
 require_once __DIR__ . '/stubs/documents-classes.php';
 require_once __DIR__ . '/stubs/mycred-classes.php';
-require_once __DIR__ . '/stubs/documents-classes.php';
 require_once __DIR__ . '/stubs/jeero-configurator-classes.php';
 
 // ─── Composer autoloader ────────────────────────────────

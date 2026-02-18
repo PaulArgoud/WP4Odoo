@@ -124,7 +124,7 @@ class Sync_Queue_Repository {
 			$wpdb->prepare( 'module = %s', $module ),
 			$wpdb->prepare( 'entity_type = %s', $entity_type ),
 			$wpdb->prepare( 'direction = %s', $direction ),
-			"status IN ('pending', 'processing')",
+			$wpdb->prepare( 'status IN (%s, %s)', 'pending', 'processing' ),
 		];
 
 		if ( null !== $wp_id && $wp_id > 0 ) {
@@ -316,8 +316,10 @@ class Sync_Queue_Repository {
 		do {
 			$deleted = (int) $wpdb->query( // phpcs:ignore Generic.Formatting.MultipleStatementAlignment.NotSameWarning
 				$wpdb->prepare(
-					"DELETE FROM {$table} WHERE blog_id = %d AND status IN ('completed', 'failed') AND created_at < %s LIMIT %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is from $wpdb->prefix, safe.
+					"DELETE FROM {$table} WHERE blog_id = %d AND status IN (%s, %s) AND created_at < %s LIMIT %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is from $wpdb->prefix, safe.
 					$this->blog_id,
+					'completed',
+					'failed',
 					$cutoff,
 					self::CLEANUP_CHUNK_SIZE
 				)
@@ -494,14 +496,15 @@ class Sync_Queue_Repository {
 			$wpdb->query( 'START TRANSACTION' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 		}
 
-		// Reset stale jobs to pending WITHOUT incrementing attempts.
-		// A stale-processing job was interrupted (crash, timeout), not
-		// genuinely failed — incrementing attempts would penalize it
-		// and cause premature failure at max_attempts.
+		// Increment attempts on recovery. A stale-processing job was
+		// interrupted (crash, timeout), but if the same job keeps getting
+		// stuck, incrementing ensures it eventually hits max_attempts
+		// and fails permanently instead of looping indefinitely.
 		$retried = (int) $wpdb->query(
 			$wpdb->prepare(
-				"UPDATE {$table} SET status = 'pending', error_message = 'Recovered from stale processing state.' WHERE blog_id = %d AND status = 'processing' AND processed_at IS NOT NULL AND processed_at < %s AND attempts < max_attempts", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is from $wpdb->prefix, safe.
+				"UPDATE {$table} SET status = 'pending', attempts = attempts + 1, error_message = 'Recovered from stale processing state.' WHERE blog_id = %d AND status = %s AND processed_at IS NOT NULL AND processed_at < %s AND attempts < max_attempts", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is from $wpdb->prefix, safe.
 				$this->blog_id,
+				'processing',
 				$cutoff
 			)
 		);
@@ -509,8 +512,10 @@ class Sync_Queue_Repository {
 		// Jobs already at max_attempts → failed (no more retries).
 		$failed = (int) $wpdb->query(
 			$wpdb->prepare(
-				"UPDATE {$table} SET status = 'failed', error_message = 'Max attempts reached after stale processing recovery.' WHERE blog_id = %d AND status = 'processing' AND processed_at IS NOT NULL AND processed_at < %s AND attempts >= max_attempts", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is from $wpdb->prefix, safe.
+				"UPDATE {$table} SET status = %s, error_message = 'Max attempts reached after stale processing recovery.' WHERE blog_id = %d AND status = %s AND processed_at IS NOT NULL AND processed_at < %s AND attempts >= max_attempts", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is from $wpdb->prefix, safe.
+				'failed',
 				$this->blog_id,
+				'processing',
 				$cutoff
 			)
 		);
