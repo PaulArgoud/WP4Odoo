@@ -49,6 +49,7 @@ if ( ! $table_check ) {
 	$wpdb->query(
 		"CREATE TABLE IF NOT EXISTS {$wpdb->prefix}wp4odoo_sync_queue (
 			id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+			blog_id BIGINT(20) UNSIGNED NOT NULL DEFAULT 1,
 			correlation_id CHAR(36) DEFAULT NULL,
 			module VARCHAR(50) NOT NULL,
 			direction ENUM('wp_to_odoo','odoo_to_wp') NOT NULL,
@@ -67,18 +68,21 @@ if ( ! $table_check ) {
 			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			PRIMARY KEY (id),
 			KEY idx_status_priority (status, priority, scheduled_at),
+			KEY idx_status_module (blog_id, status, module, priority, created_at),
 			KEY idx_module_entity (module, entity_type),
-			KEY idx_dedup_wp (module, entity_type, direction, status, wp_id),
+			KEY idx_dedup_wp (blog_id, module, entity_type, direction, status, wp_id),
 			KEY idx_dedup_odoo (module, entity_type, direction, status, odoo_id),
 			KEY idx_wp_id (wp_id),
 			KEY idx_odoo_id (odoo_id),
-			KEY idx_correlation (correlation_id)
+			KEY idx_correlation (correlation_id),
+			KEY idx_status_created (status, created_at)
 		) $charset_collate"
 	);
 
 	$wpdb->query(
 		"CREATE TABLE IF NOT EXISTS {$wpdb->prefix}wp4odoo_entity_map (
 			id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+			blog_id BIGINT(20) UNSIGNED NOT NULL DEFAULT 1,
 			module VARCHAR(50) NOT NULL,
 			entity_type VARCHAR(100) NOT NULL,
 			wp_id BIGINT(20) UNSIGNED NOT NULL,
@@ -86,17 +90,20 @@ if ( ! $table_check ) {
 			odoo_model VARCHAR(100) NOT NULL,
 			sync_hash VARCHAR(64) DEFAULT NULL,
 			last_synced_at DATETIME DEFAULT NULL,
+			last_polled_at DATETIME DEFAULT NULL,
 			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			PRIMARY KEY (id),
-			UNIQUE KEY idx_unique_mapping (module, entity_type, wp_id, odoo_id),
-			KEY idx_wp_lookup (entity_type, wp_id),
-			KEY idx_odoo_lookup (module, entity_type, odoo_id)
+			UNIQUE KEY idx_unique_mapping (blog_id, module, entity_type, wp_id, odoo_id),
+			KEY idx_wp_lookup (blog_id, module, entity_type, wp_id),
+			KEY idx_odoo_lookup (blog_id, module, entity_type, odoo_id),
+			KEY idx_poll_detection (module, entity_type, last_polled_at)
 		) $charset_collate"
 	);
 
 	$wpdb->query(
 		"CREATE TABLE IF NOT EXISTS {$wpdb->prefix}wp4odoo_logs (
 			id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+			blog_id BIGINT(20) UNSIGNED NOT NULL DEFAULT 1,
 			correlation_id CHAR(36) DEFAULT NULL,
 			level ENUM('debug','info','warning','error','critical') NOT NULL DEFAULT 'info',
 			module VARCHAR(50) DEFAULT NULL,
@@ -109,6 +116,10 @@ if ( ! $table_check ) {
 			KEY idx_correlation (correlation_id)
 		) $charset_collate"
 	);
+
+	// Run migrations on raw-SQL tables (e.g. migration_7 for blog_id is already in schema above,
+	// but this ensures schema_version is set correctly for future migrations).
+	\WP4Odoo\Database_Migration::run_migrations();
 }
 
 // Load the PHPUnit 10+ compatibility base class (WP core Trac #62004 workaround).
