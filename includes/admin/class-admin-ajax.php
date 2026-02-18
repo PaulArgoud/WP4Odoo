@@ -12,7 +12,8 @@ if ( ! defined( 'ABSPATH' ) ) {
  *
  * Handler methods are organized in domain-specific traits:
  * - Ajax_Monitor_Handlers — queue management and log viewing
- * - Ajax_Module_Handlers  — module settings and bulk operations
+ * - Ajax_Module_Handlers  — module toggle and settings
+ * - Ajax_Data_Handlers    — bulk operations, Odoo data fetching, language detection
  * - Ajax_Setup_Handlers   — connection testing and onboarding
  *
  * @package WP4Odoo
@@ -22,6 +23,7 @@ class Admin_Ajax {
 
 	use Ajax_Monitor_Handlers;
 	use Ajax_Module_Handlers;
+	use Ajax_Data_Handlers;
 	use Ajax_Setup_Handlers;
 
 	/**

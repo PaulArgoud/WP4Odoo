@@ -88,10 +88,8 @@ class Settings_Repository {
 		$merged = array_merge( self::DEFAULTS_CONNECTION, $stored );
 
 		// Defense-in-depth: clamp and validate even if data was saved unchecked.
-		if ( ! in_array( $merged['protocol'], [ 'jsonrpc', 'xmlrpc' ], true ) ) {
-			$merged['protocol'] = 'jsonrpc';
-		}
-		$merged['timeout']    = max( 5, min( 120, (int) $merged['timeout'] ) );
+		$merged['protocol']   = Settings_Validator::enum( $merged['protocol'], [ 'jsonrpc', 'xmlrpc' ], 'jsonrpc' );
+		$merged['timeout']    = Settings_Validator::clamp( $merged['timeout'], 5, 120 );
 		$merged['company_id'] = max( 0, (int) ( $merged['company_id'] ?? 0 ) );
 
 		$this->cache['connection'] = $merged;
@@ -123,25 +121,10 @@ class Settings_Repository {
 	private function validate_connection( array $data ): array {
 		$data = array_merge( self::DEFAULTS_CONNECTION, $data );
 
-		// Protocol enum.
-		if ( ! in_array( $data['protocol'], [ 'jsonrpc', 'xmlrpc' ], true ) ) {
-			$data['protocol'] = 'jsonrpc';
-		}
-
-		// Timeout clamped to 5–120.
-		$data['timeout'] = max( 5, min( 120, (int) $data['timeout'] ) );
-
-		// URL must be a non-empty string.
-		if ( ! is_string( $data['url'] ) || '' === trim( $data['url'] ) ) {
-			$data['url'] = '';
-		}
-
-		// Database must be a non-empty string.
-		if ( ! is_string( $data['database'] ) || '' === trim( $data['database'] ) ) {
-			$data['database'] = '';
-		}
-
-		// Company ID clamped to non-negative.
+		$data['protocol']   = Settings_Validator::enum( $data['protocol'], [ 'jsonrpc', 'xmlrpc' ], 'jsonrpc' );
+		$data['timeout']    = Settings_Validator::clamp( $data['timeout'], 5, 120 );
+		$data['url']        = Settings_Validator::non_empty_string( $data['url'] );
+		$data['database']   = Settings_Validator::non_empty_string( $data['database'] );
 		$data['company_id'] = max( 0, (int) ( $data['company_id'] ?? 0 ) );
 
 		return $data;
@@ -166,24 +149,11 @@ class Settings_Repository {
 		$merged = array_merge( self::DEFAULTS_SYNC, $stored );
 
 		// Defense-in-depth: validate enum values and clamp bounds.
-		$valid_directions = [ 'bidirectional', 'wp_to_odoo', 'odoo_to_wp' ];
-		if ( ! in_array( $merged['direction'], $valid_directions, true ) ) {
-			$merged['direction'] = 'bidirectional';
-		}
-
-		$valid_conflicts = [ 'newest_wins', 'odoo_wins', 'wp_wins' ];
-		if ( ! in_array( $merged['conflict_rule'], $valid_conflicts, true ) ) {
-			$merged['conflict_rule'] = 'newest_wins';
-		}
-
-		$merged['batch_size'] = max( 1, min( 500, (int) $merged['batch_size'] ) );
-
-		$valid_intervals = [ 'wp4odoo_five_minutes', 'wp4odoo_fifteen_minutes' ];
-		if ( ! in_array( $merged['sync_interval'], $valid_intervals, true ) ) {
-			$merged['sync_interval'] = 'wp4odoo_five_minutes';
-		}
-
-		$merged['stale_timeout'] = max( 60, min( 3600, (int) $merged['stale_timeout'] ) );
+		$merged['direction']     = Settings_Validator::enum( $merged['direction'], [ 'bidirectional', 'wp_to_odoo', 'odoo_to_wp' ], 'bidirectional' );
+		$merged['conflict_rule'] = Settings_Validator::enum( $merged['conflict_rule'], [ 'newest_wins', 'odoo_wins', 'wp_wins' ], 'newest_wins' );
+		$merged['batch_size']    = Settings_Validator::clamp( $merged['batch_size'], 1, 500 );
+		$merged['sync_interval'] = Settings_Validator::enum( $merged['sync_interval'], [ 'wp4odoo_five_minutes', 'wp4odoo_fifteen_minutes' ], 'wp4odoo_five_minutes' );
+		$merged['stale_timeout'] = Settings_Validator::clamp( $merged['stale_timeout'], 60, 3600 );
 
 		$this->cache['sync'] = $merged;
 		return $merged;
@@ -213,24 +183,11 @@ class Settings_Repository {
 	private function validate_sync_settings( array $data ): array {
 		$data = array_merge( self::DEFAULTS_SYNC, $data );
 
-		$valid_directions = [ 'bidirectional', 'wp_to_odoo', 'odoo_to_wp' ];
-		if ( ! in_array( $data['direction'], $valid_directions, true ) ) {
-			$data['direction'] = 'bidirectional';
-		}
-
-		$valid_conflicts = [ 'newest_wins', 'odoo_wins', 'wp_wins' ];
-		if ( ! in_array( $data['conflict_rule'], $valid_conflicts, true ) ) {
-			$data['conflict_rule'] = 'newest_wins';
-		}
-
-		$data['batch_size'] = max( 1, min( 500, (int) $data['batch_size'] ) );
-
-		$valid_intervals = [ 'wp4odoo_five_minutes', 'wp4odoo_fifteen_minutes' ];
-		if ( ! in_array( $data['sync_interval'], $valid_intervals, true ) ) {
-			$data['sync_interval'] = 'wp4odoo_five_minutes';
-		}
-
-		$data['stale_timeout'] = max( 60, min( 3600, (int) $data['stale_timeout'] ) );
+		$data['direction']     = Settings_Validator::enum( $data['direction'], [ 'bidirectional', 'wp_to_odoo', 'odoo_to_wp' ], 'bidirectional' );
+		$data['conflict_rule'] = Settings_Validator::enum( $data['conflict_rule'], [ 'newest_wins', 'odoo_wins', 'wp_wins' ], 'newest_wins' );
+		$data['batch_size']    = Settings_Validator::clamp( $data['batch_size'], 1, 500 );
+		$data['sync_interval'] = Settings_Validator::enum( $data['sync_interval'], [ 'wp4odoo_five_minutes', 'wp4odoo_fifteen_minutes' ], 'wp4odoo_five_minutes' );
+		$data['stale_timeout'] = Settings_Validator::clamp( $data['stale_timeout'], 60, 3600 );
 
 		return $data;
 	}
@@ -290,11 +247,8 @@ class Settings_Repository {
 		$merged = array_merge( self::DEFAULTS_LOG, $stored );
 
 		// Defense-in-depth: validate log level and clamp retention.
-		$valid_levels = [ 'debug', 'info', 'warning', 'error', 'critical' ];
-		if ( ! in_array( $merged['level'], $valid_levels, true ) ) {
-			$merged['level'] = 'info';
-		}
-		$merged['retention_days'] = max( 1, min( 365, (int) $merged['retention_days'] ) );
+		$merged['level']          = Settings_Validator::enum( $merged['level'], [ 'debug', 'info', 'warning', 'error', 'critical' ], 'info' );
+		$merged['retention_days'] = Settings_Validator::clamp( $merged['retention_days'], 1, 365 );
 
 		$this->cache['log'] = $merged;
 		return $merged;
@@ -323,12 +277,8 @@ class Settings_Repository {
 	private function validate_log_settings( array $data ): array {
 		$data = array_merge( self::DEFAULTS_LOG, $data );
 
-		$valid_levels = [ 'debug', 'info', 'warning', 'error', 'critical' ];
-		if ( ! in_array( $data['level'], $valid_levels, true ) ) {
-			$data['level'] = 'info';
-		}
-
-		$data['retention_days'] = max( 1, min( 365, (int) $data['retention_days'] ) );
+		$data['level']          = Settings_Validator::enum( $data['level'], [ 'debug', 'info', 'warning', 'error', 'critical' ], 'info' );
+		$data['retention_days'] = Settings_Validator::clamp( $data['retention_days'], 1, 365 );
 
 		return $data;
 	}
