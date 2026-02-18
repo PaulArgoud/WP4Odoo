@@ -22,6 +22,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`Odoo_Accounting_Formatter::for_credit_note()`** — New static method for formatting credit note data (`out_refund` account.move). Reuses `build_invoice_lines()` for line items, supports optional `reversed_entry_id` for linking to original invoice. Filterable via `wp4odoo_credit_note_data` hook
 - **Odoo_Model enum additions** — 5 new cases: `StockWarehouse`, `StockLocation`, `StockMove`, `StockQuant`, `StockPickingType`
 
+### Added (Architecture)
+- **GamiPress/myCRED `gamification` exclusive group** — GamiPress and myCRED both target `loyalty.card` via `Loyalty_Card_Resolver` with `(partner_id, program_id)`. New `gamification` exclusive group prevents both from running simultaneously (first-registered wins: GamiPress before myCRED)
+- **Lazy loading `Module_Registry`** — Disabled modules are no longer instantiated at boot. `register_all()` stores disabled module class names in a `$deferred` map; `get()` materializes on demand, `all()` materializes everything (for admin UI). Reduces memory footprint on sites with many detected but disabled modules
+- **Module health manifest** — New `tests/module-health-manifest.php` declares all third-party symbols (classes, functions, constants) per module. `ModuleHealthManifestTest` validates that stubs match the manifest and that the manifest covers all registered modules. 196 data-driven tests catch stub drift when upstream plugins evolve
+- **Sync flow integration tests** — 5 new integration tests (`tests/Integration/SyncFlowTest.php`) covering the full push/pull pipeline: hook → queue → process → Odoo transport → entity_map. Uses `SyncFlowTransport` mock for deterministic transport responses
+
 ## [3.5.0] - 2026-02-18
 
 ### Added

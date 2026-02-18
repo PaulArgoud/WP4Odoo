@@ -642,8 +642,12 @@ Module_Base (abstract)
 ├── LMS_Module_Base (abstract)
 │   ├── LearnDash_Module        → product.product, account.move, sale.order          [bidirectional]
 │   ├── LifterLMS_Module        → product.product, account.move, sale.order          [bidirectional]
-│   └── TutorLMS_Module         → product.product, account.move, sale.order          [bidirectional]
+│   ├── TutorLMS_Module         → product.product, account.move, sale.order          [bidirectional]
+│   └── LearnPress_Module       → product.product, account.move, sale.order          [bidirectional]
 ├── WC_Subscriptions_Module     → product.product, sale.subscription, account.move   [bidirectional]
+├── WC_Inventory_Module         → stock.warehouse, stock.location, stock.move        [bidirectional]
+├── WC_Shipping_Module          → stock.picking, delivery.carrier                    [bidirectional]
+├── WC_Returns_Module           → account.move (out_refund), stock.picking           [bidirectional]
 ├── Events_Calendar_Module      → event.event / calendar.event, product.product,     [bidirectional]
 │                                 event.registration
 ├── Sprout_Invoices_Module      → account.move, account.payment                      [bidirectional]
@@ -652,17 +656,23 @@ Module_Base (abstract)
 ├── Ecwid_Module                → product.product, sale.order                        [WP → Odoo]
 ├── ShopWP_Module               → product.product                                    [WP → Odoo]
 ├── WC_Bundle_Bom_Module        → mrp.bom, mrp.bom.line                              [WP → Odoo]
+├── Jeero_Configurator_Module   → mrp.bom                                            [WP → Odoo]
 ├── WC_Points_Rewards_Module    → loyalty.card                                       [bidirectional]
 ├── Job_Manager_Module          → hr.job                                             [bidirectional]
 ├── AffiliateWP_Module          → res.partner (vendor), account.move (in_invoice)    [WP → Odoo]
 ├── FluentCRM_Module            → mailing.contact, mailing.list, res.partner.category  [bidirectional]
 ├── FunnelKit_Module            → crm.lead, crm.stage                               [bidirectional]
 ├── GamiPress_Module            → loyalty.card, product.template                     [bidirectional]
+├── MyCRED_Module               → loyalty.card, product.template                     [bidirectional]
 ├── BuddyBoss_Module            → res.partner, res.partner.category                  [bidirectional]
 ├── Knowledge_Module            → knowledge.article                                  [bidirectional]
+├── Documents_Module            → documents.document, documents.folder               [bidirectional]
 ├── WPERP_Module                → hr.employee, hr.department, hr.leave               [bidirectional]
 ├── WPERP_CRM_Module            → crm.lead, mail.activity                            [bidirectional]
+├── WPERP_Accounting_Module     → account.move, account.account, account.journal     [bidirectional]
 ├── Project_Manager_Module      → project.project, project.task, account.analytic.line [bidirectional]
+├── Food_Ordering_Module        → pos.order, pos.order.line                          [WP → Odoo]
+├── Survey_Quiz_Module          → survey.survey, survey.user_input                   [WP → Odoo]
 ├── WC_Addons_Module            → product.attribute, product.template.attribute.line / mrp.bom [WP → Odoo]
 ├── JetEngine_Module            → (dynamic: admin-configured CPT → Odoo model mappings)  [WP → Odoo]
 ├── ACF_Module                  → (meta-module: enriches other modules' pipelines)   [bidirectional]
@@ -676,7 +686,8 @@ Module_Base (abstract)
 - **Memberships**: WC Memberships, MemberPress, PMPro, and RCP are mutually exclusive (all target `membership.membership_line`). Priority (highest number wins): WC Memberships (20) > PMPro (15) > RCP (12) > MemberPress (10).
 - **Invoicing**: Sprout Invoices and WP-Invoice are mutually exclusive (both target `account.move` for invoicing). Priority: Sprout Invoices (10) > WP-Invoice (5).
 - **Helpdesk**: Awesome Support and SupportCandy are mutually exclusive (both target `helpdesk.ticket` / `project.task`). Priority: SupportCandy (15) > Awesome Support (10).
-- All other modules are independent and can coexist freely (LMS, Subscriptions, Points & Rewards, Events, Booking, Donations, Forms, WPRM, Crowdfunding, BOM, WC Add-Ons, AffiliateWP, FluentCRM, FunnelKit, GamiPress, BuddyBoss, Knowledge, WP ERP, WP ERP CRM, WP Project Manager, JetEngine, JetEngine Meta, ACF, WP All Import, Job Manager).
+- **Gamification**: GamiPress and myCRED are mutually exclusive (both target `loyalty.card` via `Loyalty_Card_Resolver` with `partner_id` + `program_id`). First-registered wins (GamiPress before myCRED in registration order).
+- All other modules are independent and can coexist freely (LMS, Subscriptions, Points & Rewards, Events, Booking, Donations, Forms, WPRM, Crowdfunding, BOM, WC Add-Ons, Jeero Configurator, AffiliateWP, FluentCRM, FunnelKit, BuddyBoss, Knowledge, Documents, WP ERP, WP ERP CRM, WP ERP Accounting, WP Project Manager, JetEngine, JetEngine Meta, ACF, WP All Import, Job Manager, Food Ordering, Survey & Quiz).
 
 **Module_Base provides:**
 - Version bounds: `PLUGIN_MIN_VERSION` (blocks boot if too old) and `PLUGIN_TESTED_UP_TO` (warns if newer than tested). Subclasses override `get_plugin_version()` to return the detected plugin version. Patch-level normalization ensures `10.5.0` is within `10.5` range. `Module_Registry` enforces MIN before boot and collects TESTED warnings for the admin notice.
@@ -1545,6 +1556,27 @@ All user inputs are sanitized with:
 
 **Settings:** `sync_bundles`
 
+### Jeero Configurator — COMPLETE
+
+**Files:** `class-jeero-configurator-module.php` (push sync coordinator, uses `Jeero_Configurator_Hooks` trait), `trait-jeero-configurator-hooks.php` (hook callbacks: `on_configurable_save`), `class-jeero-configurator-handler.php` (BOM data load, component resolution, One2many line items)
+
+**Odoo models:** `mrp.bom` (manufacturing BOMs — push-only)
+
+**Key features:**
+- Push-only (WP → Odoo) — Jeero WC Product Configurator → Odoo Manufacturing BOMs
+- Requires Jeero Product Configurator 1.0+; `boot()` guards with `class_exists('Jeero_Product_Configurator') || defined('JEERO_VERSION')`
+- **Requires WooCommerce module** as dependency (`get_required_modules()`)
+- **Cross-module entity_map lookup**: resolves component products via `Entity_Map_Repository::get_odoo_id('woocommerce', 'product', ...)`
+- Smart retry: if components aren't synced yet, enqueues them via `Queue_Manager::push()` and returns `Transient` failure for later retry
+- BOM pre-formatted with `bom_line_ids` One2many tuples (`[5,0,0]` clear + `[0,0,{...}]` create)
+- BOM type configurable: `phantom` (kit, auto-explodes) or `normal` (manufacturing)
+- Reference code: auto-generated as `JEERO-{product_id}`
+- Hook: `save_post_product` (priority 20) filtered for products with `_jeero_configuration_rules` meta
+- Dedup: by `code` (reference) or `product_tmpl_id`
+- Independent module (no exclusive group)
+
+**Settings:** `sync_configurables` (bool), `bom_type` (select: `phantom` or `normal`)
+
 ### WC Product Add-Ons — COMPLETE
 
 **Files:** `class-wc-addons-module.php` (push sync coordinator, uses `WC_Addons_Hooks` trait), `trait-wc-addons-hooks.php` (hook callbacks), `class-wc-addons-handler.php` (multi-plugin abstraction, dual-mode formatting)
@@ -1830,9 +1862,28 @@ All user inputs are sanitized with:
 - Rank types → `product.template` (push-only, service type): push on `gamipress_update_user_rank`
 - Points push on `gamipress_award_points_to_user` / `gamipress_deduct_points_to_user`
 - Pull: awards/deducts points delta via `gamipress_award_points_to_user()` / `gamipress_deduct_points_to_user()` with `'odoo-sync'` reason
+- Exclusive group `gamification` — mutually exclusive with myCRED (both target `loyalty.card` via `Loyalty_Card_Resolver`)
 - Dedup: achievements/ranks by `name`
 
 **Settings:** `sync_points` (bool), `pull_points` (bool), `sync_achievements` (bool), `sync_ranks` (bool), `odoo_program_id` (int)
+
+### myCRED — COMPLETE
+
+**Files:** `class-mycred-module.php` (bidirectional sync coordinator, uses `MyCRED_Hooks` + `Loyalty_Card_Resolver` traits), `trait-mycred-hooks.php` (hook callbacks: `on_points_change`, `on_badge_earned`), `class-mycred-handler.php` (balance data load/save, badge formatting, float→int rounding)
+
+**Odoo models:** `loyalty.card` (points — bidirectional), `product.template` (badges — push-only)
+
+**Key features:**
+- Point balances → `loyalty.card` (bidirectional): find-or-create by partner_id + program_id (same pattern as WC Points & Rewards via `Loyalty_Card_Resolver`)
+- Badge types → `product.template` (push-only, service type): push on `mycred_after_badge_assign`
+- Points push on `mycred_update_user_balance`; anti-loop via `odoo_sync` reference guard (filters out sync-triggered balance changes)
+- Pull: awards/deducts points delta via `mycred_add()` / `mycred_subtract()` with `'odoo-sync'` reason
+- Float→int rounding: Odoo stores points as Float, myCRED as integer — `(int) round()` on pull
+- Exclusive group `gamification` — mutually exclusive with GamiPress (both target `loyalty.card` via `Loyalty_Card_Resolver`)
+- Detection: `function_exists('mycred')`, requires myCRED 2.0+
+- Dedup: badges by `name`
+
+**Settings:** `sync_points` (bool), `pull_points` (bool), `sync_badges` (bool), `odoo_program_id` (int)
 
 ### BuddyBoss / BuddyPress — COMPLETE
 
@@ -1897,6 +1948,28 @@ All user inputs are sanitized with:
 - **Translation support**: overrides `get_translatable_fields()` for `name` (post_title) + `body` (post_content) — WPML/Polylang compatible
 - Category mapping via `Status_Mapper::resolve()`: publish→workspace, private→private, draft→private (filterable: `wp4odoo_knowledge_category_map` / `wp4odoo_knowledge_reverse_category_map`)
 - Dedup: articles by `name`
+
+### Documents (Odoo Enterprise) — COMPLETE
+
+**Files:** `class-documents-module.php` (bidirectional sync coordinator, uses `Documents_Hooks` trait), `trait-documents-hooks.php` (hook callbacks: document save/delete, folder create/edit), `class-documents-handler.php` (file encoding, hash tracking, folder hierarchy, dual CPT support)
+
+**Odoo models:** `documents.document` (documents — bidirectional), `documents.folder` (folders — bidirectional)
+
+**Key features:**
+- Bidirectional document + folder sync with Odoo Documents (Enterprise)
+- Dual CPT support: WP Document Revisions (`document` CPT) and WP Download Manager (`wpdmpro` CPT); active source via `detect_source()`
+- Detection: `class_exists('Document_Revisions') || defined('WPDM_VERSION')`; requires Odoo Documents model probe
+- File content via base64 encoding/decoding (stored in `documents.document.datas`)
+- **SHA-256 hash tracking**: `_wp4odoo_doc_hash` post meta for change detection — skips re-upload if file unchanged
+- Folder hierarchy: `document_category` taxonomy → `documents.folder` with `parent_folder_id` Many2one, resolved via entity_map
+- Root folder configurable via `odoo_folder_id` setting
+- Max file size guard (configurable, default 10 MB)
+- Parent folder pre-sync: `ensure_entity_synced()` pushes parent folder before documents
+- Hooks: `save_post_document`, `save_post_wpdmpro`, `before_delete_post`, `created_document_category`, `edited_document_category`
+- Dedup: folders by `name` + `parent_folder_id`, documents by `name` + `folder_id`
+- Independent module (no exclusive group)
+
+**Settings:** `sync_documents` (bool), `pull_documents` (bool), `sync_folders` (bool), `pull_folders` (bool), `odoo_folder_id` (int), `max_file_size` (int, MB)
 
 ### WP Project Manager (weDevs) — COMPLETE
 

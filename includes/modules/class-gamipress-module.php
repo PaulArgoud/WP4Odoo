@@ -34,6 +34,9 @@ class GamiPress_Module extends Module_Base {
 	use GamiPress_Hooks;
 	use Loyalty_Card_Resolver;
 
+	/** @since 3.6.0 */
+	protected string $exclusive_group = 'gamification';
+
 	protected const PLUGIN_MIN_VERSION  = '2.6';
 	protected const PLUGIN_TESTED_UP_TO = '3.0';
 

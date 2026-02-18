@@ -33,6 +33,9 @@ class MyCRED_Module extends Module_Base {
 	use MyCRED_Hooks;
 	use Loyalty_Card_Resolver;
 
+	/** @since 3.6.0 */
+	protected string $exclusive_group = 'gamification';
+
 	protected const PLUGIN_MIN_VERSION  = '2.0';
 	protected const PLUGIN_TESTED_UP_TO = '2.7';
 

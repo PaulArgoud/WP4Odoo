@@ -128,3 +128,4 @@ require_once __DIR__ . '/Integration/WP4Odoo_TestCase.php';
 // ── Test Helpers ─────────────────────────────────────────
 
 require_once __DIR__ . '/helpers/test-functions.php';
+require_once __DIR__ . '/helpers/SyncFlowTransport.php';

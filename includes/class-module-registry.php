@@ -45,6 +45,34 @@ class Module_Registry {
 	private array $version_warnings = [];
 
 	/**
+	 * Deferred modules: detected but not yet instantiated.
+	 *
+	 * Modules that pass detection but are disabled are stored here to
+	 * avoid unnecessary class loading. Materialized on demand via get()
+	 * or all().
+	 *
+	 * @since 3.6.0
+	 * @var array<string, class-string<Module_Base>>
+	 */
+	private array $deferred = [];
+
+	/**
+	 * Client provider closure for deferred instantiation.
+	 *
+	 * @since 3.6.0
+	 * @var \Closure|null
+	 */
+	private ?\Closure $client_provider = null;
+
+	/**
+	 * Entity map repository for deferred instantiation.
+	 *
+	 * @since 3.6.0
+	 * @var Entity_Map_Repository|null
+	 */
+	private ?Entity_Map_Repository $entity_map = null;
+
+	/**
 	 * Plugin instance (for third-party hook compatibility).
 	 *
 	 * @var \WP4Odoo_Plugin
@@ -83,6 +111,9 @@ class Module_Registry {
 		$client_provider = fn() => $this->plugin->client();
 		$entity_map      = new Entity_Map_Repository();
 		$settings        = $this->settings;
+
+		$this->client_provider = $client_provider;
+		$this->entity_map      = $entity_map;
 
 		// CRM — always available.
 		$this->register( 'crm', new Modules\CRM_Module( $client_provider, $entity_map, $settings ) );
@@ -197,7 +228,11 @@ class Module_Registry {
 
 		foreach ( $module_defs as [ $id, $class, $detect ] ) {
 			if ( null === $detect || $detect() ) {
-				$this->register( $id, new $class( $client_provider, $entity_map, $settings ) );
+				if ( $this->settings->is_module_enabled( $id ) ) {
+					$this->register( $id, new $class( $client_provider, $entity_map, $settings ) );
+				} else {
+					$this->deferred[ $id ] = $class;
+				}
 			}
 		}
 
@@ -205,14 +240,22 @@ class Module_Registry {
 		$food_active = defined( 'FLAVOR_FLAVOR_VERSION' )
 			|| defined( 'WPPIZZA_VERSION' );
 		if ( $food_active ) {
-			$this->register( 'food_ordering', new Modules\Food_Ordering_Module( $client_provider, $entity_map, $settings ) );
+			if ( $this->settings->is_module_enabled( 'food_ordering' ) ) {
+				$this->register( 'food_ordering', new Modules\Food_Ordering_Module( $client_provider, $entity_map, $settings ) );
+			} else {
+				$this->deferred['food_ordering'] = Modules\Food_Ordering_Module::class;
+			}
 		}
 
 		// Survey & Quiz — aggregate detection.
 		$survey_active = defined( 'QUIZ_MAKER_VERSION' )
 			|| defined( 'QSM_PLUGIN_INSTALLED' );
 		if ( $survey_active ) {
-			$this->register( 'survey_quiz', new Modules\Survey_Quiz_Module( $client_provider, $entity_map, $settings ) );
+			if ( $this->settings->is_module_enabled( 'survey_quiz' ) ) {
+				$this->register( 'survey_quiz', new Modules\Survey_Quiz_Module( $client_provider, $entity_map, $settings ) );
+			} else {
+				$this->deferred['survey_quiz'] = Modules\Survey_Quiz_Module::class;
+			}
 		}
 
 		// Forms module — aggregate detection (any of 8 form plugins).
@@ -225,7 +268,11 @@ class Module_Registry {
 			|| defined( 'FORMINATOR_VERSION' )
 			|| defined( 'JET_FORM_BUILDER_VERSION' );
 		if ( $forms_active ) {
-			$this->register( 'forms', new Modules\Forms_Module( $client_provider, $entity_map, $settings ) );
+			if ( $this->settings->is_module_enabled( 'forms' ) ) {
+				$this->register( 'forms', new Modules\Forms_Module( $client_provider, $entity_map, $settings ) );
+			} else {
+				$this->deferred['forms'] = Modules\Forms_Module::class;
+			}
 		}
 
 		// Allow third-party modules (closures and shared entity map available as arguments).
@@ -291,7 +338,14 @@ class Module_Registry {
 	 * @return Module_Base|null
 	 */
 	public function get( string $id ): ?Module_Base {
-		return $this->modules[ $id ] ?? null;
+		if ( isset( $this->modules[ $id ] ) ) {
+			return $this->modules[ $id ];
+		}
+		if ( isset( $this->deferred[ $id ] ) ) {
+			$this->materialize( $id );
+			return $this->modules[ $id ];
+		}
+		return null;
 	}
 
 	/**
@@ -300,6 +354,7 @@ class Module_Registry {
 	 * @return array<string, Module_Base>
 	 */
 	public function all(): array {
+		$this->materialize_all();
 		return $this->modules;
 	}
 
@@ -346,6 +401,7 @@ class Module_Registry {
 	 * @return string[] Conflicting module IDs.
 	 */
 	public function get_conflicts( string $module_id ): array {
+		$this->materialize_all();
 		$module = $this->modules[ $module_id ] ?? null;
 		if ( ! $module ) {
 			return [];
@@ -368,6 +424,36 @@ class Module_Registry {
 		}
 
 		return $conflicts;
+	}
+
+	/**
+	 * Instantiate a single deferred module.
+	 *
+	 * @since 3.6.0
+	 *
+	 * @param string $id Module identifier.
+	 * @return void
+	 */
+	private function materialize( string $id ): void {
+		if ( null === $this->client_provider || null === $this->entity_map ) {
+			return; // @codeCoverageIgnore
+		}
+		$class                = $this->deferred[ $id ];
+		$this->modules[ $id ] = new $class( $this->client_provider, $this->entity_map, $this->settings );
+		unset( $this->deferred[ $id ] );
+	}
+
+	/**
+	 * Instantiate all deferred modules.
+	 *
+	 * @since 3.6.0
+	 *
+	 * @return void
+	 */
+	private function materialize_all(): void {
+		foreach ( array_keys( $this->deferred ) as $id ) {
+			$this->materialize( $id );
+		}
 	}
 
 	/**

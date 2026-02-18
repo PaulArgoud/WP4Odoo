@@ -11,6 +11,8 @@ use WP4Odoo\Modules\Memberships_Module;
 use WP4Odoo\Modules\MemberPress_Module;
 use WP4Odoo\Modules\CRM_Module;
 use WP4Odoo\Modules\WC_Subscriptions_Module;
+use WP4Odoo\Modules\GamiPress_Module;
+use WP4Odoo\Modules\MyCRED_Module;
 use PHPUnit\Framework\TestCase;
 
 class ModuleRegistryTest extends TestCase {
@@ -53,6 +55,12 @@ class ModuleRegistryTest extends TestCase {
 	}
 	private function make_wc_subscriptions(): WC_Subscriptions_Module {
 		return new WC_Subscriptions_Module( wp4odoo_test_client_provider(), wp4odoo_test_entity_map(), wp4odoo_test_settings() );
+	}
+	private function make_gamipress(): GamiPress_Module {
+		return new GamiPress_Module( wp4odoo_test_client_provider(), wp4odoo_test_entity_map(), wp4odoo_test_settings() );
+	}
+	private function make_mycred(): MyCRED_Module {
+		return new MyCRED_Module( wp4odoo_test_client_provider(), wp4odoo_test_entity_map(), wp4odoo_test_settings() );
 	}
 
 	// ─── Registration ──────────────────────────────────────
@@ -308,5 +316,54 @@ class ModuleRegistryTest extends TestCase {
 	public function test_wc_subscriptions_requires_woocommerce(): void {
 		$module = $this->make_wc_subscriptions();
 		$this->assertSame( [ 'woocommerce' ], $module->get_required_modules() );
+	}
+
+	// ─── Gamification Exclusive Group ────────────────────
+
+	public function test_gamification_group_blocks_second_module(): void {
+		$GLOBALS['_wp_options']['wp4odoo_module_gamipress_enabled'] = true;
+		$GLOBALS['_wp_options']['wp4odoo_module_mycred_enabled']    = true;
+
+		$this->registry->register( 'gamipress', $this->make_gamipress() );
+		$this->registry->register( 'mycred', $this->make_mycred() );
+
+		// GamiPress registered first — it wins.
+		$this->assertSame( 'gamipress', $this->registry->get_active_in_group( 'gamification' ) );
+		$this->assertSame( 1, $this->registry->get_booted_count() );
+	}
+
+	// ─── Lazy Loading / Deferred Instantiation ───────────
+
+	public function test_disabled_module_accessible_via_get_after_register_all(): void {
+		// No modules enabled.
+		$this->registry->register_all();
+
+		// 'sales' has null detection (always detected) but is not enabled.
+		// With lazy loading, it's deferred but still accessible via get().
+		$this->assertNotNull( $this->registry->get( 'sales' ) );
+		$this->assertInstanceOf( Sales_Module::class, $this->registry->get( 'sales' ) );
+	}
+
+	public function test_all_includes_deferred_disabled_modules(): void {
+		// No modules enabled.
+		$this->registry->register_all();
+
+		$all = $this->registry->all();
+
+		// Modules with null detection are always present (even disabled).
+		$this->assertArrayHasKey( 'crm', $all );
+		$this->assertArrayHasKey( 'sales', $all );
+		$this->assertArrayHasKey( 'knowledge', $all );
+	}
+
+	public function test_deferred_modules_not_booted(): void {
+		// No modules enabled.
+		$this->registry->register_all();
+
+		// No modules should be booted.
+		$this->assertSame( 0, $this->registry->get_booted_count() );
+
+		// But all() should still return detected modules.
+		$this->assertNotEmpty( $this->registry->all() );
 	}
 }

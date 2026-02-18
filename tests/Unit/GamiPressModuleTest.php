@@ -47,8 +47,8 @@ class GamiPressModuleTest extends TestCase {
 		$this->assertSame( 'GamiPress', $this->module->get_name() );
 	}
 
-	public function test_no_exclusive_group(): void {
-		$this->assertSame( '', $this->module->get_exclusive_group() );
+	public function test_exclusive_group_is_gamification(): void {
+		$this->assertSame( 'gamification', $this->module->get_exclusive_group() );
 	}
 
 	public function test_sync_direction_is_bidirectional(): void {
