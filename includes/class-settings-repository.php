@@ -384,8 +384,15 @@ class Settings_Repository {
 
 		$decrypted = API\Odoo_Auth::decrypt( $stored );
 
-		// Backward compat: if decryption fails, the token is stored in plaintext (pre-encryption).
-		return ( false !== $decrypted && '' !== $decrypted ) ? $decrypted : $stored;
+		if ( false !== $decrypted && '' !== $decrypted ) {
+			return $decrypted;
+		}
+
+		// Backward compat: token stored in plaintext (pre-encryption).
+		// Auto-migrate to encrypted storage so this fallback only runs once.
+		$this->save_webhook_token( $stored );
+
+		return $stored;
 	}
 
 	/**

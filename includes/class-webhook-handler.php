@@ -75,7 +75,7 @@ class Webhook_Handler {
 	public function __construct( Settings_Repository $settings, Module_Registry $registry ) {
 		$this->settings     = $settings;
 		$this->registry     = $registry;
-		$this->logger       = new Logger( 'webhook', $settings );
+		$this->logger       = Logger::for_channel( 'webhook', $settings );
 		$this->rate_limiter = new Rate_Limiter( 'wp4odoo_rl_', 20, 60, $this->logger );
 	}
 

@@ -148,7 +148,7 @@ class Sync_Engine {
 		$this->module_resolver  = $module_resolver;
 		$this->queue_repo       = $queue_repo;
 		$this->settings         = $settings;
-		$this->logger           = $logger ?? new Logger( 'sync', $settings );
+		$this->logger           = $logger ?? Logger::for_channel( 'sync', $settings );
 		$this->failure_notifier = new Failure_Notifier( $this->logger, $settings );
 		$this->circuit_breaker  = new Circuit_Breaker( $this->logger );
 		$this->circuit_breaker->set_failure_notifier( $this->failure_notifier );
@@ -236,10 +236,11 @@ class Sync_Engine {
 			// Recover any jobs left in 'processing' from a previous crash
 			// BEFORE fetching, so recovered jobs are eligible for this batch.
 			// Rate-limited to once per minute to avoid redundant table scans.
-			$last_recovery = (int) get_transient( 'wp4odoo_last_stale_recovery' );
+			$recovery_key  = 'wp4odoo_last_stale_recovery_' . get_current_blog_id();
+			$last_recovery = (int) get_transient( $recovery_key );
 			if ( time() - $last_recovery >= 60 ) {
 				$this->queue_repo->recover_stale_processing( $this->settings->get_stale_timeout() );
-				set_transient( 'wp4odoo_last_stale_recovery', time(), 120 );
+				set_transient( $recovery_key, time(), 120 );
 			}
 
 			$start_time = microtime( true );

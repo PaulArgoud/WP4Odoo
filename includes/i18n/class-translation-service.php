@@ -130,7 +130,7 @@ class Translation_Service {
 	 */
 	public function __construct( \Closure $client_getter, ?Settings_Repository $settings = null ) {
 		$this->client_getter = $client_getter;
-		$this->logger        = new Logger( 'i18n', $settings );
+		$this->logger        = Logger::for_channel( 'i18n', $settings );
 	}
 
 	// ─── Adapter detection ──────────────────────────────────

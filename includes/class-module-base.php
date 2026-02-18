@@ -159,6 +159,16 @@ abstract class Module_Base {
 	protected ?Queue_Manager $queue_manager = null;
 
 	/**
+	 * Registered WordPress hooks for teardown support.
+	 *
+	 * Each entry is [tag, callback, priority]. Populated by
+	 * register_hook() and consumed by teardown().
+	 *
+	 * @var array<int, array{string, \Closure, int}>
+	 */
+	private array $registered_hooks = [];
+
+	/**
 	 * Closure that returns the Odoo_Client instance (lazy, injected by Module_Registry).
 	 *
 	 * @var \Closure(): Odoo_Client
@@ -201,7 +211,7 @@ abstract class Module_Base {
 		$this->client_provider = $client_provider;
 		$this->entity_map      = $entity_map;
 		$this->settings_repo   = $settings;
-		$this->logger          = new Logger( $this->id, $settings );
+		$this->logger          = Logger::for_channel( $this->id, $settings );
 	}
 
 	/**
@@ -638,6 +648,43 @@ abstract class Module_Base {
 				);
 			}
 		};
+	}
+
+	/**
+	 * Register a WordPress hook with automatic teardown tracking.
+	 *
+	 * Wraps add_action() and records the hook reference so teardown()
+	 * can remove it later. Uses safe_callback() internally for graceful
+	 * degradation. Prefer this over manual add_action() + safe_callback()
+	 * in new module code.
+	 *
+	 * @param string   $tag           Hook name.
+	 * @param callable $callback      The method to call (e.g. [$this, 'on_event']).
+	 * @param int      $priority      Hook priority (default 10).
+	 * @param int      $accepted_args Number of arguments (default 1).
+	 * @return void
+	 */
+	protected function register_hook( string $tag, callable $callback, int $priority = 10, int $accepted_args = 1 ): void {
+		$wrapped = $this->safe_callback( $callback );
+		add_action( $tag, $wrapped, $priority, $accepted_args );
+		$this->registered_hooks[] = [ $tag, $wrapped, $priority ];
+	}
+
+	/**
+	 * Remove all hooks registered via register_hook().
+	 *
+	 * Called when a module is disabled at runtime (e.g. via admin toggle)
+	 * to stop processing hook callbacks for the remainder of the request.
+	 * Hooks not registered via register_hook() (legacy pattern) are
+	 * unaffected — they rely on should_sync() for short-circuiting.
+	 *
+	 * @return void
+	 */
+	public function teardown(): void {
+		foreach ( $this->registered_hooks as [ $tag, $callback, $priority ] ) {
+			remove_action( $tag, $callback, $priority );
+		}
+		$this->registered_hooks = [];
 	}
 
 	// -------------------------------------------------------------------------

@@ -100,7 +100,7 @@ trait Ajax_Monitor_Handlers {
 	public function purge_logs(): void {
 		$this->verify_request();
 
-		$logger  = new Logger( 'admin', wp4odoo()->settings() );
+		$logger  = Logger::for_channel( 'admin', wp4odoo()->settings() );
 		$deleted = $logger->cleanup();
 
 		wp_send_json_success(

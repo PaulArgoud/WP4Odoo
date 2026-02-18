@@ -368,7 +368,7 @@ class CLI {
 		);
 
 		$settings   = \WP4Odoo_Plugin::instance()->settings();
-		$logger     = new Logger( 'reconcile', $settings );
+		$logger     = Logger::for_channel( 'reconcile', $settings );
 		$reconciler = new Reconciler(
 			new Entity_Map_Repository(),
 			fn() => $module->get_client(),

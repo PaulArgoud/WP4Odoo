@@ -246,10 +246,12 @@ class WebhookHandlerTest extends TestCase {
 	public function test_register_routes_preserves_existing_token(): void {
 		$GLOBALS['_wp_options']['wp4odoo_webhook_token'] = 'existing-token';
 
-		$handler = new Webhook_Handler( wp4odoo_test_settings(), \WP4Odoo_Plugin::instance()->module_registry() );
+		$settings = wp4odoo_test_settings();
+		$handler  = new Webhook_Handler( $settings, \WP4Odoo_Plugin::instance()->module_registry() );
 		$handler->register_routes();
 
-		$this->assertSame( 'existing-token', $GLOBALS['_wp_options']['wp4odoo_webhook_token'] );
+		// Token is auto-migrated to encrypted storage but decrypted value is preserved.
+		$this->assertSame( 'existing-token', $settings->get_webhook_token() );
 	}
 
 	// ─── HMAC signature verification ──────────────────────

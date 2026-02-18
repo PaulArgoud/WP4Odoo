@@ -222,7 +222,7 @@ class Odoo_Auth {
 		string $protocol = 'jsonrpc',
 		array $check_models = []
 	): array {
-		$logger = new Logger( 'auth' );
+		$logger = Logger::for_channel( 'auth' );
 
 		$result = [
 			'success' => false,
@@ -326,7 +326,7 @@ class Odoo_Auth {
 			];
 		} catch ( \Throwable $e ) {
 			// Probe failed — don't report false missing models.
-			$logger = new Logger( 'auth' );
+			$logger = Logger::for_channel( 'auth' );
 			$logger->warning(
 				'Model availability check failed.',
 				[

@@ -159,6 +159,7 @@ final class Database_Migration {
 			5 => [ self::class, 'migration_5' ],
 			6 => [ self::class, 'migration_6' ],
 			7 => [ self::class, 'migration_7' ],
+			8 => [ self::class, 'migration_8' ],
 		];
 	}
 
@@ -382,6 +383,29 @@ final class Database_Migration {
 			$wpdb->query( "ALTER TABLE {$logs_table} ADD COLUMN blog_id BIGINT(20) UNSIGNED NOT NULL DEFAULT 1 AFTER id" );
 		}
 
+		// phpcs:enable
+	}
+
+	/**
+	 * Migration 8: Add composite index for stale job recovery queries.
+	 *
+	 * Covers `WHERE blog_id = ? AND status = 'processing' AND processed_at < ?`
+	 * used by Sync_Queue_Repository::recover_stale_processing().
+	 *
+	 * @return void
+	 */
+	private static function migration_8(): void {
+		global $wpdb;
+
+		$queue_table = $wpdb->prefix . 'wp4odoo_sync_queue';
+
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.SchemaChange
+		$indexes = $wpdb->get_results( "SHOW INDEX FROM {$queue_table}" );
+		$names   = array_column( $indexes, 'Key_name' );
+
+		if ( ! in_array( 'idx_stale_recovery', $names, true ) ) {
+			$wpdb->query( "ALTER TABLE {$queue_table} ADD KEY idx_stale_recovery (blog_id, status, processed_at)" );
+		}
 		// phpcs:enable
 	}
 

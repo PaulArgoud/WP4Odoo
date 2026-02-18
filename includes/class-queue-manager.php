@@ -67,6 +67,17 @@ class Queue_Manager {
 	private ?Sync_Queue_Repository $instance_repo = null;
 
 	/**
+	 * Optional Logger instance for queue depth alerting.
+	 *
+	 * When provided (e.g. by Sync_Engine), depth alerts share the
+	 * caller's Logger and its correlation ID. When null, a one-off
+	 * Logger is created on demand (backward compatibility).
+	 *
+	 * @var Logger|null
+	 */
+	private ?Logger $logger = null;
+
+	/**
 	 * Get or create the static repository instance.
 	 *
 	 * @return Sync_Queue_Repository
@@ -96,13 +107,16 @@ class Queue_Manager {
 	/**
 	 * Create a Queue_Manager instance.
 	 *
-	 * Optionally accepts a Sync_Queue_Repository for testing.
-	 * When omitted, the shared static repository is used.
+	 * Optionally accepts a Sync_Queue_Repository and Logger for DI/testing.
+	 * When omitted, the shared static repository is used and a one-off
+	 * Logger is created on demand for depth alerts.
 	 *
-	 * @param Sync_Queue_Repository|null $repo Optional repository for DI/testing.
+	 * @param Sync_Queue_Repository|null $repo   Optional repository for DI/testing.
+	 * @param Logger|null                $logger Optional logger for depth alerts.
 	 */
-	public function __construct( ?Sync_Queue_Repository $repo = null ) {
+	public function __construct( ?Sync_Queue_Repository $repo = null, ?Logger $logger = null ) {
 		$this->instance_repo = $repo;
+		$this->logger        = $logger;
 	}
 
 	// -------------------------------------------------------------------------
@@ -236,7 +250,8 @@ class Queue_Manager {
 	 */
 	private function check_queue_depth(): void {
 		// Cooldown: only check every 5 minutes to avoid per-enqueue overhead.
-		$cooldown_key = 'wp4odoo_depth_check_cooldown';
+		// Blog-scoped to prevent multisite sites from sharing cooldown state.
+		$cooldown_key = 'wp4odoo_depth_cooldown_' . get_current_blog_id();
 		if ( get_transient( $cooldown_key ) ) {
 			return;
 		}
@@ -246,7 +261,7 @@ class Queue_Manager {
 		if ( $depth >= self::QUEUE_DEPTH_CRITICAL ) {
 			set_transient( $cooldown_key, 1, 300 );
 
-			$logger = new Logger( 'queue_manager', new Settings_Repository() );
+			$logger = $this->logger ?? Logger::for_channel( 'queue_manager' );
 			$logger->critical(
 				'Queue depth critical threshold exceeded.',
 				[

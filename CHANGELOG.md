@@ -17,6 +17,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Odoo_Model enum additions** — 2 new cases: `MailActivity`, `MailActivityType`
 - **WP-CLI `--blog_id` parameter** — `wp wp4odoo sync run --blog_id=3` and `wp wp4odoo reconcile crm contact --blog_id=3` target a specific site in multisite (switches blog context, flushes credential cache)
 
+### Added (Architecture)
+- **Migration 8 — Stale recovery index** — New composite index `idx_stale_recovery (blog_id, status, processed_at)` on `wp4odoo_sync_queue` for efficient stale job recovery queries. Idempotent (checks `SHOW INDEX` before `ALTER`)
+- **`Logger::for_channel()` factory** — New static factory method creates Logger instances with a shared `Settings_Repository` (avoids repeated `get_option()` calls when multiple loggers are created in the same request). All 12 direct `new Logger()` callsites migrated to `Logger::for_channel()` (Sync_Engine, Queue_Manager, Module_Base, Webhook_Handler, Partner_Service, Odoo_Client, Odoo_Transport_Base, Odoo_Auth, CLI, Ajax_Monitor_Handlers, Translation_Service)
+- **`Module_Base::register_hook()` / `teardown()`** — New hook lifecycle methods. `register_hook()` wraps `add_action()` with `safe_callback()` and tracks registered hooks. `teardown()` removes all tracked hooks via `remove_action()`. Called automatically when a module is disabled via the admin toggle. Designed for gradual adoption by new modules
+- **Queue_Manager injectable Logger** — Constructor accepts optional `?Logger $logger` parameter. When provided (e.g. by Sync_Engine), queue depth alerts share the caller's Logger and its correlation ID. Falls back to `Logger::for_channel('queue_manager')` when null
+
+### Fixed (Architecture)
+- **Blog-scoped transients** — `Sync_Engine` stale recovery transient (`wp4odoo_last_stale_recovery`) and `Queue_Manager` depth check cooldown now include `get_current_blog_id()` in their transient keys, preventing multisite sites from sharing cooldown state
+- **Webhook token auto-migration** — `Settings_Repository::get_webhook_token()` now auto-encrypts plaintext tokens on first read (backward-compat fallback path). Subsequent reads return the encrypted-then-decrypted value, eliminating the plaintext storage after first access
+
 ### Changed
 - **Settings_Repository multisite support** — New methods: `get_effective_connection()` (local → network fallback), `get_network_connection()`, `save_network_connection()`, `get_site_company_id()`, `get_network_site_companies()`, `save_network_site_companies()`, `is_using_network_connection()`. New constants: `OPT_NETWORK_CONNECTION`, `OPT_NETWORK_SITE_COMPANIES`. `company_id` added to `DEFAULTS_CONNECTION`
 - **Odoo_Auth multisite credential resolution** — `get_credentials()` falls back to network-level shared connection when site has no local URL configured. Applies site-specific `company_id` from network mapping. `save_credentials()` preserves `company_id`
@@ -24,7 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Connection tab UI** — Shows "Using network connection" indicator when site inherits from network. New Company ID input field after Timeout
 
 ### Tests
-- 4 226 unit tests (6 471 assertions) — new tests covering multisite blog_id scoping (Entity_Map_Repository, Sync_Queue_Repository), company_id injection (Odoo_Client), credential resolution (Odoo_Auth network fallback), Settings_Repository multisite methods, switch_to_blog stubs, JetBooking module+handler, WP ERP CRM module+handler, JetEngine Meta-Module, JetFormBuilder form extraction, migration 7
+- 4 226 unit tests (6 472 assertions) — new tests covering multisite blog_id scoping (Entity_Map_Repository, Sync_Queue_Repository), company_id injection (Odoo_Client), credential resolution (Odoo_Auth network fallback), Settings_Repository multisite methods, switch_to_blog stubs, JetBooking module+handler, WP ERP CRM module+handler, JetEngine Meta-Module, JetFormBuilder form extraction, migrations 7–8, webhook token auto-migration
 
 ## [3.4.0] - 2026-02-18
 

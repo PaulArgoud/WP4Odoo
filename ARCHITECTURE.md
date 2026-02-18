@@ -300,7 +300,7 @@ WordPress For Odoo/
 │   ├── class-circuit-breaker.php     # Circuit breaker for Odoo connectivity (3-state, advisory lock probe mutex, DB-backed fallback)
 │   ├── class-sync-engine.php          # Queue processor, advisory locking, smart retry (Error_Type), memory guard
 │   ├── class-batch-create-processor.php # Batch create pipeline (grouping, claiming, fallback) extracted from Sync_Engine
-│   ├── class-queue-manager.php        # Instantiable queue manager with DI, queue depth alerting, static + instance API
+│   ├── class-queue-manager.php        # Instantiable queue manager with DI (repo + logger), queue depth alerting, static + instance API
 │   ├── class-queue-job.php            # Readonly DTO for sync queue jobs (typed properties, from_row() factory)
 │   ├── class-advisory-lock.php        # Reusable MySQL advisory lock wrapper (acquire, release, is_held)
 │   ├── class-query-service.php        # Paginated queries with column projection (queue jobs, log entries) — injectable instance
@@ -313,7 +313,7 @@ WordPress For Odoo/
 │   ├── class-cli.php                 # WP-CLI commands (loaded only in CLI context)
 │   ├── trait-cli-queue-commands.php   # CLI queue subcommands (stats, list, retry, cleanup, cancel)
 │   ├── trait-cli-module-commands.php  # CLI module subcommands (list, enable, disable)
-│   └── class-logger.php              # DB-backed logger with level filtering, 4KB context truncation
+│   └── class-logger.php              # DB-backed logger with level filtering, 4KB context truncation, for_channel() factory
 │
 ├── admin/
 │   ├── css/admin.css                  # Admin styles (~560 lines)
@@ -554,7 +554,7 @@ WordPress For Odoo/
 │       ├── WPERPModuleTest.php         # 101 tests for WP ERP module
 │       ├── ErrorClassificationTest.php # 19 tests for Error_Classification trait
 │       ├── PushDedupLockTest.php      #   6 tests for Push_Lock advisory lock
-│       ├── DatabaseMigrationTest.php  #   9 tests for Database_Migration (migrations 1–7)
+│       ├── DatabaseMigrationTest.php  #   9 tests for Database_Migration (migrations 1–8)
 │       ├── MultisiteTest.php          #   29 tests for multisite (blog_id scoping, company_id, network fallback)
 │       ├── JetBookingModuleTest.php   # Tests for Jet_Booking_Module
 │       ├── JetBookingHandlerTest.php  # Tests for Jet_Booking_Handler
@@ -674,6 +674,7 @@ Module_Base (abstract)
 - Push helpers: `enqueue_push()` (mapping lookup + injectable Queue_Manager via `$this->queue()`), `handle_cpt_save()` (anti-loop + revision/autosave + post_type + settings guards → enqueue_push; used by 12 hooks traits)
 - Guard helpers: `should_sync(string $setting_key)` (consolidated `is_importing()` + settings check — used in ~40 hook callbacks), `poll_entity_changes(string $entity_type, array $items, string $id_field)` (SHA-256 hash-based diff against entity map — detects creates/updates/deletes, used by Bookly and Ecwid cron polling)
 - Graceful degradation: `safe_callback()` wraps hook callbacks in try/catch(`\Throwable`), logging crashes instead of crashing the WordPress request. All ~87 third-party hook registrations use this wrapper
+- Hook lifecycle: `register_hook($hook, $callback, $priority, $args)` wraps `add_action()` with `safe_callback()` and tracks registered hooks. `teardown()` removes all tracked hooks via `remove_action()`, called when a module is disabled via admin toggle
 - Subclass hooks: `boot()`, `load_wp_data()`, `save_wp_data()`, `delete_wp_data()`
 
 **Module lifecycle:**
@@ -995,6 +996,7 @@ Managed via `dbDelta()` in `Database_Migration::create_tables()`. Schema upgrade
 - Time-range index: `(created_at)` — added by migration_2
 - Processed status index: `(status, processed_at)` — added by migration_4 (health metrics)
 - Cleanup index: `(status, created_at)` — added by migration_5
+- Stale recovery index: `(blog_id, status, processed_at)` — added by migration_8
 - Correlation index: `(correlation_id)` — added by migration_1
 
 **`{prefix}wp4odoo_entity_map`** — WP ↔ Odoo mapping

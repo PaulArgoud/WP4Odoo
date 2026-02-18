@@ -68,6 +68,16 @@ class Logger {
 	private ?Settings_Repository $settings;
 
 	/**
+	 * Shared Settings_Repository for factory-created loggers.
+	 *
+	 * Avoids repeated get_option() calls when multiple factory loggers
+	 * are created in the same request (e.g. webhook + queue_manager).
+	 *
+	 * @var Settings_Repository|null
+	 */
+	private static ?Settings_Repository $shared_settings = null;
+
+	/**
 	 * Constructor.
 	 *
 	 * @param string|null              $module   Optional module identifier to tag all log entries.
@@ -76,6 +86,27 @@ class Logger {
 	public function __construct( ?string $module = null, ?Settings_Repository $settings = null ) {
 		$this->module   = $module;
 		$this->settings = $settings;
+	}
+
+	/**
+	 * Create a Logger for a named channel.
+	 *
+	 * Uses a shared Settings_Repository instance so multiple loggers
+	 * created in the same request don't each trigger a get_option() call.
+	 *
+	 * @param string                    $channel  Channel name (e.g. 'api', 'webhook', 'sync').
+	 * @param Settings_Repository|null  $settings Optional explicit settings (overrides shared).
+	 * @return self
+	 */
+	public static function for_channel( string $channel, ?Settings_Repository $settings = null ): self {
+		if ( null === $settings ) {
+			if ( null === self::$shared_settings ) {
+				self::$shared_settings = new Settings_Repository();
+			}
+			$settings = self::$shared_settings;
+		}
+
+		return new self( $channel, $settings );
 	}
 
 	/**
@@ -314,6 +345,6 @@ class Logger {
 	 * @return void
 	 */
 	public static function reset_cache(): void {
-		// No-op.
+		self::$shared_settings = null;
 	}
 }

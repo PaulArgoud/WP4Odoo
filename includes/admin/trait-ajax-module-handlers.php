@@ -42,6 +42,14 @@ trait Ajax_Module_Handlers {
 
 		wp4odoo()->settings()->set_module_enabled( $module_id, $enabled );
 
+		// Teardown hooks for the current request when disabling a module.
+		if ( ! $enabled ) {
+			$module = \WP4Odoo_Plugin::instance()->get_module( $module_id );
+			if ( $module ) {
+				$module->teardown();
+			}
+		}
+
 		$response = [
 			'module_id' => $module_id,
 			'enabled'   => $enabled,

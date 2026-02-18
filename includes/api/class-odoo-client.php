@@ -61,7 +61,7 @@ class Odoo_Client {
 	 * @param Settings_Repository|null $settings  Optional settings repository for the logger.
 	 */
 	public function __construct( ?Transport $transport = null, ?Settings_Repository $settings = null ) {
-		$this->logger = new Logger( 'api', $settings );
+		$this->logger = Logger::for_channel( 'api', $settings );
 
 		if ( null !== $transport ) {
 			$this->transport = $transport;

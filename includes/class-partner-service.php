@@ -48,7 +48,7 @@ class Partner_Service {
 	 * @param Settings_Repository|null $settings      Settings repository (null uses default).
 	 */
 	public function __construct( \Closure $client_getter, Entity_Map_Repository $entity_map, ?Settings_Repository $settings = null ) {
-		$this->logger        = new Logger( 'partner', $settings );
+		$this->logger        = Logger::for_channel( 'partner', $settings );
 		$this->client_getter = $client_getter;
 		$this->entity_map    = $entity_map;
 	}

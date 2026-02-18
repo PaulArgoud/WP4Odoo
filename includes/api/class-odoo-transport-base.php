@@ -84,7 +84,7 @@ abstract class Odoo_Transport_Base implements Transport {
 		$this->database = $database;
 		$this->api_key  = $api_key;
 		$this->timeout  = $timeout;
-		$this->logger   = new Logger( $this->get_protocol_name() );
+		$this->logger   = Logger::for_channel( $this->get_protocol_name() );
 	}
 
 	/**
