@@ -32,101 +32,100 @@ tests_add_filter(
 
 require $_tests_dir . '/includes/bootstrap.php';
 
-// Create plugin tables AFTER WordPress is fully installed and booted.
-// dbDelta() may fail silently in certain environments — verify and fallback.
+// ── Create plugin tables ────────────────────────────────────
+//
+// WordPress dbDelta() fails silently in certain wp-env environments
+// (the test database is empty and dbDelta's table-existence check
+// misfires). To avoid corrupted migration state, we create tables
+// directly with raw SQL — this is the canonical schema from
+// Database_Migration::create_tables() with all migrations applied.
+//
+// After creation we set schema_version to the latest migration
+// number so that Database_Migration::run_migrations() becomes a
+// no-op if ever called again during the test run.
+
 global $wpdb;
 
-require_once ABSPATH . 'wp-admin/includes/upgrade.php';
-\WP4Odoo\Database_Migration::create_tables();
+$charset_collate = $wpdb->get_charset_collate();
 
-// Verify tables were created. If dbDelta failed, use raw SQL.
-$table_check = $wpdb->get_var( "SHOW TABLES LIKE '{$wpdb->prefix}wp4odoo_sync_queue'" );
-if ( ! $table_check ) {
-	fwrite( STDERR, "[WP4Odoo] dbDelta failed — creating tables with raw SQL.\n" );
+$wpdb->query(
+	"CREATE TABLE IF NOT EXISTS {$wpdb->prefix}wp4odoo_sync_queue (
+		id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+		blog_id BIGINT(20) UNSIGNED NOT NULL DEFAULT 1,
+		correlation_id CHAR(36) DEFAULT NULL,
+		module VARCHAR(50) NOT NULL,
+		direction ENUM('wp_to_odoo','odoo_to_wp') NOT NULL,
+		entity_type VARCHAR(100) NOT NULL,
+		wp_id BIGINT(20) UNSIGNED DEFAULT NULL,
+		odoo_id BIGINT(20) UNSIGNED DEFAULT NULL,
+		action ENUM('create','update','delete') NOT NULL DEFAULT 'update',
+		payload LONGTEXT DEFAULT NULL,
+		priority TINYINT(3) UNSIGNED NOT NULL DEFAULT 5,
+		status ENUM('pending','processing','completed','failed') NOT NULL DEFAULT 'pending',
+		attempts TINYINT(3) UNSIGNED NOT NULL DEFAULT 0,
+		max_attempts TINYINT(3) UNSIGNED NOT NULL DEFAULT 3,
+		error_message TEXT DEFAULT NULL,
+		scheduled_at DATETIME DEFAULT NULL,
+		processed_at DATETIME DEFAULT NULL,
+		created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+		PRIMARY KEY (id),
+		KEY idx_status_priority (status, priority, scheduled_at),
+		KEY idx_status_module (blog_id, status, module, priority, created_at),
+		KEY idx_module_entity (module, entity_type),
+		KEY idx_dedup_wp (blog_id, module, entity_type, direction, status, wp_id),
+		KEY idx_dedup_odoo (blog_id, module, entity_type, direction, status, odoo_id),
+		KEY idx_wp_id (wp_id),
+		KEY idx_odoo_id (odoo_id),
+		KEY idx_correlation (correlation_id),
+		KEY idx_status_created (status, created_at),
+		KEY idx_status_attempts (status, attempts),
+		KEY idx_processed_status (status, processed_at),
+		KEY idx_stale_recovery (blog_id, status, processed_at)
+	) ENGINE=InnoDB $charset_collate"
+);
 
-	$charset_collate = $wpdb->get_charset_collate();
+$wpdb->query(
+	"CREATE TABLE IF NOT EXISTS {$wpdb->prefix}wp4odoo_entity_map (
+		id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+		blog_id BIGINT(20) UNSIGNED NOT NULL DEFAULT 1,
+		module VARCHAR(50) NOT NULL,
+		entity_type VARCHAR(100) NOT NULL,
+		wp_id BIGINT(20) UNSIGNED NOT NULL,
+		odoo_id BIGINT(20) UNSIGNED NOT NULL,
+		odoo_model VARCHAR(100) NOT NULL,
+		sync_hash VARCHAR(64) DEFAULT NULL,
+		last_synced_at DATETIME DEFAULT NULL,
+		last_polled_at DATETIME DEFAULT NULL,
+		created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+		PRIMARY KEY (id),
+		UNIQUE KEY idx_unique_mapping (blog_id, module, entity_type, wp_id, odoo_id),
+		KEY idx_wp_lookup (blog_id, module, entity_type, wp_id),
+		KEY idx_odoo_lookup (blog_id, module, entity_type, odoo_id),
+		KEY idx_poll_detection (blog_id, module, entity_type, last_polled_at)
+	) ENGINE=InnoDB $charset_collate"
+);
 
-	$wpdb->query(
-		"CREATE TABLE IF NOT EXISTS {$wpdb->prefix}wp4odoo_sync_queue (
-			id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-			blog_id BIGINT(20) UNSIGNED NOT NULL DEFAULT 1,
-			correlation_id CHAR(36) DEFAULT NULL,
-			module VARCHAR(50) NOT NULL,
-			direction ENUM('wp_to_odoo','odoo_to_wp') NOT NULL,
-			entity_type VARCHAR(100) NOT NULL,
-			wp_id BIGINT(20) UNSIGNED DEFAULT NULL,
-			odoo_id BIGINT(20) UNSIGNED DEFAULT NULL,
-			action ENUM('create','update','delete') NOT NULL DEFAULT 'update',
-			payload LONGTEXT DEFAULT NULL,
-			priority TINYINT(3) UNSIGNED NOT NULL DEFAULT 5,
-			status ENUM('pending','processing','completed','failed') NOT NULL DEFAULT 'pending',
-			attempts TINYINT(3) UNSIGNED NOT NULL DEFAULT 0,
-			max_attempts TINYINT(3) UNSIGNED NOT NULL DEFAULT 3,
-			error_message TEXT DEFAULT NULL,
-			scheduled_at DATETIME DEFAULT NULL,
-			processed_at DATETIME DEFAULT NULL,
-			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-			PRIMARY KEY (id),
-			KEY idx_status_priority (status, priority, scheduled_at),
-			KEY idx_status_module (blog_id, status, module, priority, created_at),
-			KEY idx_module_entity (module, entity_type),
-			KEY idx_dedup_wp (blog_id, module, entity_type, direction, status, wp_id),
-			KEY idx_dedup_odoo (blog_id, module, entity_type, direction, status, odoo_id),
-			KEY idx_wp_id (wp_id),
-			KEY idx_odoo_id (odoo_id),
-			KEY idx_correlation (correlation_id),
-			KEY idx_status_created (status, created_at),
-			KEY idx_status_attempts (status, attempts),
-			KEY idx_processed_status (status, processed_at),
-			KEY idx_stale_recovery (blog_id, status, processed_at)
-		) $charset_collate"
-	);
+$wpdb->query(
+	"CREATE TABLE IF NOT EXISTS {$wpdb->prefix}wp4odoo_logs (
+		id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+		blog_id BIGINT(20) UNSIGNED NOT NULL DEFAULT 1,
+		correlation_id CHAR(36) DEFAULT NULL,
+		level ENUM('debug','info','warning','error','critical') NOT NULL DEFAULT 'info',
+		module VARCHAR(50) DEFAULT NULL,
+		message TEXT NOT NULL,
+		context LONGTEXT DEFAULT NULL,
+		created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+		PRIMARY KEY (id),
+		KEY idx_level_date (level, created_at),
+		KEY idx_module (module),
+		KEY idx_correlation (correlation_id),
+		KEY idx_blog_cleanup (blog_id, created_at)
+	) ENGINE=InnoDB $charset_collate"
+);
 
-	$wpdb->query(
-		"CREATE TABLE IF NOT EXISTS {$wpdb->prefix}wp4odoo_entity_map (
-			id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-			blog_id BIGINT(20) UNSIGNED NOT NULL DEFAULT 1,
-			module VARCHAR(50) NOT NULL,
-			entity_type VARCHAR(100) NOT NULL,
-			wp_id BIGINT(20) UNSIGNED NOT NULL,
-			odoo_id BIGINT(20) UNSIGNED NOT NULL,
-			odoo_model VARCHAR(100) NOT NULL,
-			sync_hash VARCHAR(64) DEFAULT NULL,
-			last_synced_at DATETIME DEFAULT NULL,
-			last_polled_at DATETIME DEFAULT NULL,
-			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-			PRIMARY KEY (id),
-			UNIQUE KEY idx_unique_mapping (blog_id, module, entity_type, wp_id, odoo_id),
-			KEY idx_wp_lookup (blog_id, module, entity_type, wp_id),
-			KEY idx_odoo_lookup (blog_id, module, entity_type, odoo_id),
-			KEY idx_poll_detection (blog_id, module, entity_type, last_polled_at)
-		) $charset_collate"
-	);
-
-	$wpdb->query(
-		"CREATE TABLE IF NOT EXISTS {$wpdb->prefix}wp4odoo_logs (
-			id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-			blog_id BIGINT(20) UNSIGNED NOT NULL DEFAULT 1,
-			correlation_id CHAR(36) DEFAULT NULL,
-			level ENUM('debug','info','warning','error','critical') NOT NULL DEFAULT 'info',
-			module VARCHAR(50) DEFAULT NULL,
-			message TEXT NOT NULL,
-			context LONGTEXT DEFAULT NULL,
-			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-			PRIMARY KEY (id),
-			KEY idx_level_date (level, created_at),
-			KEY idx_module (module),
-			KEY idx_correlation (correlation_id),
-			KEY idx_blog_cleanup (blog_id, created_at)
-		) $charset_collate"
-	);
-
-	// Reset schema_version — the failed dbDelta path let migrations "succeed"
-	// against non-existent tables, advancing schema_version to 10 without
-	// actually applying anything. Reset so migrations run correctly now.
-	delete_option( \WP4Odoo\Database_Migration::OPT_SCHEMA_VERSION );
-	\WP4Odoo\Database_Migration::run_migrations();
-}
+// Set schema_version to latest so run_migrations() is a no-op.
+update_option( \WP4Odoo\Database_Migration::OPT_SCHEMA_VERSION, 10 );
+update_option( \WP4Odoo\Settings_Repository::OPT_DB_VERSION, WP4ODOO_VERSION );
 
 // Load the PHPUnit 10+ compatibility base class (WP core Trac #62004 workaround).
 require_once __DIR__ . '/Integration/WP4Odoo_TestCase.php';

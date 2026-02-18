@@ -308,11 +308,12 @@ WordPress For Odoo/
 │   ├── trait-error-classification.php # Error_Classification trait: classify RuntimeException → Error_Type (transient vs permanent)
 │   ├── trait-push-lock.php           # Push_Lock trait: MySQL advisory lock around push_to_odoo() create path (TOCTOU prevention)
 │   ├── trait-poll-support.php        # Poll_Support trait: targeted entity_map loading + last_polled_at deletion detection
-│   ├── class-entity-map-repository.php # DB access for wp4odoo_entity_map (batch lookups, LRU cache)
+│   ├── class-entity-map-repository.php # DB access for wp4odoo_entity_map (batch lookups, LRU cache, orphan cleanup)
 │   ├── class-sync-queue-repository.php # DB access for wp4odoo_sync_queue (atomic dedup via transaction)
 │   ├── class-partner-service.php       # Shared res.partner lookup/creation service (advisory lock dedup)
 │   ├── class-failure-notifier.php     # Admin email notification on consecutive sync failures
 │   ├── class-circuit-breaker.php     # Circuit breaker for Odoo connectivity (3-state, advisory lock probe mutex, DB-backed fallback)
+│   ├── class-module-circuit-breaker.php # Per-module circuit breaker (isolates failing modules, 5-batch threshold, 80% ratio, 600s recovery)
 │   ├── class-sync-engine.php          # Queue processor, advisory locking, smart retry (Error_Type), memory guard
 │   ├── class-batch-create-processor.php # Batch create pipeline (grouping, claiming, fallback) extracted from Sync_Engine
 │   ├── class-queue-manager.php        # Instantiable queue manager with DI (repo + logger), queue depth alerting, static + instance API
@@ -325,7 +326,7 @@ WordPress For Odoo/
 │   ├── class-rate-limiter.php        # Dual-strategy rate limiter (atomic wp_cache_incr + transient fallback)
 │   ├── class-schema-cache.php        # fields_get() cache (memory + transient) for field validation
 │   ├── class-reconciler.php          # Entity map reconciliation against live Odoo records
-│   ├── class-cli.php                 # WP-CLI commands (loaded only in CLI context)
+│   ├── class-cli.php                 # WP-CLI commands (loaded only in CLI context, includes cleanup orphans)
 │   ├── trait-cli-queue-commands.php   # CLI queue subcommands (stats, list, retry, cleanup, cancel)
 │   ├── trait-cli-module-commands.php  # CLI module subcommands (list, enable, disable)
 │   └── class-logger.php              # DB-backed logger with level filtering, 4KB context truncation, for_channel() factory
@@ -341,7 +342,7 @@ WordPress For Odoo/
 │       ├── tab-modules.php            #   Module cards with AJAX toggles + inline settings panels
 │       ├── tab-queue.php              #   Stats cards + paginated jobs table
 │       ├── tab-logs.php               #   Filter bar + AJAX paginated log table
-│       ├── tab-health.php             #   Health dashboard (system status, queue stats, circuit breaker, cron)
+│       ├── tab-health.php             #   Health dashboard (system status, queue stats, circuit breaker, module breakers, cron)
 │       └── network-settings.php       #   Network admin: shared connection + site → company_id table
 │
 ├── assets/                            # Frontend assets
@@ -523,6 +524,7 @@ WordPress For Odoo/
 │       ├── OdooAccountingFormatterTest.php # Tests for Odoo_Accounting_Formatter
 │       ├── OdooModelTest.php            # Tests for Odoo_Model enum
 │       ├── CircuitBreakerTest.php       # Tests for Circuit_Breaker
+│       ├── ModuleCircuitBreakerTest.php # Tests for Module_Circuit_Breaker (20 tests: state transitions, isolation, recovery)
 │       ├── ModuleRegistryTest.php       # Tests for Module_Registry
 │       ├── ModuleBaseHelpersTest.php    #   18 tests for should_sync(), poll_entity_changes(), push_entity()
 │       ├── SafeCallbackTest.php         # Tests for safe_callback() graceful degradation
@@ -782,7 +784,8 @@ WP Event               Sync Engine (cron)           Odoo
 **Reliability mechanisms:**
 - MySQL advisory locking via `GET_LOCK()` / `RELEASE_LOCK()` (prevents parallel execution, return value verified)
 - Exponential backoff on failure (`2^(attempts+1) × 60s`)
-- Circuit breaker: pauses processing after 3 consecutive all-fail batches (5-min recovery delay, probe mutex, DB-backed state via `wp_options` survives cache flushes)
+- Circuit breaker (global): pauses processing after 3 consecutive all-fail batches (5-min recovery delay, probe mutex, DB-backed state via `wp_options` survives cache flushes)
+- Circuit breaker (per-module): isolates failing modules without blocking the entire sync — 5 consecutive batches with ≥80% failure ratio opens the module, 600s recovery delay (half-open probe), auto-cleans stale state >2h. Integrated into `Failure_Notifier` (per-module email with cooldown) and health dashboard
 - Deduplication: updates an existing `pending` job rather than creating a duplicate (atomic via `SELECT … FOR UPDATE`)
 - Configurable batch size (50 items per cron tick by default)
 - Stale job recovery: configurable timeout (60–3600 s, default 600 s via `stale_timeout` sync setting)
@@ -2156,6 +2159,7 @@ Shared service for managing WP user ↔ Odoo `res.partner` relationships. Access
 | `wp wp4odoo module enable <id>` | Enable a module (enforces mutual exclusivity) |
 | `wp wp4odoo module disable <id>` | Disable a module |
 | `wp wp4odoo reconcile <module> <entity>` | Detect orphaned entity_map entries (`--fix` to remove, `--yes` to skip confirmation) |
+| `wp wp4odoo cleanup orphans` | Remove entity_map entries where WP post no longer exists (`--module`, `--dry-run`, `--yes`) |
 
 Pure delegation to existing services — no business logic in CLI class.
 
