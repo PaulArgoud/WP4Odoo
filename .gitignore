@@ -17,6 +17,9 @@ composer.lock
 .DS_Store
 Thumbs.db
 
+# PHPCS (local override of .phpcs.xml.dist)
+.phpcs.xml
+
 # PHPUnit
 .phpunit.result.cache
 .phpunit.cache/
