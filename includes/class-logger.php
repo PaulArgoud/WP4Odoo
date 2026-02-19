@@ -34,6 +34,17 @@ class Logger {
 	private const CLEANUP_CHUNK_SIZE = 10000;
 
 	/**
+	 * Number of log entries to buffer before flushing to DB.
+	 *
+	 * Reduces DB round-trips during batch processing: log() calls
+	 * become pure memory operations until the buffer is full or the
+	 * request ends (via shutdown function).
+	 *
+	 * @since 3.8.0
+	 */
+	private const WRITE_BUFFER_SIZE = 50;
+
+	/**
 	 * Log levels in ascending severity order.
 	 *
 	 * @var array<string, int>
@@ -76,6 +87,23 @@ class Logger {
 	 * @var Settings_Repository|null
 	 */
 	private static ?Settings_Repository $shared_settings = null;
+
+	/**
+	 * Write buffer for deferred batch inserts.
+	 *
+	 * Shared across all Logger instances to aggregate writes from
+	 * different channels into a single flush operation.
+	 *
+	 * @var array<int, array{blog_id: int, correlation_id: string|null, level: string, module: string|null, message: string, context: string|null}>
+	 */
+	private static array $write_buffer = [];
+
+	/**
+	 * Whether the shutdown flush function has been registered.
+	 *
+	 * @var bool
+	 */
+	private static bool $shutdown_registered = false;
 
 	/**
 	 * Constructor.
@@ -145,24 +173,65 @@ class Logger {
 			return false;
 		}
 
+		self::$write_buffer[] = [
+			'blog_id'        => (int) get_current_blog_id(),
+			'correlation_id' => $this->correlation_id,
+			'level'          => $level,
+			'module'         => $this->module,
+			'message'        => $message,
+			'context'        => ! empty( $context ) ? self::truncate_context( $context ) : null,
+		];
+
+		if ( ! self::$shutdown_registered ) {
+			self::$shutdown_registered = true;
+			register_shutdown_function( [ self::class, 'flush_buffer' ] );
+		}
+
+		if ( count( self::$write_buffer ) >= self::WRITE_BUFFER_SIZE ) {
+			self::flush_buffer();
+		}
+
+		return true;
+	}
+
+	/**
+	 * Flush the write buffer to the database.
+	 *
+	 * Inserts all buffered log entries using individual $wpdb->insert()
+	 * calls. Called automatically when the buffer reaches WRITE_BUFFER_SIZE
+	 * or at request shutdown.
+	 *
+	 * @since 3.8.0
+	 *
+	 * @return void
+	 */
+	public static function flush_buffer(): void {
+		if ( empty( self::$write_buffer ) ) {
+			return;
+		}
+
 		global $wpdb;
 
-		$table = $wpdb->prefix . 'wp4odoo_logs';
+		// Guard: $wpdb may be unavailable during late PHP shutdown.
+		if ( ! isset( $wpdb ) || ! is_object( $wpdb ) ) {
+			self::$write_buffer = [];
+			return;
+		}
 
-		$result = $wpdb->insert(
-			$table,
-			[
-				'blog_id'        => (int) get_current_blog_id(),
-				'correlation_id' => $this->correlation_id,
-				'level'          => $level,
-				'module'         => $this->module,
-				'message'        => $message,
-				'context'        => ! empty( $context ) ? self::truncate_context( $context ) : null,
-			],
-			[ '%d', '%s', '%s', '%s', '%s', '%s' ]
-		);
+		$table   = $wpdb->prefix . 'wp4odoo_logs';
+		$entries = self::$write_buffer;
 
-		return false !== $result;
+		// Clear buffer before writing to prevent infinite recursion
+		// if insert triggers a log call (e.g., via WordPress hooks).
+		self::$write_buffer = [];
+
+		foreach ( $entries as $entry ) {
+			$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+				$table,
+				$entry,
+				[ '%d', '%s', '%s', '%s', '%s', '%s' ]
+			);
+		}
 	}
 
 	/**
@@ -345,6 +414,8 @@ class Logger {
 	 * @return void
 	 */
 	public static function reset_cache(): void {
-		self::$shared_settings = null;
+		self::$shared_settings     = null;
+		self::$write_buffer        = [];
+		self::$shutdown_registered = false;
 	}
 }

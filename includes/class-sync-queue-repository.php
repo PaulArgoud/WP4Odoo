@@ -537,6 +537,23 @@ class Sync_Queue_Repository {
 	}
 
 	/**
+	 * Defer a pending job by pushing its scheduled_at forward.
+	 *
+	 * Used by Sync_Engine to reschedule jobs whose module circuit breaker
+	 * is open, preventing them from being re-fetched on every cron tick.
+	 *
+	 * @since 3.8.0
+	 *
+	 * @param int    $job_id       The queue job ID.
+	 * @param string $scheduled_at New scheduled_at value (UTC datetime).
+	 * @return void
+	 */
+	public function defer_job( int $job_id, string $scheduled_at ): void {
+		global $wpdb;
+		$wpdb->update( $this->table(), [ 'scheduled_at' => $scheduled_at ], [ 'id' => $job_id ] ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+	}
+
+	/**
 	 * Atomically claim a pending job for processing.
 	 *
 	 * Uses UPDATE … WHERE status = 'pending' to prevent race conditions

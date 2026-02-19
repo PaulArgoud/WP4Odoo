@@ -172,6 +172,20 @@ class Module_Circuit_Breaker {
 	}
 
 	/**
+	 * Get the recovery delay in seconds.
+	 *
+	 * Used by Sync_Engine to defer jobs for open modules so they are not
+	 * re-fetched on every cron tick (avoids hot polling loop).
+	 *
+	 * @since 3.8.0
+	 *
+	 * @return int Seconds until recovery probe is attempted.
+	 */
+	public function get_recovery_delay(): int {
+		return self::RECOVERY_DELAY;
+	}
+
+	/**
 	 * Get all currently open modules.
 	 *
 	 * @return array<string, array{failures: int, opened_at: int}> Module states that are currently open.

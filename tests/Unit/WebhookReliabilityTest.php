@@ -87,15 +87,17 @@ class WebhookReliabilityTest extends TestCase {
 		] );
 
 		$this->handler->handle_webhook( $request );
+		\WP4Odoo\Logger::flush_buffer();
 
 		// Check that a CRITICAL-level log was inserted to the logs table.
-		$log_inserts = array_values(
+		$critical_inserts = array_values(
 			array_filter( $this->wpdb->calls, fn( $c ) =>
-				$c['method'] === 'insert' && str_contains( $c['args'][0], 'logs' )
+				$c['method'] === 'insert'
+				&& str_contains( $c['args'][0], 'logs' )
+				&& 'critical' === ( $c['args'][1]['level'] ?? '' )
 			)
 		);
-		$this->assertNotEmpty( $log_inserts );
-		$this->assertSame( 'critical', $log_inserts[0]['args'][1]['level'] );
+		$this->assertNotEmpty( $critical_inserts );
 	}
 
 	public function test_webhook_still_returns_202_on_success(): void {

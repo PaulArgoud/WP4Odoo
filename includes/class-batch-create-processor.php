@@ -65,7 +65,7 @@ class Batch_Create_Processor {
 	 * @return array{processed: int, successes: int, failures: int}
 	 */
 	public function process( array $jobs, array &$batched_job_ids ): array {
-		$groups = $this->group_eligible_jobs( $jobs );
+		$groups = $this->group_eligible_jobs( $jobs, $batched_job_ids );
 
 		$processed = 0;
 		$successes = 0;
@@ -94,10 +94,11 @@ class Batch_Create_Processor {
 	}
 
 	/**
-	 * @param Queue_Job[] $jobs All fetched jobs.
+	 * @param Queue_Job[]      $jobs              All fetched jobs.
+	 * @param array<int, bool> &$evicted_job_ids  Output: IDs of jobs evicted by dedup (to prevent reprocessing).
 	 * @return array<string, Queue_Job[]> Groups keyed by module:entity_type.
 	 */
-	private function group_eligible_jobs( array $jobs ): array {
+	private function group_eligible_jobs( array $jobs, array &$evicted_job_ids ): array {
 		$groups = [];
 		// Track wp_id → index per group to deduplicate within each group.
 		$wp_id_index = [];
@@ -108,8 +109,11 @@ class Batch_Create_Processor {
 				$wp_id = (int) $job->wp_id;
 
 				// Deduplicate by wp_id within each group: keep the latest job
-				// to prevent creating duplicate records in Odoo.
+				// to prevent creating duplicate records in Odoo. Mark the evicted
+				// job so the individual processing loop does not reprocess it.
 				if ( $wp_id > 0 && isset( $wp_id_index[ $key ][ $wp_id ] ) ) {
+					$old_job                               = $groups[ $key ][ $wp_id_index[ $key ][ $wp_id ] ];
+					$evicted_job_ids[ (int) $old_job->id ] = true;
 					$groups[ $key ][ $wp_id_index[ $key ][ $wp_id ] ] = $job;
 					continue;
 				}

@@ -50,7 +50,7 @@ trait Sync_Orchestrator {
 			$wp_data                  = ! empty( $payload ) ? $payload : $this->load_wp_data( $entity_type, $wp_id );
 			$wp_data['_wp_entity_id'] = $wp_id;
 			$odoo_values              = $this->map_to_odoo( $entity_type, $wp_data );
-			$odoo_values              = $this->maybe_inject_company_id( $odoo_values );
+			$odoo_values              = $this->maybe_inject_company_id( $odoo_values, $model );
 
 			if ( empty( $odoo_values ) ) {
 				$this->logger->warning( 'No data to push.', compact( 'entity_type', 'wp_id' ) );
@@ -169,7 +169,7 @@ trait Sync_Orchestrator {
 			$wp_data                  = ! empty( $item['payload'] ) ? $item['payload'] : $this->load_wp_data( $entity_type, $wp_id );
 			$wp_data['_wp_entity_id'] = $wp_id;
 			$odoo_values              = $this->map_to_odoo( $entity_type, $wp_data );
-			$odoo_values              = $this->maybe_inject_company_id( $odoo_values );
+			$odoo_values              = $this->maybe_inject_company_id( $odoo_values, $model );
 
 			if ( empty( $odoo_values ) ) {
 				$results[ $wp_id ] = Sync_Result::failure( 'No data to push.', Error_Type::Permanent );
@@ -338,7 +338,7 @@ trait Sync_Orchestrator {
 			}
 
 			$this->logger->error( 'Failed to save WP data during pull.', compact( 'entity_type', 'odoo_id' ) );
-			return Sync_Result::failure( 'Failed to save WP data during pull.', Error_Type::Permanent );
+			return Sync_Result::failure( 'Failed to save WP data during pull.', Error_Type::Transient );
 		} finally {
 			$this->clear_importing();
 		}
@@ -364,13 +364,25 @@ trait Sync_Orchestrator {
 	 * handles filtering, but record-level company_id ensures the created
 	 * record is assigned to the correct company.
 	 *
+	 * Skips injection when the schema cache confirms the model does not
+	 * have a company_id field (e.g. res.currency, product.category).
+	 *
 	 * Modules can override this by setting company_id in their map_to_odoo().
 	 *
-	 * @param array $odoo_values The mapped Odoo field values.
+	 * @param array  $odoo_values The mapped Odoo field values.
+	 * @param string $model       The Odoo model name.
 	 * @return array The values with company_id injected if applicable.
 	 */
-	private function maybe_inject_company_id( array $odoo_values ): array {
+	private function maybe_inject_company_id( array $odoo_values, string $model ): array {
 		if ( isset( $odoo_values['company_id'] ) ) {
+			return $odoo_values;
+		}
+
+		// Skip injection if the schema cache confirms the model lacks company_id.
+		// When the cache is empty (API unreachable), we err on the side of injecting
+		// — Odoo silently ignores unknown fields on write in most configurations.
+		$fields = Schema_Cache::get_fields( fn() => $this->client(), $model );
+		if ( ! empty( $fields ) && ! isset( $fields['company_id'] ) ) {
 			return $odoo_values;
 		}
 

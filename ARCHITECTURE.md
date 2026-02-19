@@ -309,9 +309,9 @@ WordPress For Odoo/
 │   ├── class-settings-repository.php  # Centralized option access: keys, defaults, typed accessors (DI)
 │   ├── class-module-registry.php      # Module registration, mutual exclusivity, lifecycle
 │   ├── class-module-base.php          # Abstract base class for modules (mapping, anti-loop, trait composition)
-│   ├── trait-sync-orchestrator.php   # Push/pull orchestration trait (push_to_odoo, push_batch_creates, pull_from_odoo)
+│   ├── trait-sync-orchestrator.php   # Push/pull orchestration trait (push_to_odoo, push_batch_creates, pull_from_odoo, schema-guarded company_id injection)
 │   ├── trait-module-helpers.php       # Composition trait: uses Partner_Helpers, Accounting_Helpers, Dependency_Helpers, Sync_Helpers
-│   ├── trait-partner-helpers.php     # Partner resolution: partner_service(), resolve_partner_from_user/email
+│   ├── trait-partner-helpers.php     # Partner resolution: partner_service() (static singleton), resolve_partner_from_user/email
 │   ├── trait-accounting-helpers.php  # Invoice helpers: auto_post_invoice()
 │   ├── trait-dependency-helpers.php  # Entity dependency: ensure_entity_synced, check_dependency, has_odoo_model
 │   ├── trait-sync-helpers.php        # Sync utilities: push_entity, translation_service, synthetic IDs, resolve_many2one_field
@@ -326,12 +326,12 @@ WordPress For Odoo/
 │   ├── trait-network-settings.php    # Network_Settings trait (from Settings_Repository): multisite connection, site → company_id mapping
 │   ├── class-entity-map-repository.php # DB access for wp4odoo_entity_map (batch lookups, LRU cache, orphan cleanup)
 │   ├── class-sync-queue-repository.php # DB access for wp4odoo_sync_queue (atomic dedup via transaction)
-│   ├── class-partner-service.php       # Shared res.partner lookup/creation service (advisory lock dedup)
+│   ├── class-partner-service.php       # Shared static res.partner lookup/creation service (advisory lock dedup, singleton across modules)
 │   ├── class-failure-notifier.php     # Admin email notification on consecutive sync failures
 │   ├── class-circuit-breaker.php     # Circuit breaker for Odoo connectivity (3-state, advisory lock probe mutex, DB-backed fallback)
 │   ├── class-module-circuit-breaker.php # Per-module circuit breaker (isolates failing modules, 5-batch threshold, 80% ratio, 600s recovery)
 │   ├── class-sync-engine.php          # Queue processor, advisory locking, smart retry (Error_Type), memory guard
-│   ├── class-batch-create-processor.php # Batch create pipeline (grouping, claiming, fallback) extracted from Sync_Engine
+│   ├── class-batch-create-processor.php # Batch create pipeline (grouping, claiming, fallback, dedup eviction tracking) extracted from Sync_Engine
 │   ├── class-queue-manager.php        # Instantiable queue manager with DI (repo + logger), queue depth alerting, static + instance API
 │   ├── class-queue-job.php            # Readonly DTO for sync queue jobs (typed properties, from_row() factory)
 │   ├── class-advisory-lock.php        # Reusable MySQL advisory lock wrapper (acquire, release, is_held)
@@ -345,7 +345,7 @@ WordPress For Odoo/
 │   ├── class-cli.php                 # WP-CLI commands (loaded only in CLI context, includes cleanup orphans, cache flush)
 │   ├── trait-cli-queue-commands.php   # CLI queue subcommands (stats, list, retry, cleanup, cancel)
 │   ├── trait-cli-module-commands.php  # CLI module subcommands (list, enable, disable)
-│   └── class-logger.php              # DB-backed logger with level filtering, 4KB context truncation, for_channel() factory
+│   └── class-logger.php              # DB-backed logger with level filtering, 4KB context truncation, for_channel() factory, write buffer (50 entries, flush at threshold or shutdown)
 │
 ├── admin/
 │   ├── css/admin.css                  # Admin styles (~560 lines)
@@ -829,7 +829,7 @@ WP Event               Sync Engine (cron)           Odoo
 - MySQL advisory locking via `GET_LOCK()` / `RELEASE_LOCK()` (prevents parallel execution, return value verified)
 - Exponential backoff on failure (`2^(attempts+1) × 60s`)
 - Circuit breaker (global): pauses processing after 3 consecutive all-fail batches (5-min recovery delay, probe mutex, DB-backed state via `wp_options` survives cache flushes)
-- Circuit breaker (per-module): isolates failing modules without blocking the entire sync — 5 consecutive batches with ≥80% failure ratio opens the module, 600s recovery delay (half-open probe with per-module probe mutex via transient + advisory lock double-check), advisory lock on `record_module_failure()` to prevent lost-update races on the shared `wp_options` JSON blob, auto-cleans stale state >2h. Integrated into `Failure_Notifier` (per-module email with cooldown) and health dashboard
+- Circuit breaker (per-module): isolates failing modules without blocking the entire sync — 5 consecutive batches with ≥80% failure ratio opens the module, 600s recovery delay (half-open probe with per-module probe mutex via transient + advisory lock double-check), advisory lock on `record_module_failure()` to prevent lost-update races on the shared `wp_options` JSON blob, auto-cleans stale state >2h. Integrated into `Failure_Notifier` (per-module email with cooldown) and health dashboard. When open, jobs are deferred (`scheduled_at` pushed forward by recovery delay) instead of silently skipped, preventing hot-polling
 - Deduplication: updates an existing `pending` job rather than creating a duplicate (atomic via `SELECT … FOR UPDATE`)
 - Configurable batch size (50 items per cron tick by default)
 - Stale job recovery: configurable timeout (60–3600 s, default 600 s via `stale_timeout` sync setting)
@@ -922,7 +922,7 @@ The codebase uses a tiered error-handling strategy. Each tier is appropriate for
 
 **Guidelines for new code:**
 - **API layer** (`Odoo_Client`): throw on RPC faults, return empty arrays for search with no results.
-- **Modules**: return `Sync_Result` from push/pull, `null` from ID lookups, `0` from failed saves.
+- **Modules**: return `Sync_Result` from push/pull, `null` from ID lookups, `0` from failed saves. `save_wp_data()` failures are classified as `Error_Type::Transient` (WordPress save failures are typically retryable: DB locks, temporary constraints).
 - **Infrastructure**: throw for configuration errors, use typed returns for data access.
 
 > **Note:** `Image_Handler::pull_image()` returns `bool` (true if image was updated, false if unchanged or failed). This is the only handler that uses a boolean return — it acts as a side-effect operation (download + attach to WP media library) rather than a data transformer, so `Sync_Result` would be over-engineered. The caller (`WooCommerce_Module`) logs accordingly. A `MAX_IMAGE_BYTES` guard (10 MB) rejects oversized base64 image data before decoding to prevent OOM.
@@ -1104,7 +1104,7 @@ Managed via `dbDelta()` in `Database_Migration::create_tables()`. Schema upgrade
 
 ### WordPress Options (`wp_options`)
 
-All option keys, default values, and typed accessors are centralized in `Settings_Repository` (`includes/class-settings-repository.php`). Uses 3 traits for separation of concerns: `Failure_Tracking_Settings` (failure counters), `UI_State_Settings` (onboarding/checklist/cron), `Network_Settings` (multisite). Option key constants (e.g., `Settings_Repository::OPT_CONNECTION`) are used throughout the codebase instead of string literals. Instance-level cache is keyed by `blog_id` and auto-invalidated via `update_option_{$key}` hooks for external modifications (WP-CLI, cron, direct `update_option()` calls).
+All option keys, default values, and typed accessors are centralized in `Settings_Repository` (`includes/class-settings-repository.php`). Uses 3 traits for separation of concerns: `Failure_Tracking_Settings` (failure counters), `UI_State_Settings` (onboarding/checklist/cron), `Network_Settings` (multisite). Option key constants (e.g., `Settings_Repository::OPT_CONNECTION`) are used throughout the codebase instead of string literals. Instance-level cache is keyed by `blog_id` and auto-invalidated via `update_option_{$key}` hooks for external modifications (WP-CLI, cron, direct `update_option()` calls). Module settings (`get_module_settings()`) are also cached in memory, keyed by `blog_id` + module ID, invalidated on `save_module_settings()`.
 
 | Key | Constant | Type | Description |
 |-----|----------|------|-------------|
@@ -1114,7 +1114,7 @@ All option keys, default values, and typed accessors are centralized in `Setting
 | `wp4odoo_module_{id}_enabled` | — | `bool` | Per-module activation (via `is_module_enabled()`) |
 | `wp4odoo_module_{id}_settings` | — | `array` | Per-module configuration (via `get_module_settings()`) |
 | `wp4odoo_module_{id}_mappings` | — | `array` | Custom field mappings (via `get_module_mappings()`) |
-| `wp4odoo_webhook_token` | `OPT_WEBHOOK_TOKEN` | `string` | Auto-generated webhook auth token |
+| `wp4odoo_webhook_token` | `OPT_WEBHOOK_TOKEN` | `string` | Auto-generated webhook auth token (stored with `enc1:` prefix for encryption migration safety) |
 | `wp4odoo_db_version` | `OPT_DB_VERSION` | `string` | DB schema version |
 | `wp4odoo_onboarding_dismissed` | `OPT_ONBOARDING_DISMISSED` | `bool` | Setup notice dismissed |
 | `wp4odoo_checklist_dismissed` | `OPT_CHECKLIST_DISMISSED` | `bool` | Setup checklist dismissed |
@@ -1190,7 +1190,7 @@ Reading:  wp_options → sodium_crypto_secretbox_open() → API key (plaintext)
 - Derivation key based on WordPress salts (`AUTH_KEY`, `SECURE_AUTH_KEY`)
 - Optional dedicated key via `WP4ODOO_ENCRYPTION_KEY` in `wp-config.php`
 - OpenSSL fallback if libsodium is unavailable
-- Per-request credential cache (`$credentials_cache`) avoids repeated decryption in batch operations
+- Per-request credential cache (`$credentials_cache`) keyed by `blog_id` avoids repeated decryption in batch operations and prevents cross-site credential leakage on multisite
 - SSL verification enabled by default; opt-out via `WP4ODOO_DISABLE_SSL_VERIFY` constant (not a filter — prevents runtime injection)
 
 ### Request Authentication
@@ -1224,7 +1224,7 @@ All user inputs are sanitized with:
 **Key classes:**
 - `Admin` — orchestrator: menu registration, asset enqueuing, plugin settings link, activation redirect, setup notice, backup warning banner, version warnings with compatibility report links (`build_compat_report_url()`)
 - `Settings_Page` — Settings API registration, 6-tab rendering (dynamic `render_tab()` dispatcher), setup checklist, health dashboard, sanitize callbacks
-- `Admin_Ajax` — 15 handlers: test_connection, retry_failed, cleanup_queue, cancel_job, purge_logs, fetch_logs, queue_stats, toggle_module, save_module_settings, bulk_import_products, bulk_export_products, fetch_queue, dismiss_onboarding, dismiss_checklist, confirm_webhooks
+- `Admin_Ajax` — 16 handlers: test_connection, retry_failed, cleanup_queue, cancel_job, purge_logs, fetch_logs, queue_stats, toggle_module, save_module_settings, bulk_import_products, bulk_export_products, fetch_queue, dismiss_onboarding, dismiss_checklist, confirm_webhooks, flush_schema_cache
 
 ## Modules Detail
 

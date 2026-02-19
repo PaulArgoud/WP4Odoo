@@ -396,12 +396,27 @@ class Settings_Repository {
 	/**
 	 * Get a module's settings (raw, no merge with defaults).
 	 *
+	 * Cached per blog+module to avoid repeated get_option() calls.
+	 * Module settings are stored with autoload=false, so each uncached
+	 * read is an individual DB query. Caching prevents up to 72 queries
+	 * per request on sites with many modules.
+	 *
 	 * @param string $id Module identifier.
 	 * @return array
 	 */
 	public function get_module_settings( string $id ): array {
+		$blog_id   = (int) get_current_blog_id();
+		$cache_key = 'module_' . $id;
+
+		if ( isset( $this->cache[ $blog_id ][ $cache_key ] ) ) {
+			return $this->cache[ $blog_id ][ $cache_key ];
+		}
+
 		$stored = get_option( 'wp4odoo_module_' . $id . '_settings', [] );
-		return is_array( $stored ) ? $stored : [];
+		$result = is_array( $stored ) ? $stored : [];
+
+		$this->cache[ $blog_id ][ $cache_key ] = $result;
+		return $result;
 	}
 
 	/**
@@ -412,6 +427,8 @@ class Settings_Repository {
 	 * @return bool
 	 */
 	public function save_module_settings( string $id, array $settings ): bool {
+		$blog_id = (int) get_current_blog_id();
+		unset( $this->cache[ $blog_id ][ 'module_' . $id ] );
 		return update_option( 'wp4odoo_module_' . $id . '_settings', $settings, false );
 	}
 
@@ -429,6 +446,17 @@ class Settings_Repository {
 	// ── Webhook token ──────────────────────────────────────
 
 	/**
+	 * Prefix for encrypted webhook tokens.
+	 *
+	 * Makes the storage format unambiguous: prefixed values are known-encrypted,
+	 * unprefixed values are either legacy encrypted or plaintext (migration).
+	 * Prevents double-encryption races during backward-compat migration.
+	 *
+	 * @since 3.8.0
+	 */
+	private const WEBHOOK_TOKEN_PREFIX = 'enc1:';
+
+	/**
 	 * Get the webhook token (decrypted).
 	 *
 	 * @return string
@@ -439,21 +467,28 @@ class Settings_Repository {
 			return '';
 		}
 
-		$decrypted = API\Odoo_Auth::decrypt( $stored );
+		// Current format: prefixed encrypted token.
+		if ( str_starts_with( $stored, self::WEBHOOK_TOKEN_PREFIX ) ) {
+			$decrypted = API\Odoo_Auth::decrypt( substr( $stored, strlen( self::WEBHOOK_TOKEN_PREFIX ) ) );
+			return ( false !== $decrypted && '' !== $decrypted ) ? $decrypted : '';
+		}
 
+		// Legacy encrypted (no prefix): try to decrypt.
+		$decrypted = API\Odoo_Auth::decrypt( $stored );
 		if ( false !== $decrypted && '' !== $decrypted ) {
+			// Auto-migrate to prefixed format.
+			$this->save_webhook_token( $decrypted );
 			return $decrypted;
 		}
 
-		// Backward compat: token stored in plaintext (pre-encryption).
-		// Auto-migrate to encrypted storage so this fallback only runs once.
+		// Plaintext (pre-encryption era): migrate to encrypted with prefix.
 		$this->save_webhook_token( $stored );
 
 		return $stored;
 	}
 
 	/**
-	 * Save the webhook token (encrypted at rest).
+	 * Save the webhook token (encrypted at rest with format prefix).
 	 *
 	 * @param string $token Token value (plaintext).
 	 * @return bool
@@ -463,7 +498,7 @@ class Settings_Repository {
 			return update_option( self::OPT_WEBHOOK_TOKEN, '', false );
 		}
 
-		return update_option( self::OPT_WEBHOOK_TOKEN, API\Odoo_Auth::encrypt( $token ), false );
+		return update_option( self::OPT_WEBHOOK_TOKEN, self::WEBHOOK_TOKEN_PREFIX . API\Odoo_Auth::encrypt( $token ), false );
 	}
 
 	// ── DB version ─────────────────────────────────────────

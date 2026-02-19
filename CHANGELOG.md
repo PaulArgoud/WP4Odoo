@@ -15,6 +15,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Events exclusive group** — The Events Calendar and MEC modules now share `exclusive_group = 'events'`. Only one events module boots per site (TEC has priority via registration order)
 - **`Events_Module_Base` intermediate base class** — Extracted shared logic from Events Calendar, MEC, and FooEvents into a new abstract base. Provides dual-model detection (`event.event` / `calendar.event` fallback), attendance resolution (partner + event mapping), shared event formatting/parsing, dedup domains, translation fields, and push/pull overrides. 5 abstract methods for subclass configuration. Events Calendar extends with ticket entity type overrides
 
+### Fixed (Architecture)
+- **Multisite credential cache isolation** — `Odoo_Auth::$credentials_cache` is now keyed by `blog_id`. Previously a single static value, causing cross-site credential leakage when `switch_to_blog()` was called within the same request
+- **`flush_schema_cache` nonce domain** — Added `flush_schema_cache` to `Admin_Ajax::ACTION_NONCE_MAP`. Was falling back to the generic `wp4odoo_admin` nonce domain instead of the correct `wp4odoo_setup`
+- **Webhook token encryption marker** — `Settings_Repository` now prefixes encrypted webhook tokens with `enc1:`. Eliminates a race condition during migration where a previously encrypted token could be double-encrypted. Three-path read logic: prefixed (current), legacy encrypted (no prefix but decryptable), plaintext (auto-migrates)
+- **Batch dedup eviction tracking** — `Batch_Create_Processor::group_eligible_jobs()` now marks evicted duplicate job IDs in `$batched_job_ids`, preventing the individual processing loop from reprocessing jobs already replaced by newer duplicates for the same `wp_id`
+- **`save_wp_data` failure now Transient** — `Sync_Orchestrator::pull_from_odoo()` classifies `save_wp_data()` returning `0` as `Error_Type::Transient` (was `Permanent`). WordPress save failures (DB locks, temporary constraint issues) are retryable and should not permanently fail the job
+
+### Changed (Core)
+- **Module settings cache** — `Settings_Repository::get_module_settings()` now caches results in memory, keyed by `blog_id` + module ID. Avoids repeated `get_option()` calls when multiple hook callbacks read the same module settings in a single request. Cache invalidated on `save_module_settings()`
+- **Circuit-breaker job deferral** — `Sync_Engine` now defers jobs to `scheduled_at + recovery_delay` when a module's circuit breaker is open (was silently skipping). Prevents hot-polling: deferred jobs won't be re-fetched until the recovery window has passed
+- **Logger write buffer** — `Logger::log()` now buffers entries in a static `$write_buffer` (threshold: 50). Flushes at threshold or via `register_shutdown_function()`. Reduces DB round-trips during batch processing where dozens of log calls occur per request
+- **Shared Partner_Service** — `Partner_Helpers::$shared_partner_service` is now a static singleton shared across all module instances. Avoids duplicate Odoo lookups when multiple modules resolve the same email in a single batch
+- **Schema-guarded `company_id` injection** — `Sync_Orchestrator::maybe_inject_company_id()` now checks `Schema_Cache::get_fields()` before injecting `company_id`. Skips injection for models that don't have the field (e.g. `product.template`), avoiding Odoo validation errors
+
+### Tests
+- Added `Logger::flush_buffer()` calls in `LoggerTest`, `WPAllImportModuleTest`, and `WebhookReliabilityTest` to account for deferred buffer writes
+
 ## [3.7.0] - 2026-02-19
 
 ### Added

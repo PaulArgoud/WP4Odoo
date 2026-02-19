@@ -543,8 +543,11 @@ class Sync_Engine {
 				continue;
 			}
 
-			// Skip jobs whose module circuit breaker is open.
+			// Defer jobs whose module circuit breaker is open so they are not
+			// re-fetched on every cron tick (avoids hot polling loop on SELECT).
 			if ( ! $this->module_breaker->is_module_available( $job->module ) ) {
+				$defer_time = gmdate( 'Y-m-d H:i:s', time() + $this->module_breaker->get_recovery_delay() );
+				$this->queue_repo->defer_job( (int) $job->id, $defer_time );
 				continue;
 			}
 

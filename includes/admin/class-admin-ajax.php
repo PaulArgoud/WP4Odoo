@@ -57,6 +57,7 @@ class Admin_Ajax {
 		'save_module_settings' => 'wp4odoo_module',
 		'bulk_import_products' => 'wp4odoo_module',
 		'bulk_export_products' => 'wp4odoo_module',
+		'flush_schema_cache'   => 'wp4odoo_setup',
 	];
 
 	/**

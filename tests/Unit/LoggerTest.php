@@ -534,6 +534,8 @@ class LoggerTest extends TestCase {
 	}
 
 	private function get_calls( string $method ): array {
+		// Flush buffered log entries so $wpdb->calls reflects all writes.
+		Logger::flush_buffer();
 		return array_values(
 			array_filter( $this->wpdb->calls, fn( $c ) => $c['method'] === $method )
 		);

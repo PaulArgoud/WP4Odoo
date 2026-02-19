@@ -22,14 +22,18 @@ if ( ! defined( 'ABSPATH' ) ) {
 trait Partner_Helpers {
 
 	/**
-	 * Lazy Partner_Service instance.
+	 * Shared Partner_Service instance across all modules.
+	 *
+	 * All modules use the same Odoo client and Entity_Map_Repository,
+	 * so sharing the Partner_Service avoids duplicate Odoo lookups
+	 * when multiple modules resolve the same email in a single batch.
 	 *
 	 * @var Partner_Service|null
 	 */
-	private ?Partner_Service $partner_service_instance = null;
+	private static ?Partner_Service $shared_partner_service = null;
 
 	/**
-	 * Get or create the Partner_Service instance (lazy).
+	 * Get or create the shared Partner_Service instance (lazy).
 	 *
 	 * Used by any module that needs to resolve WordPress users or
 	 * guest emails to Odoo res.partner records.
@@ -37,11 +41,11 @@ trait Partner_Helpers {
 	 * @return Partner_Service
 	 */
 	protected function partner_service(): Partner_Service {
-		if ( null === $this->partner_service_instance ) {
-			$this->partner_service_instance = new Partner_Service( fn() => $this->client(), $this->entity_map() );
+		if ( null === self::$shared_partner_service ) {
+			self::$shared_partner_service = new Partner_Service( fn() => $this->client(), $this->entity_map() );
 		}
 
-		return $this->partner_service_instance;
+		return self::$shared_partner_service;
 	}
 
 	/**

@@ -103,9 +103,12 @@ class Odoo_Auth {
 	/**
 	 * Per-request credential cache to avoid repeated decryption.
 	 *
-	 * @var array|null
+	 * Keyed by blog ID to prevent stale data when switch_to_blog()
+	 * changes the active site in multisite environments.
+	 *
+	 * @var array<int, array>
 	 */
-	private static ?array $credentials_cache = null;
+	private static array $credentials_cache = [];
 
 	/**
 	 * Get decrypted Odoo credentials from wp_options.
@@ -120,8 +123,10 @@ class Odoo_Auth {
 	 * @return array{url: string, database: string, username: string, api_key: string, protocol: string, timeout: int, company_id: int}
 	 */
 	public static function get_credentials(): array {
-		if ( null !== self::$credentials_cache ) {
-			return self::$credentials_cache;
+		$blog_id = (int) get_current_blog_id();
+
+		if ( isset( self::$credentials_cache[ $blog_id ] ) ) {
+			return self::$credentials_cache[ $blog_id ];
 		}
 
 		$connection = get_option( Settings_Repository::OPT_CONNECTION, [] );
@@ -158,7 +163,7 @@ class Odoo_Auth {
 			}
 		}
 
-		self::$credentials_cache = $credentials;
+		self::$credentials_cache[ $blog_id ] = $credentials;
 
 		return $credentials;
 	}
@@ -169,7 +174,7 @@ class Odoo_Auth {
 	 * @return void
 	 */
 	public static function flush_credentials_cache(): void {
-		self::$credentials_cache = null;
+		self::$credentials_cache = [];
 	}
 
 	/**

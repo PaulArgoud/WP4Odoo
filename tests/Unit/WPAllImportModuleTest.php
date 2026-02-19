@@ -228,6 +228,7 @@ class WPAllImportModuleTest extends Module_Test_Case {
 		$initial_call_count = count( $this->wpdb->calls );
 
 		$this->module->on_import_complete( 10, (object) [] );
+		\WP4Odoo\Logger::flush_buffer();
 
 		// Logger insert was called.
 		$this->assertGreaterThan( $initial_call_count, count( $this->wpdb->calls ) );
