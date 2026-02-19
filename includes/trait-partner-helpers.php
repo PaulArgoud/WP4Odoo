@@ -49,6 +49,19 @@ trait Partner_Helpers {
 	}
 
 	/**
+	 * Reset the shared Partner_Service singleton.
+	 *
+	 * Called between tests to prevent cross-test state leakage.
+	 *
+	 * @since 3.9.0
+	 *
+	 * @return void
+	 */
+	public static function reset_partner_service(): void {
+		self::$shared_partner_service = null;
+	}
+
+	/**
 	 * Resolve a WordPress user ID to an Odoo partner ID.
 	 *
 	 * Loads the user, extracts email + display name, then delegates to

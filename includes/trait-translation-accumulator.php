@@ -97,34 +97,48 @@ trait Translation_Accumulator {
 		foreach ( $this->translation_buffer as $odoo_model => $odoo_wp_map ) {
 			$entity_type = $model_to_entity[ $odoo_model ] ?? '';
 			if ( '' === $entity_type ) {
+				unset( $this->translation_buffer[ $odoo_model ] );
 				continue;
 			}
 
 			$field_map = $this->get_translatable_fields( $entity_type );
 			if ( empty( $field_map ) ) {
+				unset( $this->translation_buffer[ $odoo_model ] );
 				continue;
 			}
 
-			$ts->pull_translations_batch(
-				$odoo_model,
-				$odoo_wp_map,
-				array_keys( $field_map ),
-				$field_map,
-				$entity_type,
-				fn( int $wp_id, array $data, string $lang ) => $this->apply_pull_translation( $wp_id, $data, $lang ),
-				[]
-			);
+			try {
+				$ts->pull_translations_batch(
+					$odoo_model,
+					$odoo_wp_map,
+					array_keys( $field_map ),
+					$field_map,
+					$entity_type,
+					fn( int $wp_id, array $data, string $lang ) => $this->apply_pull_translation( $wp_id, $data, $lang ),
+					[]
+				);
 
-			$this->logger->info(
-				'Flushed pull translations.',
-				[
-					'entity_type' => $entity_type,
-					'count'       => count( $odoo_wp_map ),
-				]
-			);
+				// Only remove from buffer after successful flush.
+				unset( $this->translation_buffer[ $odoo_model ] );
+
+				$this->logger->info(
+					'Flushed pull translations.',
+					[
+						'entity_type' => $entity_type,
+						'count'       => count( $odoo_wp_map ),
+					]
+				);
+			} catch ( \Throwable $e ) {
+				$this->logger->error(
+					'Pull translation flush failed; entries retained in buffer.',
+					[
+						'entity_type' => $entity_type,
+						'count'       => count( $odoo_wp_map ),
+						'error'       => $e->getMessage(),
+					]
+				);
+			}
 		}
-
-		$this->translation_buffer = [];
 	}
 
 	/**

@@ -315,7 +315,9 @@ abstract class Module_Base {
 		 * @param array  $wp_data     Original WP data.
 		 * @param string $entity_type Entity type.
 		 */
-		return apply_filters( "wp4odoo_map_to_odoo_{$this->id}_{$entity_type}", $odoo_values, $wp_data, $entity_type );
+		$filtered = apply_filters( "wp4odoo_map_to_odoo_{$this->id}_{$entity_type}", $odoo_values, $wp_data, $entity_type );
+
+		return is_array( $filtered ) ? $filtered : $odoo_values; // @phpstan-ignore function.alreadyNarrowedType
 	}
 
 	/**

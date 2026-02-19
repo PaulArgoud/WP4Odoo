@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.9.0] - Unreleased
 
+### Fixed (Architecture)
+- **`safe_callback()` preserves filter chain** — `Hook_Lifecycle::safe_callback()` now returns the callback's result (was void). On crash, returns `$args[0]` so filter chains are not broken by a crashed callback
+- **Module materialization failure UX** — `Module_Registry::materialize()` now records a `version_warning` entry when a module's constructor throws, making the failure visible in the admin health dashboard instead of being silently swallowed
+- **Advisory Lock reentrancy guard** — `Advisory_Lock::acquire()` returns `true` immediately if the lock is already held by the current instance, preventing redundant `GET_LOCK()` calls
+- **Advisory Lock destructor safety** — `Advisory_Lock::__destruct()` releases the lock if still held (safety net for uncaught exceptions), wrapped in try-catch so destructors never throw
+- **`many2one_to_id` rejects zero/negative IDs** — `Field_Mapper::many2one_to_id()` now returns `null` for array-path IDs ≤ 0, preventing invalid Odoo references from propagating
+- **Logger `error_log` fallback** — `Logger::flush_buffer()` writes `error`/`critical` entries to PHP `error_log()` when `$wpdb` is unavailable (late shutdown), preventing silent log loss
+- **`cached_company_id` multisite invalidation** — `Sync_Orchestrator::maybe_inject_company_id()` now compares `blog_id` against the cached value, auto-invalidating the company_id cache when `switch_to_blog()` changes context
+- **CLI `try/finally` on `switch_to_blog`** — `CLI::sync()`, `reconcile()`, and `cleanup()` now wrap their body in `try/finally` to guarantee `restore_current_blog()` is called even on exceptions
+- **Microsecond date parsing** — `Field_Mapper::odoo_date_to_wp()` now tries `Y-m-d H:i:s.u` format first, supporting Odoo timestamps with microsecond precision
+- **Reconciliation batch size filter** — `Reconciler::reconcile()` batch size is now filterable via `wp4odoo_reconcile_batch_size`, with ≤ 0 guard falling back to the default (200)
+- **Translation cache flush** — New `Translation_Service::flush_caches()` static method clears `ir.translation` and active languages transients. Called from CLI `cache flush` command
+- **Filter return type validation** — `map_to_odoo()` and `pull_from_odoo()` now validate that `apply_filters()` returns an array, falling back to the pre-filter value if a third-party filter returns an unexpected type
+- **Recovery transaction try-finally** — `Sync_Queue_Repository::recover_stale_processing()` now wraps the SAVEPOINT/RELEASE block in `try/finally`, guaranteeing the transaction is committed even if a query throws
+- **Translation buffer flush loss protection** — `Translation_Accumulator::flush_pull_translations()` now uses per-model try-catch. Failed models retain their buffer entries for the next flush instead of being silently discarded
+- **Oversized payload observability** — `Sync_Queue_Repository::enqueue()` now fires `wp4odoo_enqueue_rejected` action when a payload exceeds 1 MB, providing a hook for logging/monitoring instead of failing silently
+
+### Changed (Core)
+- **`Schema_Cache::flush()` in test teardown** — `Module_Test_Case::reset_static_caches()` now calls `Schema_Cache::flush()` to prevent cross-test schema cache leakage
+- **`Partner_Service` static reset in test teardown** — New `Partner_Helpers::reset_partner_service()` method, called from `Module_Test_Case::reset_static_caches()` to prevent cross-test partner service leakage
+
+### Tests
+- Added `Logger::flush_buffer()` calls in `MultisiteScopingTest` integration tests to account for deferred buffer writes
+
 ## [3.8.0] - 2026-02-19
 
 ### Added

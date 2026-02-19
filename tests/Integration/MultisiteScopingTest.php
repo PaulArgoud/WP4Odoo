@@ -264,6 +264,7 @@ class MultisiteScopingTest extends WP4Odoo_TestCase {
 
 		$logger = new Logger( 'test_module' );
 		$logger->info( 'Integration test log entry.' );
+		Logger::flush_buffer();
 
 		$row = $wpdb->get_row(
 			"SELECT blog_id, module, message FROM {$wpdb->prefix}wp4odoo_logs ORDER BY id DESC LIMIT 1"
@@ -288,6 +289,7 @@ class MultisiteScopingTest extends WP4Odoo_TestCase {
 
 		$logger = new Logger( 'test_module' );
 		$logger->info( 'Blog 1 log.' );
+		Logger::flush_buffer();
 
 		// Get the log ID.
 		$id1 = $wpdb->insert_id;

@@ -124,7 +124,11 @@ class Advisory_Lock {
 	 */
 	public function __destruct() {
 		if ( $this->held ) {
-			$this->release();
+			try {
+				$this->release();
+			} catch ( \Throwable $e ) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedCatch
+				// Destructor must not throw — silently absorb.
+			}
 		}
 	}
 }

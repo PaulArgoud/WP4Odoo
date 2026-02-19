@@ -112,6 +112,7 @@ abstract class Module_Test_Case extends TestCase {
 		\WP4Odoo\API\Odoo_Auth::flush_credentials_cache();
 		\WP4Odoo\Queue_Manager::reset();
 		\WP4Odoo\Schema_Cache::flush();
+		\WP4Odoo\Module_Base::reset_partner_service();
 	}
 
 	// ─── Assertion Helpers ────────────────────────────────

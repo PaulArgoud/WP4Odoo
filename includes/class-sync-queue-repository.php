@@ -92,6 +92,7 @@ class Sync_Queue_Repository {
 			: 'update';
 		$payload     = isset( $args['payload'] ) ? wp_json_encode( $args['payload'] ) : null;
 		if ( null !== $payload && strlen( $payload ) > 1048576 ) {
+			do_action( 'wp4odoo_enqueue_rejected', $module, $entity_type, strlen( $payload ) );
 			return false;
 		}
 		$priority     = isset( $args['priority'] ) ? absint( $args['priority'] ) : 5;
@@ -507,30 +508,32 @@ class Sync_Queue_Repository {
 		// interrupted (crash, timeout), but if the same job keeps getting
 		// stuck, incrementing ensures it eventually hits max_attempts
 		// and fails permanently instead of looping indefinitely.
-		$retried = (int) $wpdb->query(
-			$wpdb->prepare(
-				"UPDATE {$table} SET status = 'pending', attempts = attempts + 1, error_message = 'Recovered from stale processing state.' WHERE blog_id = %d AND status = %s AND processed_at IS NOT NULL AND processed_at < %s AND attempts < max_attempts", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is from $wpdb->prefix, safe.
-				$this->blog_id,
-				'processing',
-				$cutoff
-			)
-		);
+		try {
+			$retried = (int) $wpdb->query(
+				$wpdb->prepare(
+					"UPDATE {$table} SET status = 'pending', attempts = attempts + 1, error_message = 'Recovered from stale processing state.' WHERE blog_id = %d AND status = %s AND processed_at IS NOT NULL AND processed_at < %s AND attempts < max_attempts", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is from $wpdb->prefix, safe.
+					$this->blog_id,
+					'processing',
+					$cutoff
+				)
+			);
 
-		// Jobs already at max_attempts → failed (no more retries).
-		$failed = (int) $wpdb->query(
-			$wpdb->prepare(
-				"UPDATE {$table} SET status = %s, error_message = 'Max attempts reached after stale processing recovery.' WHERE blog_id = %d AND status = %s AND processed_at IS NOT NULL AND processed_at < %s AND attempts >= max_attempts", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is from $wpdb->prefix, safe.
-				'failed',
-				$this->blog_id,
-				'processing',
-				$cutoff
-			)
-		);
-
-		if ( $use_savepoint ) {
-			$wpdb->query( 'RELEASE SAVEPOINT wp4odoo_recovery' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
-		} else {
-			$wpdb->query( 'COMMIT' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+			// Jobs already at max_attempts → failed (no more retries).
+			$failed = (int) $wpdb->query(
+				$wpdb->prepare(
+					"UPDATE {$table} SET status = %s, error_message = 'Max attempts reached after stale processing recovery.' WHERE blog_id = %d AND status = %s AND processed_at IS NOT NULL AND processed_at < %s AND attempts >= max_attempts", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is from $wpdb->prefix, safe.
+					'failed',
+					$this->blog_id,
+					'processing',
+					$cutoff
+				)
+			);
+		} finally {
+			if ( $use_savepoint ) {
+				$wpdb->query( 'RELEASE SAVEPOINT wp4odoo_recovery' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+			} else {
+				$wpdb->query( 'COMMIT' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+			}
 		}
 
 		return $retried + $failed;

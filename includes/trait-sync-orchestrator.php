@@ -300,7 +300,8 @@ trait Sync_Orchestrator {
 			 * @param array  $odoo_data   The raw Odoo record data.
 			 * @param string $entity_type The entity type.
 			 */
-			$wp_data = apply_filters( "wp4odoo_map_from_odoo_{$this->id}_{$entity_type}", $wp_data, $odoo_data, $entity_type );
+			$filtered = apply_filters( "wp4odoo_map_from_odoo_{$this->id}_{$entity_type}", $wp_data, $odoo_data, $entity_type );
+			$wp_data  = is_array( $filtered ) ? $filtered : $wp_data; // @phpstan-ignore function.alreadyNarrowedType
 
 			// Find existing WP entity.
 			if ( 0 === $wp_id ) {
