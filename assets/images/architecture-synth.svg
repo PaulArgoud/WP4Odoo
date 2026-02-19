@@ -46,7 +46,7 @@
   <text x="925" y="46" fill="#8b949e" font-size="9">Odoo &#8594; WP</text>
 
   <!-- Module count -->
-  <text x="60" y="64" fill="#484f58" font-size="9" font-weight="600" letter-spacing="1">69 MODULES IN 17 DOMAINS</text>
+  <text x="60" y="64" fill="#484f58" font-size="9" font-weight="600" letter-spacing="1">72 MODULES IN 17 DOMAINS</text>
 
   <!-- ═══ ROW 1: 3 category cards (310px wide) ═══ -->
 
@@ -87,11 +87,12 @@
   <text x="665" y="210" text-anchor="middle" fill="rgba(255,255,255,0.6)" font-size="8.5">LearnDash &#183; LifterLMS &#183; TutorLMS &#8596;</text>
   <text x="665" y="224" text-anchor="middle" fill="rgba(255,255,255,0.6)" font-size="8.5">LearnPress &#183; Sensei &#8596;</text>
 
-  <!-- Booking & Events (6) -->
+  <!-- Booking & Events (9) -->
   <rect x="795" y="170" width="230" height="78" rx="7" fill="url(#bidir)" filter="url(#s)"/>
-  <text x="910" y="192" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">Booking &amp; Events (6)</text>
-  <text x="910" y="210" text-anchor="middle" fill="rgba(255,255,255,0.6)" font-size="8.5">Amelia &#183; Bookly &#183; WC Bookings &#8596;</text>
-  <text x="910" y="224" text-anchor="middle" fill="rgba(255,255,255,0.6)" font-size="8.5">JetAppt &#183; JetBook &#183; Events Cal &#8596;</text>
+  <text x="910" y="190" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">Booking &amp; Events (9)</text>
+  <text x="910" y="206" text-anchor="middle" fill="rgba(255,255,255,0.6)" font-size="8">Amelia &#183; Bookly &#183; FluentBook &#8596;</text>
+  <text x="910" y="218" text-anchor="middle" fill="rgba(255,255,255,0.6)" font-size="8">JetAppt &#183; JetBook &#183; WC Book &#8596;</text>
+  <text x="910" y="230" text-anchor="middle" fill="rgba(255,255,255,0.6)" font-size="8">Events Cal &#183; MEC &#183; FooEvents &#8596;</text>
 
   <!-- ═══ ROW 3: 5 category cards (186px wide) ═══ -->
 
