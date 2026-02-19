@@ -26,7 +26,7 @@ Modular WordPress plugin that creates a seamless, bidirectional bridge between W
 - **WPML / Polylang Translation Sync** — Multilingual product sync via WPML or Polylang: pushes translated names/descriptions to Odoo with language context, pulls translations back to create/update translated posts. Category and attribute value translations included
 - **Multisite** — WordPress Multisite support: each site in a network syncs with a specific Odoo company (`res.company`). Shared network connection with per-site company_id mapping. Network admin page for centralized configuration
 - **Extensible** — Register custom modules via `wp4odoo_register_modules`; filter data with `wp4odoo_map_to_odoo_*` / `wp4odoo_map_from_odoo_*`; map ACF or JetEngine custom fields to Odoo via meta-modules
-- **Multilingual** — 944 translatable strings, ships with English, French, and Spanish. Translation-ready via `.po`/`.mo`
+- **Multilingual** — 946 translatable strings, ships with English, French, and Spanish. Translation-ready via `.po`/`.mo`
 
 ## Requirements
 
@@ -160,6 +160,7 @@ wp wp4odoo queue cleanup --days=7    # Delete old completed/failed jobs
 wp wp4odoo queue cancel 42           # Cancel a pending job
 wp wp4odoo cleanup orphans           # Remove orphaned entity map entries
 wp wp4odoo cleanup orphans --dry-run # Preview orphans without deleting
+wp wp4odoo cache flush               # Flush Odoo schema cache
 wp wp4odoo module list               # List modules with status
 wp wp4odoo module enable crm         # Enable a module
 wp wp4odoo module disable crm        # Disable a module
@@ -167,7 +168,7 @@ wp wp4odoo module disable crm        # Disable a module
 
 ### REST API & Hooks
 
-The plugin exposes 4 REST endpoints under `wp-json/wp4odoo/v1/` (webhook receiver, webhook health check, system health, manual sync trigger) and 6 action hooks + 20 data filters for customization.
+The plugin exposes 4 REST endpoints under `wp-json/wp4odoo/v1/` (webhook receiver, webhook health check, system health, manual sync trigger) and 10 action hooks + 34 data filters for customization.
 
 ## Architecture
 

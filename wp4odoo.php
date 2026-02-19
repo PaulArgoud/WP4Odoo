@@ -137,6 +137,10 @@ final class WP4Odoo_Plugin {
 
 		// Multisite: provision new sites added to the network.
 		add_action( 'wp_initialize_site', [ $this, 'on_new_site' ], 10, 1 );
+
+		// Multisite: flush API credential cache when switching blog context
+		// to prevent stale credentials from site A leaking into site B.
+		add_action( 'switch_blog', fn() => \WP4Odoo\API\Odoo_Auth::flush_credentials_cache() );
 	}
 
 	/**

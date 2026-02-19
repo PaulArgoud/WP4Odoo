@@ -94,6 +94,9 @@ class Sales_Module extends Module_Base {
 	 */
 	public function __construct( \Closure $client_provider, \WP4Odoo\Entity_Map_Repository $entity_map, \WP4Odoo\Settings_Repository $settings ) {
 		parent::__construct( 'sales', 'Sales', $client_provider, $entity_map, $settings );
+
+		$partner_service      = new Partner_Service( fn() => $this->client(), $this->entity_map() );
+		$this->portal_manager = new Portal_Manager( $this->logger, fn() => $this->get_settings(), $partner_service );
 	}
 
 	/**
@@ -102,9 +105,6 @@ class Sales_Module extends Module_Base {
 	 * @return void
 	 */
 	public function boot(): void {
-		$partner_service      = new Partner_Service( fn() => $this->client(), $this->entity_map() );
-		$this->portal_manager = new Portal_Manager( $this->logger, fn() => $this->get_settings(), $partner_service );
-
 		// Register CPTs.
 		add_action( 'init', [ $this, 'register_order_cpt' ] );
 		add_action( 'init', [ Invoice_Helper::class, 'register_cpt' ] );

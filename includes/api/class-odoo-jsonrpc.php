@@ -116,6 +116,10 @@ class Odoo_JsonRPC extends Odoo_Transport_Base {
 
 		$ssl_verify = ! defined( 'WP4ODOO_DISABLE_SSL_VERIFY' ) || ! WP4ODOO_DISABLE_SSL_VERIFY;
 
+		if ( ! $ssl_verify ) {
+			$this->logger->warning( 'SSL verification is disabled via WP4ODOO_DISABLE_SSL_VERIFY. This is insecure and should only be used for local development.' );
+		}
+
 		$request_args = [
 			'timeout'   => $this->timeout,
 			'headers'   => [ 'Content-Type' => 'application/json' ],

@@ -5,8 +5,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: WordPress For Odoo 2.0.0\n"
-"Report-Msgid-Bugs-To: support@avalia.io\n"
-"POT-Creation-Date: 2026-02-18 16:20+0100\n"
+"Report-Msgid-Bugs-To: paul@argoud.net\n"
+"POT-Creation-Date: 2026-02-19 01:19+0100\n"
 "PO-Revision-Date: 2026-02-15 12:00+0100\n"
 "Last-Translator: \n"
 "Language-Team: Spanish\n"
@@ -1253,16 +1253,16 @@ msgstr "Credenciales de Odoo no configuradas."
 msgid "Authentication failed: invalid credentials."
 msgstr "Error de autenticación: credenciales no válidas."
 
-#: includes/api/class-odoo-jsonrpc.php:133
+#: includes/api/class-odoo-jsonrpc.php:137
 #, php-format
 msgid "Invalid JSON response from Odoo (HTTP %d)."
 msgstr "Respuesta JSON no válida de Odoo (HTTP %d)."
 
-#: includes/api/class-odoo-jsonrpc.php:142
+#: includes/api/class-odoo-jsonrpc.php:146
 msgid "Unknown RPC error"
 msgstr "Error RPC desconocido"
 
-#: includes/api/class-odoo-jsonrpc.php:162
+#: includes/api/class-odoo-jsonrpc.php:166
 #, php-format
 msgid "Odoo RPC error: %s"
 msgstr "Error RPC de Odoo: %s"
@@ -1271,15 +1271,15 @@ msgstr "Error RPC de Odoo: %s"
 msgid "Not authenticated. Call authenticate() first."
 msgstr "No autenticado. Llame primero a authenticate()."
 
-#: includes/api/class-odoo-xmlrpc.php:144
+#: includes/api/class-odoo-xmlrpc.php:148
 msgid "Failed to parse XML-RPC response from Odoo."
 msgstr "Error al analizar la respuesta XML-RPC de Odoo."
 
-#: includes/api/class-odoo-xmlrpc.php:151
+#: includes/api/class-odoo-xmlrpc.php:155
 msgid "Unknown XML-RPC fault"
 msgstr "Error XML-RPC desconocido"
 
-#: includes/api/class-odoo-xmlrpc.php:170
+#: includes/api/class-odoo-xmlrpc.php:174
 #, php-format
 msgid "Odoo XML-RPC error: %s"
 msgstr "Error XML-RPC de Odoo: %s"
@@ -1447,7 +1447,9 @@ msgstr "Subcomando desconocido: %s. Uso: wp wp4odoo cleanup orphans"
 
 #: includes/class-cli.php:460
 msgid "This will permanently remove orphaned entity map entries. Continue?"
-msgstr "Esto eliminará permanentemente las entradas huérfanas de la tabla de correspondencias. ¿Continuar?"
+msgstr ""
+"Esto eliminará permanentemente las entradas huérfanas de la tabla de "
+"correspondencias. ¿Continuar?"
 
 #: includes/class-cli.php:469
 #, php-format
@@ -1476,7 +1478,17 @@ msgstr "%d correspondencia(s) huérfana(s) encontrada(s):"
 msgid "Run without --dry-run to remove orphaned mappings."
 msgstr "Ejecute sin --dry-run para eliminar las correspondencias huérfanas."
 
-#: includes/class-cli.php:527
+#: includes/class-cli.php:525
+#, fuzzy, php-format
+msgid "Unknown subcommand: %s. Available: flush"
+msgstr "Subcomando desconocido: %s. Disponibles: list, enable, disable"
+
+#: includes/class-cli.php:537
+#, php-format
+msgid "Schema cache flushed (%d transient(s) deleted)."
+msgstr "Caché de esquemas vaciado (%d transient(s) eliminado(s))."
+
+#: includes/class-cli.php:560
 #, php-format
 msgid "Unknown subcommand: %s. Available: list, enable, disable"
 msgstr "Subcomando desconocido: %s. Disponibles: list, enable, disable"
@@ -1513,9 +1525,9 @@ msgid ""
 "\n"
 "Check the health dashboard at %3$s"
 msgstr ""
-"El disyuntor por módulo de WP4Odoo se ha activado para el módulo « %1$s » tras "
-"%2$d lotes consecutivos con fallos. Las tareas de este módulo se omitirán "
-"hasta que se recupere.\n"
+"El disyuntor por módulo de WP4Odoo se ha activado para el módulo « %1$s » "
+"tras %2$d lotes consecutivos con fallos. Las tareas de este módulo se "
+"omitirán hasta que se recupere.\n"
 "\n"
 "Consulte el panel de salud en %3$s"
 
@@ -1537,7 +1549,7 @@ msgstr ""
 "\n"
 "Por favor, revise la cola de sincronización en %2$s"
 
-#: includes/class-module-base.php:782
+#: includes/class-module-base.php:577
 #, php-format
 msgid "Entity type \"%1$s\" is not registered in module \"%2$s\"."
 msgstr "El tipo de entidad «%1$s» no está registrado en el módulo «%2$s»."
@@ -1551,35 +1563,17 @@ msgstr "%1$s requiere que los siguientes módulos estén activos: %2$s."
 msgid "Too many requests. Please try again later."
 msgstr "Demasiadas solicitudes. Inténtelo de nuevo más tarde."
 
-#: includes/class-settings-repository.php:551
-msgid ""
-"WP-Cron is disabled (DISABLE_WP_CRON). Ensure a system cron job calls wp-"
-"cron.php regularly, or queue processing will not run."
-msgstr ""
-"WP-Cron está desactivado (DISABLE_WP_CRON). Asegúrese de que una tarea cron "
-"del sistema ejecute wp-cron.php regularmente, o la cola de sincronización no "
-"se procesará."
-
-#: includes/class-settings-repository.php:553
-msgid ""
-"WP-Cron has not triggered recently. On low-traffic sites, scheduled sync may "
-"be delayed. Consider setting up a system cron job."
-msgstr ""
-"WP-Cron no se ha ejecutado recientemente. En sitios con poco tráfico, la "
-"sincronización programada puede retrasarse. Considere configurar una tarea "
-"cron del sistema."
-
-#: includes/class-sync-engine.php:366
+#: includes/class-sync-engine.php:343
 #, php-format
 msgid "Module \"%s\" not found or not registered."
 msgstr "Módulo «%s» no encontrado o no registrado."
 
-#: includes/class-sync-engine.php:379
+#: includes/class-sync-engine.php:356
 #, php-format
 msgid "Invalid JSON payload in job #%d."
 msgstr "Payload JSON no válido en el trabajo #%d."
 
-#: includes/class-sync-engine.php:417
+#: includes/class-sync-engine.php:394
 #, php-format
 msgid "Invalid sync direction \"%1$s\" in job #%2$d."
 msgstr "Dirección de sincronización no válida «%1$s» en el trabajo #%2$d."
@@ -1604,11 +1598,11 @@ msgstr "Token de webhook no configurado."
 msgid "Invalid webhook token."
 msgstr "Token de webhook no válido."
 
-#: includes/class-webhook-handler.php:460
+#: includes/class-webhook-handler.php:462
 msgid "Invalid webhook signature."
 msgstr "Firma de webhook inválida."
 
-#: includes/class-webhook-handler.php:482
+#: includes/class-webhook-handler.php:489
 msgid "You do not have permission to perform this action."
 msgstr "No tiene permiso para realizar esta acción."
 
@@ -1758,7 +1752,7 @@ msgstr ""
 "ID del proyecto Odoo (Community). Se usa cuando helpdesk.ticket no está "
 "disponible."
 
-#: includes/modules/class-booking-module-base.php:298
+#: includes/modules/class-booking-module-base.php:303
 #, php-format
 msgid "%1$s — %2$s"
 msgstr "%1$s — %2$s"
@@ -4422,6 +4416,24 @@ msgstr ""
 msgid "Push lock timeout — will retry."
 msgstr "Tiempo de espera del bloqueo push agotado — se reintentará."
 
+#: includes/trait-ui-state-settings.php:124
+msgid ""
+"WP-Cron is disabled (DISABLE_WP_CRON). Ensure a system cron job calls wp-"
+"cron.php regularly, or queue processing will not run."
+msgstr ""
+"WP-Cron está desactivado (DISABLE_WP_CRON). Asegúrese de que una tarea cron "
+"del sistema ejecute wp-cron.php regularmente, o la cola de sincronización no "
+"se procesará."
+
+#: includes/trait-ui-state-settings.php:126
+msgid ""
+"WP-Cron has not triggered recently. On low-traffic sites, scheduled sync may "
+"be delayed. Consider setting up a system cron job."
+msgstr ""
+"WP-Cron no se ha ejecutado recientemente. En sitios con poco tráfico, la "
+"sincronización programada puede retrasarse. Considere configurar una tarea "
+"cron del sistema."
+
 #: templates/customer-portal.php:38 templates/customer-portal.php:83
 msgid "Reference"
 msgstr "Referencia"
@@ -4430,11 +4442,11 @@ msgstr "Referencia"
 msgid "Total"
 msgstr "Total"
 
-#: wp4odoo.php:346
+#: wp4odoo.php:350
 msgid "Every 5 Minutes"
 msgstr "Cada 5 minutos"
 
-#: wp4odoo.php:350
+#: wp4odoo.php:354
 msgid "Every 15 Minutes"
 msgstr "Cada 15 minutos"
 

@@ -310,7 +310,7 @@ WordPress For Odoo/
 │   ├── trait-poll-support.php        # Poll_Support trait: targeted entity_map loading + last_polled_at deletion detection
 │   ├── trait-hook-lifecycle.php      # Hook_Lifecycle trait (from Module_Base): safe_callback(), register_hook(), teardown()
 │   ├── trait-translation-accumulator.php # Translation_Accumulator trait (from Module_Base): translation buffer, flush/apply pull translations
-│   ├── trait-sync-job-tracking.php   # Sync_Job_Tracking trait (from Sync_Engine): batch counters, per-module outcomes, handle_failure()
+│   ├── trait-sync-job-tracking.php   # Sync_Job_Tracking trait (from Sync_Engine): batch counters, per-module outcomes, handle_failure(), wp4odoo_retry_delay filter
 │   ├── trait-failure-tracking-settings.php # Failure_Tracking_Settings trait (from Settings_Repository): consecutive failures, last email timestamp
 │   ├── trait-ui-state-settings.php   # UI_State_Settings trait (from Settings_Repository): onboarding, checklist, cron health
 │   ├── trait-network-settings.php    # Network_Settings trait (from Settings_Repository): multisite connection, site → company_id mapping
@@ -330,9 +330,9 @@ WordPress For Odoo/
 │   ├── class-cpt-helper.php           # Shared CPT register/load/save/parse helpers
 │   ├── class-webhook-handler.php      # REST API endpoints for Odoo webhooks, HMAC signature
 │   ├── class-rate-limiter.php        # Dual-strategy rate limiter (atomic wp_cache_incr + transient fallback)
-│   ├── class-schema-cache.php        # fields_get() cache (memory + transient) for field validation
+│   ├── class-schema-cache.php        # fields_get() cache (memory + transient) for field validation; flush_all() clears transients + fires action
 │   ├── class-reconciler.php          # Entity map reconciliation against live Odoo records
-│   ├── class-cli.php                 # WP-CLI commands (loaded only in CLI context, includes cleanup orphans)
+│   ├── class-cli.php                 # WP-CLI commands (loaded only in CLI context, includes cleanup orphans, cache flush)
 │   ├── trait-cli-queue-commands.php   # CLI queue subcommands (stats, list, retry, cleanup, cancel)
 │   ├── trait-cli-module-commands.php  # CLI module subcommands (list, enable, disable)
 │   └── class-logger.php              # DB-backed logger with level filtering, 4KB context truncation, for_channel() factory
@@ -2176,6 +2176,7 @@ Shared service for managing WP user ↔ Odoo `res.partner` relationships. Access
 | `wp wp4odoo module disable <id>` | Disable a module |
 | `wp wp4odoo reconcile <module> <entity>` | Detect orphaned entity_map entries (`--fix` to remove, `--yes` to skip confirmation) |
 | `wp wp4odoo cleanup orphans` | Remove entity_map entries where WP post no longer exists (`--module`, `--dry-run`, `--yes`) |
+| `wp wp4odoo cache flush` | Flush Odoo schema cache (memory + transients) |
 
 Pure delegation to existing services — no business logic in CLI class.
 
@@ -2209,6 +2210,7 @@ Auto-dismissed when all steps completed. Dismiss via × button persisted in `wp4
 | `wp4odoo_after_save_{module}_{entity}` | After `save_wp_data()` in pull | `$wp_id`, `$odoo_data`, `$wp_data` |
 | `wp4odoo_batch_processed` | After each batch completes | `$module_id`, `$entity_type`, `$count` |
 | `wp4odoo_webhook_enqueue_failed` | Webhook payload enqueue failure | `$payload`, `$exception` |
+| `wp4odoo_schema_cache_flushed` | Schema cache fully flushed (memory + transients) | `$deleted` (int) |
 
 ### Filters
 
@@ -2248,6 +2250,7 @@ Auto-dismissed when all steps completed. Dismiss via × button persisted in `wp4
 | `wp4odoo_wpai_routing_table` | Customize WP All Import post type → module routing |
 | `wp4odoo_odoo_locale` | Customize WP locale → Odoo locale mapping |
 | `wp4odoo_translatable_fields_{module}` | Customize translatable field list per module |
+| `wp4odoo_retry_delay` | Customize retry delay (seconds) for failed sync jobs (`$delay`, `$attempts`, `$error_type`) |
 | `wp4odoo_compat_report_url` | Customize the compatibility report URL for TESTED_UP_TO notices |
 
 ## Cron

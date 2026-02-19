@@ -88,4 +88,45 @@ class Schema_Cache {
 	public static function flush(): void {
 		self::$memory = [];
 	}
+
+	/**
+	 * Flush both in-memory and persistent (transient) caches.
+	 *
+	 * Deletes all `wp4odoo_schema_*` transients from the database
+	 * and clears the per-request memory. Use this when Odoo model
+	 * schemas have changed and cached field definitions are stale.
+	 *
+	 * Also fires the `wp4odoo_schema_cache_flushed` action after cleanup
+	 * so third-party code can react to the invalidation.
+	 *
+	 * @return int Number of transients deleted.
+	 *
+	 * @since 3.7.0
+	 */
+	public static function flush_all(): int {
+		global $wpdb;
+
+		self::$memory = [];
+
+		// Delete all schema transients in one query.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$deleted = (int) $wpdb->query(
+			$wpdb->prepare(
+				"DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s",
+				$wpdb->esc_like( '_transient_' . self::TRANSIENT_PREFIX ) . '%',
+				$wpdb->esc_like( '_transient_timeout_' . self::TRANSIENT_PREFIX ) . '%'
+			)
+		);
+
+		/**
+		 * Fires after the schema cache has been fully flushed.
+		 *
+		 * @since 3.7.0
+		 *
+		 * @param int $deleted Number of transient rows deleted.
+		 */
+		do_action( 'wp4odoo_schema_cache_flushed', $deleted );
+
+		return $deleted;
+	}
 }

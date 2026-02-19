@@ -77,7 +77,19 @@ trait Sync_Job_Tracking {
 		$should_retry = Error_Type::Transient === $error_type && $attempts < (int) $job->max_attempts;
 
 		if ( $should_retry ) {
-			$delay     = min( (int) ( pow( 2, $attempts ) * 60 ) + random_int( 0, 60 ), self::MAX_RETRY_DELAY );
+			$delay = min( (int) ( pow( 2, $attempts ) * 60 ) + random_int( 0, 60 ), self::MAX_RETRY_DELAY );
+
+			/**
+			 * Filter the retry delay for a failed sync job.
+			 *
+			 * @since 3.7.0
+			 *
+			 * @param int        $delay      Computed delay in seconds.
+			 * @param int        $attempts   Number of attempts so far (including this one).
+			 * @param Error_Type $error_type Error classification.
+			 */
+			$delay     = (int) apply_filters( 'wp4odoo_retry_delay', $delay, $attempts, $error_type );
+			$delay     = max( 0, min( $delay, self::MAX_RETRY_DELAY ) );
 			$scheduled = gmdate( 'Y-m-d H:i:s', time() + $delay );
 
 			$extra = [

@@ -14,7 +14,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Atomic stale recovery guard** — `Sync_Engine::process_queue()` now uses `wp_cache_add()` for the stale recovery mutex (was non-atomic `get_transient()`/`set_transient()` — two concurrent crons could both pass the check)
 - **Multisite settings cache scoping** — `Settings_Repository` internal cache is now keyed by `blog_id`. On multisite, `switch_to_blog()` previously returned cached settings from the originating site
 
+### Added
+- **`Schema_Cache::flush_all()`** — New method that deletes both in-memory and persistent (transient) caches in one query. Fires `wp4odoo_schema_cache_flushed` action after cleanup for third-party extensibility
+- **WP-CLI `cache flush` command** — `wp wp4odoo cache flush` clears the Odoo schema cache (memory + transients) on demand
+- **`wp4odoo_retry_delay` filter** — Retry delay in `Sync_Job_Tracking::handle_failure()` is now filterable. Clamped to `[0, MAX_RETRY_DELAY]` for safety
+
+### Fixed (Multisite)
+- **Credential cache flush on `switch_blog`** — `wp4odoo.php` now hooks `switch_blog` to call `Odoo_Auth::flush_credentials_cache()`, preventing stale credentials from site A leaking into site B when using `switch_to_blog()`
+
+### Fixed (Modules)
+- **Sales_Module handler init** — Moved `Portal_Manager` and `Partner_Service` initialization from `boot()` to `__construct()`, consistent with all other modules. Prevents potential uninitialized property access if `portal_manager` is referenced before `boot()` is called
+
 ### Changed
+- **SSL verification warning** — `Odoo_JsonRPC` and `Odoo_XmlRPC` now log a warning when `WP4ODOO_DISABLE_SSL_VERIFY` is active, making the insecure configuration visible in logs
 - **PHP 8.1+ first-class callable syntax** — Replaced 17 string-based callables (`'intval'`, `'strval'`) with first-class callable syntax (`intval( ... )`, `strval( ... )`) across 9 files. Better IDE support, type-safe, catches typos at parse time
 - **PHP 8.0+ `str_contains()`** — Replaced 2 `strpos() !== false` patterns with `str_contains()` in `GamiPress_Handler`
 

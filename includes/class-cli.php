@@ -505,6 +505,39 @@ class CLI {
 	}
 
 	/**
+	 * Manage caches.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     wp wp4odoo cache flush
+	 *
+	 * @subcommand cache
+	 * @when after_wp_load
+	 *
+	 * @since 3.7.0
+	 */
+	public function cache( array $args ): void {
+		$sub = $args[0] ?? 'flush';
+
+		match ( $sub ) {
+			'flush'  => $this->cache_flush(),
+			/* translators: %s: subcommand name */
+			default  => \WP_CLI::error( sprintf( __( 'Unknown subcommand: %s. Available: flush', 'wp4odoo' ), $sub ) ),
+		};
+	}
+
+	/**
+	 * Flush the Odoo schema cache (memory + transients).
+	 *
+	 * @return void
+	 */
+	private function cache_flush(): void {
+		$deleted = Schema_Cache::flush_all();
+		/* translators: %d: number of transients deleted */
+		\WP_CLI::success( sprintf( __( 'Schema cache flushed (%d transient(s) deleted).', 'wp4odoo' ), $deleted ) );
+	}
+
+	/**
 	 * Manage modules.
 	 *
 	 * ## EXAMPLES
