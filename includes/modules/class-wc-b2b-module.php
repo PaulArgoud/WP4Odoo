@@ -53,6 +53,7 @@ class WC_B2B_Module extends Module_Base {
 	 */
 	protected array $odoo_models = [
 		'company'        => 'res.partner',
+		'pricelist'      => 'product.pricelist',
 		'pricelist_rule' => 'product.pricelist.item',
 		'payment_term'   => 'account.payment.term',
 	];
@@ -72,6 +73,10 @@ class WC_B2B_Module extends Module_Base {
 			'billing_vat'     => 'vat',
 			'billing_phone'   => 'phone',
 			'is_company'      => 'is_company',
+		],
+		'pricelist'      => [
+			'name'        => 'name',
+			'currency_id' => 'currency_id',
 		],
 		'pricelist_rule' => [
 			'pricelist_id'    => 'pricelist_id',
@@ -136,11 +141,13 @@ class WC_B2B_Module extends Module_Base {
 	 */
 	public function get_default_settings(): array {
 		return [
-			'sync_companies'         => true,
-			'sync_pricelist_rules'   => true,
-			'pull_payment_terms'     => false,
-			'wholesale_pricelist_id' => 0,
-			'wholesale_category_id'  => 0,
+			'sync_companies'              => true,
+			'sync_pricelist_rules'        => true,
+			'sync_pricelists'             => false,
+			'assign_pricelist_to_partner' => true,
+			'pull_payment_terms'          => false,
+			'wholesale_pricelist_id'      => 0,
+			'wholesale_category_id'       => 0,
 		];
 	}
 
@@ -151,27 +158,37 @@ class WC_B2B_Module extends Module_Base {
 	 */
 	public function get_settings_fields(): array {
 		return [
-			'sync_companies'         => [
+			'sync_companies'              => [
 				'label'       => __( 'Sync B2B company accounts', 'wp4odoo' ),
 				'type'        => 'checkbox',
 				'description' => __( 'Push wholesale company accounts to Odoo as company partners.', 'wp4odoo' ),
 			],
-			'sync_pricelist_rules'   => [
+			'sync_pricelist_rules'        => [
 				'label'       => __( 'Sync wholesale pricing rules', 'wp4odoo' ),
 				'type'        => 'checkbox',
 				'description' => __( 'Push wholesale prices to Odoo as pricelist items.', 'wp4odoo' ),
 			],
-			'pull_payment_terms'     => [
+			'sync_pricelists'             => [
+				'label'       => __( 'Sync wholesale roles as pricelists', 'wp4odoo' ),
+				'type'        => 'checkbox',
+				'description' => __( 'Push Wholesale Suite roles to Odoo as product pricelists. Requires Wholesale Suite Premium.', 'wp4odoo' ),
+			],
+			'assign_pricelist_to_partner' => [
+				'label'       => __( 'Assign pricelist to wholesale partners', 'wp4odoo' ),
+				'type'        => 'checkbox',
+				'description' => __( 'Set the matching Odoo pricelist on wholesale customer partners.', 'wp4odoo' ),
+			],
+			'pull_payment_terms'          => [
 				'label'       => __( 'Pull payment terms from Odoo', 'wp4odoo' ),
 				'type'        => 'checkbox',
 				'description' => __( 'Pull payment terms from Odoo for B2B order management.', 'wp4odoo' ),
 			],
-			'wholesale_pricelist_id' => [
+			'wholesale_pricelist_id'      => [
 				'label'       => __( 'Odoo Pricelist ID', 'wp4odoo' ),
 				'type'        => 'number',
 				'description' => __( 'Odoo product.pricelist ID for wholesale pricing rules.', 'wp4odoo' ),
 			],
-			'wholesale_category_id'  => [
+			'wholesale_category_id'       => [
 				'label'       => __( 'Odoo Partner Category ID', 'wp4odoo' ),
 				'type'        => 'number',
 				'description' => __( 'Odoo res.partner.category ID for wholesale customer tagging.', 'wp4odoo' ),
@@ -227,6 +244,10 @@ class WC_B2B_Module extends Module_Base {
 			}
 		}
 
+		if ( 'pricelist' === $entity_type && ! empty( $odoo_values['name'] ) ) {
+			return [ [ 'name', '=', $odoo_values['name'] ] ];
+		}
+
 		if ( 'pricelist_rule' === $entity_type ) {
 			if ( ! empty( $odoo_values['pricelist_id'] ) && ! empty( $odoo_values['product_tmpl_id'] ) ) {
 				return [
@@ -262,6 +283,14 @@ class WC_B2B_Module extends Module_Base {
 		if ( 'pricelist_rule' === $entity_type ) {
 			$this->logger->info(
 				'Pricelist rule pull not supported — originates in WooCommerce.',
+				[ 'odoo_id' => $odoo_id ]
+			);
+			return Sync_Result::success();
+		}
+
+		if ( 'pricelist' === $entity_type ) {
+			$this->logger->info(
+				'Pricelist pull not supported — wholesale roles originate in WordPress.',
 				[ 'odoo_id' => $odoo_id ]
 			);
 			return Sync_Result::success();
@@ -346,6 +375,10 @@ class WC_B2B_Module extends Module_Base {
 			return $this->load_company_data( $wp_id );
 		}
 
+		if ( 'pricelist' === $entity_type ) {
+			return $this->handler->load_pricelist( $wp_id );
+		}
+
 		if ( 'pricelist_rule' === $entity_type ) {
 			return $this->load_pricelist_rule_data( $wp_id );
 		}
@@ -368,7 +401,17 @@ class WC_B2B_Module extends Module_Base {
 		$settings    = $this->get_settings();
 		$category_id = (int) ( $settings['wholesale_category_id'] ?? 0 );
 
-		return $this->handler->format_company_for_odoo( $data, $category_id );
+		$formatted = $this->handler->format_company_for_odoo( $data, $category_id );
+
+		// Assign pricelist to partner if enabled and a role-pricelist mapping exists.
+		if ( ! empty( $settings['assign_pricelist_to_partner'] ) && ! empty( $data['wholesale_role'] ) ) {
+			$pricelist_odoo_id = $this->handler->get_pricelist_odoo_id_for_role( $data['wholesale_role'] );
+			if ( $pricelist_odoo_id > 0 ) {
+				$formatted['property_product_pricelist'] = $pricelist_odoo_id;
+			}
+		}
+
+		return $formatted;
 	}
 
 	/**

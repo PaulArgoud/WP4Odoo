@@ -7,8 +7,13 @@
 
 // ─── Global stores ──────────────────────────────────────
 
-$GLOBALS['_wwp_wholesale_roles']  = [];
-$GLOBALS['_wwp_wholesale_prices'] = [];
+$GLOBALS['_wwp_wholesale_roles']      = [];
+$GLOBALS['_wwp_wholesale_prices']     = [];
+$GLOBALS['_wwp_all_wholesale_roles']  = [
+	'wholesale_customer' => [
+		'roleName' => 'Wholesale Customer',
+	],
+];
 
 // ─── Detection constant ────────────────────────────────
 
@@ -35,6 +40,17 @@ if ( ! function_exists( 'wwp_get_wholesale_role_for_user' ) ) {
 	 */
 	function wwp_get_wholesale_role_for_user( int $user_id ): string {
 		return $GLOBALS['_wwp_wholesale_roles'][ $user_id ] ?? '';
+	}
+}
+
+if ( ! function_exists( 'wwp_get_all_wholesale_roles' ) ) {
+	/**
+	 * Get all registered wholesale roles (Wholesale Suite Premium).
+	 *
+	 * @return array<string, array{roleName: string}> Wholesale roles.
+	 */
+	function wwp_get_all_wholesale_roles(): array {
+		return $GLOBALS['_wwp_all_wholesale_roles'] ?? [];
 	}
 }
 

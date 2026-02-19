@@ -101,6 +101,12 @@ return [
 		'constants' => [],
 	],
 
+	'fluent_booking'   => [
+		'classes'   => [],
+		'functions' => [],
+		'constants' => [ 'FLUENT_BOOKING_VERSION' ],
+	],
+
 	'jet_appointments' => [
 		'classes'   => [ 'JET_APB\Plugin' ],
 		'functions' => [],
@@ -163,7 +169,7 @@ return [
 
 	'wc_b2b'            => [
 		'classes'   => [ 'B2bking' ],
-		'functions' => [ 'wwp_get_wholesale_role_for_user', 'wwp_get_product_wholesale_price' ],
+		'functions' => [ 'wwp_get_wholesale_role_for_user', 'wwp_get_product_wholesale_price', 'wwp_get_all_wholesale_roles' ],
 		'constants' => [ 'WWP_PLUGIN_VERSION' ],
 	],
 
@@ -215,6 +221,18 @@ return [
 		'classes'   => [ 'Tribe__Events__Main', 'Tribe__Tickets__Main' ],
 		'functions' => [],
 		'constants' => [],
+	],
+
+	'mec'               => [
+		'classes'   => [ 'MEC' ],
+		'functions' => [],
+		'constants' => [ 'MEC_VERSION' ],
+	],
+
+	'fooevents'         => [
+		'classes'   => [ 'FooEvents' ],
+		'functions' => [],
+		'constants' => [ 'FOOEVENTS_VERSION' ],
 	],
 
 	'job_manager'       => [

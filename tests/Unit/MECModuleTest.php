@@ -3,32 +3,31 @@ declare( strict_types=1 );
 
 namespace WP4Odoo\Tests\Unit;
 
-use WP4Odoo\Modules\Events_Calendar_Module;
+use WP4Odoo\Modules\MEC_Module;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Unit tests for Events_Calendar_Module.
+ * Unit tests for MEC_Module.
  *
- * Tests module identity, Odoo models, settings, field mappings,
- * dependency status, boot guard, and bidirectional pull support.
+ * Tests module identity, exclusive group, Odoo models, settings,
+ * field mappings, dependency status, boot guard, and pull support.
+ *
+ * @covers \WP4Odoo\Modules\MEC_Module
  */
-class EventsCalendarModuleTest extends TestCase {
+class MECModuleTest extends TestCase {
 
-	private Events_Calendar_Module $module;
+	private MEC_Module $module;
 
 	protected function setUp(): void {
 		global $wpdb;
 		$wpdb = new \WP_DB_Stub();
 
-		$GLOBALS['_wp_options']       = [];
-		$GLOBALS['_wp_transients']    = [];
-		$GLOBALS['_wp_posts']         = [];
-		$GLOBALS['_wp_post_meta']     = [];
-		$GLOBALS['_tribe_events']     = [];
-		$GLOBALS['_tribe_tickets']    = [];
-		$GLOBALS['_tribe_attendees']  = [];
+		$GLOBALS['_wp_options']    = [];
+		$GLOBALS['_wp_transients'] = [];
+		$GLOBALS['_wp_posts']      = [];
+		$GLOBALS['_wp_post_meta']  = [];
 
-		$this->module = new Events_Calendar_Module(
+		$this->module = new MEC_Module(
 			wp4odoo_test_client_provider(),
 			wp4odoo_test_entity_map(),
 			wp4odoo_test_settings()
@@ -37,12 +36,12 @@ class EventsCalendarModuleTest extends TestCase {
 
 	// ─── Module identity ─────────────────────────────────
 
-	public function test_module_id_is_events_calendar(): void {
-		$this->assertSame( 'events_calendar', $this->module->get_id() );
+	public function test_module_id_is_mec(): void {
+		$this->assertSame( 'mec', $this->module->get_id() );
 	}
 
-	public function test_module_name_is_the_events_calendar(): void {
-		$this->assertSame( 'The Events Calendar', $this->module->get_name() );
+	public function test_module_name_is_modern_events_calendar(): void {
+		$this->assertSame( 'Modern Events Calendar', $this->module->get_name() );
 	}
 
 	public function test_exclusive_group_is_events(): void {
@@ -60,18 +59,13 @@ class EventsCalendarModuleTest extends TestCase {
 		$this->assertSame( 'event.event', $models['event'] );
 	}
 
-	public function test_declares_ticket_model(): void {
+	public function test_declares_booking_model(): void {
 		$models = $this->module->get_odoo_models();
-		$this->assertSame( 'product.product', $models['ticket'] );
+		$this->assertSame( 'event.registration', $models['booking'] );
 	}
 
-	public function test_declares_attendee_model(): void {
-		$models = $this->module->get_odoo_models();
-		$this->assertSame( 'event.registration', $models['attendee'] );
-	}
-
-	public function test_declares_three_entity_types(): void {
-		$this->assertCount( 3, $this->module->get_odoo_models() );
+	public function test_declares_two_entity_types(): void {
+		$this->assertCount( 2, $this->module->get_odoo_models() );
 	}
 
 	// ─── Default settings ───────────────────────────────
@@ -81,14 +75,9 @@ class EventsCalendarModuleTest extends TestCase {
 		$this->assertTrue( $settings['sync_events'] );
 	}
 
-	public function test_sync_tickets_enabled_by_default(): void {
+	public function test_sync_bookings_enabled_by_default(): void {
 		$settings = $this->module->get_default_settings();
-		$this->assertTrue( $settings['sync_tickets'] );
-	}
-
-	public function test_sync_attendees_enabled_by_default(): void {
-		$settings = $this->module->get_default_settings();
-		$this->assertTrue( $settings['sync_attendees'] );
+		$this->assertTrue( $settings['sync_bookings'] );
 	}
 
 	public function test_pull_events_enabled_by_default(): void {
@@ -96,19 +85,14 @@ class EventsCalendarModuleTest extends TestCase {
 		$this->assertTrue( $settings['pull_events'] );
 	}
 
-	public function test_pull_tickets_enabled_by_default(): void {
-		$settings = $this->module->get_default_settings();
-		$this->assertTrue( $settings['pull_tickets'] );
-	}
-
 	public function test_default_settings_count(): void {
-		$this->assertCount( 5, $this->module->get_default_settings() );
+		$this->assertCount( 3, $this->module->get_default_settings() );
 	}
 
 	// ─── Settings fields ────────────────────────────────
 
 	public function test_settings_fields_count(): void {
-		$this->assertCount( 5, $this->module->get_settings_fields() );
+		$this->assertCount( 3, $this->module->get_settings_fields() );
 	}
 
 	public function test_settings_fields_have_labels(): void {
@@ -143,43 +127,26 @@ class EventsCalendarModuleTest extends TestCase {
 		$this->assertSame( 'Details', $odoo['description'] );
 	}
 
-	// ─── Field mappings: ticket ──────────────────────────
+	// ─── Field mappings: booking (pass-through) ─────────
 
-	public function test_ticket_mapping_includes_name(): void {
-		$odoo = $this->module->map_to_odoo( 'ticket', [ 'name' => 'VIP' ] );
-		$this->assertSame( 'VIP', $odoo['name'] );
-	}
-
-	public function test_ticket_mapping_includes_list_price(): void {
-		$odoo = $this->module->map_to_odoo( 'ticket', [ 'list_price' => 25.0 ] );
-		$this->assertSame( 25.0, $odoo['list_price'] );
-	}
-
-	public function test_ticket_mapping_includes_service_type(): void {
-		$odoo = $this->module->map_to_odoo( 'ticket', [ 'type' => 'service' ] );
-		$this->assertSame( 'service', $odoo['type'] );
-	}
-
-	// ─── Field mappings: attendee (pass-through) ────────
-
-	public function test_attendee_mapping_passes_event_id(): void {
-		$odoo = $this->module->map_to_odoo( 'attendee', [ 'event_id' => 100 ] );
+	public function test_booking_mapping_passes_event_id(): void {
+		$odoo = $this->module->map_to_odoo( 'booking', [ 'event_id' => 100 ] );
 		$this->assertSame( 100, $odoo['event_id'] );
 	}
 
-	public function test_attendee_mapping_passes_partner_id(): void {
-		$odoo = $this->module->map_to_odoo( 'attendee', [ 'partner_id' => 200 ] );
+	public function test_booking_mapping_passes_partner_id(): void {
+		$odoo = $this->module->map_to_odoo( 'booking', [ 'partner_id' => 200 ] );
 		$this->assertSame( 200, $odoo['partner_id'] );
 	}
 
-	public function test_attendee_mapping_passes_email(): void {
-		$odoo = $this->module->map_to_odoo( 'attendee', [ 'email' => 'john@example.com' ] );
+	public function test_booking_mapping_passes_email(): void {
+		$odoo = $this->module->map_to_odoo( 'booking', [ 'email' => 'john@example.com' ] );
 		$this->assertSame( 'john@example.com', $odoo['email'] );
 	}
 
 	// ─── Dependency status ──────────────────────────────
 
-	public function test_dependency_available_when_class_exists(): void {
+	public function test_dependency_available_when_constant_defined(): void {
 		$status = $this->module->get_dependency_status();
 		$this->assertTrue( $status['available'] );
 	}
@@ -189,16 +156,16 @@ class EventsCalendarModuleTest extends TestCase {
 		$this->assertEmpty( $status['notices'] );
 	}
 
-	// ─── Pull: attendee skipped ─────────────────────────
+	// ─── Pull: booking skipped ─────────────────────────
 
-	public function test_pull_attendee_skipped(): void {
-		$result = $this->module->pull_from_odoo( 'attendee', 'update', 100, 0 );
+	public function test_pull_booking_skipped(): void {
+		$result = $this->module->pull_from_odoo( 'booking', 'update', 100, 0 );
 		$this->assertTrue( $result->succeeded() );
 		$this->assertNull( $result->get_entity_id() );
 	}
 
-	public function test_pull_attendee_create_skipped(): void {
-		$result = $this->module->pull_from_odoo( 'attendee', 'create', 200, 0 );
+	public function test_pull_booking_create_skipped(): void {
+		$result = $this->module->pull_from_odoo( 'booking', 'create', 200, 0 );
 		$this->assertTrue( $result->succeeded() );
 		$this->assertNull( $result->get_entity_id() );
 	}
@@ -207,7 +174,7 @@ class EventsCalendarModuleTest extends TestCase {
 
 	public function test_pull_event_delete_removes_post(): void {
 		$GLOBALS['_wp_posts'][50] = (object) [
-			'post_type'    => 'tribe_events',
+			'post_type'    => 'mec-events',
 			'post_title'   => 'Event to delete',
 			'post_content' => '',
 		];
@@ -216,20 +183,9 @@ class EventsCalendarModuleTest extends TestCase {
 		$this->assertTrue( $result->succeeded() );
 	}
 
-	public function test_pull_ticket_delete_removes_post(): void {
-		$GLOBALS['_wp_posts'][60] = (object) [
-			'post_type'  => 'tribe_rsvp_tickets',
-			'post_title' => 'Ticket to delete',
-		];
-
-		$result = $this->module->pull_from_odoo( 'ticket', 'delete', 200, 60 );
-		$this->assertTrue( $result->succeeded() );
-	}
-
 	// ─── map_from_odoo ──────────────────────────────────
 
 	public function test_map_from_odoo_event_parses_calendar_fields(): void {
-		// Without event.event model, uses calendar.event fields (start/stop/allday).
 		$odoo_data = [
 			'name'        => 'Pulled Conference',
 			'start'       => '2026-08-01 09:00:00',
@@ -243,14 +199,12 @@ class EventsCalendarModuleTest extends TestCase {
 		$this->assertSame( 'Pulled Conference', $wp_data['name'] );
 		$this->assertSame( '2026-08-01 09:00:00', $wp_data['start_date'] );
 		$this->assertSame( '2026-08-01 17:00:00', $wp_data['end_date'] );
-		$this->assertFalse( $wp_data['all_day'] );
 	}
 
 	public function test_map_from_odoo_event_with_event_model(): void {
-		// Simulate event.event model detection via transient.
 		$GLOBALS['_wp_transients']['wp4odoo_has_event_event'] = 1;
 
-		$module = new Events_Calendar_Module(
+		$module = new MEC_Module(
 			wp4odoo_test_client_provider(),
 			wp4odoo_test_entity_map(),
 			wp4odoo_test_settings()
@@ -270,19 +224,6 @@ class EventsCalendarModuleTest extends TestCase {
 		$this->assertSame( '2026-08-01 09:00:00', $wp_data['start_date'] );
 		$this->assertSame( '2026-08-01 17:00:00', $wp_data['end_date'] );
 		$this->assertSame( 'Europe/Paris', $wp_data['timezone'] );
-	}
-
-	public function test_map_from_odoo_ticket_uses_parent_mapping(): void {
-		$odoo_data = [
-			'name'       => 'Pulled Ticket',
-			'list_price' => 30.0,
-			'type'       => 'service',
-		];
-
-		$wp_data = $this->module->map_from_odoo( 'ticket', $odoo_data );
-
-		$this->assertSame( 'Pulled Ticket', $wp_data['name'] );
-		$this->assertSame( 30.0, $wp_data['list_price'] );
 	}
 
 	// ─── Boot guard ─────────────────────────────────────
@@ -305,15 +246,9 @@ class EventsCalendarModuleTest extends TestCase {
 		);
 	}
 
-	public function test_translatable_fields_empty_for_ticket(): void {
+	public function test_translatable_fields_empty_for_booking(): void {
 		$method = new \ReflectionMethod( $this->module, 'get_translatable_fields' );
 
-		$this->assertSame( [], $method->invoke( $this->module, 'ticket' ) );
-	}
-
-	public function test_translatable_fields_empty_for_attendee(): void {
-		$method = new \ReflectionMethod( $this->module, 'get_translatable_fields' );
-
-		$this->assertSame( [], $method->invoke( $this->module, 'attendee' ) );
+		$this->assertSame( [], $method->invoke( $this->module, 'booking' ) );
 	}
 }

@@ -11,45 +11,35 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Events Calendar Module — bidirectional sync for events and tickets,
- * push-only for attendees.
+ * FooEvents Module — bidirectional sync for WC product events,
+ * push-only for attendees/tickets.
  *
- * Syncs The Events Calendar events as Odoo events (event.event) or calendar
- * entries (calendar.event fallback), Event Tickets RSVP ticket types as
- * service products (product.product), and RSVP attendees as event
- * registrations (event.registration).
+ * FooEvents turns WooCommerce products into events with ticketing.
+ * This module syncs event products as Odoo events (event.event) or
+ * calendar entries (calendar.event fallback), and ticket holders as
+ * event registrations (event.registration).
  *
- * Events and tickets are bidirectional (push + pull). Attendees are
- * push-only (they originate in WordPress RSVP forms).
+ * Events are bidirectional (push + pull). Attendees are push-only
+ * (they originate from WooCommerce order completion).
  *
  * Dual-model: probes Odoo for event.event model at runtime.
  * If available, events and attendees use the rich event module.
  * If not, events fall back to calendar.event and attendees are skipped.
  *
- * Requires The Events Calendar to be active. Event Tickets is optional
- * (enables ticket and attendee sync when present).
- *
- * Exclusive group: events — mutually exclusive with Modern Events Calendar.
+ * Requires WooCommerce module to be active (FooEvents extends WC products).
  *
  * @package WP4Odoo
- * @since   2.7.0
+ * @since   3.8.0
  */
-class Events_Calendar_Module extends Module_Base {
+class FooEvents_Module extends Module_Base {
 
-	use Events_Calendar_Hooks;
+	use FooEvents_Hooks;
 
-	protected const PLUGIN_MIN_VERSION  = '6.0';
-	protected const PLUGIN_TESTED_UP_TO = '6.15';
-
-	/**
-	 * Exclusive group — only one events module can boot.
-	 *
-	 * @var string
-	 */
-	protected string $exclusive_group = 'events';
+	protected const PLUGIN_MIN_VERSION  = '1.18';
+	protected const PLUGIN_TESTED_UP_TO = '2.0';
 
 	/**
-	 * Sync direction: bidirectional for events/tickets, push-only for attendees.
+	 * Sync direction: bidirectional for events, push-only for attendees.
 	 *
 	 * @return string
 	 */
@@ -67,7 +57,6 @@ class Events_Calendar_Module extends Module_Base {
 	 */
 	protected array $odoo_models = [
 		'event'    => 'event.event',
-		'ticket'   => 'product.product',
 		'attendee' => 'event.registration',
 	];
 
@@ -75,7 +64,6 @@ class Events_Calendar_Module extends Module_Base {
 	 * Default field mappings.
 	 *
 	 * Event and attendee mappings are identity (pre-formatted by handler).
-	 * Ticket mapping uses standard field mapping.
 	 *
 	 * @var array<string, array<string, string>>
 	 */
@@ -87,11 +75,6 @@ class Events_Calendar_Module extends Module_Base {
 			'date_tz'     => 'date_tz',
 			'description' => 'description',
 		],
-		'ticket'   => [
-			'name'       => 'name',
-			'list_price' => 'list_price',
-			'type'       => 'type',
-		],
 		'attendee' => [
 			'event_id'   => 'event_id',
 			'partner_id' => 'partner_id',
@@ -101,14 +84,14 @@ class Events_Calendar_Module extends Module_Base {
 	];
 
 	/**
-	 * Events Calendar data handler.
+	 * FooEvents data handler.
 	 *
 	 * Initialized in __construct() (not boot()) because Sync_Engine can
 	 * call push_to_odoo on non-booted modules for residual queue jobs.
 	 *
-	 * @var Events_Calendar_Handler
+	 * @var FooEvents_Handler
 	 */
-	private Events_Calendar_Handler $handler;
+	private FooEvents_Handler $handler;
 
 	/**
 	 * Constructor.
@@ -118,37 +101,31 @@ class Events_Calendar_Module extends Module_Base {
 	 * @param \WP4Odoo\Settings_Repository   $settings        Settings repository.
 	 */
 	public function __construct( \Closure $client_provider, \WP4Odoo\Entity_Map_Repository $entity_map, \WP4Odoo\Settings_Repository $settings ) {
-		parent::__construct( 'events_calendar', 'The Events Calendar', $client_provider, $entity_map, $settings );
-		$this->handler = new Events_Calendar_Handler( $this->logger );
+		parent::__construct( 'fooevents', 'FooEvents', $client_provider, $entity_map, $settings );
+		$this->handler = new FooEvents_Handler( $this->logger );
 	}
 
 	/**
-	 * Boot the module: register Events Calendar + Event Tickets hooks.
+	 * Required modules — FooEvents needs WooCommerce.
+	 *
+	 * @return string[]
+	 */
+	public function get_required_modules(): array {
+		return [ 'woocommerce' ];
+	}
+
+	/**
+	 * Boot the module: register FooEvents hooks.
 	 *
 	 * @return void
 	 */
 	public function boot(): void {
-		if ( ! class_exists( 'Tribe__Events__Main' ) ) {
-			$this->logger->warning( \__( 'Events Calendar module enabled but The Events Calendar is not active.', 'wp4odoo' ) );
+		if ( ! class_exists( 'FooEvents' ) && ! defined( 'FOOEVENTS_VERSION' ) ) {
+			$this->logger->warning( \__( 'FooEvents module enabled but FooEvents for WooCommerce is not active.', 'wp4odoo' ) );
 			return;
 		}
 
-		$settings = $this->get_settings();
-
-		if ( ! empty( $settings['sync_events'] ) ) {
-			\add_action( 'save_post_tribe_events', $this->safe_callback( [ $this, 'on_event_save' ] ), 10, 1 );
-		}
-
-		// Ticket and attendee hooks only if Event Tickets is active.
-		if ( class_exists( 'Tribe__Tickets__Main' ) ) {
-			if ( ! empty( $settings['sync_tickets'] ) ) {
-				\add_action( 'save_post_tribe_rsvp_tickets', $this->safe_callback( [ $this, 'on_ticket_save' ] ), 10, 1 );
-			}
-
-			if ( ! empty( $settings['sync_attendees'] ) ) {
-				\add_action( 'event_tickets_rsvp_ticket_created', $this->safe_callback( [ $this, 'on_rsvp_attendee_created' ] ), 10, 4 );
-			}
-		}
+		$this->register_hooks();
 	}
 
 	/**
@@ -159,10 +136,8 @@ class Events_Calendar_Module extends Module_Base {
 	public function get_default_settings(): array {
 		return [
 			'sync_events'    => true,
-			'sync_tickets'   => true,
 			'sync_attendees' => true,
-			'pull_events'    => true,
-			'pull_tickets'   => true,
+			'pull_events'    => false,
 		];
 	}
 
@@ -176,64 +151,36 @@ class Events_Calendar_Module extends Module_Base {
 			'sync_events'    => [
 				'label'       => \__( 'Sync events', 'wp4odoo' ),
 				'type'        => 'checkbox',
-				'description' => \__( 'Push events to Odoo (event.event or calendar.event).', 'wp4odoo' ),
-			],
-			'sync_tickets'   => [
-				'label'       => \__( 'Sync tickets', 'wp4odoo' ),
-				'type'        => 'checkbox',
-				'description' => \__( 'Push RSVP ticket types to Odoo as service products. Requires Event Tickets.', 'wp4odoo' ),
+				'description' => \__( 'Push FooEvents products to Odoo (event.event or calendar.event).', 'wp4odoo' ),
 			],
 			'sync_attendees' => [
 				'label'       => \__( 'Sync attendees', 'wp4odoo' ),
 				'type'        => 'checkbox',
-				'description' => \__( 'Push RSVP attendees to Odoo as event registrations. Requires Event Tickets and Odoo Events module.', 'wp4odoo' ),
+				'description' => \__( 'Push ticket holders to Odoo as event registrations. Requires Odoo Events module.', 'wp4odoo' ),
 			],
 			'pull_events'    => [
 				'label'       => \__( 'Pull events from Odoo', 'wp4odoo' ),
 				'type'        => 'checkbox',
-				'description' => \__( 'Pull event changes from Odoo back to WordPress.', 'wp4odoo' ),
-			],
-			'pull_tickets'   => [
-				'label'       => \__( 'Pull tickets from Odoo', 'wp4odoo' ),
-				'type'        => 'checkbox',
-				'description' => \__( 'Pull ticket product changes from Odoo back to WordPress.', 'wp4odoo' ),
+				'description' => \__( 'Pull event changes from Odoo back to WordPress. Products are primarily managed by WooCommerce module.', 'wp4odoo' ),
 			],
 		];
 	}
 
 	/**
-	 * Get external dependency status for The Events Calendar.
+	 * Get external dependency status for FooEvents.
 	 *
 	 * @return array{available: bool, notices: array<array{type: string, message: string}>}
 	 */
 	public function get_dependency_status(): array {
-		return $this->check_dependency( class_exists( 'Tribe__Events__Main' ), 'The Events Calendar' );
+		$available = class_exists( 'FooEvents' ) || defined( 'FOOEVENTS_VERSION' );
+		return $this->check_dependency( $available, 'FooEvents for WooCommerce' );
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
 	protected function get_plugin_version(): string {
-		return class_exists( 'Tribe__Events__Main' ) ? \Tribe__Events__Main::VERSION : '';
-	}
-
-	// ─── Translation ──────────────────────────────────────
-
-	/**
-	 * Translatable fields for events (name + description).
-	 *
-	 * @param string $entity_type Entity type.
-	 * @return array<string, string> Odoo field => WP field.
-	 */
-	protected function get_translatable_fields( string $entity_type ): array {
-		if ( 'event' === $entity_type ) {
-			return [
-				'name'        => 'post_title',
-				'description' => 'post_content',
-			];
-		}
-
-		return [];
+		return defined( 'FOOEVENTS_VERSION' ) ? (string) FOOEVENTS_VERSION : '';
 	}
 
 	// ─── Deduplication ─────────────────────────────────────
@@ -241,15 +188,14 @@ class Events_Calendar_Module extends Module_Base {
 	/**
 	 * Deduplication domain for search-before-create.
 	 *
-	 * Events dedup by name. Tickets dedup by product name. Attendees
-	 * dedup by email on event.registration.
+	 * Events dedup by name. Attendees dedup by email on event.registration.
 	 *
 	 * @param string $entity_type Entity type.
 	 * @param array  $odoo_values Odoo-ready field values.
 	 * @return array Odoo domain filter, or empty to skip dedup.
 	 */
 	protected function get_dedup_domain( string $entity_type, array $odoo_values ): array {
-		if ( in_array( $entity_type, [ 'event', 'ticket' ], true ) && ! empty( $odoo_values['name'] ) ) {
+		if ( 'event' === $entity_type && ! empty( $odoo_values['name'] ) ) {
 			return [ [ 'name', '=', $odoo_values['name'] ] ];
 		}
 
@@ -267,8 +213,6 @@ class Events_Calendar_Module extends Module_Base {
 
 	/**
 	 * Check whether Odoo has the event.event model (Events module).
-	 *
-	 * Delegates to Module_Helpers::has_odoo_model().
 	 *
 	 * @return bool
 	 */
@@ -297,8 +241,8 @@ class Events_Calendar_Module extends Module_Base {
 	/**
 	 * Pull an Odoo entity to WordPress.
 	 *
-	 * Attendees are push-only and cannot be pulled. Events and tickets
-	 * delegate to the parent pull_from_odoo() infrastructure.
+	 * Attendees are push-only and cannot be pulled. Events delegate to
+	 * the parent pull_from_odoo() infrastructure.
 	 *
 	 * @param string $entity_type Entity type.
 	 * @param string $action      'create', 'update', or 'delete'.
@@ -309,17 +253,13 @@ class Events_Calendar_Module extends Module_Base {
 	 */
 	public function pull_from_odoo( string $entity_type, string $action, int $odoo_id, int $wp_id = 0, array $payload = [] ): \WP4Odoo\Sync_Result {
 		if ( 'attendee' === $entity_type ) {
-			$this->logger->info( 'Attendee pull not supported — attendees originate in WordPress.', [ 'odoo_id' => $odoo_id ] );
+			$this->logger->info( 'Attendee pull not supported — attendees originate from WooCommerce orders.', [ 'odoo_id' => $odoo_id ] );
 			return \WP4Odoo\Sync_Result::success();
 		}
 
 		$settings = $this->get_settings();
 
 		if ( 'event' === $entity_type && empty( $settings['pull_events'] ) ) {
-			return \WP4Odoo\Sync_Result::success();
-		}
-
-		if ( 'ticket' === $entity_type && empty( $settings['pull_tickets'] ) ) {
 			return \WP4Odoo\Sync_Result::success();
 		}
 
@@ -330,7 +270,6 @@ class Events_Calendar_Module extends Module_Base {
 	 * Map Odoo data to WordPress format for pull.
 	 *
 	 * Events use the handler's parse method (dual-model aware).
-	 * Tickets use standard reverse field mapping from parent.
 	 *
 	 * @param string $entity_type Entity type.
 	 * @param array  $odoo_data   Raw Odoo record data.
@@ -353,11 +292,11 @@ class Events_Calendar_Module extends Module_Base {
 	 * @return int The WordPress entity ID (0 on failure).
 	 */
 	protected function save_wp_data( string $entity_type, array $data, int $wp_id = 0 ): int {
-		return match ( $entity_type ) {
-			'event'  => $this->handler->save_event( $data, $wp_id ),
-			'ticket' => $this->handler->save_ticket( $data, $wp_id ),
-			default  => 0,
-		};
+		if ( 'event' === $entity_type ) {
+			return $this->handler->save_event( $data, $wp_id );
+		}
+
+		return 0;
 	}
 
 	/**
@@ -368,7 +307,7 @@ class Events_Calendar_Module extends Module_Base {
 	 * @return bool
 	 */
 	protected function delete_wp_data( string $entity_type, int $wp_id ): bool {
-		if ( 'event' === $entity_type || 'ticket' === $entity_type ) {
+		if ( 'event' === $entity_type ) {
 			$deleted = \wp_delete_post( $wp_id, true );
 			return false !== $deleted && null !== $deleted;
 		}
@@ -382,7 +321,6 @@ class Events_Calendar_Module extends Module_Base {
 	 * Push a WordPress entity to Odoo.
 	 *
 	 * For attendees: skip if event.event not available, ensure event synced.
-	 * For tickets: standard push (product.product always available).
 	 *
 	 * @param string $entity_type The entity type.
 	 * @param string $action      'create', 'update', or 'delete'.
@@ -392,7 +330,6 @@ class Events_Calendar_Module extends Module_Base {
 	 * @return \WP4Odoo\Sync_Result
 	 */
 	public function push_to_odoo( string $entity_type, string $action, int $wp_id, int $odoo_id = 0, array $payload = [] ): \WP4Odoo\Sync_Result {
-		// Attendees require the Odoo Events module.
 		if ( 'attendee' === $entity_type && 'delete' !== $action ) {
 			if ( ! $this->has_event_model() ) {
 				$this->logger->info( 'event.event not available — skipping attendee push.', [ 'attendee_id' => $wp_id ] );
@@ -408,7 +345,7 @@ class Events_Calendar_Module extends Module_Base {
 	 * Map WP data to Odoo values.
 	 *
 	 * Events and attendees bypass standard mapping — the data is pre-formatted
-	 * by the handler. Tickets use standard field mapping plus a hardcoded type.
+	 * by the handler.
 	 *
 	 * @param string $entity_type Entity type.
 	 * @param array  $wp_data     WordPress data from load_wp_data().
@@ -419,13 +356,7 @@ class Events_Calendar_Module extends Module_Base {
 			return $wp_data;
 		}
 
-		$mapped = parent::map_to_odoo( $entity_type, $wp_data );
-
-		if ( 'ticket' === $entity_type ) {
-			$mapped['type'] = 'service';
-		}
-
-		return $mapped;
+		return parent::map_to_odoo( $entity_type, $wp_data );
 	}
 
 	// ─── Data access ───────────────────────────────────────
@@ -440,7 +371,6 @@ class Events_Calendar_Module extends Module_Base {
 	protected function load_wp_data( string $entity_type, int $wp_id ): array {
 		return match ( $entity_type ) {
 			'event'    => $this->load_event_data( $wp_id ),
-			'ticket'   => $this->handler->load_ticket( $wp_id ),
 			'attendee' => $this->load_attendee_data( $wp_id ),
 			default    => [],
 		};
@@ -449,11 +379,11 @@ class Events_Calendar_Module extends Module_Base {
 	/**
 	 * Load and format an event for the target Odoo model.
 	 *
-	 * @param int $post_id Event post ID.
+	 * @param int $product_id WC product ID.
 	 * @return array<string, mixed>
 	 */
-	private function load_event_data( int $post_id ): array {
-		$data = $this->handler->load_event( $post_id );
+	private function load_event_data( int $product_id ): array {
+		$data = $this->handler->load_event( $product_id );
 		if ( empty( $data ) ) {
 			return [];
 		}
@@ -464,32 +394,30 @@ class Events_Calendar_Module extends Module_Base {
 	/**
 	 * Load and resolve an attendee with Odoo references.
 	 *
-	 * @param int $attendee_id Attendee post ID.
+	 * @param int $ticket_id FooEvents ticket post ID.
 	 * @return array<string, mixed>
 	 */
-	private function load_attendee_data( int $attendee_id ): array {
-		$data = $this->handler->load_attendee( $attendee_id );
+	private function load_attendee_data( int $ticket_id ): array {
+		$data = $this->handler->load_attendee( $ticket_id );
 		if ( empty( $data ) ) {
 			return [];
 		}
 
-		// Resolve attendee → Odoo partner.
 		$email = $data['email'] ?? '';
 		$name  = $data['name'] ?? '';
 
 		if ( empty( $email ) ) {
-			$this->logger->warning( 'RSVP attendee has no email.', [ 'attendee_id' => $attendee_id ] );
+			$this->logger->warning( 'FooEvents attendee has no email.', [ 'ticket_id' => $ticket_id ] );
 			return [];
 		}
 
 		$partner_id = $this->resolve_partner_from_email( $email, $name ?: $email );
 
 		if ( ! $partner_id ) {
-			$this->logger->warning( 'Cannot resolve partner for attendee.', [ 'attendee_id' => $attendee_id ] );
+			$this->logger->warning( 'Cannot resolve partner for FooEvents attendee.', [ 'ticket_id' => $ticket_id ] );
 			return [];
 		}
 
-		// Resolve event → Odoo event ID.
 		$event_wp_id   = $data['event_id'] ?? 0;
 		$event_odoo_id = 0;
 		if ( $event_wp_id > 0 ) {
@@ -497,7 +425,7 @@ class Events_Calendar_Module extends Module_Base {
 		}
 
 		if ( ! $event_odoo_id ) {
-			$this->logger->warning( 'Cannot resolve Odoo event for attendee.', [ 'event_id' => $event_wp_id ] );
+			$this->logger->warning( 'Cannot resolve Odoo event for FooEvents attendee.', [ 'event_id' => $event_wp_id ] );
 			return [];
 		}
 
@@ -509,11 +437,11 @@ class Events_Calendar_Module extends Module_Base {
 	/**
 	 * Ensure the event is synced before pushing an attendee.
 	 *
-	 * @param int $attendee_id Attendee post ID.
+	 * @param int $ticket_id FooEvents ticket post ID.
 	 * @return void
 	 */
-	private function ensure_event_synced_for_attendee( int $attendee_id ): void {
-		$event_id = $this->handler->get_event_id_for_attendee( $attendee_id );
+	private function ensure_event_synced_for_attendee( int $ticket_id ): void {
+		$event_id = $this->handler->get_event_id_for_attendee( $ticket_id );
 		$this->ensure_entity_synced( 'event', $event_id );
 	}
 }

@@ -2,7 +2,7 @@
 
 ## Overview
 
-Modular WordPress plugin providing bidirectional synchronization between WordPress/WooCommerce and Odoo ERP (v14+). The plugin covers 69 modules across 49 domains: CRM, Sales & Invoicing, WooCommerce, WooCommerce Subscriptions, WC Bundle BOM, WC Product Add-Ons, WC Points & Rewards, WC Inventory, WC Shipping, WC Returns, WC Rental, Easy Digital Downloads, Memberships (WC Memberships + MemberPress + PMPro + RCP), Donations (GiveWP + WP Charitable + WP Simple Pay), Forms (11 plugins: Gravity Forms + WPForms + CF7 + Fluent Forms + Formidable + Ninja Forms + Forminator + JetFormBuilder + Elementor Pro + Divi + Bricks), WP Recipe Maker, LMS (LearnDash + LifterLMS + TutorLMS + LearnPress + Sensei LMS), Booking (Amelia + Bookly + JetAppointments + JetBooking + WC Bookings), Projects (WP Project Manager), Events (The Events Calendar + Event Tickets), Invoicing (Sprout Invoices + WP-Invoice), E-Commerce (WP Crowdfunding + Ecwid + ShopWP + SureCart), Marketplace (Dokan + WCFM + WC Vendors), B2B/Wholesale (WC B2B), Email Marketing (MailPoet + MC4WP + FluentCRM), Helpdesk (Awesome Support + SupportCandy + Fluent Support), HR (WP Job Manager + WP ERP + WP ERP CRM), Accounting (WP ERP Accounting), Affiliates (AffiliateWP), Funnels (FunnelKit), Gamification (GamiPress + myCRED), Community (BuddyBoss + Ultimate Member), Field Service, Knowledge (Knowledge), Documents (WP Document Revisions + WP Download Manager), Food Ordering (GloriaFood + WPPizza + RestroPress), Survey & Quiz (Quiz Maker + QSM), Product Configurator (Jeero), Generic CPT (JetEngine), and Meta-modules (ACF + JetEngine Meta + WP All Import). Supports WordPress Multisite with per-site company scoping.
+Modular WordPress plugin providing bidirectional synchronization between WordPress/WooCommerce and Odoo ERP (v14+). The plugin covers 72 modules across 49 domains: CRM, Sales & Invoicing, WooCommerce, WooCommerce Subscriptions, WC Bundle BOM, WC Product Add-Ons, WC Points & Rewards, WC Inventory, WC Shipping, WC Returns, WC Rental, Easy Digital Downloads, Memberships (WC Memberships + MemberPress + PMPro + RCP), Donations (GiveWP + WP Charitable + WP Simple Pay), Forms (11 plugins: Gravity Forms + WPForms + CF7 + Fluent Forms + Formidable + Ninja Forms + Forminator + JetFormBuilder + Elementor Pro + Divi + Bricks), WP Recipe Maker, LMS (LearnDash + LifterLMS + TutorLMS + LearnPress + Sensei LMS), Booking (Amelia + Bookly + FluentBooking + JetAppointments + JetBooking + WC Bookings), Projects (WP Project Manager), Events (The Events Calendar + MEC + FooEvents), Invoicing (Sprout Invoices + WP-Invoice), E-Commerce (WP Crowdfunding + Ecwid + ShopWP + SureCart), Marketplace (Dokan + WCFM + WC Vendors), B2B/Wholesale (WC B2B), Email Marketing (MailPoet + MC4WP + FluentCRM), Helpdesk (Awesome Support + SupportCandy + Fluent Support), HR (WP Job Manager + WP ERP + WP ERP CRM), Accounting (WP ERP Accounting), Affiliates (AffiliateWP), Funnels (FunnelKit), Gamification (GamiPress + myCRED), Community (BuddyBoss + Ultimate Member), Field Service, Knowledge (Knowledge), Documents (WP Document Revisions + WP Download Manager), Food Ordering (GloriaFood + WPPizza + RestroPress), Survey & Quiz (Quiz Maker + QSM), Product Configurator (Jeero), Generic CPT (JetEngine), and Meta-modules (ACF + JetEngine Meta + WP All Import). Supports WordPress Multisite with per-site company scoping.
 
 ![WP4ODOO Full Architecture](assets/images/architecture-full.svg)
 
@@ -116,7 +116,7 @@ WordPress For Odoo/
 │   │   ├── class-rcp-handler.php             # RCP: level/payment/membership data load via RCP v3.0+ classes
 │   │   ├── class-rcp-module.php              # RCP: extends Membership_Module_Base (uses RCP_Hooks trait)
 │   │   │
-│   │   ├── # ─── Booking (Amelia + Bookly + JetAppointments + JetBooking + WC Bookings) ──
+│   │   ├── # ─── Booking (Amelia + Bookly + FluentBooking + JetAppointments + JetBooking + WC Bookings) ──
 │   │   ├── class-booking-module-base.php     # Shared: abstract base class for booking/appointment modules
 │   │   ├── trait-amelia-hooks.php            # Amelia: hook callbacks (booking saved/canceled/rescheduled, service saved)
 │   │   ├── class-amelia-handler.php          # Amelia: $wpdb queries on amelia_* tables (no CPT)
@@ -124,6 +124,9 @@ WordPress For Odoo/
 │   │   ├── trait-bookly-cron-hooks.php       # Bookly: WP-Cron polling (no hooks available)
 │   │   ├── class-bookly-handler.php          # Bookly: $wpdb queries on bookly_* tables (batch + individual)
 │   │   ├── class-bookly-module.php           # Bookly: extends Booking_Module_Base (uses Bookly_Cron_Hooks trait)
+│   │   ├── trait-fluent-booking-hooks.php   # FluentBooking: hook callbacks (booking scheduled, status changed, calendar created/updated)
+│   │   ├── class-fluent-booking-handler.php # FluentBooking: $wpdb queries on fluentbooking_* tables (no CPT)
+│   │   ├── class-fluent-booking-module.php  # FluentBooking: extends Booking_Module_Base (uses Fluent_Booking_Hooks trait)
 │   │   ├── trait-jet-appointments-hooks.php  # JetAppointments: hook callbacks (appointment after-insert/update, service save)
 │   │   ├── class-jet-appointments-handler.php # JetAppointments: CPT-based (jet-appointment + jet-service), meta fields
 │   │   ├── class-jet-appointments-module.php # JetAppointments: extends Booking_Module_Base (uses Jet_Appointments_Hooks trait)
@@ -182,10 +185,16 @@ WordPress For Odoo/
 │   │   ├── class-wc-points-rewards-module.php # Points: bidirectional, uses Loyalty_Card_Resolver trait
 │   │   ├── trait-loyalty-card-resolver.php     # Shared find-or-create loyalty.card logic (WC Points & GamiPress)
 │   │   │
-│   │   ├── # ─── Events Calendar ──────────────────────────────
+│   │   ├── # ─── Events (Events Calendar + MEC + FooEvents) ────
 │   │   ├── trait-events-calendar-hooks.php   # Events Calendar: hook callbacks (event save, ticket save, attendee created)
 │   │   ├── class-events-calendar-handler.php # Events Calendar: event/ticket/attendee data load + formatting
-│   │   ├── class-events-calendar-module.php  # Events Calendar: push sync, dual-model (event.event / calendar.event)
+│   │   ├── class-events-calendar-module.php  # Events Calendar: exclusive group: events, dual-model (event.event / calendar.event)
+│   │   ├── trait-mec-hooks.php              # MEC: hook callbacks (event save, booking completed)
+│   │   ├── class-mec-handler.php            # MEC: event/booking data load from CPT + mec_events table
+│   │   ├── class-mec-module.php             # MEC: exclusive group: events, dual-model (event.event / calendar.event)
+│   │   ├── trait-fooevents-hooks.php        # FooEvents: hook callbacks (event product save, ticket save)
+│   │   ├── class-fooevents-handler.php      # FooEvents: event data from WC product meta, attendee from ticket CPT
+│   │   ├── class-fooevents-module.php       # FooEvents: dual-model, requires WooCommerce, events + attendees
 │   │   │
 │   │   ├── # ─── Invoicing (Sprout Invoices + WP-Invoice) ──
 │   │   ├── trait-sprout-invoices-hooks.php   # SI: hook callbacks (invoice save, payment)
@@ -364,7 +373,7 @@ WordPress For Odoo/
 ├── templates/
 │   └── customer-portal.php           #   Customer portal HTML template (orders/invoices tabs)
 │
-├── tests/                             # 4226 unit tests (6471 assertions) + 26 integration tests (wp-env)
+├── tests/                             # 5405 unit tests (8126 assertions) + 42 integration tests (wp-env)
 │   ├── bootstrap.php                 #   Unit test bootstrap: constants, stub loading, plugin class requires
 │   ├── bootstrap-integration.php     #   Integration test bootstrap: loads WP test framework (wp-env)
 │   ├── stubs/
@@ -389,6 +398,9 @@ WordPress For Odoo/
 │   │   ├── rcp-classes.php          #   RCP_Membership, RCP_Customer, RCP_Payments
 │   │   ├── wc-subscriptions-classes.php # WC_Subscriptions, WC_Subscription
 │   │   ├── events-calendar-classes.php  # Tribe__Events__Main, Tribe__Tickets__Main
+│   │   ├── mec-classes.php             # MEC class, MEC_VERSION constant
+│   │   ├── fooevents-classes.php       # FooEvents class, FOOEVENTS_VERSION constant
+│   │   ├── fluent-booking-classes.php  # FLUENT_BOOKING_VERSION constant
 │   │   ├── wc-bookings-classes.php     # WC_Booking, WC_Product_Booking
 │   │   ├── sprout-invoices-classes.php  # SI_Post_Type, SI_Invoice, SI_Payment
 │   │   ├── wp-invoice-classes.php       # WPI_Invoice
@@ -509,6 +521,9 @@ WordPress For Odoo/
 │       ├── WCSubscriptionsHandlerTest.php # 40 tests for WC_Subscriptions_Handler
 │       ├── EventsCalendarModuleTest.php  # 23 tests for Events_Calendar_Module
 │       ├── EventsCalendarHandlerTest.php # 30 tests for Events_Calendar_Handler
+│       ├── MECModuleTest.php            # 30 tests for MEC_Module
+│       ├── FooEventsModuleTest.php      # 28 tests for FooEvents_Module
+│       ├── FluentBookingModuleTest.php  # 38 tests for Fluent_Booking_Module
 │       ├── WCBookingsModuleTest.php     # 25 tests for WC_Bookings_Module
 │       ├── WCBookingsHandlerTest.php    # 24 tests for WC_Bookings_Handler
 │       ├── SproutInvoicesModuleTest.php  # 46 tests for Sprout_Invoices_Module
@@ -656,6 +671,7 @@ Module_Base (abstract)
 ├── Booking_Module_Base (abstract)
 │   ├── Amelia_Module           → product.product, calendar.event                    [bidirectional]
 │   ├── Bookly_Module           → product.product, calendar.event                    [bidirectional]
+│   ├── Fluent_Booking_Module   → product.product, calendar.event                    [bidirectional]
 │   ├── Jet_Appointments_Module → product.product, calendar.event                    [bidirectional]
 │   ├── Jet_Booking_Module     → product.product, calendar.event                    [bidirectional]
 │   └── WC_Bookings_Module     → product.product, calendar.event                    [bidirectional]
@@ -672,7 +688,11 @@ Module_Base (abstract)
 ├── WC_Shipping_Module          → stock.picking, delivery.carrier                    [bidirectional]
 ├── WC_Returns_Module           → account.move (out_refund), stock.picking           [bidirectional]
 ├── Events_Calendar_Module      → event.event / calendar.event, product.product,     [bidirectional]
-│                                 event.registration
+│                                 event.registration  (exclusive group: events)
+├── MEC_Module                  → event.event / calendar.event, event.registration   [bidirectional]
+│                                 (exclusive group: events)
+├── FooEvents_Module            → event.event / calendar.event, event.registration   [bidirectional]
+│                                 (requires: woocommerce)
 ├── Sprout_Invoices_Module      → account.move, account.payment                      [bidirectional]
 ├── WP_Invoice_Module           → account.move                                       [WP → Odoo]
 ├── Crowdfunding_Module         → product.product                                    [WP → Odoo]
@@ -710,7 +730,8 @@ Module_Base (abstract)
 - **Invoicing**: Sprout Invoices and WP-Invoice are mutually exclusive (both target `account.move` for invoicing). First-registered wins — registration order: Sprout Invoices → WP-Invoice.
 - **Helpdesk**: Awesome Support and SupportCandy are mutually exclusive (both target `helpdesk.ticket` / `project.task`). First-registered wins — registration order: Awesome Support → SupportCandy.
 - **Gamification**: GamiPress and myCRED are mutually exclusive (both target `loyalty.card` via `Loyalty_Card_Resolver` with `partner_id` + `program_id`). First-registered wins (GamiPress before myCRED in registration order).
-- All other modules are independent and can coexist freely (LMS, Subscriptions, Points & Rewards, Events, Booking, Donations, Forms, WPRM, Crowdfunding, BOM, WC Add-Ons, Jeero Configurator, AffiliateWP, FluentCRM, FunnelKit, BuddyBoss, Knowledge, Documents, WP ERP, WP ERP CRM, WP ERP Accounting, WP Project Manager, JetEngine, JetEngine Meta, ACF, WP All Import, Job Manager, Food Ordering, Survey & Quiz).
+- **Events**: Events Calendar and MEC are mutually exclusive (both target `event.event` / `calendar.event` with exclusive group `events`). First-registered wins — registration order: Events Calendar → MEC. Note: FooEvents is independent (not in the exclusive group) — it coexists with either events module.
+- All other modules are independent and can coexist freely (LMS, Subscriptions, Points & Rewards, FooEvents, Booking, Donations, Forms, WPRM, Crowdfunding, BOM, WC Add-Ons, Jeero Configurator, AffiliateWP, FluentCRM, FunnelKit, BuddyBoss, Knowledge, Documents, WP ERP, WP ERP CRM, WP ERP Accounting, WP Project Manager, JetEngine, JetEngine Meta, ACF, WP All Import, Job Manager, Food Ordering, Survey & Quiz).
 
 **Module_Base provides** (uses traits: `Hook_Lifecycle`, `Translation_Accumulator`, `Sync_Orchestrator`, `Module_Helpers`):
 - Version bounds: `PLUGIN_MIN_VERSION` (blocks boot if too old) and `PLUGIN_TESTED_UP_TO` (warns if newer than tested). Subclasses override `get_plugin_version()` to return the detected plugin version. Patch-level normalization ensures `10.5.0` is within `10.5` range. `Module_Registry` enforces MIN before boot and collects TESTED warnings for the admin notice.
@@ -943,7 +964,7 @@ Used by `MemberPress_Module`, `PMPro_Module`, and `RCP_Module`.
 
 ### 10. Shared Booking Infrastructure
 
-Three booking modules (Amelia, Bookly, JetAppointments) share a common service/appointment sync pattern:
+Six booking modules (Amelia, Bookly, FluentBooking, JetAppointments, JetBooking, WC Bookings) share a common service/appointment sync pattern:
 
 **`Booking_Module_Base`** (`class-booking-module-base.php`):
 - Abstract base class extending `Module_Base`
@@ -953,7 +974,7 @@ Three booking modules (Amelia, Bookly, JetAppointments) share a common service/a
 - Shared `ensure_service_synced()`: auto-pushes service to Odoo before dependent booking
 - 8 abstract methods for subclass configuration: `get_booking_entity_type()`, `get_fallback_label()`, `handler_load_service()`, `handler_extract_booking_fields()` (consolidated: returns service_id, customer email/name, start/end/notes in one call), `handler_get_service_id()`, `handler_parse_service_from_odoo()`, `handler_save_service()`, `handler_delete_service()`
 
-Used by `Amelia_Module`, `Bookly_Module`, `Jet_Appointments_Module`, and `WC_Bookings_Module`.
+Used by `Amelia_Module`, `Bookly_Module`, `Fluent_Booking_Module`, `Jet_Appointments_Module`, `Jet_Booking_Module`, and `WC_Bookings_Module`.
 
 ### 11. Shared Helpdesk Infrastructure
 
@@ -1441,6 +1462,23 @@ All user inputs are sanitized with:
 
 **Settings:** `sync_products`, `sync_bookings`, `pull_services`
 
+### FluentBooking — COMPLETE
+
+**Files:** `class-fluent-booking-module.php` (extends `Booking_Module_Base`, uses `Fluent_Booking_Hooks` trait), `trait-fluent-booking-hooks.php` (hook callbacks), `class-fluent-booking-handler.php` ($wpdb queries on FluentBooking tables)
+
+**Odoo models:** `product.product` (services/calendars), `calendar.event` (bookings)
+
+**Key features:**
+- Bidirectional: services ↔ Odoo, bookings → Odoo only
+- Requires FluentBooking; `boot()` guards with `defined('FLUENT_BOOKING_VERSION')`
+- Hook-based sync: `fluent_booking/after_booking_scheduled`, `fluent_booking/booking_status_changed` for bookings; `fluent_booking/after_calendar_created`, `fluent_booking/after_calendar_updated` for services
+- Data access via `$wpdb` on FluentBooking custom tables (`fluentbooking_calendars`, `fluentbooking_bookings`)
+- Service auto-sync via `Booking_Module_Base::ensure_service_synced()`
+- Customer resolution via `Partner_Service` (from email/name in booking)
+- Event naming: "Service — Customer"
+
+**Settings:** `sync_services`, `sync_bookings`, `pull_services`
+
 ### JetAppointments (Crocoblock) — COMPLETE
 
 **Files:** `class-jet-appointments-module.php` (extends `Booking_Module_Base`, uses `Jet_Appointments_Hooks` trait), `trait-jet-appointments-hooks.php` (hook callbacks), `class-jet-appointments-handler.php` (CPT-based: `jet-appointment` + `jet-service`, meta fields)
@@ -1699,7 +1737,7 @@ All user inputs are sanitized with:
 - Push-only (WP → Odoo) — events, RSVP tickets, RSVP attendees
 - Requires The Events Calendar; `boot()` guards with `class_exists('Tribe__Events__Main')`
 - Event Tickets optional: ticket and attendee sync only if `class_exists('Tribe__Tickets__Main')`
-- Independent module (no exclusive group) — coexists with all other modules
+- Exclusive group `events` — mutually exclusive with Modern Events Calendar (MEC)
 - **Dual-model detection**: probes `ir.model` for `event.event` (cached 1h); falls back to `calendar.event`
 - Attendees require `event.event` (skipped in fallback mode); tickets always use `product.product`
 - Event auto-sync: `ensure_event_synced_for_attendee()` pushes event before dependent attendee
@@ -1708,6 +1746,45 @@ All user inputs are sanitized with:
 - Translation pull support: `get_translatable_fields()` maps `name → post_title`, `description → post_content` for events
 
 **Settings:** `sync_events`, `sync_tickets`, `sync_attendees`
+
+### Modern Events Calendar (MEC) — COMPLETE
+
+**Files:** `class-mec-module.php` (extends `Module_Base`, uses `MEC_Hooks` trait), `trait-mec-hooks.php` (hook callbacks), `class-mec-handler.php` (event/booking data load from CPT + custom `mec_events` table)
+
+**Odoo models:** `event.event` (events — preferred), `calendar.event` (events — fallback), `event.registration` (bookings/attendees)
+
+**Key features:**
+- Bidirectional events, push-only bookings (MEC Pro)
+- Requires Modern Events Calendar; `boot()` guards with `defined('MEC_VERSION') || class_exists('MEC')`
+- Exclusive group `events` — mutually exclusive with The Events Calendar
+- **Dual-model detection**: probes `ir.model` for `event.event` (cached 1h); falls back to `calendar.event`
+- Bookings require `event.event` (skipped in fallback mode)
+- Data access: CPT `mec-events` for post data + `mec_events` custom table for dates
+- Event auto-sync: `ensure_event_synced_for_booking()` pushes event before dependent booking
+- Booking → Odoo partner resolution via `resolve_partner_from_email()`
+- Translation pull support: `get_translatable_fields()` maps `name → post_title`, `description → post_content`
+
+**Settings:** `sync_events`, `sync_bookings`, `pull_events`
+
+### FooEvents for WooCommerce — COMPLETE
+
+**Files:** `class-fooevents-module.php` (extends `Module_Base`, uses `FooEvents_Hooks` trait), `trait-fooevents-hooks.php` (hook callbacks), `class-fooevents-handler.php` (event data from WC product meta, attendee data from ticket CPT)
+
+**Odoo models:** `event.event` (events — preferred), `calendar.event` (events — fallback), `event.registration` (attendees)
+
+**Key features:**
+- Bidirectional events, push-only attendees
+- Requires FooEvents for WooCommerce; `boot()` guards with `class_exists('FooEvents') || defined('FOOEVENTS_VERSION')`
+- Requires WooCommerce module (`get_required_modules()` returns `['woocommerce']`)
+- **Dual-model detection**: probes `ir.model` for `event.event` (cached 1h); falls back to `calendar.event`
+- Attendees require `event.event` (skipped in fallback mode)
+- FooEvents marks WC products as events via `WooCommerceEventsEvent = 'Event'` post meta
+- Tickets stored as `event_magic_tickets` CPT with attendee name/email meta
+- Hook priority 20 on `save_post_product` (after WooCommerce module at priority 10)
+- Event auto-sync: `ensure_event_synced_for_attendee()` pushes event before dependent attendee
+- Attendee → Odoo partner resolution via `resolve_partner_from_email()`
+
+**Settings:** `sync_events`, `sync_attendees`, `pull_events`
 
 ### Sprout Invoices — COMPLETE
 

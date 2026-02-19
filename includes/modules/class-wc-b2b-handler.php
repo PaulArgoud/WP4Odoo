@@ -39,6 +39,13 @@ class WC_B2B_Handler {
 	private const PAYMENT_TERMS_OPTION = 'wp4odoo_b2b_payment_terms';
 
 	/**
+	 * Option key for role → Odoo pricelist ID mappings.
+	 *
+	 * @var string
+	 */
+	private const PRICELIST_MAPPINGS_OPTION = 'wp4odoo_b2b_pricelist_mappings';
+
+	/**
 	 * Wholesale Suite wholesale price meta keys.
 	 *
 	 * @var array<string>
@@ -208,6 +215,121 @@ class WC_B2B_Handler {
 			'compute_price'   => 'fixed',
 			'applied_on'      => '1_product',
 		];
+	}
+
+	// ─── Pricelist (wholesale role → product.pricelist) ──
+
+	/**
+	 * Load a wholesale role as pricelist data for push.
+	 *
+	 * Uses a sequential ID scheme: the $wp_id parameter is the 1-based
+	 * index of the role in the list returned by get_all_wholesale_roles().
+	 *
+	 * @param int $wp_id Role index (1-based).
+	 * @return array<string, mixed> Pricelist data, or empty if role not found.
+	 */
+	public function load_pricelist( int $wp_id ): array {
+		$roles = $this->get_all_wholesale_roles();
+		if ( empty( $roles ) ) {
+			return [];
+		}
+
+		$index      = 0;
+		$role_slug  = '';
+		$role_label = '';
+
+		foreach ( $roles as $slug => $data ) {
+			++$index;
+			if ( $index === $wp_id ) {
+				$role_slug  = $slug;
+				$role_label = is_array( $data ) ? ( $data['roleName'] ?? $slug ) : (string) $data;
+				break;
+			}
+		}
+
+		if ( '' === $role_slug ) {
+			$this->logger->warning( 'Wholesale role not found at index.', [ 'wp_id' => $wp_id ] );
+			return [];
+		}
+
+		return $this->format_pricelist_for_odoo( $role_slug, $role_label );
+	}
+
+	/**
+	 * Format a wholesale role as an Odoo product.pricelist record.
+	 *
+	 * @param string $role_slug Role slug (e.g. 'wholesale_customer').
+	 * @param string $role_name Display name for the pricelist.
+	 * @return array<string, mixed> Odoo-compatible pricelist values.
+	 */
+	public function format_pricelist_for_odoo( string $role_slug, string $role_name ): array {
+		return [
+			'name'      => $role_name ?: $role_slug,
+			'role_slug' => $role_slug,
+		];
+	}
+
+	/**
+	 * Save a role → Odoo pricelist mapping.
+	 *
+	 * Stores the mapping in wp_options so that company push can resolve
+	 * the pricelist ID for a wholesale partner.
+	 *
+	 * @param string $role_slug Wholesale role slug.
+	 * @param int    $odoo_id   Odoo product.pricelist ID.
+	 * @return void
+	 */
+	public function save_pricelist_mapping( string $role_slug, int $odoo_id ): void {
+		$mappings = \get_option( self::PRICELIST_MAPPINGS_OPTION, [] );
+		if ( ! is_array( $mappings ) ) {
+			$mappings = [];
+		}
+
+		$mappings[ $role_slug ] = $odoo_id;
+		\update_option( self::PRICELIST_MAPPINGS_OPTION, $mappings );
+	}
+
+	/**
+	 * Get the Odoo pricelist ID mapped to a wholesale role.
+	 *
+	 * @param string $role_slug Wholesale role slug.
+	 * @return int Odoo pricelist ID, or 0 if not mapped.
+	 */
+	public function get_pricelist_odoo_id_for_role( string $role_slug ): int {
+		$mappings = \get_option( self::PRICELIST_MAPPINGS_OPTION, [] );
+		if ( ! is_array( $mappings ) ) {
+			return 0;
+		}
+
+		return (int) ( $mappings[ $role_slug ] ?? 0 );
+	}
+
+	/**
+	 * Get all registered wholesale roles.
+	 *
+	 * Supports Wholesale Suite Premium (wwp_get_all_wholesale_roles)
+	 * and falls back to detecting the default 'wholesale_customer' role.
+	 *
+	 * @return array<string, mixed> Associative array of role_slug => role_data.
+	 */
+	public function get_all_wholesale_roles(): array {
+		if ( function_exists( 'wwp_get_all_wholesale_roles' ) ) {
+			$roles = wwp_get_all_wholesale_roles();
+			if ( is_array( $roles ) && ! empty( $roles ) ) {
+				return $roles;
+			}
+		}
+
+		// Fallback: check if the default wholesale_customer role exists.
+		if ( function_exists( 'wwp_get_wholesale_role_for_user' ) ) {
+			return [
+				'wholesale_customer' => [
+					'roleName' => 'Wholesale Customer',
+				],
+			];
+		}
+
+		return [];
 	}
 
 	// ─── Wholesale role detection ─────────────────────────

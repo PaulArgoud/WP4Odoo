@@ -230,6 +230,113 @@ class WCB2BModuleTest extends TestCase {
 		$this->assertTrue( $result->succeeded() );
 	}
 
+	// ─── Odoo Models: pricelist ─────────────────────────
+
+	public function test_declares_pricelist_model(): void {
+		$models = $this->module->get_odoo_models();
+		$this->assertSame( 'product.pricelist', $models['pricelist'] );
+	}
+
+	public function test_declares_four_entity_types(): void {
+		$this->assertCount( 4, $this->module->get_odoo_models() );
+	}
+
+	// ─── Default Settings: pricelist ────────────────────
+
+	public function test_default_settings_has_sync_pricelists_disabled(): void {
+		$settings = $this->module->get_default_settings();
+		$this->assertFalse( $settings['sync_pricelists'] );
+	}
+
+	public function test_default_settings_has_assign_pricelist_to_partner(): void {
+		$settings = $this->module->get_default_settings();
+		$this->assertTrue( $settings['assign_pricelist_to_partner'] );
+	}
+
+	public function test_default_settings_count(): void {
+		$this->assertCount( 7, $this->module->get_default_settings() );
+	}
+
+	// ─── Field Mappings: pricelist ──────────────────────
+
+	public function test_pricelist_mapping_includes_name(): void {
+		$odoo = $this->module->map_to_odoo( 'pricelist', [ 'name' => 'Wholesale Customer' ] );
+		$this->assertSame( 'Wholesale Customer', $odoo['name'] );
+	}
+
+	// ─── Pull: pricelist skipped ────────────────────────
+
+	public function test_pull_pricelist_skipped(): void {
+		$result = $this->module->pull_from_odoo( 'pricelist', 'create', 100, 0 );
+		$this->assertTrue( $result->succeeded() );
+		$this->assertNull( $result->get_entity_id() );
+	}
+
+	// ─── Handler: Pricelist Format ──────────────────────
+
+	public function test_format_pricelist_for_odoo(): void {
+		$handler = new WC_B2B_Handler( new \WP4Odoo\Logger( 'test', wp4odoo_test_settings() ) );
+
+		$result = $handler->format_pricelist_for_odoo( 'wholesale_customer', 'Wholesale Customer' );
+
+		$this->assertSame( 'Wholesale Customer', $result['name'] );
+		$this->assertSame( 'wholesale_customer', $result['role_slug'] );
+	}
+
+	public function test_format_pricelist_for_odoo_uses_slug_as_fallback(): void {
+		$handler = new WC_B2B_Handler( new \WP4Odoo\Logger( 'test', wp4odoo_test_settings() ) );
+
+		$result = $handler->format_pricelist_for_odoo( 'wholesale_customer', '' );
+
+		$this->assertSame( 'wholesale_customer', $result['name'] );
+	}
+
+	// ─── Handler: Pricelist Mapping ─────────────────────
+
+	public function test_save_and_get_pricelist_mapping(): void {
+		$handler = new WC_B2B_Handler( new \WP4Odoo\Logger( 'test', wp4odoo_test_settings() ) );
+
+		$handler->save_pricelist_mapping( 'wholesale_customer', 42 );
+		$result = $handler->get_pricelist_odoo_id_for_role( 'wholesale_customer' );
+
+		$this->assertSame( 42, $result );
+	}
+
+	public function test_get_pricelist_odoo_id_returns_zero_for_unknown_role(): void {
+		$handler = new WC_B2B_Handler( new \WP4Odoo\Logger( 'test', wp4odoo_test_settings() ) );
+
+		$this->assertSame( 0, $handler->get_pricelist_odoo_id_for_role( 'nonexistent_role' ) );
+	}
+
+	// ─── Handler: Load Pricelist ────────────────────────
+
+	public function test_load_pricelist_returns_data_for_valid_index(): void {
+		$handler = new WC_B2B_Handler( new \WP4Odoo\Logger( 'test', wp4odoo_test_settings() ) );
+
+		$result = $handler->load_pricelist( 1 );
+
+		$this->assertSame( 'Wholesale Customer', $result['name'] );
+		$this->assertSame( 'wholesale_customer', $result['role_slug'] );
+	}
+
+	public function test_load_pricelist_returns_empty_for_invalid_index(): void {
+		$handler = new WC_B2B_Handler( new \WP4Odoo\Logger( 'test', wp4odoo_test_settings() ) );
+
+		$result = $handler->load_pricelist( 999 );
+
+		$this->assertSame( [], $result );
+	}
+
+	// ─── Handler: Get All Wholesale Roles ────────────────
+
+	public function test_get_all_wholesale_roles_returns_roles(): void {
+		$handler = new WC_B2B_Handler( new \WP4Odoo\Logger( 'test', wp4odoo_test_settings() ) );
+
+		$roles = $handler->get_all_wholesale_roles();
+
+		$this->assertArrayHasKey( 'wholesale_customer', $roles );
+	}
+
 	// ─── Boot Guard ──────────────────────────────────────
 
 	public function test_boot_does_not_crash(): void {

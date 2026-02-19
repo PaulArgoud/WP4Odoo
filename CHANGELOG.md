@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.8.0] - Unreleased
 
+### Added
+- **FluentBooking module** — New booking module extending `Booking_Module_Base`. Syncs calendars → `product.product` (service), bookings → `calendar.event` (bidirectional). Hooks: `fluent_booking/after_booking_scheduled`, `fluent_booking/booking_status_changed`, `fluent_booking/after_calendar_created`, `fluent_booking/after_calendar_updated`. Tables: `fluentbooking_calendars`, `fluentbooking_bookings`. Version bounds: 1.0–1.5
+- **Modern Events Calendar (MEC) module** — New standalone events module extending `Module_Base`. Dual-model: probes Odoo for `event.event`, falls back to `calendar.event`. Syncs events (bidirectional) and MEC Pro bookings → `event.registration` (push-only). Hooks: `save_post_mec-events`, `mec_booking_completed`. CPT `mec-events` + custom `mec_events` table. Translatable fields (name, description). Version bounds: 6.0–7.15
+- **FooEvents for WooCommerce module** — New events module, `required_modules: ['woocommerce']`. Dual-model: `event.event` / `calendar.event`. Syncs WC event products (bidirectional) and ticket holders → `event.registration` (push-only). Hooks: `save_post_product` (priority 20), `save_post_event_magic_tickets`. Detects FooEvents products via `WooCommerceEventsEvent` meta. Version bounds: 1.18–2.0
+- **Wholesale Suite pricelist sync (WC B2B extension)** — Extends existing WC B2B module with `pricelist` entity type → `product.pricelist`. Pushes wholesale roles as Odoo pricelists, optionally assigns `property_product_pricelist` on wholesale partners. New hooks: `wwp_wholesale_role_created`, `wwp_wholesale_role_updated`. Role → pricelist mapping stored in wp_options. New settings: `sync_pricelists`, `assign_pricelist_to_partner`
+- **Events exclusive group** — The Events Calendar and MEC modules now share `exclusive_group = 'events'`. Only one events module boots per site (TEC has priority via registration order)
+
 ## [3.7.0] - 2026-02-19
 
 ### Added

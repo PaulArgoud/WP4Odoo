@@ -5,8 +5,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: WP4Odoo 3.8.0\n"
-"Report-Msgid-Bugs-To: support@avalia.io\n"
-"POT-Creation-Date: 2026-02-19 02:29+0100\n"
+"Report-Msgid-Bugs-To: paul@argoud.net\n"
+"POT-Creation-Date: 2026-02-19 03:57+0100\n"
 "PO-Revision-Date: 2026-02-15 12:00+0100\n"
 "Last-Translator: \n"
 "Language-Team: French\n"
@@ -16,18 +16,11 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
-#. translators: %s: conflicting module identifier
 #: includes/trait-cli-module-commands.php:83
 #, php-format
 msgid "  Disabled conflicting module: %s"
 msgstr "  Module en conflit désactivé : %s"
 
-#: includes/class-sync-queue-repository.php:389
-#, php-format
-msgid " LIMIT %d"
-msgstr " LIMIT %d"
-
-#. translators: 1: enabled module name, 2: comma-separated disabled module names
 #: includes/admin/trait-ajax-module-handlers.php:91
 #, php-format
 msgid ""
@@ -37,33 +30,27 @@ msgstr ""
 "« %1$s » est mutuellement exclusif avec %2$s. Le(s) module(s) en conflit ont "
 "été désactivés."
 
-#. translators: 1: completed steps, 2: total steps
 #: admin/views/partial-checklist.php:27
 #, php-format
 msgid "%1$d / %2$d completed"
 msgstr "%1$d / %2$d terminé(s)"
 
-#. translators: %1$d: failure count, %2$s: datetime
-#. translators: 1: failure count, 2: datetime
 #: admin/views/tab-health.php:82 admin/views/tab-health.php:109
 #, php-format
 msgid "%1$d failures — opened %2$s"
 msgstr "%1$d échecs — ouvert le %2$s"
 
-#. translators: 1: number of jobs deleted, 2: number of days
 #: includes/trait-cli-queue-commands.php:136
 #, php-format
 msgid "%1$d job(s) deleted (older than %2$d days)."
 msgstr "%1$d tâche(s) supprimée(s) (plus de %2$d jours)."
 
-#. translators: 1: number of products enqueued, 2: total number of products
 #: includes/admin/class-bulk-handler.php:118
 #, php-format
 msgid "%1$d product(s) enqueued for import (%2$d found in Odoo)."
 msgstr ""
 "%1$d produit(s) mis en file d'attente pour l'import (%2$d trouvés dans Odoo)."
 
-#. translators: 1: number of products enqueued, 2: total number of products
 #: includes/admin/class-bulk-handler.php:112
 #, php-format
 msgid ""
@@ -73,7 +60,6 @@ msgstr ""
 "%1$d produit(s) mis en file d'attente pour l'import (%2$d trouvés dans "
 "Odoo). Opération expirée — relancez pour continuer."
 
-#. translators: %1$s: plugin name, %2$s: detected version, %3$s: last tested version
 #: includes/trait-dependency-helpers.php:172
 #, php-format
 msgid ""
@@ -83,13 +69,11 @@ msgstr ""
 "%1$s %2$s n'a pas été testé (testé jusqu'à %3$s). Des incompatibilités "
 "peuvent survenir."
 
-#. translators: %1$s: plugin name, %2$s: detected version, %3$s: minimum version
 #: includes/trait-dependency-helpers.php:149
 #, php-format
 msgid "%1$s %2$s is not supported (minimum required: %3$s)."
 msgstr "%1$s %2$s n'est pas supporté (minimum requis : %3$s)."
 
-#. translators: %1$s: plugin name, %2$s: comma-separated list of missing table names
 #: includes/trait-dependency-helpers.php:189
 #, php-format
 msgid ""
@@ -98,61 +82,51 @@ msgstr ""
 "Tables de base de données %1$s manquantes : %2$s. Le plugin n'est peut-être "
 "pas entièrement installé."
 
-#. translators: 1: module name, 2: comma-separated list of required module IDs
-#: includes/class-module-registry.php:326
+#: includes/class-module-registry.php:329
 #, php-format
 msgid "%1$s requires the following modules to be active: %2$s."
 msgstr "%1$s nécessite l'activation des modules suivants : %2$s."
 
-#. translators: %1$s: service name, %2$s: customer name
 #: includes/modules/class-booking-module-base.php:303
 #, php-format
 msgid "%1$s — %2$s"
 msgstr "%1$s — %2$s"
 
-#. translators: %d: number of jobs retried
 #: includes/trait-cli-queue-commands.php:123
 #, php-format
 msgid "%d failed job(s) retried."
 msgstr "%d tâche(s) échouée(s) relancée(s)."
 
-#. translators: %d: number of deleted jobs
 #: includes/admin/trait-ajax-monitor-handlers.php:62
 #, php-format
 msgid "%d job(s) deleted."
 msgstr "%d job(s) supprimé(s)."
 
-#. translators: %d: number of jobs
 #: includes/class-cli.php:257
 #, php-format
 msgid "%d job(s) processed."
 msgstr "%d tâche(s) traitée(s)."
 
-#. translators: %d: number of jobs
 #: includes/admin/trait-ajax-monitor-handlers.php:39
 #, php-format
 msgid "%d job(s) retried."
 msgstr "%d job(s) relancé(s)."
 
-#. translators: %d: number of jobs
 #: includes/class-cli.php:254
 #, php-format
 msgid "%d job(s) would be processed (dry-run)."
 msgstr "%d tâche(s) serai(en)t traitée(s) (simulation)."
 
-#. translators: %d: number of deleted log entries
 #: includes/admin/trait-ajax-monitor-handlers.php:111
 #, php-format
 msgid "%d log entry(ies) deleted."
 msgstr "%d entrée(s) de journal supprimée(s)."
 
-#. translators: %d: number of orphaned mappings removed
 #: includes/class-cli.php:402 includes/class-cli.php:498
 #, php-format
 msgid "%d orphaned mapping(s) removed."
 msgstr "%d correspondance(s) orpheline(s) supprimée(s)."
 
-#. translators: %d: number of products enqueued
 #: includes/admin/class-bulk-handler.php:188
 #, php-format
 msgid ""
@@ -162,20 +136,11 @@ msgstr ""
 "%d produit(s) mis en file d'attente pour l'export. Opération expirée — "
 "relancez pour continuer."
 
-#. translators: %d: number of products enqueued
 #: includes/admin/class-bulk-handler.php:193
 #, php-format
 msgid "%d product(s) enqueued for export."
 msgstr "%d produit(s) mis en file d'attente pour l'export."
 
-#: includes/modules/class-dual-accounting-module-base.php:347
-#, php-format
-msgid "%s has no donor/payer email."
-msgstr "%s n'a pas d'adresse e-mail de donateur/payeur."
-
-#. translators: %s: plugin name
-#. translators: %s: form plugin name
-#. translators: %s: plugin name
 #: includes/modules/class-food-ordering-module.php:244
 #: includes/modules/class-forms-module.php:629
 #: includes/modules/class-survey-quiz-module.php:234
@@ -183,51 +148,19 @@ msgstr "%s n'a pas d'adresse e-mail de donateur/payeur."
 msgid "%s is not active."
 msgstr "%s n'est pas actif."
 
-#. translators: %s: number of items
 #: admin/views/tab-queue.php:168
 #, php-format
 msgid "%s item(s)"
 msgstr "%s élément(s)"
 
-#. translators: %s: plugin name
 #: includes/trait-dependency-helpers.php:128
 #, php-format
 msgid "%s must be installed and activated to use this module."
 msgstr "%s doit être installé et activé pour utiliser ce module."
 
-#: includes/modules/class-surecart-module.php:296
-#, php-format
-msgid "%s pull not supported — originates in SureCart."
-msgstr "Import de %s non pris en charge — provient de SureCart."
-
-#: includes/modules/class-wc-subscriptions-module.php:267
-#, php-format
-msgid "%s pull not supported — originates in WooCommerce."
-msgstr "Import de %s non pris en charge — provient de WooCommerce."
-
-#: includes/modules/class-dokan-module.php:325
-#, php-format
-msgid "%s pull not supported — originates in WooCommerce/Dokan."
-msgstr "Import de %s non pris en charge — provient de WooCommerce/Dokan."
-
-#: includes/modules/class-wc-vendors-module.php:324
-#, php-format
-msgid "%s pull not supported — originates in WooCommerce/WC Vendors."
-msgstr "Import de %s non pris en charge — provient de WooCommerce/WC Vendors."
-
-#: includes/modules/class-wcfm-module.php:324
-#, php-format
-msgid "%s pull not supported — originates in WooCommerce/WCFM."
-msgstr "Import de %s non pris en charge — provient de WooCommerce/WCFM."
-
 #: includes/class-cli.php:56
 msgid "--blog_id must be a positive integer."
 msgstr "--blog_id doit être un entier positif."
-
-#: includes/admin/class-admin.php:381
-#, php-format
-msgid "<a href=\"%s\">%s</a>"
-msgstr "<a href=\"%s\">%s</a>"
 
 #: admin/views/tab-logs.php:40
 msgid "ACF"
@@ -300,7 +233,6 @@ msgstr "Ajouter une commande"
 msgid "Add New Task"
 msgstr "Ajouter une tâche"
 
-#. translators: %s: header name
 #: admin/views/tab-connection.php:235
 #, php-format
 msgid "Add a custom header %s with the token shown above."
@@ -392,6 +324,10 @@ msgstr ""
 "site seront limités à la res.company spécifiée. Laissez à 0 pour aucune "
 "restriction de société."
 
+#: includes/modules/class-wc-b2b-module.php:177
+msgid "Assign pricelist to wholesale partners"
+msgstr "Attribuer la liste de prix aux partenaires grossistes"
+
 #: includes/modules/class-food-ordering-module.php:230
 msgid "At least one food ordering plugin must be installed and activated."
 msgstr ""
@@ -449,11 +385,6 @@ msgstr "Valider automatiquement les factures"
 #: includes/modules/class-wcfm-module.php:202
 msgid "Auto-post vendor bills"
 msgstr "Valider automatiquement les factures fournisseur"
-
-#: includes/modules/class-dual-accounting-module-base.php:82
-#, php-format
-msgid "Auto-pushing %s before child entity."
-msgstr "Envoi automatique de %s avant l'entité enfant."
 
 #: includes/modules/class-charitable-module.php:146
 #: includes/modules/class-givewp-module.php:146
@@ -592,13 +523,13 @@ msgstr "Bidirectionnelle"
 msgid "Bidirectional stock sync between WooCommerce and Odoo."
 msgstr "Synchronisation bidirectionnelle du stock entre WooCommerce et Odoo."
 
-#. translators: %d: blog ID
 #: includes/class-cli.php:61
 #, php-format
 msgid "Blog ID %d does not exist."
 msgstr "L'identifiant de blog %d n'existe pas."
 
 #: includes/modules/class-bookly-module.php:190
+#: includes/modules/class-fluent-booking-module.php:177
 #: includes/modules/class-jet-booking-module.php:169
 #: includes/modules/class-wc-bookings-module.php:185
 msgid "Booking"
@@ -608,29 +539,10 @@ msgstr "Réservation"
 msgid "Bookly"
 msgstr "Bookly"
 
-#: includes/modules/class-bookly-handler.php:103
-#, php-format
-msgid ""
-"Bookly bookings query hit the %d-row safety limit. Some bookings may be "
-"excluded from sync."
-msgstr ""
-"La requête de réservations Bookly a atteint la limite de sécurité de %d "
-"lignes. Certaines réservations peuvent être exclues de la synchronisation."
-
 #: includes/modules/trait-bookly-cron-hooks.php:40
 msgid "Bookly module enabled but Bookly is not active."
 msgstr "Module Bookly activé mais Bookly n'est pas actif."
 
-#: includes/modules/class-bookly-handler.php:55
-#, php-format
-msgid ""
-"Bookly services query hit the %d-row safety limit. Some services may be "
-"excluded from sync."
-msgstr ""
-"La requête de services Bookly a atteint la limite de sécurité de %d lignes. "
-"Certains services peuvent être exclus de la synchronisation."
-
-#. translators: %s: form title
 #: includes/modules/class-form-field-extractor.php:393
 #, php-format
 msgid "Bricks: %s"
@@ -664,7 +576,6 @@ msgstr "Annuler"
 msgid "Cancel this job?"
 msgstr "Annuler ce job ?"
 
-#. translators: %s: name of the conflicting active module
 #: admin/views/tab-modules.php:87
 #, php-format
 msgid "Cannot be active simultaneously with \"%s\"."
@@ -674,16 +585,6 @@ msgstr "Ne peut pas être actif en même temps que « %s »."
 msgid "Cannot determine warehouse stock location."
 msgstr "Impossible de déterminer l'emplacement de stock de l'entrepôt."
 
-#: includes/modules/class-dual-accounting-module-base.php:373
-#, php-format
-msgid "Cannot resolve Odoo product for %s."
-msgstr "Impossible de résoudre le produit Odoo pour %s."
-
-#: includes/modules/class-dual-accounting-module-base.php:358
-#, php-format
-msgid "Cannot resolve partner for %s."
-msgstr "Impossible de résoudre le partenaire pour %s."
-
 #: includes/modules/class-knowledge-module.php:140
 msgid "Category filter"
 msgstr "Filtre par catégorie"
@@ -692,7 +593,6 @@ msgstr "Filtre par catégorie"
 msgid "Charitable"
 msgstr "Charitable"
 
-#. translators: %d: number of mappings checked
 #: includes/class-cli.php:381
 #, php-format
 msgid "Checked: %d mapping(s)"
@@ -706,7 +606,6 @@ msgstr "Disjoncteur"
 msgid "Clean up (> 7 days)"
 msgstr "Nettoyer (> 7 jours)"
 
-#. translators: %s: module name or "all modules"
 #: includes/class-cli.php:472
 #, php-format
 msgid "Cleaning up orphaned mappings (%s)..."
@@ -728,7 +627,6 @@ msgstr ""
 "Identifiants de catégories séparés par des virgules pour limiter la "
 "synchronisation. Laisser vide pour tout synchroniser."
 
-#. translators: 1: referral ID, 2: referral description
 #: includes/modules/class-affiliatewp-handler.php:78
 #, php-format
 msgid "Commission #%1$d — %2$s"
@@ -738,7 +636,6 @@ msgstr "Commission #%1$d — %2$s"
 msgid "Company"
 msgstr "Société"
 
-#. translators: %s: company name.
 #: includes/modules/class-job-manager-handler.php:153
 #, php-format
 msgid "Company: %s"
@@ -753,7 +650,6 @@ msgstr "Avertissements de compatibilité"
 msgid "Completed"
 msgstr "Terminé"
 
-#. translators: %s: header name
 #: admin/views/tab-connection.php:199
 #, php-format
 msgid "Configure this token in Odoo as the %s header."
@@ -771,7 +667,6 @@ msgstr "Règle de conflit"
 msgid "Connect to Odoo"
 msgstr "Connecter Odoo"
 
-#. translators: 1: Odoo URL, 2: database name, 3: protocol
 #: includes/class-cli.php:98
 #, php-format
 msgid "Connected to %1$s (db: %2$s, protocol: %3$s)"
@@ -785,7 +680,6 @@ msgstr "Connexion"
 msgid "Connection failed."
 msgstr "Échec de la connexion."
 
-#. translators: %s: error message
 #: includes/class-cli.php:177
 #, php-format
 msgid "Connection failed: %s"
@@ -795,7 +689,6 @@ msgstr "Échec de la connexion : %s"
 msgid "Connection successful!"
 msgstr "Connexion réussie !"
 
-#. translators: %d: Odoo user ID
 #: includes/class-cli.php:174
 #, php-format
 msgid "Connection successful! UID: %d"
@@ -805,13 +698,11 @@ msgstr "Connexion réussie ! UID : %d"
 msgid "Connection successful."
 msgstr "Connexion réussie."
 
-#. translators: %s: form title
 #: includes/modules/class-form-field-extractor.php:190
 #, php-format
 msgid "Contact Form 7: %s"
 msgstr "Contact Form 7 : %s"
 
-#. translators: %s: contact person name
 #: includes/modules/class-wperp-crm-handler.php:104
 #, php-format
 msgid "Contact: %s"
@@ -837,7 +728,6 @@ msgstr ""
 "Convertir les prix à l'aide des taux de change Odoo lorsque la devise du "
 "produit diffère de celle de la boutique."
 
-#. translators: %s: cooking time in minutes (e.g. "30min").
 #: includes/modules/class-wprm-handler.php:105
 #, php-format
 msgid "Cook: %smin"
@@ -869,7 +759,8 @@ msgstr "Créer des leads Odoo depuis les soumissions Divi Contact Form."
 
 #: includes/modules/class-forms-module.php:570
 msgid "Create Odoo leads from Elementor Pro form submissions."
-msgstr "Créer des leads Odoo depuis les soumissions de formulaires Elementor Pro."
+msgstr ""
+"Créer des leads Odoo depuis les soumissions de formulaires Elementor Pro."
 
 #: includes/modules/class-forms-module.php:545
 msgid "Create Odoo leads from Fluent Forms submissions."
@@ -992,7 +883,6 @@ msgstr "Direction"
 msgid "Dismiss checklist"
 msgstr "Masquer la liste"
 
-#. translators: %s: form title
 #: includes/modules/class-form-field-extractor.php:377
 #, php-format
 msgid "Divi: %s"
@@ -1051,7 +941,6 @@ msgstr "Modifier la commande"
 msgid "Edit Task"
 msgstr "Modifier la tâche"
 
-#. translators: %s: form title
 #: includes/modules/class-form-field-extractor.php:360
 #, php-format
 msgid "Elementor: %s"
@@ -1061,7 +950,6 @@ msgstr "Elementor : %s"
 msgid "Email"
 msgstr "E-mail"
 
-#. translators: %s: module name
 #: admin/views/tab-modules.php:64
 #, php-format
 msgid "Enable %s module"
@@ -1101,7 +989,6 @@ msgstr ""
 msgid "Enable the [wp4odoo_lead_form] shortcode."
 msgstr "Activer le shortcode [wp4odoo_lead_form]."
 
-#. translators: %s: campaign end date.
 #: includes/modules/class-crowdfunding-handler.php:107
 #, php-format
 msgid "End date: %s"
@@ -1122,14 +1009,12 @@ msgstr "Saisissez votre clé API Odoo."
 msgid "Entity type"
 msgstr "Type d'entité"
 
-#. translators: 1: entity type, 2: module identifier
 #: includes/class-module-base.php:577
 #, php-format
 msgid "Entity type \"%1$s\" is not registered in module \"%2$s\"."
 msgstr ""
 "Le type d'entité « %1$s » n'est pas enregistré dans le module « %2$s »."
 
-#. translators: 1: entity type, 2: module identifier, 3: available entity types
 #: includes/class-cli.php:343
 #, php-format
 msgid "Entity type \"%1$s\" not found in module \"%2$s\". Available: %3$s"
@@ -1145,7 +1030,7 @@ msgstr "Erreur"
 msgid "Events Calendar"
 msgstr "Events Calendar"
 
-#: includes/modules/class-events-calendar-module.php:125
+#: includes/modules/class-events-calendar-module.php:132
 msgid "Events Calendar module enabled but The Events Calendar is not active."
 msgstr ""
 "Module Events Calendar activé mais The Events Calendar n'est pas actif."
@@ -1223,7 +1108,6 @@ msgstr "Mappages de champs"
 msgid "Filter"
 msgstr "Filtrer"
 
-#. translators: %s: form title
 #: includes/modules/class-form-field-extractor.php:221
 #, php-format
 msgid "Fluent Forms: %s"
@@ -1233,21 +1117,27 @@ msgstr "Fluent Forms : %s"
 msgid "Fluent Support module enabled but Fluent Support is not active."
 msgstr "Module Fluent Support activé mais Fluent Support n'est pas actif."
 
+#: includes/modules/trait-fluent-booking-hooks.php:32
+msgid "FluentBooking module enabled but FluentBooking is not active."
+msgstr "Module FluentBooking activé mais FluentBooking n'est pas actif."
+
 #: includes/modules/class-fluentcrm-module.php:111
 msgid "FluentCRM module enabled but FluentCRM is not active."
 msgstr "Module FluentCRM activé mais FluentCRM n'est pas actif."
+
+#: includes/modules/class-fooevents-module.php:124
+msgid "FooEvents module enabled but FooEvents for WooCommerce is not active."
+msgstr "Module FooEvents activé mais FooEvents for WooCommerce n'est pas actif."
 
 #: includes/modules/class-food-ordering-handler.php:67
 msgid "Food item"
 msgstr "Article alimentaire"
 
-#. translators: %s: form title
 #: includes/modules/class-form-field-extractor.php:252
 #, php-format
 msgid "Formidable: %s"
 msgstr "Formidable : %s"
 
-#. translators: %s: form title
 #: includes/modules/class-form-field-extractor.php:313
 #, php-format
 msgid "Forminator: %s"
@@ -1257,7 +1147,6 @@ msgstr "Forminator : %s"
 msgid "Forms"
 msgstr "Formulaires"
 
-#. translators: %d: number of orphaned mappings found
 #: includes/class-cli.php:481
 #, php-format
 msgid "Found %d orphaned mapping(s):"
@@ -1267,7 +1156,6 @@ msgstr "%d correspondance(s) orpheline(s) trouvée(s) :"
 msgid "From"
 msgstr "Du"
 
-#. translators: %s: funding goal amount.
 #: includes/modules/class-crowdfunding-handler.php:102
 #, php-format
 msgid "Funding goal: %s"
@@ -1313,13 +1201,11 @@ msgstr "Allez dans Paramètres > Utilisateurs & Sociétés > Utilisateurs."
 msgid "Go to settings"
 msgstr "Aller aux paramètres"
 
-#. translators: %s: form title
 #: includes/modules/class-form-field-extractor.php:126
 #, php-format
 msgid "Gravity Forms: %s"
 msgstr "Gravity Forms : %s"
 
-#. translators: %s: error message from HTTP request
 #: includes/api/trait-retryable-http.php:46
 #, php-format
 msgid "HTTP error: %s"
@@ -1423,18 +1309,11 @@ msgstr "Erreur interne de mise en file d'attente."
 msgid "Interval"
 msgstr "Intervalle"
 
-#: includes/class-batch-create-processor.php:210
-#, php-format
-msgid "Invalid JSON payload in batch job #%d."
-msgstr "Charge JSON invalide dans la tâche de lot #%d."
-
-#. translators: %d: job ID
 #: includes/class-sync-engine.php:356
 #, php-format
 msgid "Invalid JSON payload in job #%d."
 msgstr "Payload JSON invalide dans le job #%d."
 
-#. translators: %d: HTTP status code
 #: includes/api/class-odoo-jsonrpc.php:137
 #, php-format
 msgid "Invalid JSON response from Odoo (HTTP %d)."
@@ -1444,14 +1323,12 @@ msgstr "Réponse JSON invalide depuis Odoo (HTTP %d)."
 msgid "Invalid email address."
 msgstr "Adresse e-mail invalide."
 
-#. translators: 1: format name, 2: allowed format names
 #: includes/trait-cli-queue-commands.php:34
 #: includes/trait-cli-queue-commands.php:66
 #, php-format
 msgid "Invalid format \"%1$s\". Allowed: %2$s"
 msgstr "Format invalide « %1$s ». Autorisés : %2$s"
 
-#. translators: 1: direction value, 2: job ID
 #: includes/class-sync-engine.php:394
 #, php-format
 msgid "Invalid sync direction \"%1$s\" in job #%2$d."
@@ -1475,7 +1352,6 @@ msgstr "Inventaire (stock) + Ventes (sale_management) + Facturation (account)"
 msgid "Invoice"
 msgstr "Facture"
 
-#. translators: %s: invoice ID/reference.
 #: includes/modules/class-wp-invoice-handler.php:154
 #, php-format
 msgid "Invoice %s"
@@ -1502,13 +1378,11 @@ msgstr ""
 msgid "JetEngine Meta module enabled but JetEngine is not active."
 msgstr "Le module JetEngine Meta est activé mais JetEngine n'est pas actif."
 
-#. translators: %s: form title
 #: includes/modules/class-form-field-extractor.php:326
 #, php-format
 msgid "JetFormBuilder: %s"
 msgstr "JetFormBuilder : %s"
 
-#. translators: %d: job ID
 #: includes/trait-cli-queue-commands.php:152
 #, php-format
 msgid "Job %d cancelled."
@@ -1540,29 +1414,11 @@ msgstr ""
 msgid "Knowledge Article"
 msgstr "Article Knowledge"
 
-#: includes/modules/class-learndash-handler.php:159
-#, php-format
-msgid "LD-TXN-%d"
-msgstr "LD-TXN-%d"
-
-#: includes/modules/class-lifterlms-handler.php:188
-#, php-format
-msgid "LLMS-ORD-%d"
-msgstr "LLMS-ORD-%d"
-
-#: includes/modules/class-learnpress-handler.php:144
-#, php-format
-msgid "LP-ORDER-%d"
-msgstr "LP-ORDER-%d"
-
-#. translators: %s: timestamp of last completed sync
 #: includes/class-cli.php:127
 #, php-format
 msgid "Last completed: %s"
 msgstr "Dernier traitement : %s"
 
-#. translators: %s: datetime string
-#. translators: %s: formatted date/time of the last synchronization
 #: admin/views/tab-queue.php:68 includes/admin/class-admin.php:119
 #, php-format
 msgid "Last sync: %s"
@@ -1638,7 +1494,6 @@ msgstr "Charger depuis Odoo"
 msgid "Loading..."
 msgstr "Chargement…"
 
-#. translators: %s: job location (e.g. "Paris, France").
 #: includes/modules/class-job-manager-handler.php:149
 #, php-format
 msgid "Location: %s"
@@ -1659,6 +1514,10 @@ msgstr "Journaux"
 #: includes/modules/class-mc4wp-module.php:101
 msgid "MC4WP module enabled but Mailchimp for WP is not active."
 msgstr "Le module MC4WP est activé mais Mailchimp for WP n'est pas actif."
+
+#: includes/modules/class-mec-module.php:123
+msgid "MEC module enabled but Modern Events Calendar is not active."
+msgstr "Module MEC activé mais Modern Events Calendar n'est pas actif."
 
 #: includes/modules/class-mailpoet-module.php:101
 msgid "MailPoet module enabled but MailPoet is not active."
@@ -1725,13 +1584,11 @@ msgstr "Associer les livraisons"
 msgid "Map taxes"
 msgstr "Associer les taxes"
 
-#. translators: 1: commission ID, 2: order ID
 #: includes/modules/class-wcfm-handler.php:197
 #, php-format
 msgid "Marketplace commission #%1$d — Order #%2$d"
 msgstr "Commission marketplace #%1$d — Commande #%2$d"
 
-#. translators: 1: order ID
 #: includes/modules/class-dokan-handler.php:200
 #: includes/modules/class-wc-vendors-handler.php:199
 #, php-format
@@ -1773,7 +1630,6 @@ msgstr ""
 msgid "Message"
 msgstr "Message"
 
-#. translators: %s: minimum pledge amount.
 #: includes/modules/class-crowdfunding-handler.php:112
 #, php-format
 msgid "Min pledge: %s"
@@ -1805,7 +1661,6 @@ msgstr "Paramètres de traduction manquants."
 msgid "Module"
 msgstr "Module"
 
-#. translators: 1: module identifier, 2: conflicting module identifiers
 #: includes/trait-cli-module-commands.php:75
 #, php-format
 msgid ""
@@ -1815,27 +1670,23 @@ msgstr ""
 "Le module « %1$s » entre en conflit avec le(s) module(s) actif(s) : %2$s. "
 "Ils seront désactivés."
 
-#. translators: %s: module identifier
 #: includes/admin/trait-ajax-module-handlers.php:64
 #: includes/trait-cli-module-commands.php:95
 #, php-format
 msgid "Module \"%s\" disabled."
 msgstr "Module « %s » désactivé."
 
-#. translators: %s: module identifier
 #: includes/admin/trait-ajax-module-handlers.php:59
 #: includes/trait-cli-module-commands.php:92
 #, php-format
 msgid "Module \"%s\" enabled."
 msgstr "Module « %s » activé."
 
-#. translators: %s: module identifier
 #: includes/class-sync-engine.php:343
 #, php-format
 msgid "Module \"%s\" not found or not registered."
 msgstr "Module « %s » introuvable ou non enregistré."
 
-#. translators: %s: module identifier
 #: includes/class-cli.php:334 includes/class-webhook-handler.php:356
 #, php-format
 msgid "Module \"%s\" not found."
@@ -1870,7 +1721,6 @@ msgstr "Le plus récent gagne"
 msgid "Next cron run"
 msgstr "Prochaine exécution cron"
 
-#. translators: %s: form title
 #: includes/modules/class-form-field-extractor.php:265
 #, php-format
 msgid "Ninja Forms: %s"
@@ -2047,11 +1897,11 @@ msgstr "ID du programme de fidélité Odoo"
 msgid "Odoo Loyalty Program ID not configured."
 msgstr "ID du programme de fidélité Odoo non configuré."
 
-#: includes/modules/class-wc-b2b-module.php:175
+#: includes/modules/class-wc-b2b-module.php:192
 msgid "Odoo Partner Category ID"
 msgstr "ID de catégorie de partenaire Odoo"
 
-#: includes/modules/class-wc-b2b-module.php:170
+#: includes/modules/class-wc-b2b-module.php:187
 msgid "Odoo Pricelist ID"
 msgstr "ID de liste de prix Odoo"
 
@@ -2065,7 +1915,6 @@ msgstr ""
 "ID du projet Odoo (Community). Utilisé lorsque helpdesk.ticket n'est pas "
 "disponible."
 
-#. translators: %s: error message from Odoo
 #: includes/api/class-odoo-jsonrpc.php:166
 #, php-format
 msgid "Odoo RPC error: %s"
@@ -2075,7 +1924,6 @@ msgstr "Erreur RPC Odoo : %s"
 msgid "Odoo URL"
 msgstr "URL Odoo"
 
-#. translators: %s: error message from Odoo
 #: includes/api/class-odoo-xmlrpc.php:174
 #, php-format
 msgid "Odoo XML-RPC error: %s"
@@ -2101,7 +1949,7 @@ msgstr "ID du pipeline Odoo"
 msgid "Odoo priority"
 msgstr "Odoo prioritaire"
 
-#: includes/modules/class-wc-b2b-module.php:172
+#: includes/modules/class-wc-b2b-module.php:189
 msgid "Odoo product.pricelist ID for wholesale pricing rules."
 msgstr "ID product.pricelist Odoo pour les règles de tarification grossiste."
 
@@ -2113,7 +1961,7 @@ msgstr ""
 "ID res.company Odoo pour les configurations multi-sociétés. Laissez à 0 pour "
 "aucune restriction de société."
 
-#: includes/modules/class-wc-b2b-module.php:177
+#: includes/modules/class-wc-b2b-module.php:194
 msgid "Odoo res.partner.category ID for wholesale customer tagging."
 msgstr "ID res.partner.category Odoo pour le marquage des clients grossistes."
 
@@ -2156,7 +2004,6 @@ msgstr "Ouvert"
 msgid "Order"
 msgstr "Commande"
 
-#. translators: %s: order number.
 #: includes/modules/class-ecwid-handler.php:109
 #, php-format
 msgid "Order %s"
@@ -2178,7 +2025,6 @@ msgstr "Commandes"
 msgid "Orders per page"
 msgstr "Commandes par page"
 
-#. translators: %d: number of orphaned mappings
 #: includes/class-cli.php:383
 #, php-format
 msgid "Orphaned: %d"
@@ -2200,7 +2046,6 @@ msgstr "Module PMPro activé mais Paid Memberships Pro n'est pas actif."
 msgid "Packlink hooks"
 msgstr "Crochets Packlink"
 
-#. translators: 1: current page number, 2: total pages, 3: total items
 #: includes/trait-cli-queue-commands.php:106
 #, php-format
 msgid "Page %1$d/%2$d (%3$d total)"
@@ -2224,7 +2069,6 @@ msgstr "En attente"
 msgid "Permission denied."
 msgstr "Permission refusée."
 
-#. translators: %d: number of persons
 #: includes/modules/class-wc-bookings-handler.php:102
 #, php-format
 msgid "Persons: %d"
@@ -2234,7 +2078,6 @@ msgstr "Personnes : %d"
 msgid "Phone"
 msgstr "Téléphone"
 
-#. translators: %s: login URL
 #: includes/modules/class-portal-manager.php:76
 #, php-format
 msgid "Please <a href=\"%s\">log in</a> to access your customer portal."
@@ -2257,7 +2100,6 @@ msgstr ""
 msgid "Post type"
 msgstr "Type de publication"
 
-#. translators: %s: preparation time in minutes (e.g. "15min").
 #: includes/modules/class-wprm-handler.php:100
 #, php-format
 msgid "Prep: %smin"
@@ -2364,6 +2206,10 @@ msgstr "Récupérer les produits de service Odoo dans les services Amelia."
 msgid "Pull Odoo service products into Bookly services."
 msgstr "Récupérer les produits de service Odoo dans les services Bookly."
 
+#: includes/modules/class-fluent-booking-module.php:143
+msgid "Pull Odoo service products into FluentBooking calendars."
+msgstr "Récupérer les produits de service Odoo dans les calendriers FluentBooking."
+
 #: includes/modules/class-jet-appointments-module.php:132
 msgid "Pull Odoo service products into JetAppointments services."
 msgstr ""
@@ -2395,6 +2241,10 @@ msgstr "Importer les articles depuis Odoo"
 msgid "Pull balance updates from Odoo"
 msgstr "Récupérer les mises à jour de soldes depuis Odoo"
 
+#: includes/modules/class-fluent-booking-module.php:141
+msgid "Pull calendars"
+msgstr "Importer les calendriers"
+
 #: includes/modules/class-wperp-accounting-module.php:187
 msgid "Pull chart of accounts"
 msgstr "Importer le plan comptable"
@@ -2412,8 +2262,8 @@ msgstr ""
 #: includes/modules/class-ultimate-member-module.php:150
 msgid "Pull contact changes from Odoo back to Ultimate Member profiles."
 msgstr ""
-"Importer les modifications de contacts depuis Odoo vers les profils "
-"Ultimate Member."
+"Importer les modifications de contacts depuis Odoo vers les profils Ultimate "
+"Member."
 
 #: includes/modules/class-funnelkit-module.php:155
 msgid "Pull contacts from Odoo"
@@ -2464,11 +2314,22 @@ msgstr "Importer les modifications d'employés depuis Odoo vers WP ERP."
 msgid "Pull employees from Odoo"
 msgstr "Importer les employés depuis Odoo"
 
-#: includes/modules/class-events-calendar-module.php:187
+#: includes/modules/class-events-calendar-module.php:194
+#: includes/modules/class-mec-module.php:163
 msgid "Pull event changes from Odoo back to WordPress."
 msgstr "Récupérer les modifications d'événements depuis Odoo vers WordPress."
 
-#: includes/modules/class-events-calendar-module.php:185
+#: includes/modules/class-fooevents-module.php:164
+msgid ""
+"Pull event changes from Odoo back to WordPress. Products are primarily "
+"managed by WooCommerce module."
+msgstr ""
+"Récupérer les modifications d'événements depuis Odoo vers WordPress. Les "
+"produits sont principalement gérés par le module WooCommerce."
+
+#: includes/modules/class-events-calendar-module.php:192
+#: includes/modules/class-fooevents-module.php:162
+#: includes/modules/class-mec-module.php:161
 msgid "Pull events from Odoo"
 msgstr "Récupérer les événements depuis Odoo"
 
@@ -2611,11 +2472,11 @@ msgstr "Récupérer les adhésions depuis Odoo"
 msgid "Pull payment changes from Odoo back to WordPress."
 msgstr "Récupérer les modifications de paiements depuis Odoo vers WordPress."
 
-#: includes/modules/class-wc-b2b-module.php:165
+#: includes/modules/class-wc-b2b-module.php:182
 msgid "Pull payment terms from Odoo"
 msgstr "Importer les conditions de paiement depuis Odoo"
 
-#: includes/modules/class-wc-b2b-module.php:167
+#: includes/modules/class-wc-b2b-module.php:184
 msgid "Pull payment terms from Odoo for B2B order management."
 msgstr ""
 "Importer les conditions de paiement depuis Odoo pour la gestion des "
@@ -2701,7 +2562,7 @@ msgstr "Importer les tâches"
 msgid "Pull tasks from Odoo"
 msgstr "Importer les tâches depuis Odoo"
 
-#: includes/modules/class-events-calendar-module.php:192
+#: includes/modules/class-events-calendar-module.php:199
 msgid "Pull ticket product changes from Odoo back to WordPress."
 msgstr "Récupérer les modifications de billets depuis Odoo vers WordPress."
 
@@ -2728,7 +2589,7 @@ msgid "Pull ticket status changes from Odoo back to SupportCandy."
 msgstr ""
 "Récupérer les changements de statut de ticket depuis Odoo vers SupportCandy."
 
-#: includes/modules/class-events-calendar-module.php:190
+#: includes/modules/class-events-calendar-module.php:197
 msgid "Pull tickets from Odoo"
 msgstr "Récupérer les billets depuis Odoo"
 
@@ -2825,6 +2686,18 @@ msgstr ""
 "Envoyer les tickets Fluent Support vers Odoo (helpdesk.ticket ou "
 "project.task)."
 
+#: includes/modules/class-fluent-booking-module.php:138
+msgid "Push FluentBooking bookings to Odoo as calendar events."
+msgstr ""
+"Envoyer les réservations FluentBooking vers Odoo en tant qu'événements de "
+"calendrier."
+
+#: includes/modules/class-fluent-booking-module.php:133
+msgid "Push FluentBooking calendars to Odoo as service products."
+msgstr ""
+"Envoyer les calendriers FluentBooking vers Odoo en tant que produits de "
+"service."
+
 #: includes/modules/class-fluentcrm-module.php:161
 msgid "Push FluentCRM mailing lists to Odoo."
 msgstr "Envoyer les listes de diffusion FluentCRM vers Odoo."
@@ -2838,6 +2711,10 @@ msgstr ""
 msgid "Push FluentCRM tags to Odoo as partner categories."
 msgstr ""
 "Envoyer les étiquettes FluentCRM vers Odoo comme catégories de partenaires."
+
+#: includes/modules/class-fooevents-module.php:154
+msgid "Push FooEvents products to Odoo (event.event or calendar.event)."
+msgstr "Envoyer les produits FooEvents vers Odoo (event.event ou calendar.event)."
 
 #: includes/modules/class-funnelkit-module.php:147
 msgid "Push FunnelKit contacts to Odoo as CRM leads."
@@ -2946,6 +2823,18 @@ msgstr ""
 "Envoyer les abonnés MC4WP vers Odoo en tant que contacts de liste de "
 "diffusion."
 
+#: includes/modules/class-mec-module.php:158
+msgid ""
+"Push MEC Pro bookings to Odoo as event registrations. Requires MEC Pro and "
+"Odoo Events module."
+msgstr ""
+"Envoyer les réservations MEC Pro vers Odoo comme inscriptions aux "
+"événements. Nécessite MEC Pro et le module Événements Odoo."
+
+#: includes/modules/class-mec-module.php:153
+msgid "Push MEC events to Odoo (event.event or calendar.event)."
+msgstr "Envoyer les événements MEC vers Odoo (event.event ou calendar.event)."
+
 #: includes/modules/class-mailpoet-module.php:137
 msgid "Push MailPoet mailing lists to Odoo."
 msgstr "Envoyer les listes de diffusion MailPoet vers Odoo."
@@ -2981,7 +2870,7 @@ msgstr "Envoyer les quiz et résultats Quiz Maker vers Odoo Survey."
 msgid "Push RCP levels to Odoo as membership products."
 msgstr "Envoyer les niveaux RCP vers Odoo comme produits d'adhésion."
 
-#: includes/modules/class-events-calendar-module.php:182
+#: includes/modules/class-events-calendar-module.php:189
 msgid ""
 "Push RSVP attendees to Odoo as event registrations. Requires Event Tickets "
 "and Odoo Events module."
@@ -2989,7 +2878,7 @@ msgstr ""
 "Envoyer les participants RSVP vers Odoo comme inscriptions aux événements. "
 "Nécessite Event Tickets et le module Événements Odoo."
 
-#: includes/modules/class-events-calendar-module.php:177
+#: includes/modules/class-events-calendar-module.php:184
 msgid ""
 "Push RSVP ticket types to Odoo as service products. Requires Event Tickets."
 msgstr ""
@@ -3171,6 +3060,14 @@ msgstr "Envoyer les factures WP-Invoice vers Odoo comme écritures comptables."
 msgid "Push WPPizza orders to Odoo POS."
 msgstr "Envoyer les commandes WPPizza vers Odoo POS."
 
+#: includes/modules/class-wc-b2b-module.php:174
+msgid ""
+"Push Wholesale Suite roles to Odoo as product pricelists. Requires Wholesale "
+"Suite Premium."
+msgstr ""
+"Envoyer les rôles Wholesale Suite vers Odoo en tant que listes de prix "
+"produit. Nécessite Wholesale Suite Premium."
+
 #: includes/modules/class-memberships-module.php:152
 msgid "Push WooCommerce membership plans to Odoo."
 msgstr "Envoyer les plans d'adhésion WooCommerce vers Odoo."
@@ -3284,7 +3181,7 @@ msgstr ""
 msgid "Push document categories as Odoo document folders."
 msgstr "Envoyer les catégories de documents en tant que dossiers Odoo."
 
-#: includes/modules/class-events-calendar-module.php:172
+#: includes/modules/class-events-calendar-module.php:179
 msgid "Push events to Odoo (event.event or calendar.event)."
 msgstr "Envoyer les événements vers Odoo (event.event ou calendar.event)."
 
@@ -3328,6 +3225,14 @@ msgid "Push subscriptions to Odoo sale.subscription (Enterprise only)."
 msgstr ""
 "Envoyer les abonnements vers Odoo sale.subscription (Enterprise uniquement)."
 
+#: includes/modules/class-fooevents-module.php:159
+msgid ""
+"Push ticket holders to Odoo as event registrations. Requires Odoo Events "
+"module."
+msgstr ""
+"Envoyer les détenteurs de billets vers Odoo comme inscriptions aux "
+"événements. Nécessite le module Événements Odoo."
+
 #: includes/modules/class-project-manager-module.php:159
 msgid ""
 "Push time entries to Odoo as analytic lines (requires Timesheet module)."
@@ -3363,13 +3268,13 @@ msgstr ""
 "Envoyer les commissions fournisseur vers Odoo en tant que factures "
 "fournisseur."
 
-#: includes/modules/class-wc-b2b-module.php:157
+#: includes/modules/class-wc-b2b-module.php:164
 msgid "Push wholesale company accounts to Odoo as company partners."
 msgstr ""
 "Envoyer les comptes d'entreprise grossiste vers Odoo en tant que partenaires "
 "société."
 
-#: includes/modules/class-wc-b2b-module.php:162
+#: includes/modules/class-wc-b2b-module.php:169
 msgid "Push wholesale prices to Odoo as pricelist items."
 msgstr ""
 "Envoyer les prix grossiste vers Odoo en tant qu'éléments de liste de prix."
@@ -3399,16 +3304,10 @@ msgstr "Adhésion RCP"
 msgid "RCP module enabled but Restrict Content Pro is not active."
 msgstr "Module RCP activé mais Restrict Content Pro n'est pas actif."
 
-#: includes/modules/class-rcp-handler.php:114
-#, php-format
-msgid "RCP-%d"
-msgstr "RCP-%d"
-
 #: admin/views/tab-logs.php:36
 msgid "Reconcile"
 msgstr "Réconciliation"
 
-#. translators: 1: module identifier, 2: entity type, 3: Odoo model name, 4: fix mode indicator
 #: includes/class-cli.php:362
 #, php-format
 msgid "Reconciling %1$s/%2$s against Odoo model %3$s%4$s..."
@@ -3422,7 +3321,6 @@ msgstr "Référence"
 msgid "Refresh"
 msgstr "Actualiser"
 
-#. translators: %d: WC order ID
 #: includes/modules/class-wc-returns-handler.php:117
 #, php-format
 msgid "Refund for order #%d"
@@ -3448,7 +3346,6 @@ msgstr "Signaler la compatibilité"
 msgid "Required Odoo Modules"
 msgstr "Modules Odoo requis"
 
-#. translators: %s: comma-separated list of Odoo model names with module hints
 #: includes/admin/class-admin-ajax.php:161
 #, php-format
 msgid ""
@@ -3478,11 +3375,6 @@ msgstr "Clé meta date de retour"
 msgid "Return item"
 msgstr "Article retourné"
 
-#: includes/modules/class-wc-returns-handler.php:341
-#, php-format
-msgid "Return: WC Order #%d"
-msgstr "Retour : Commande WC #%d"
-
 #: includes/modules/class-wc-returns-module.php:194
 msgid "ReturnGO hooks"
 msgstr "Crochets ReturnGO"
@@ -3498,11 +3390,6 @@ msgstr "Exécutez avec --fix pour supprimer les correspondances orphelines."
 #: includes/class-cli.php:495
 msgid "Run without --dry-run to remove orphaned mappings."
 msgstr "Relancez sans --dry-run pour supprimer les correspondances orphelines."
-
-#: includes/modules/class-sensei-handler.php:130
-#, php-format
-msgid "SENSEI-ORDER-%d"
-msgstr "SENSEI-ORDER-%d"
 
 #: admin/views/tab-logs.php:58
 msgid "Sales"
@@ -3528,7 +3415,6 @@ msgstr "Enregistrer les paramètres réseau"
 msgid "Save settings"
 msgstr "Enregistrer les paramètres"
 
-#. translators: %s: module name or "all modules"
 #: includes/class-cli.php:469
 #, php-format
 msgid "Scanning for orphaned mappings (%s, dry-run)..."
@@ -3538,7 +3424,6 @@ msgstr "Recherche des correspondances orphelines (%s, simulation)…"
 msgid "Scheduled"
 msgstr "Planifié"
 
-#. translators: %d: number of transients deleted
 #: includes/class-cli.php:537
 #, php-format
 msgid "Schema cache flushed (%d transient(s) deleted)."
@@ -3565,11 +3450,6 @@ msgstr "Rechercher des commandes"
 #: includes/modules/class-field-service-module.php:128
 msgid "Search Tasks"
 msgstr "Rechercher des tâches"
-
-#: includes/trait-sync-helpers.php:57
-#, php-format
-msgid "Secondary ID %d exceeds synthetic ID multiplier %d."
-msgstr "L'ID secondaire %d dépasse le multiplicateur d'ID synthétique %d."
 
 #: includes/modules/class-woocommerce-module.php:480
 msgid ""
@@ -3618,13 +3498,11 @@ msgstr "Module Sensei activé mais Sensei LMS n'est pas actif."
 msgid "Server communication error."
 msgstr "Erreur de communication avec le serveur."
 
-#. translators: 1: HTTP status code, 2: endpoint
 #: includes/api/trait-retryable-http.php:64
 #, php-format
 msgid "Server error HTTP %1$d on %2$s."
 msgstr "Erreur serveur HTTP %1$d sur %2$s."
 
-#. translators: %s: number of servings (e.g. "4" or "4 persons").
 #: includes/modules/class-wprm-handler.php:95
 #, php-format
 msgid "Servings: %s"
@@ -3634,11 +3512,14 @@ msgstr "Portions : %s"
 msgid "Set active=false in Odoo instead of deleting the record."
 msgstr "Définir active=false dans Odoo au lieu de supprimer l'enregistrement."
 
-#. translators: %s: webhook URL
 #: admin/views/tab-connection.php:226
 #, php-format
 msgid "Set the URL to: %s"
 msgstr "Définissez l'URL : %s"
+
+#: includes/modules/class-wc-b2b-module.php:179
+msgid "Set the matching Odoo pricelist on wholesale customer partners."
+msgstr "Définir la liste de prix Odoo correspondante sur les partenaires clients grossistes."
 
 #: admin/views/tab-connection.php:246
 msgid ""
@@ -3731,7 +3612,6 @@ msgstr "Clé meta date de début"
 msgid "Status"
 msgstr "Statut"
 
-#. translators: %s: error message
 #: includes/modules/class-stock-handler.php:106
 #, php-format
 msgid "Stock push failed: %s"
@@ -3777,7 +3657,7 @@ msgstr "Élément SureCart"
 msgid "SureCart module enabled but SureCart is not active."
 msgstr "Le module SureCart est activé mais SureCart n'est pas actif."
 
-#: includes/modules/class-wc-b2b-module.php:155
+#: includes/modules/class-wc-b2b-module.php:162
 msgid "Sync B2B company accounts"
 msgstr "Synchroniser les comptes d'entreprise B2B"
 
@@ -3866,7 +3746,8 @@ msgstr "Synchroniser les rendez-vous"
 msgid "Sync articles"
 msgstr "Synchroniser les articles"
 
-#: includes/modules/class-events-calendar-module.php:180
+#: includes/modules/class-events-calendar-module.php:187
+#: includes/modules/class-fooevents-module.php:157
 msgid "Sync attendees"
 msgstr "Synchroniser les participants"
 
@@ -3875,7 +3756,9 @@ msgid "Sync badge types"
 msgstr "Synchroniser les types de badges"
 
 #: includes/modules/class-bookly-module.php:149
+#: includes/modules/class-fluent-booking-module.php:136
 #: includes/modules/class-jet-booking-module.php:125
+#: includes/modules/class-mec-module.php:156
 #: includes/modules/class-wc-bookings-module.php:135
 msgid "Sync bookings"
 msgstr "Synchroniser les réservations"
@@ -3883,6 +3766,10 @@ msgstr "Synchroniser les réservations"
 #: includes/modules/class-wc-bundle-bom-module.php:141
 msgid "Sync bundles as BOMs"
 msgstr "Synchroniser les bundles comme nomenclatures"
+
+#: includes/modules/class-fluent-booking-module.php:131
+msgid "Sync calendars"
+msgstr "Synchroniser les calendriers"
 
 #: includes/modules/class-charitable-module.php:136
 #: includes/modules/class-crowdfunding-module.php:124
@@ -3956,7 +3843,9 @@ msgstr "Synchroniser les employés"
 msgid "Sync enrollments"
 msgstr "Synchroniser les inscriptions"
 
-#: includes/modules/class-events-calendar-module.php:170
+#: includes/modules/class-events-calendar-module.php:177
+#: includes/modules/class-fooevents-module.php:152
+#: includes/modules/class-mec-module.php:151
 msgid "Sync events"
 msgstr "Synchroniser les événements"
 
@@ -4182,7 +4071,7 @@ msgid "Sync tasks"
 msgstr "Synchroniser les tâches"
 
 #: includes/modules/class-awesome-support-module.php:114
-#: includes/modules/class-events-calendar-module.php:175
+#: includes/modules/class-events-calendar-module.php:182
 #: includes/modules/class-fluent-support-module.php:114
 #: includes/modules/class-supportcandy-module.php:126
 msgid "Sync tickets"
@@ -4219,9 +4108,13 @@ msgstr "Synchroniser les vendeurs"
 msgid "Sync warehouses"
 msgstr "Synchroniser les entrepôts"
 
-#: includes/modules/class-wc-b2b-module.php:160
+#: includes/modules/class-wc-b2b-module.php:167
 msgid "Sync wholesale pricing rules"
 msgstr "Synchroniser les règles de tarification grossiste"
+
+#: includes/modules/class-wc-b2b-module.php:172
+msgid "Sync wholesale roles as pricelists"
+msgstr "Synchroniser les rôles grossistes en tant que listes de prix"
 
 #: admin/views/tab-sync.php:18 includes/admin/class-settings-page.php:44
 msgid "Synchronization"
@@ -4263,11 +4156,6 @@ msgstr "Système"
 msgid "System Status"
 msgstr "État du système"
 
-#: includes/modules/class-tutorlms-handler.php:132
-#, php-format
-msgid "TUTOR-ORD-%d"
-msgstr "TUTOR-ORD-%d"
-
 #: admin/views/tab-modules.php:188
 msgid "Target module"
 msgstr "Module cible"
@@ -4280,7 +4168,6 @@ msgstr "Association des taxes"
 msgid "Test connection"
 msgstr "Tester la connexion"
 
-#. translators: %s: Odoo server URL
 #: includes/class-cli.php:162
 #, php-format
 msgid "Testing connection to %s..."
@@ -4333,7 +4220,6 @@ msgstr ""
 "L'ID de la liste de prix Odoo à utiliser (Ventes > Configuration > Listes de "
 "prix)."
 
-#. translators: 1: number of consecutive batch failures, 2: health admin URL
 #: includes/class-failure-notifier.php:122
 #, php-format
 msgid ""
@@ -4348,7 +4234,6 @@ msgstr ""
 "\n"
 "Consultez le tableau de bord de santé à l'adresse %2$s"
 
-#. translators: 1: module identifier, 2: failure count, 3: health admin URL
 #: includes/class-failure-notifier.php:179
 #, php-format
 msgid ""
@@ -4364,7 +4249,6 @@ msgstr ""
 "\n"
 "Consultez le tableau de bord de santé à l'adresse %3$s"
 
-#. translators: 1: number of failures, 2: queue admin URL
 #: includes/class-failure-notifier.php:233
 #, php-format
 msgid ""
@@ -4439,7 +4323,6 @@ msgstr "Trop de requêtes. Veuillez réessayer plus tard."
 msgid "Total"
 msgstr "Total"
 
-#. translators: %s: total time in minutes (e.g. "45min").
 #: includes/modules/class-wprm-handler.php:110
 #, php-format
 msgid "Total: %smin"
@@ -4473,7 +4356,6 @@ msgstr "URL"
 msgid "Ultimate Member module enabled but Ultimate Member is not active."
 msgstr "Module Ultimate Member activé mais Ultimate Member n'est pas actif."
 
-#. translators: %d: job ID
 #: includes/trait-cli-queue-commands.php:155
 #, php-format
 msgid "Unable to cancel job %d (not found or not pending)."
@@ -4517,7 +4399,6 @@ msgstr "Erreur inconnue."
 msgid "Unknown module."
 msgstr "Module inconnu."
 
-#. translators: %s: module identifier
 #: includes/trait-cli-module-commands.php:64
 #, php-format
 msgid ""
@@ -4526,19 +4407,16 @@ msgstr ""
 "Module inconnu : %s. Utilisez « wp wp4odoo module list » pour voir les "
 "modules disponibles."
 
-#. translators: %s: subcommand name
 #: includes/class-cli.php:525
-#, fuzzy, php-format
+#, php-format
 msgid "Unknown subcommand: %s. Available: flush"
-msgstr "Sous-commande inconnue : %s. Disponibles : list, enable, disable"
+msgstr "Sous-commande inconnue : %s. Disponibles : flush"
 
-#. translators: %s: subcommand name
 #: includes/class-cli.php:560
 #, php-format
 msgid "Unknown subcommand: %s. Available: list, enable, disable"
 msgstr "Sous-commande inconnue : %s. Disponibles : list, enable, disable"
 
-#. translators: %s: subcommand name
 #: includes/class-cli.php:285
 #, php-format
 msgid "Unknown subcommand: %s. Available: stats, list, retry, cleanup, cancel"
@@ -4546,13 +4424,11 @@ msgstr ""
 "Sous-commande inconnue : %s. Disponibles : stats, list, retry, cleanup, "
 "cancel"
 
-#. translators: %s: subcommand name
 #: includes/class-cli.php:451
 #, php-format
 msgid "Unknown subcommand: %s. Usage: wp wp4odoo cleanup orphans"
 msgstr "Sous-commande inconnue : %s. Utilisation : wp wp4odoo cleanup orphans"
 
-#. translators: %s: subcommand name
 #: includes/class-cli.php:214
 #, php-format
 msgid "Unknown subcommand: %s. Usage: wp wp4odoo sync run"
@@ -4586,7 +4462,6 @@ msgstr "Voir la commande"
 msgid "View Task"
 msgstr "Voir la tâche"
 
-#. translators: 1: sub-order ID, 2: parent order ID
 #: includes/modules/class-dokan-handler.php:174
 #: includes/modules/class-wc-vendors-handler.php:173
 #: includes/modules/class-wcfm-handler.php:170
@@ -4600,7 +4475,7 @@ msgstr ""
 "Le module WC Add-Ons est activé mais aucun plugin d'options compatible n'est "
 "actif."
 
-#: includes/modules/class-wc-b2b-module.php:125
+#: includes/modules/class-wc-b2b-module.php:130
 msgid ""
 "WC B2B module enabled but neither Wholesale Suite nor B2BKing is active."
 msgstr ""
@@ -4629,11 +4504,6 @@ msgstr ""
 #: includes/modules/class-wc-inventory-module.php:120
 msgid "WC Inventory module enabled but WooCommerce is not active."
 msgstr "Le module WC Inventory est activé mais WooCommerce n'est pas actif."
-
-#: includes/modules/class-wc-shipping-handler.php:162
-#, php-format
-msgid "WC Order #%d"
-msgstr "Commande WC #%d"
 
 #: admin/views/tab-logs.php:65
 msgid "WC Points & Rewards"
@@ -4682,26 +4552,10 @@ msgstr ""
 msgid "WC Vendors module enabled but WC Vendors is not active."
 msgstr "Le module WC Vendors est activé mais WC Vendors n'est pas actif."
 
-#. translators: %s: WC product name
 #: includes/modules/class-wc-inventory-handler.php:198
 #, php-format
 msgid "WC stock adjustment: %s"
 msgstr "Ajustement de stock WC : %s"
-
-#: includes/modules/class-wc-inventory-handler.php:191
-#, php-format
-msgid "WC-ADJ-%d-%s"
-msgstr "WC-ADJ-%d-%s"
-
-#: includes/modules/class-wc-returns-handler.php:210
-#, php-format
-msgid "WC-REFUND-%d (Order #%d)"
-msgstr "WC-REFUND-%d (Commande #%d)"
-
-#: includes/modules/class-wc-rental-handler.php:157
-#, php-format
-msgid "WC-RENTAL-%d"
-msgstr "WC-RENTAL-%d"
 
 #: includes/modules/class-wcfm-module.php:142
 msgid "WCFM module enabled but WCFM Marketplace is not active."
@@ -4711,7 +4565,6 @@ msgstr "Le module WCFM est activé mais WCFM Marketplace n'est pas actif."
 msgid "WP All Import"
 msgstr "WP All Import"
 
-#. translators: 1: import ID, 2: number of records
 #: includes/modules/trait-wpai-hooks.php:108
 #, php-format
 msgid "WP All Import #%1$d: enqueued %2$d records for Odoo sync."
@@ -4781,11 +4634,6 @@ msgstr "Module WP Simple Pay activé mais WP Simple Pay n'est pas actif."
 msgid "WP → Odoo"
 msgstr "WP → Odoo"
 
-#: includes/modules/class-food-ordering-handler.php:59
-#, php-format
-msgid "WP-%s-%s"
-msgstr "WP-%s-%s"
-
 #: includes/trait-ui-state-settings.php:126
 msgid ""
 "WP-Cron has not triggered recently. On low-traffic sites, scheduled sync may "
@@ -4825,17 +4673,6 @@ msgstr ""
 "complète (WordPress + Odoo) vous permet de revenir en arrière en cas de "
 "problème."
 
-#: includes/class-database-migration.php:170
-#, php-format
-msgid "WP4Odoo migration %d failed: %s"
-msgstr "La migration WP4Odoo %d a échoué : %s"
-
-#: includes/modules/class-wperp-accounting-handler.php:108
-#, php-format
-msgid "WPERP-JE-%d"
-msgstr "WPERP-JE-%d"
-
-#. translators: %s: form title
 #: includes/modules/class-form-field-extractor.php:177
 #, php-format
 msgid "WPForms: %s"
@@ -4883,7 +4720,6 @@ msgstr "WooCommerce :"
 msgid "WordPress For Odoo"
 msgstr "WordPress For Odoo"
 
-#. translators: %s: plugin version number
 #: includes/class-cli.php:90
 #, php-format
 msgid "WordPress For Odoo v%s"
@@ -4946,7 +4782,6 @@ msgstr ""
 msgid "Your message has been sent successfully."
 msgstr "Votre message a été envoyé avec succès."
 
-#. translators: %d: number of consecutive failures
 #: includes/class-failure-notifier.php:227
 #, php-format
 msgid "[WP4Odoo] %d consecutive sync failures"
@@ -4956,7 +4791,6 @@ msgstr "[WP4Odoo] %d échecs de synchronisation consécutifs"
 msgid "[WP4Odoo] Circuit breaker opened"
 msgstr "[WP4Odoo] Disjoncteur activé"
 
-#. translators: %s: module identifier
 #: includes/class-failure-notifier.php:173
 #, php-format
 msgid "[WP4Odoo] Module circuit breaker opened: %s"
@@ -4974,16 +4808,10 @@ msgstr "terminé"
 msgid "default"
 msgstr "par défaut"
 
-#: includes/modules/class-ecwid-handler.php:187
-#, php-format
-msgid "https://app.ecwid.com/api/v3/%s/%s?offset=%d&limit=%d"
-msgstr "https://app.ecwid.com/api/v3/%s/%s?offset=%d&limit=%d"
-
 #: admin/views/tab-logs.php:34
 msgid "i18n"
 msgstr "i18n"
 
-#. translators: %s: human time diff
 #: admin/views/tab-health.php:134
 #, php-format
 msgid "in %s"
@@ -5012,6 +4840,135 @@ msgstr "stock.picking introuvable."
 #: admin/views/tab-modules.php:202
 msgid "— Select —"
 msgstr "— Sélectionner —"
+
+#, php-format
+#~ msgid " LIMIT %d"
+#~ msgstr " LIMIT %d"
+
+#, php-format
+#~ msgid "%s has no donor/payer email."
+#~ msgstr "%s n'a pas d'adresse e-mail de donateur/payeur."
+
+#, php-format
+#~ msgid "%s pull not supported — originates in SureCart."
+#~ msgstr "Import de %s non pris en charge — provient de SureCart."
+
+#, php-format
+#~ msgid "%s pull not supported — originates in WooCommerce."
+#~ msgstr "Import de %s non pris en charge — provient de WooCommerce."
+
+#, php-format
+#~ msgid "%s pull not supported — originates in WooCommerce/Dokan."
+#~ msgstr "Import de %s non pris en charge — provient de WooCommerce/Dokan."
+
+#, php-format
+#~ msgid "%s pull not supported — originates in WooCommerce/WC Vendors."
+#~ msgstr ""
+#~ "Import de %s non pris en charge — provient de WooCommerce/WC Vendors."
+
+#, php-format
+#~ msgid "%s pull not supported — originates in WooCommerce/WCFM."
+#~ msgstr "Import de %s non pris en charge — provient de WooCommerce/WCFM."
+
+#, php-format
+#~ msgid "<a href=\"%s\">%s</a>"
+#~ msgstr "<a href=\"%s\">%s</a>"
+
+#, php-format
+#~ msgid "Auto-pushing %s before child entity."
+#~ msgstr "Envoi automatique de %s avant l'entité enfant."
+
+#, php-format
+#~ msgid ""
+#~ "Bookly bookings query hit the %d-row safety limit. Some bookings may be "
+#~ "excluded from sync."
+#~ msgstr ""
+#~ "La requête de réservations Bookly a atteint la limite de sécurité de %d "
+#~ "lignes. Certaines réservations peuvent être exclues de la synchronisation."
+
+#, php-format
+#~ msgid ""
+#~ "Bookly services query hit the %d-row safety limit. Some services may be "
+#~ "excluded from sync."
+#~ msgstr ""
+#~ "La requête de services Bookly a atteint la limite de sécurité de %d "
+#~ "lignes. Certains services peuvent être exclus de la synchronisation."
+
+#, php-format
+#~ msgid "Cannot resolve Odoo product for %s."
+#~ msgstr "Impossible de résoudre le produit Odoo pour %s."
+
+#, php-format
+#~ msgid "Cannot resolve partner for %s."
+#~ msgstr "Impossible de résoudre le partenaire pour %s."
+
+#, php-format
+#~ msgid "Invalid JSON payload in batch job #%d."
+#~ msgstr "Charge JSON invalide dans la tâche de lot #%d."
+
+#, php-format
+#~ msgid "LD-TXN-%d"
+#~ msgstr "LD-TXN-%d"
+
+#, php-format
+#~ msgid "LLMS-ORD-%d"
+#~ msgstr "LLMS-ORD-%d"
+
+#, php-format
+#~ msgid "LP-ORDER-%d"
+#~ msgstr "LP-ORDER-%d"
+
+#, php-format
+#~ msgid "RCP-%d"
+#~ msgstr "RCP-%d"
+
+#, php-format
+#~ msgid "Return: WC Order #%d"
+#~ msgstr "Retour : Commande WC #%d"
+
+#, php-format
+#~ msgid "SENSEI-ORDER-%d"
+#~ msgstr "SENSEI-ORDER-%d"
+
+#, php-format
+#~ msgid "Secondary ID %d exceeds synthetic ID multiplier %d."
+#~ msgstr "L'ID secondaire %d dépasse le multiplicateur d'ID synthétique %d."
+
+#, php-format
+#~ msgid "TUTOR-ORD-%d"
+#~ msgstr "TUTOR-ORD-%d"
+
+#, php-format
+#~ msgid "WC Order #%d"
+#~ msgstr "Commande WC #%d"
+
+#, php-format
+#~ msgid "WC-ADJ-%d-%s"
+#~ msgstr "WC-ADJ-%d-%s"
+
+#, php-format
+#~ msgid "WC-REFUND-%d (Order #%d)"
+#~ msgstr "WC-REFUND-%d (Commande #%d)"
+
+#, php-format
+#~ msgid "WC-RENTAL-%d"
+#~ msgstr "WC-RENTAL-%d"
+
+#, php-format
+#~ msgid "WP-%s-%s"
+#~ msgstr "WP-%s-%s"
+
+#, php-format
+#~ msgid "WP4Odoo migration %d failed: %s"
+#~ msgstr "La migration WP4Odoo %d a échoué : %s"
+
+#, php-format
+#~ msgid "WPERP-JE-%d"
+#~ msgstr "WPERP-JE-%d"
+
+#, php-format
+#~ msgid "https://app.ecwid.com/api/v3/%s/%s?offset=%d&limit=%d"
+#~ msgstr "https://app.ecwid.com/api/v3/%s/%s?offset=%d&limit=%d"
 
 #~ msgid "Pull stock levels from Odoo into WooCommerce products."
 #~ msgstr ""
