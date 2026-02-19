@@ -123,10 +123,10 @@ class WC_Rental_Handler {
 				0,
 				0,
 				[
-					'product_id'   => $odoo_product_id,
+					'product_id'      => $odoo_product_id,
 					'product_uom_qty' => $qty,
-					'price_unit'   => $price,
-					'name'         => $item->get_name(),
+					'price_unit'      => $price,
+					'name'            => $item->get_name(),
 				],
 			];
 
