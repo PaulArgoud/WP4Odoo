@@ -5,6 +5,7 @@ namespace WP4Odoo\Modules;
 
 use WP4Odoo\API\Odoo_Client;
 use WP4Odoo\Field_Mapper;
+use WP4Odoo\Logger;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -29,12 +30,20 @@ class Contact_Refiner {
 	private \Closure $client_getter;
 
 	/**
+	 * Logger instance.
+	 *
+	 * @var Logger
+	 */
+	private Logger $logger;
+
+	/**
 	 * Constructor.
 	 *
 	 * @param \Closure $client_getter Returns an Odoo_Client instance.
 	 */
 	public function __construct( \Closure $client_getter ) {
 		$this->client_getter = $client_getter;
+		$this->logger        = Logger::for_channel( 'crm' );
 	}
 
 	/**
@@ -70,10 +79,11 @@ class Contact_Refiner {
 
 		// Resolve country code to Odoo res.country ID.
 		if ( ! empty( $odoo_values['country_id'] ) && is_string( $odoo_values['country_id'] ) ) {
+			$code = strtoupper( $odoo_values['country_id'] );
 			try {
-				$code    = strtoupper( $odoo_values['country_id'] );
 				$country = $this->client()->search( 'res.country', [ [ 'code', '=', $code ] ], 0, 1 );
 			} catch ( \RuntimeException $e ) {
+				$this->logger->warning( 'Country code lookup failed.', [ 'code' => $code, 'error' => $e->getMessage() ] );
 				$country = [];
 			}
 			$odoo_values['country_id'] = ! empty( $country ) ? (int) $country[0] : false;
@@ -89,6 +99,7 @@ class Contact_Refiner {
 						1
 					);
 				} catch ( \RuntimeException $e ) {
+					$this->logger->warning( 'State lookup failed.', [ 'state' => $state_name, 'error' => $e->getMessage() ] );
 					$state = [];
 				}
 				$odoo_values['state_id'] = ! empty( $state ) ? (int) $state[0] : false;
@@ -159,6 +170,7 @@ class Contact_Refiner {
 		try {
 			$records = $this->client()->read( $model, [ $id ], [ $field ] );
 		} catch ( \RuntimeException $e ) {
+			$this->logger->warning( 'Many2one field resolution failed.', [ 'model' => $model, 'field' => $field, 'id' => $id, 'error' => $e->getMessage() ] );
 			return null;
 		}
 

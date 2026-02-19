@@ -5,6 +5,7 @@ namespace WP4Odoo\Admin;
 
 use WP4Odoo\Logger;
 use WP4Odoo\Queue_Manager;
+use WP4Odoo\Schema_Cache;
 use WP4Odoo\Sync_Engine;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -208,5 +209,33 @@ trait Ajax_Monitor_Handlers {
 		$this->verify_request();
 
 		wp_send_json_success( \WP4Odoo\Queue_Manager::get_stats() );
+	}
+
+	/**
+	 * Flush the Odoo model schema cache.
+	 *
+	 * Clears both in-memory and persistent (transient) caches so that
+	 * fresh field definitions are fetched on the next push. Useful after
+	 * adding custom fields or upgrading Odoo modules.
+	 *
+	 * @since 3.8.0
+	 *
+	 * @return void
+	 */
+	public function flush_schema_cache(): void {
+		$this->verify_request();
+
+		$deleted = Schema_Cache::flush_all();
+
+		wp_send_json_success(
+			[
+				'deleted' => $deleted,
+				'message' => sprintf(
+					/* translators: %d: number of deleted transients */
+					__( 'Schema cache cleared (%d entries removed).', 'wp4odoo' ),
+					$deleted
+				),
+			]
+		);
 	}
 }

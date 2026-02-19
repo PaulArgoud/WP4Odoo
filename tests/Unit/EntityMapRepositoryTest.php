@@ -514,6 +514,46 @@ class EntityMapRepositoryTest extends TestCase {
 		$this->assertNotEmpty( $get_var_calls, 'Oldest entry should have been evicted, DB query expected' );
 	}
 
+	public function test_evict_cache_removes_orphaned_bidirectional_entries(): void {
+		// Fill cache exactly to the eviction threshold.
+		// Each save() creates 2 entries (wp→odoo, odoo→wp).
+		// 2600 saves = 5200 entries > MAX_CACHE_SIZE (5000) → eviction.
+		for ( $i = 1; $i <= 2600; $i++ ) {
+			$this->repo->save( 'crm', 'contact', $i, $i + 10000, 'res.partner' );
+		}
+
+		// After eviction, entries whose bidirectional partner was evicted
+		// should also be removed. Verify by checking that a mid-range entry
+		// (which might have one direction evicted but not the other) falls
+		// back to DB query — proving the orphan was cleaned up.
+		$this->wpdb->calls = [];
+
+		// Entry near the eviction boundary: if the wp→odoo key was kept
+		// but the odoo→wp partner was evicted, the orphan cleanup should
+		// have removed both.
+		$mid_entry = 650;  // Should be in the evicted 25%.
+		$this->wpdb->get_var_return = null;
+		$this->repo->get_odoo_id( 'crm', 'contact', $mid_entry );
+
+		$get_var_calls = array_values(
+			array_filter( $this->wpdb->calls, fn( $c ) => $c['method'] === 'get_var' )
+		);
+		$this->assertNotEmpty( $get_var_calls, 'Mid-range entry should have been evicted (with orphan cleanup), DB query expected.' );
+
+		// Conversely, a recent entry should still be fully cached (both directions).
+		$this->wpdb->calls = [];
+		$this->wpdb->get_var_return = null;
+
+		$recent = 2500;
+		$this->repo->get_odoo_id( 'crm', 'contact', $recent );
+		$this->repo->get_wp_id( 'crm', 'contact', $recent + 10000 );
+
+		$get_var_calls = array_values(
+			array_filter( $this->wpdb->calls, fn( $c ) => $c['method'] === 'get_var' )
+		);
+		$this->assertEmpty( $get_var_calls, 'Recent entry should have both directions cached, no DB query expected.' );
+	}
+
 	// ─── Helpers ───────────────────────────────────────────
 
 	private function get_last_call( string $method ): ?array {

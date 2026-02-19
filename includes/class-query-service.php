@@ -32,12 +32,13 @@ class Query_Service {
 	public function get_queue_jobs( int $page = 1, int $per_page = 30, string $status = '' ): array {
 		global $wpdb;
 
-		$table  = $wpdb->prefix . 'wp4odoo_sync_queue';
-		$offset = ( $page - 1 ) * $per_page;
+		$table   = $wpdb->prefix . 'wp4odoo_sync_queue';
+		$blog_id = (int) get_current_blog_id();
+		$offset  = ( $page - 1 ) * $per_page;
 
-		$where = '';
+		$where = $wpdb->prepare( 'WHERE blog_id = %d', $blog_id );
 		if ( '' !== $status ) {
-			$where = $wpdb->prepare( 'WHERE status = %s', $status );
+			$where .= $wpdb->prepare( ' AND status = %s', $status );
 		}
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
@@ -76,10 +77,11 @@ class Query_Service {
 	public function get_log_entries( array $filters = [], int $page = 1, int $per_page = 50 ): array {
 		global $wpdb;
 
-		$table  = $wpdb->prefix . 'wp4odoo_logs';
-		$offset = ( $page - 1 ) * $per_page;
-		$where  = [];
-		$params = [];
+		$table   = $wpdb->prefix . 'wp4odoo_logs';
+		$blog_id = (int) get_current_blog_id();
+		$offset  = ( $page - 1 ) * $per_page;
+		$where   = [ 'blog_id = %d' ];
+		$params  = [ $blog_id ];
 
 		if ( ! empty( $filters['level'] ) ) {
 			$where[]  = 'level = %s';
@@ -101,31 +103,18 @@ class Query_Service {
 			$params[] = $filters['date_to'] . ' 23:59:59';
 		}
 
-		$where_sql = '';
-		if ( ! empty( $where ) ) {
-			$where_sql = 'WHERE ' . implode( ' AND ', $where );
-		}
+		$where_sql = 'WHERE ' . implode( ' AND ', $where );
 
 		$count_query = "SELECT COUNT(*) FROM {$table} {$where_sql}"; // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 
-		if ( ! empty( $params ) ) {
-			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
-			$total = (int) $wpdb->get_var( $wpdb->prepare( $count_query, $params ) );
-		} else {
-			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
-			$total = (int) $wpdb->get_var( $count_query );
-		}
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+		$total = (int) $wpdb->get_var( $wpdb->prepare( $count_query, $params ) );
 
 		$data_query        = "SELECT id, correlation_id, level, module, message, context, created_at FROM {$table} {$where_sql} ORDER BY id DESC LIMIT %d OFFSET %d"; // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 		$params_with_limit = array_merge( $params, [ $per_page, $offset ] );
 
-		if ( ! empty( $params ) ) {
-			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
-			$items = $wpdb->get_results( $wpdb->prepare( $data_query, $params_with_limit ) );
-		} else {
-			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
-			$items = $wpdb->get_results( $wpdb->prepare( $data_query, [ $per_page, $offset ] ) );
-		}
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+		$items = $wpdb->get_results( $wpdb->prepare( $data_query, $params_with_limit ) );
 
 		return [
 			'items' => $items ?: [],

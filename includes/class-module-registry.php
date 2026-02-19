@@ -84,7 +84,18 @@ class Module_Registry {
 	private ?Entity_Map_Repository $entity_map = null;
 
 	/**
-	 * Plugin instance (for third-party hook compatibility).
+	 * Client provider closure.
+	 *
+	 * Returns the shared Odoo_Client instance. Decouples the registry
+	 * from the plugin singleton.
+	 *
+	 * @since 3.8.0
+	 * @var \Closure(): \WP4Odoo\API\Odoo_Client
+	 */
+	private \Closure $client_factory;
+
+	/**
+	 * Plugin instance (passed to third-party hook for backward compatibility).
 	 *
 	 * @var \WP4Odoo_Plugin
 	 */
@@ -100,12 +111,14 @@ class Module_Registry {
 	/**
 	 * Constructor.
 	 *
-	 * @param \WP4Odoo_Plugin    $plugin   Plugin instance.
-	 * @param Settings_Repository $settings Settings repository.
+	 * @param \WP4Odoo_Plugin    $plugin         Plugin instance (for third-party hook compatibility).
+	 * @param Settings_Repository $settings       Settings repository.
+	 * @param \Closure|null       $client_factory Returns the Odoo_Client. Defaults to $plugin->client().
 	 */
-	public function __construct( \WP4Odoo_Plugin $plugin, Settings_Repository $settings ) {
-		$this->plugin   = $plugin;
-		$this->settings = $settings;
+	public function __construct( \WP4Odoo_Plugin $plugin, Settings_Repository $settings, ?\Closure $client_factory = null ) {
+		$this->plugin         = $plugin;
+		$this->settings       = $settings;
+		$this->client_factory = $client_factory ?? fn() => $plugin->client();
 	}
 
 	/**
@@ -119,7 +132,7 @@ class Module_Registry {
 	 * @return void
 	 */
 	public function register_all(): void {
-		$client_provider = fn() => $this->plugin->client();
+		$client_provider = $this->client_factory;
 		$entity_map      = new Entity_Map_Repository();
 		$settings        = $this->settings;
 
@@ -350,6 +363,14 @@ class Module_Registry {
 		$group = $module->get_exclusive_group();
 		if ( '' !== $group && $this->has_booted_in_group( $group ) ) {
 			return;
+		}
+
+		// Emit deprecation warning (module still boots for backward compatibility).
+		if ( $module->is_deprecated() ) {
+			$this->version_warnings[ $id ][] = [
+				'type'    => 'warning',
+				'message' => $module->get_deprecated_notice(),
+			];
 		}
 
 		$module->boot();

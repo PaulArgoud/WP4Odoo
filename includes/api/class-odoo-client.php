@@ -55,13 +55,27 @@ class Odoo_Client {
 	private int $company_id = 0;
 
 	/**
+	 * Credentials provider closure.
+	 *
+	 * Returns the decrypted Odoo credentials array. Defaults to
+	 * Odoo_Auth::get_credentials() for backward compatibility but
+	 * can be overridden for testing or custom credential sources.
+	 *
+	 * @since 3.8.0
+	 * @var \Closure(): array{url: string, database: string, username: string, api_key: string, protocol: string, timeout: int, company_id: int}
+	 */
+	private \Closure $credentials_provider;
+
+	/**
 	 * Constructor.
 	 *
-	 * @param Transport|null          $transport Optional pre-configured transport (skips auto-connection).
-	 * @param Settings_Repository|null $settings  Optional settings repository for the logger.
+	 * @param Transport|null          $transport            Optional pre-configured transport (skips auto-connection).
+	 * @param Settings_Repository|null $settings            Optional settings repository for the logger.
+	 * @param \Closure|null           $credentials_provider Returns credentials array. Defaults to Odoo_Auth::get_credentials().
 	 */
-	public function __construct( ?Transport $transport = null, ?Settings_Repository $settings = null ) {
-		$this->logger = Logger::for_channel( 'api', $settings );
+	public function __construct( ?Transport $transport = null, ?Settings_Repository $settings = null, ?\Closure $credentials_provider = null ) {
+		$this->logger               = Logger::for_channel( 'api', $settings );
+		$this->credentials_provider = $credentials_provider ?? static fn() => Odoo_Auth::get_credentials();
 
 		if ( null !== $transport ) {
 			$this->transport = $transport;
@@ -94,7 +108,7 @@ class Odoo_Client {
 			return;
 		}
 
-		$credentials = Odoo_Auth::get_credentials();
+		$credentials = ( $this->credentials_provider )();
 
 		if ( empty( $credentials['url'] ) || empty( $credentials['database'] ) ) {
 

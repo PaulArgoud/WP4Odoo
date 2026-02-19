@@ -46,10 +46,11 @@ class Sync_Engine {
 	private ?Advisory_Lock $lock = null;
 
 	/**
-	 * Maximum wall-clock seconds for a single batch run.
+	 * Default maximum wall-clock seconds for a single batch run.
 	 *
 	 * Prevents WP-Cron timeouts (default 60 s). We stop fetching
 	 * new jobs once this limit is reached; in-flight jobs finish.
+	 * Filterable via `wp4odoo_engine_batch_time_limit`.
 	 */
 	private const BATCH_TIME_LIMIT = 55;
 
@@ -117,17 +118,33 @@ class Sync_Engine {
 	private Module_Circuit_Breaker $module_breaker;
 
 	/**
-	 * Memory usage threshold (fraction of PHP memory_limit).
+	 * Resolved batch time limit for the current run (seconds).
+	 *
+	 * @var int
+	 */
+	private int $time_limit = self::BATCH_TIME_LIMIT;
+
+	/**
+	 * Resolved memory threshold for the current run (0.0–1.0).
+	 *
+	 * @var float
+	 */
+	private float $memory_threshold = self::MEMORY_THRESHOLD;
+
+	/**
+	 * Default memory usage threshold (fraction of PHP memory_limit).
 	 *
 	 * When usage exceeds this ratio, batch processing stops to prevent OOM.
+	 * Filterable via `wp4odoo_engine_memory_threshold`.
 	 */
 	private const MEMORY_THRESHOLD = 0.8;
 
 	/**
-	 * Maximum batch iterations per cron invocation.
+	 * Default maximum batch iterations per cron invocation.
 	 *
 	 * Safety cap to prevent runaway loops even if time/memory checks
 	 * malfunction. 20 iterations × default 50 batch = 1 000 jobs max.
+	 * Filterable via `wp4odoo_engine_max_iterations`.
 	 */
 	private const MAX_BATCH_ITERATIONS = 20;
 
@@ -149,6 +166,57 @@ class Sync_Engine {
 		$this->circuit_breaker->set_failure_notifier( $this->failure_notifier );
 		$this->module_breaker = new Module_Circuit_Breaker( $this->logger );
 		$this->module_breaker->set_failure_notifier( $this->failure_notifier );
+	}
+
+	/**
+	 * Get the effective batch time limit (filterable).
+	 *
+	 * @return int Seconds.
+	 */
+	private function get_batch_time_limit(): int {
+		/**
+		 * Filter the maximum wall-clock seconds for a single batch run.
+		 *
+		 * Lower this on shared hosting with 30 s cron timeouts; raise it
+		 * on dedicated servers that can afford longer runs.
+		 *
+		 * @since 3.8.0
+		 *
+		 * @param int $limit Default time limit in seconds.
+		 */
+		return max( 10, (int) apply_filters( 'wp4odoo_engine_batch_time_limit', self::BATCH_TIME_LIMIT ) );
+	}
+
+	/**
+	 * Get the effective memory threshold (filterable).
+	 *
+	 * @return float Fraction of memory_limit (0.0–1.0).
+	 */
+	private function get_memory_threshold(): float {
+		/**
+		 * Filter the memory usage threshold for batch processing.
+		 *
+		 * @since 3.8.0
+		 *
+		 * @param float $threshold Fraction of PHP memory_limit (0.0–1.0).
+		 */
+		return max( 0.5, min( 0.99, (float) apply_filters( 'wp4odoo_engine_memory_threshold', self::MEMORY_THRESHOLD ) ) );
+	}
+
+	/**
+	 * Get the effective maximum batch iterations (filterable).
+	 *
+	 * @return int
+	 */
+	private function get_max_iterations(): int {
+		/**
+		 * Filter the maximum number of batch iterations per cron invocation.
+		 *
+		 * @since 3.8.0
+		 *
+		 * @param int $max Default maximum iterations.
+		 */
+		return max( 1, (int) apply_filters( 'wp4odoo_engine_max_iterations', self::MAX_BATCH_ITERATIONS ) );
 	}
 
 	/**
@@ -227,8 +295,10 @@ class Sync_Engine {
 				return 0;
 			}
 
-			$sync_settings = $this->settings->get_sync_settings();
-			$batch         = (int) $sync_settings['batch_size'];
+			$sync_settings          = $this->settings->get_sync_settings();
+			$batch                  = (int) $sync_settings['batch_size'];
+			$this->time_limit       = $this->get_batch_time_limit();
+			$this->memory_threshold = $this->get_memory_threshold();
 
 			// Recover any jobs left in 'processing' from a previous crash
 			// BEFORE fetching, so recovered jobs are eligible for this batch.
@@ -251,7 +321,7 @@ class Sync_Engine {
 			// Multi-batch loop: keep fetching batches until the queue is
 			// drained or a termination condition (time, memory, circuit
 			// breaker, iteration cap) is reached.
-			while ( $iteration < self::MAX_BATCH_ITERATIONS ) {
+			while ( $iteration < $this->get_max_iterations() ) {
 				++$iteration;
 
 				if ( ! $this->should_continue_batching( $start_time, $processed, $iteration ) ) {
@@ -276,6 +346,12 @@ class Sync_Engine {
 				$processed += $result['processed'];
 
 				if ( $result['should_stop'] ) {
+					break;
+				}
+
+				// If the batch returned fewer jobs than requested, the queue
+				// is drained — skip the redundant query on the next iteration.
+				if ( count( $jobs ) < $batch ) {
 					break;
 				}
 			}
@@ -410,7 +486,7 @@ class Sync_Engine {
 	 * @return bool True if the next batch should be fetched.
 	 */
 	private function should_continue_batching( float $start_time, int $processed, int $iteration ): bool {
-		if ( ( microtime( true ) - $start_time ) >= self::BATCH_TIME_LIMIT ) {
+		if ( ( microtime( true ) - $start_time ) >= $this->time_limit ) {
 			$this->logger->info(
 				'Multi-batch: time limit reached between batches.',
 				[
@@ -472,7 +548,7 @@ class Sync_Engine {
 				continue;
 			}
 
-			if ( ( microtime( true ) - $start_time ) >= self::BATCH_TIME_LIMIT ) {
+			if ( ( microtime( true ) - $start_time ) >= $this->time_limit ) {
 				$this->logger->info(
 					'Batch time limit reached, deferring remaining jobs.',
 					[
@@ -635,7 +711,7 @@ class Sync_Engine {
 		}
 
 		$limit_bytes = wp_convert_hr_to_bytes( $limit );
-		return memory_get_usage( true ) >= (int) ( $limit_bytes * self::MEMORY_THRESHOLD );
+		return memory_get_usage( true ) >= (int) ( $limit_bytes * $this->memory_threshold );
 	}
 
 	/**

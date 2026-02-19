@@ -77,6 +77,18 @@ abstract class Module_Base {
 	protected string $exclusive_group = '';
 
 	/**
+	 * Deprecation notice for this module.
+	 *
+	 * When non-empty, the module can still boot but displays a warning
+	 * in the admin UI. Set to a user-facing message explaining why the
+	 * module is deprecated and what the alternative is.
+	 *
+	 * @since 3.8.0
+	 * @var string
+	 */
+	protected string $deprecated_notice = '';
+
+	/**
 	 * Minimum supported version of the third-party plugin.
 	 *
 	 * When non-empty and the detected plugin version is lower,
@@ -722,6 +734,26 @@ abstract class Module_Base {
 	 */
 	public function get_exclusive_group(): string {
 		return $this->exclusive_group;
+	}
+
+	/**
+	 * Check if this module is deprecated.
+	 *
+	 * @since 3.8.0
+	 * @return bool True if the module has a deprecation notice.
+	 */
+	public function is_deprecated(): bool {
+		return '' !== $this->deprecated_notice;
+	}
+
+	/**
+	 * Get the deprecation notice.
+	 *
+	 * @since 3.8.0
+	 * @return string Deprecation message, or empty string if not deprecated.
+	 */
+	public function get_deprecated_notice(): string {
+		return $this->deprecated_notice;
 	}
 
 	/**

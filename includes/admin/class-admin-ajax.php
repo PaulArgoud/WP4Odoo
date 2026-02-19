@@ -103,6 +103,7 @@ class Admin_Ajax {
 			'wp4odoo_detect_languages',
 			'wp4odoo_fetch_odoo_taxes',
 			'wp4odoo_fetch_odoo_carriers',
+			'wp4odoo_flush_schema_cache',
 		];
 
 		foreach ( $actions as $action ) {
