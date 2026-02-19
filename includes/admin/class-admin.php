@@ -342,10 +342,10 @@ class Admin {
 
 		$params = [
 			"wpf{$form_id}_14" => $module_name,
-			"wpf{$form_id}_2" => WP4ODOO_VERSION,
-			"wpf{$form_id}_3" => $plugin_name . ' ' . $plugin_version,
-			"wpf{$form_id}_6" => get_bloginfo( 'version' ),
-			"wpf{$form_id}_7" => PHP_VERSION,
+			"wpf{$form_id}_2"  => WP4ODOO_VERSION,
+			"wpf{$form_id}_3"  => $plugin_name . ' ' . $plugin_version,
+			"wpf{$form_id}_6"  => get_bloginfo( 'version' ),
+			"wpf{$form_id}_7"  => PHP_VERSION,
 		];
 
 		// Field 9 is a number field — send the major version (e.g. 17).
