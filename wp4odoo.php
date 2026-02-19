@@ -3,7 +3,7 @@
  * Plugin Name: WordPress For Odoo
  * Plugin URI: https://github.com/PaulArgoud/wordpress-for-odoo
  * Description: Modular WordPress/WooCommerce sync with Odoo ERP (v14+). 72 modules — CRM, Sales, WooCommerce, WooCommerce Subscriptions, WC Bundle BOM, WC Product Add-Ons, WC Points & Rewards, WC Bookings, WC B2B, WC Inventory, WC Shipping, WC Returns, WC Rental, EDD, Ecwid, ShopWP, SureCart, WP Crowdfunding, Memberships, MemberPress, Restrict Content Pro, Paid Memberships Pro, GiveWP, Charitable, WP Simple Pay, WP Recipe Maker, Forms (11 plugins), Amelia, Bookly, FluentBooking, JetAppointments, JetBooking, LearnDash, LifterLMS, TutorLMS, LearnPress, Sensei LMS, The Events Calendar, Modern Events Calendar, FooEvents, Sprout Invoices, WP-Invoice, WP Job Manager, WP Project Manager, Awesome Support, SupportCandy, Fluent Support, AffiliateWP, FluentCRM, FunnelKit, GamiPress, myCRED, BuddyBoss, Ultimate Member, WP ERP, WP ERP CRM, WP ERP Accounting, Knowledge, Documents, Food Ordering, Survey & Quiz, Jeero Configurator, Field Service, JetEngine, Dokan, WCFM, WC Vendors, MailPoet, MC4WP, ACF, JetEngine Meta, WP All Import — covering contacts, leads, orders, invoices, products, donations, bookings, recipes, LMS courses, recurring subscriptions, events, manufacturing BOMs, helpdesk tickets, affiliate commissions, marketing CRM, HR employees, knowledge articles, documents, food orders, quizzes, product configurators, points & rewards, projects, field service tasks, rental orders, user profiles, generic CPT mapping, email marketing, marketplace vendors. Async queue, webhooks, customer portal, WP-CLI, encrypted credentials.
- * Version: 3.8.0
+ * Version: 3.9.0
  * Requires at least: 6.0
  * Requires PHP: 8.2
  * Author: Paul ARGOUD
@@ -21,7 +21,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Plugin constants
-define( 'WP4ODOO_VERSION', '3.8.0' );
+define( 'WP4ODOO_VERSION', '3.9.0' );
 define( 'WP4ODOO_PLUGIN_FILE', __FILE__ );
 define( 'WP4ODOO_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'WP4ODOO_PLUGIN_URL', plugin_dir_url( __FILE__ ) );

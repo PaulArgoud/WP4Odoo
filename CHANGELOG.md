@@ -5,7 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [3.8.0] - Unreleased
+## [3.9.0] - Unreleased
+
+## [3.8.0] - 2026-02-19
 
 ### Added
 - **FluentBooking module** — New booking module extending `Booking_Module_Base`. Syncs calendars → `product.product` (service), bookings → `calendar.event` (bidirectional). Hooks: `fluent_booking/after_booking_scheduled`, `fluent_booking/booking_status_changed`, `fluent_booking/after_calendar_created`, `fluent_booking/after_calendar_updated`. Tables: `fluentbooking_calendars`, `fluentbooking_bookings`. Version bounds: 1.0–1.5
