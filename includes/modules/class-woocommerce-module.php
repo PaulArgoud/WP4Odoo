@@ -235,7 +235,7 @@ class WooCommerce_Module extends Module_Base {
 		add_action( 'init', [ Invoice_Helper::class, 'register_cpt' ] );
 
 		// Translation flush: deferred batch operation after queue processing.
-		add_action( 'wp4odoo_batch_processed', [ $this, 'on_batch_processed' ] );
+		add_action( 'wp4odoo_batch_processed', $this->safe_callback( [ $this, 'on_batch_processed' ] ) );
 	}
 
 	// ─── Translation push override ─────────────────────────

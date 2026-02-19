@@ -103,7 +103,7 @@ WordPress For Odoo/
 │   │   │
 │   │   ├── # ─── Forms ─────────────────────────────────────────
 │   │   ├── class-form-handler.php            # Forms: thin facade delegating to Form_Field_Extractor
-│   │   ├── class-form-field-extractor.php   # Forms: strategy-based field extraction for 8 form plugins
+│   │   ├── class-form-field-extractor.php   # Forms: strategy-based field extraction for 11 form plugins
 │   │   ├── class-forms-module.php            # Forms: push sync coordinator (GF/WPForms/JetFormBuilder → crm.lead)
 │   │   │
 │   │   ├── # ─── PMPro ─────────────────────────────────────────
@@ -137,7 +137,7 @@ WordPress For Odoo/
 │   │   ├── class-wc-bookings-handler.php     # WC Bookings: WC CRUD (WC_Booking, WC_Product_Booking)
 │   │   ├── class-wc-bookings-module.php      # WC Bookings: extends Booking_Module_Base (uses WC_Bookings_Hooks trait)
 │   │   │
-│   │   ├── # ─── LMS (LearnDash + LifterLMS) ─────────────────
+│   │   ├── # ─── LMS (LearnDash + LifterLMS + TutorLMS + LearnPress + Sensei) ──
 │   │   ├── class-lms-module-base.php         # LMS shared: enrollment loading pipeline (synthetic ID → partner → product → sale order)
 │   │   ├── trait-learndash-hooks.php         # LearnDash: hook callbacks (course/group save, transaction, enrollment)
 │   │   ├── class-learndash-handler.php       # LearnDash: course/group/transaction/enrollment data load
@@ -148,6 +148,9 @@ WordPress For Odoo/
 │   │   ├── trait-tutorlms-hooks.php        # TutorLMS: hook callbacks (course save, order placed, enrollment, unenrollment)
 │   │   ├── class-tutorlms-handler.php      # TutorLMS: course/order/enrollment data load, invoice/sale order formatting
 │   │   ├── class-tutorlms-module.php       # TutorLMS: push sync coordinator (extends LMS_Module_Base, uses TutorLMS_Hooks trait)
+│   │   ├── trait-sensei-hooks.php          # Sensei: hook callbacks (course save, enrollment, WC order status)
+│   │   ├── class-sensei-handler.php        # Sensei: course/enrollment/order data load/save
+│   │   ├── class-sensei-module.php         # Sensei: extends LMS_Module_Base (uses Sensei_Hooks trait)
 │   │   │
 │   │   ├── # ─── WC Subscriptions ─────────────────────────────
 │   │   ├── trait-wc-subscriptions-hooks.php  # WCS: hook callbacks (product save, subscription status, renewal)
@@ -205,6 +208,11 @@ WordPress For Odoo/
 │   │   ├── class-wp-invoice-handler.php      # WPI: invoice data load from WPI_Invoice, One2many lines
 │   │   ├── class-wp-invoice-module.php       # WPI: invoicing exclusive group (second in registration order)
 │   │   │
+│   │   ├── # ─── SureCart (Stripe-native e-commerce) ──────────
+│   │   ├── trait-surecart-hooks.php         # SureCart: hook callbacks (product/order/subscription created/updated)
+│   │   ├── class-surecart-handler.php       # SureCart: REST model API data load, status mapping, line formatting
+│   │   ├── class-surecart-module.php        # SureCart: ecommerce exclusive group, bidirectional products/orders/subscriptions
+│   │   │
 │   │   ├── # ─── E-Commerce (Crowdfunding + Ecwid + ShopWP) ─
 │   │   ├── trait-crowdfunding-hooks.php      # Crowdfunding: on_campaign_save (filters by wpneo_* meta)
 │   │   ├── class-crowdfunding-handler.php    # Crowdfunding: WC product + wpneo_* meta, funding description
@@ -225,7 +233,7 @@ WordPress For Odoo/
 │   │   ├── class-wperp-crm-module.php       # WP ERP CRM: extends Module_Base (uses WPERP_CRM_Hooks trait)
 │   │   ├── trait-wperp-crm-hooks.php        # WP ERP CRM: contact/activity hooks
 │   │   ├── class-wperp-crm-handler.php      # WP ERP CRM: erp_peoples/erp_crm_customer_activities tables
-│   │   ├── # ─── Helpdesk (Awesome Support + SupportCandy) ──
+│   │   ├── # ─── Helpdesk (Awesome Support + SupportCandy + Fluent Support) ──
 │   │   ├── class-helpdesk-module-base.php    # Shared: abstract base for helpdesk modules (dual-model, stage resolution)
 │   │   ├── trait-awesome-support-hooks.php   # AS: hook callbacks (ticket created, status updated)
 │   │   ├── class-awesome-support-handler.php # AS: CPT-based ticket data load/save, priority mapping
@@ -233,6 +241,9 @@ WordPress For Odoo/
 │   │   ├── trait-supportcandy-hooks.php      # SC: hook callbacks (ticket created, status changed)
 │   │   ├── class-supportcandy-handler.php    # SC: $wpdb custom table ticket data load/save
 │   │   ├── class-supportcandy-module.php     # SC: extends Helpdesk_Module_Base (uses SC_Hooks trait)
+│   │   ├── trait-fluent-support-hooks.php   # FS: hook callbacks (ticket created, updated, response added)
+│   │   ├── class-fluent-support-handler.php # FS: ticket load/save via Fluent Support model API
+│   │   ├── class-fluent-support-module.php  # FS: extends Helpdesk_Module_Base (uses Fluent_Support_Hooks trait)
 │   │   │
 │   │   ├── # ─── AffiliateWP ────────────────────────
 │   │   ├── class-affiliatewp-module.php      # AffiliateWP: push-only, affiliates → res.partner, referrals → vendor bills
@@ -259,6 +270,11 @@ WordPress For Odoo/
 │   │   ├── class-buddyboss-handler.php     # BuddyBoss: profile/group data load, xprofile fields, M2M category tags
 │   │   ├── class-buddyboss-module.php      # BuddyBoss: community sync coordinator (uses BuddyBoss_Hooks trait)
 │   │   │
+│   │   ├── # ─── Ultimate Member (Community) ────────────────
+│   │   ├── trait-ultimate-member-hooks.php  # UM: hook callbacks (registration, update, delete, role change)
+│   │   ├── class-ultimate-member-handler.php # UM: profile/role data load via UM API, custom field enrichment
+│   │   ├── class-ultimate-member-module.php # UM: bidirectional profiles, push-only roles → res.partner.category
+│   │   │
 │   │   ├── # ─── Knowledge (Odoo Enterprise) ────────────────
 │   │   ├── class-knowledge-module.php       # Knowledge: extends Module_Base (uses Knowledge_Hooks trait)
 │   │   ├── trait-knowledge-hooks.php         # Knowledge: article save/delete hooks, category filter
@@ -273,6 +289,16 @@ WordPress For Odoo/
 │   │   ├── trait-jetengine-hooks.php          # JetEngine: dynamic save_post_{cpt} hooks per configured mapping
 │   │   ├── class-jetengine-handler.php        # JetEngine: unified CPT data reader (post fields, meta:, jet:, tax:), type conversions
 │   │   ├── class-jetengine-module.php         # JetEngine: generic CPT push, dynamic entity types from admin settings
+│   │   │
+│   │   ├── # ─── WC Rental ──────────────────────────────────
+│   │   ├── trait-wc-rental-hooks.php        # WC Rental: WC order status hook at priority 20
+│   │   ├── class-wc-rental-handler.php      # WC Rental: rental detection, Odoo Rental field formatting
+│   │   ├── class-wc-rental-module.php       # WC Rental: requires WooCommerce, configurable meta keys
+│   │   │
+│   │   ├── # ─── Field Service (Odoo Enterprise) ────────────
+│   │   ├── trait-field-service-hooks.php     # FS: CPT save/delete hook callbacks
+│   │   ├── class-field-service-handler.php  # FS: task load/save/parse, status mapping (draft/publish/private)
+│   │   ├── class-field-service-module.php   # FS: bidirectional CPT (wp4odoo_fs_task ↔ field_service.task)
 │   │   │
 │   │   ├── # ─── Meta-modules (enrichment / interception) ──
 │   │   ├── class-acf-handler.php             # ACF: type conversions, enrich push/pull, write ACF fields
@@ -334,7 +360,7 @@ WordPress For Odoo/
 │   ├── class-batch-create-processor.php # Batch create pipeline (grouping, claiming, fallback, dedup eviction tracking) extracted from Sync_Engine
 │   ├── class-queue-manager.php        # Instantiable queue manager with DI (repo + logger), queue depth alerting, static + instance API
 │   ├── class-queue-job.php            # Readonly DTO for sync queue jobs (typed properties, from_row() factory)
-│   ├── class-advisory-lock.php        # Reusable MySQL advisory lock wrapper (acquire, release, is_held)
+│   ├── class-advisory-lock.php        # Reusable MySQL advisory lock wrapper (acquire, release, is_held, destructor safety net)
 │   ├── class-query-service.php        # Paginated queries with column projection (queue jobs, log entries) — injectable instance
 │   ├── class-field-mapper.php         # Type conversions (Many2one, dates, HTML)
 │   ├── class-cpt-helper.php           # Shared CPT register/load/save/parse helpers
@@ -374,7 +400,7 @@ WordPress For Odoo/
 ├── templates/
 │   └── customer-portal.php           #   Customer portal HTML template (orders/invoices tabs)
 │
-├── tests/                             # 5405 unit tests (8126 assertions) + 45 integration tests (wp-env)
+├── tests/                             # 5406 unit tests (8129 assertions) + 45 integration tests (wp-env)
 │   ├── bootstrap.php                 #   Unit test bootstrap: constants, stub loading, plugin class requires
 │   ├── bootstrap-integration.php     #   Integration test bootstrap: loads WP test framework (wp-env)
 │   ├── stubs/
@@ -445,7 +471,8 @@ WordPress For Odoo/
 │   │   ├── sensei-classes.php          # SENSEI_LMS_VERSION, Sensei_Main stubs
 │   │   ├── ultimate-member-classes.php # UM class, UM_VERSION stubs
 │   │   ├── wc-rental-classes.php       # WC Rental stubs (minimal)
-│   │   └── field-service-classes.php   # Field Service stubs (no WP plugin dependency)
+│   │   ├── field-service-classes.php   # Field Service stubs (no WP plugin dependency)
+│   │   └── surecart-classes.php        # SureCart stubs (SURECART_VERSION, SureCart model classes)
 │   ├── helpers/
 │   │   └── MockTransport.php            #   Shared mock Transport for API tests
 │   ├── Integration/                       #   wp-env integration tests (real WordPress + MySQL)
@@ -615,7 +642,13 @@ WordPress For Odoo/
 │       ├── WPERPCRMModuleTest.php     # Tests for WPERP_CRM_Module
 │       ├── WPERPCRMHandlerTest.php    # Tests for WPERP_CRM_Handler
 │       ├── JetEngineMetaModuleTest.php  # Tests for JetEngine_Meta_Module
-│       └── JetEngineMetaHandlerTest.php # Tests for JetEngine_Meta_Handler
+│       ├── JetEngineMetaHandlerTest.php # Tests for JetEngine_Meta_Handler
+│       ├── SureCartModuleTest.php     #  40 tests for SureCart_Module
+│       ├── SenseiModuleTest.php       #  29 tests for Sensei_Module
+│       ├── UltimateMemberModuleTest.php # 59 tests for Ultimate_Member_Module
+│       ├── WCRentalModuleTest.php     #  27 tests for WC_Rental_Module
+│       ├── FieldServiceModuleTest.php #  63 tests for Field_Service_Module
+│       └── FluentSupportModuleTest.php # 26 tests for Fluent_Support_Module
 │
 ├── uninstall.php                      # Cleanup on plugin uninstall
 │
@@ -678,12 +711,14 @@ Module_Base (abstract)
 │   └── WC_Bookings_Module     → product.product, calendar.event                    [bidirectional]
 ├── Helpdesk_Module_Base (abstract)
 │   ├── Awesome_Support_Module  → helpdesk.ticket / project.task                     [bidirectional]
-│   └── SupportCandy_Module     → helpdesk.ticket / project.task                     [bidirectional]
+│   ├── SupportCandy_Module     → helpdesk.ticket / project.task                     [bidirectional]
+│   └── Fluent_Support_Module   → helpdesk.ticket / project.task                     [bidirectional]
 ├── LMS_Module_Base (abstract)
 │   ├── LearnDash_Module        → product.product, account.move, sale.order          [bidirectional]
 │   ├── LifterLMS_Module        → product.product, account.move, sale.order          [bidirectional]
 │   ├── TutorLMS_Module         → product.product, account.move, sale.order          [bidirectional]
-│   └── LearnPress_Module       → product.product, account.move, sale.order          [bidirectional]
+│   ├── LearnPress_Module       → product.product, account.move, sale.order          [bidirectional]
+│   └── Sensei_Module           → product.product, account.move, sale.order          [bidirectional]
 ├── WC_Subscriptions_Module     → product.product, sale.subscription, account.move   [bidirectional]
 ├── WC_Inventory_Module         → stock.warehouse, stock.location, stock.move        [bidirectional]
 ├── WC_Shipping_Module          → stock.picking, delivery.carrier                    [bidirectional]
@@ -700,6 +735,7 @@ Module_Base (abstract)
 ├── Crowdfunding_Module         → product.product                                    [WP → Odoo]
 ├── Ecwid_Module                → product.product, sale.order                        [WP → Odoo]
 ├── ShopWP_Module               → product.product                                    [WP → Odoo]
+├── SureCart_Module              → product.template, sale.order, sale.subscription    [bidirectional]
 ├── WC_Bundle_Bom_Module        → mrp.bom, mrp.bom.line                              [WP → Odoo]
 ├── Jeero_Configurator_Module   → mrp.bom                                            [WP → Odoo]
 ├── WC_Points_Rewards_Module    → loyalty.card                                       [bidirectional]
@@ -710,12 +746,15 @@ Module_Base (abstract)
 ├── GamiPress_Module            → loyalty.card, product.template                     [bidirectional]
 ├── MyCRED_Module               → loyalty.card, product.template                     [bidirectional]
 ├── BuddyBoss_Module            → res.partner, res.partner.category                  [bidirectional]
+├── Ultimate_Member_Module      → res.partner, res.partner.category                  [bidirectional]
 ├── Knowledge_Module            → knowledge.article                                  [bidirectional]
 ├── Documents_Module            → documents.document, documents.folder               [bidirectional]
 ├── WPERP_Module                → hr.employee, hr.department, hr.leave               [bidirectional]
 ├── WPERP_CRM_Module            → crm.lead, mail.activity                            [bidirectional]
 ├── WPERP_Accounting_Module     → account.move, account.account, account.journal     [bidirectional]
 ├── Project_Manager_Module      → project.project, project.task, account.analytic.line [bidirectional]
+├── WC_Rental_Module            → sale.order (with Odoo Rental fields)               [WP → Odoo]
+├── Field_Service_Module        → field_service.task                                 [bidirectional]
 ├── Food_Ordering_Module        → pos.order, pos.order.line                          [WP → Odoo]
 ├── Survey_Quiz_Module          → survey.survey, survey.user_input                   [WP → Odoo]
 ├── WC_Addons_Module            → product.attribute, product.template.attribute.line / mrp.bom [WP → Odoo]
@@ -730,10 +769,10 @@ Module_Base (abstract)
 - **Commerce**: WooCommerce, EDD, Sales, SureCart, Ecwid, and ShopWP are mutually exclusive (all share `sale.order` / `product.product` for commerce). First-registered wins — registration order: WooCommerce → EDD → Sales → SureCart → Ecwid → ShopWP.
 - **Memberships**: WC Memberships, MemberPress, PMPro, and RCP are mutually exclusive (all target `membership.membership_line`). First-registered wins — registration order: WC Memberships → MemberPress → PMPro → RCP.
 - **Invoicing**: Sprout Invoices and WP-Invoice are mutually exclusive (both target `account.move` for invoicing). First-registered wins — registration order: Sprout Invoices → WP-Invoice.
-- **Helpdesk**: Awesome Support and SupportCandy are mutually exclusive (both target `helpdesk.ticket` / `project.task`). First-registered wins — registration order: Awesome Support → SupportCandy.
+- **Helpdesk**: Awesome Support, SupportCandy, and Fluent Support are mutually exclusive (all target `helpdesk.ticket` / `project.task`). First-registered wins — registration order: Awesome Support → SupportCandy → Fluent Support.
 - **Gamification**: GamiPress and myCRED are mutually exclusive (both target `loyalty.card` via `Loyalty_Card_Resolver` with `partner_id` + `program_id`). First-registered wins (GamiPress before myCRED in registration order).
 - **Events**: Events Calendar and MEC are mutually exclusive (both target `event.event` / `calendar.event` with exclusive group `events`). First-registered wins — registration order: Events Calendar → MEC. Note: FooEvents is independent (not in the exclusive group) — it coexists with either events module.
-- All other modules are independent and can coexist freely (LMS, Subscriptions, Points & Rewards, FooEvents, Booking, Donations, Forms, WPRM, Crowdfunding, BOM, WC Add-Ons, Jeero Configurator, AffiliateWP, FluentCRM, FunnelKit, BuddyBoss, Knowledge, Documents, WP ERP, WP ERP CRM, WP ERP Accounting, WP Project Manager, JetEngine, JetEngine Meta, ACF, WP All Import, Job Manager, Food Ordering, Survey & Quiz).
+- All other modules are independent and can coexist freely (LMS, Subscriptions, Points & Rewards, FooEvents, Booking, Donations, Forms, WPRM, Crowdfunding, BOM, WC Add-Ons, Jeero Configurator, AffiliateWP, FluentCRM, FunnelKit, BuddyBoss, Ultimate Member, Knowledge, Documents, WP ERP, WP ERP CRM, WP ERP Accounting, WP Project Manager, JetEngine, JetEngine Meta, ACF, WP All Import, Job Manager, Food Ordering, WC Rental, Field Service, Survey & Quiz).
 
 **Module_Base provides** (uses traits: `Hook_Lifecycle`, `Translation_Accumulator`, `Sync_Orchestrator`, `Module_Helpers`):
 - Version bounds: `PLUGIN_MIN_VERSION` (blocks boot if too old) and `PLUGIN_TESTED_UP_TO` (warns if newer than tested). Subclasses override `get_plugin_version()` to return the detected plugin version. Patch-level normalization ensures `10.5.0` is within `10.5` range. `Module_Registry` enforces MIN before boot and collects TESTED warnings for the admin notice.
@@ -2244,6 +2283,27 @@ All user inputs are sanitized with:
 - Dedup: surveys by `title`, responses empty (each unique)
 
 **Settings:** `sync_ays_quizzes`, `sync_qsm`
+
+### SureCart — COMPLETE
+
+**Files:** `class-surecart-module.php` (extends `Module_Base`, uses `SureCart_Hooks` trait), `class-surecart-handler.php` (REST model API data load, status mapping, line formatting), `trait-surecart-hooks.php` (product/order/subscription hook callbacks)
+
+**Odoo models:** `product.template` (products, bidirectional), `sale.order` (orders, push-only), `sale.subscription` (subscriptions, bidirectional — Enterprise)
+
+**Key features:**
+- Stripe-native e-commerce alternative to WooCommerce
+- Exclusive group: `ecommerce` (mutually exclusive with WooCommerce, EDD, Sales, Ecwid, ShopWP)
+- Dual-model: `sale.subscription` probed at runtime via `has_odoo_model()` (Enterprise only)
+- Product type set to `consu` (consumable) on push
+- Order lines pre-formatted as One2many `[0, 0, {...}]` tuples with cross-module product resolution
+- Subscription pull: status updates only (SureCart → Odoo state mapping)
+- Partner resolution via `resolve_partner_from_email()`
+- Dedup: products by `default_code` (slug), orders by `client_order_ref`, subscriptions by `code`
+- Hooks: `surecart/product_created`, `surecart/product_updated`, `surecart/checkout_confirmed`, `surecart/subscription_created`, `surecart/subscription_updated`
+- Version bounds: SureCart 2.0–3.5
+- Detection: `SURECART_VERSION`
+
+**Settings:** `sync_products`, `sync_orders`, `sync_subscriptions`, `pull_subscriptions`
 
 ### Fluent Support — COMPLETE
 

@@ -176,7 +176,7 @@ wp wp4odoo module disable crm        # Disable a module
 
 ### REST API & Hooks
 
-The plugin exposes 4 REST endpoints under `wp-json/wp4odoo/v1/` (webhook receiver, webhook health check, system health, manual sync trigger) and 10 action hooks + 34 data filters for customization.
+The plugin exposes 4 REST endpoints under `wp-json/wp4odoo/v1/` (webhook receiver, webhook health check, system health, manual sync trigger) and 14 action hooks + 68 data filters for customization.
 
 ## Architecture
 

@@ -206,8 +206,34 @@ final class WP4Odoo_Plugin {
 
 	/**
 	 * Plugin deactivation.
+	 *
+	 * In multisite with network deactivation, clears cron hooks on every site
+	 * to prevent orphaned scheduled events.
+	 *
+	 * @param bool $network_wide Whether network-deactivated.
 	 */
-	public function deactivate(): void {
+	public function deactivate( bool $network_wide = false ): void {
+		if ( is_multisite() && $network_wide ) {
+			$sites = get_sites(
+				[
+					'fields' => 'ids',
+					'number' => 0,
+				]
+			);
+			foreach ( $sites as $site_id ) {
+				switch_to_blog( (int) $site_id );
+				$this->deactivate_single_site();
+				restore_current_blog();
+			}
+		} else {
+			$this->deactivate_single_site();
+		}
+	}
+
+	/**
+	 * Deactivate for a single site: clear cron hooks and flush rewrite rules.
+	 */
+	private function deactivate_single_site(): void {
 		wp_clear_scheduled_hook( 'wp4odoo_scheduled_sync' );
 		wp_clear_scheduled_hook( 'wp4odoo_log_cleanup' );
 		wp_clear_scheduled_hook( 'wp4odoo_bookly_poll' );

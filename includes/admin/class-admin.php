@@ -334,14 +334,14 @@ class Admin {
 	 */
 	public static function build_compat_report_url( string $module_id, string $plugin_name, string $plugin_version ): string {
 		$form_id  = 34221;
-		$base_url = 'https://paul.argoud.net/wp4odoo-plugin-wordpress-odoo-synchronisation-woocommerce/#forms';
+		$base_url = 'https://paul.argoud.net/wp4odoo-plugin-wordpress-odoo-synchronisation-woocommerce/';
 
-		// Field 1 is a select — WPForms dynamic population matches on choice label.
+		// Field 14 is a text input — accepts any module name via URL prefill.
 		$module      = wp4odoo()->module_registry()->get( $module_id );
 		$module_name = $module ? $module->get_name() : $module_id;
 
 		$params = [
-			"wpf{$form_id}_1" => $module_name,
+			"wpf{$form_id}_14" => $module_name,
 			"wpf{$form_id}_2" => WP4ODOO_VERSION,
 			"wpf{$form_id}_3" => $plugin_name . ' ' . $plugin_version,
 			"wpf{$form_id}_6" => get_bloginfo( 'version' ),
@@ -357,7 +357,7 @@ class Admin {
 			}
 		}
 
-		$url = $base_url . '#forms?' . http_build_query( $params );
+		$url = $base_url . '?' . http_build_query( $params ) . '#forms';
 
 		/**
 		 * Filters the compatibility report URL shown in version warnings.

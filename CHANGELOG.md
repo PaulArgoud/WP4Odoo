@@ -24,6 +24,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Recovery transaction try-finally** — `Sync_Queue_Repository::recover_stale_processing()` now wraps the SAVEPOINT/RELEASE block in `try/finally`, guaranteeing the transaction is committed even if a query throws
 - **Translation buffer flush loss protection** — `Translation_Accumulator::flush_pull_translations()` now uses per-model try-catch. Failed models retain their buffer entries for the next flush instead of being silently discarded
 - **Oversized payload observability** — `Sync_Queue_Repository::enqueue()` now fires `wp4odoo_enqueue_rejected` action when a payload exceeds 1 MB, providing a hook for logging/monitoring instead of failing silently
+- **WooCommerce `safe_callback` consistency** — `wp4odoo_batch_processed` hook in WooCommerce module now wrapped in `safe_callback()` for consistency with all other hook registrations
+- **Compatibility report URL construction** — `Admin::build_compat_report_url()` now places query parameters before the `#forms` anchor. Previously parameters were appended after the fragment, making them invisible to the WPForms URL prefill parser
+- **Compatibility report module field** — Updated WPForms field ID from `_1` (dropdown) to `_14` (text input) for the module name, allowing any module name to be prefilled without dropdown restrictions
+
+### Fixed (Multisite)
+- **Network-wide deactivation cron cleanup** — `deactivate()` now iterates over all sites via `get_sites()` when network-deactivated, preventing orphaned cron hooks on subsites (mirrors existing `activate()` pattern)
 
 ### Changed (Core)
 - **`Schema_Cache::flush()` in test teardown** — `Module_Test_Case::reset_static_caches()` now calls `Schema_Cache::flush()` to prevent cross-test schema cache leakage
