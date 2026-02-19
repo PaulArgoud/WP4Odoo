@@ -3,9 +3,6 @@ declare( strict_types=1 );
 
 namespace WP4Odoo\Modules;
 
-use WP4Odoo\Module_Base;
-use WP4Odoo\Odoo_Model;
-
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -34,7 +31,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @package WP4Odoo
  * @since   2.7.0
  */
-class Events_Calendar_Module extends Module_Base {
+class Events_Calendar_Module extends Events_Module_Base {
 
 	use Events_Calendar_Hooks;
 
@@ -47,15 +44,6 @@ class Events_Calendar_Module extends Module_Base {
 	 * @var string
 	 */
 	protected string $exclusive_group = 'events';
-
-	/**
-	 * Sync direction: bidirectional for events/tickets, push-only for attendees.
-	 *
-	 * @return string
-	 */
-	public function get_sync_direction(): string {
-		return 'bidirectional';
-	}
 
 	/**
 	 * Odoo models by entity type (preferred models).
@@ -217,208 +205,73 @@ class Events_Calendar_Module extends Module_Base {
 		return class_exists( 'Tribe__Events__Main' ) ? \Tribe__Events__Main::VERSION : '';
 	}
 
-	// ─── Translation ──────────────────────────────────────
+	// ─── Events_Module_Base abstract implementations ────────
 
 	/**
-	 * Translatable fields for events (name + description).
-	 *
-	 * @param string $entity_type Entity type.
-	 * @return array<string, string> Odoo field => WP field.
+	 * {@inheritDoc}
 	 */
-	protected function get_translatable_fields( string $entity_type ): array {
-		if ( 'event' === $entity_type ) {
-			return [
-				'name'        => 'post_title',
-				'description' => 'post_content',
-			];
-		}
-
-		return [];
-	}
-
-	// ─── Deduplication ─────────────────────────────────────
-
-	/**
-	 * Deduplication domain for search-before-create.
-	 *
-	 * Events dedup by name. Tickets dedup by product name. Attendees
-	 * dedup by email on event.registration.
-	 *
-	 * @param string $entity_type Entity type.
-	 * @param array  $odoo_values Odoo-ready field values.
-	 * @return array Odoo domain filter, or empty to skip dedup.
-	 */
-	protected function get_dedup_domain( string $entity_type, array $odoo_values ): array {
-		if ( in_array( $entity_type, [ 'event', 'ticket' ], true ) && ! empty( $odoo_values['name'] ) ) {
-			return [ [ 'name', '=', $odoo_values['name'] ] ];
-		}
-
-		if ( 'attendee' === $entity_type && ! empty( $odoo_values['email'] ) && ! empty( $odoo_values['event_id'] ) ) {
-			return [
-				[ 'email', '=', $odoo_values['email'] ],
-				[ 'event_id', '=', $odoo_values['event_id'] ],
-			];
-		}
-
-		return [];
-	}
-
-	// ─── Dual-model detection ──────────────────────────────
-
-	/**
-	 * Check whether Odoo has the event.event model (Events module).
-	 *
-	 * Delegates to Module_Helpers::has_odoo_model().
-	 *
-	 * @return bool
-	 */
-	private function has_event_model(): bool {
-		return $this->has_odoo_model( Odoo_Model::EventEvent, 'wp4odoo_has_event_event' );
+	protected function get_attendance_entity_type(): string {
+		return 'attendee';
 	}
 
 	/**
-	 * Resolve the Odoo model for an entity type at runtime.
-	 *
-	 * Falls back to calendar.event for events when event.event is unavailable.
-	 *
-	 * @param string $entity_type Entity type.
-	 * @return string Odoo model name.
+	 * {@inheritDoc}
 	 */
-	protected function get_odoo_model( string $entity_type ): string {
-		if ( 'event' === $entity_type && ! $this->has_event_model() ) {
-			return Odoo_Model::CalendarEvent->value;
-		}
-
-		return parent::get_odoo_model( $entity_type );
-	}
-
-	// ─── Pull override ─────────────────────────────────────
-
-	/**
-	 * Pull an Odoo entity to WordPress.
-	 *
-	 * Attendees are push-only and cannot be pulled. Events and tickets
-	 * delegate to the parent pull_from_odoo() infrastructure.
-	 *
-	 * @param string $entity_type Entity type.
-	 * @param string $action      'create', 'update', or 'delete'.
-	 * @param int    $odoo_id     Odoo record ID.
-	 * @param int    $wp_id       WordPress entity ID (0 if unknown).
-	 * @param array  $payload     Additional data.
-	 * @return \WP4Odoo\Sync_Result
-	 */
-	public function pull_from_odoo( string $entity_type, string $action, int $odoo_id, int $wp_id = 0, array $payload = [] ): \WP4Odoo\Sync_Result {
-		if ( 'attendee' === $entity_type ) {
-			$this->logger->info( 'Attendee pull not supported — attendees originate in WordPress.', [ 'odoo_id' => $odoo_id ] );
-			return \WP4Odoo\Sync_Result::success();
-		}
-
-		$settings = $this->get_settings();
-
-		if ( 'event' === $entity_type && empty( $settings['pull_events'] ) ) {
-			return \WP4Odoo\Sync_Result::success();
-		}
-
-		if ( 'ticket' === $entity_type && empty( $settings['pull_tickets'] ) ) {
-			return \WP4Odoo\Sync_Result::success();
-		}
-
-		return parent::pull_from_odoo( $entity_type, $action, $odoo_id, $wp_id, $payload );
+	protected function handler_load_event( int $wp_id ): array {
+		return $this->handler->load_event( $wp_id );
 	}
 
 	/**
-	 * Map Odoo data to WordPress format for pull.
+	 * {@inheritDoc}
+	 */
+	protected function handler_load_attendance( int $wp_id ): array {
+		return $this->handler->load_attendee( $wp_id );
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	protected function handler_save_event( array $data, int $wp_id ): int {
+		return $this->handler->save_event( $data, $wp_id );
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	protected function handler_get_event_id_for_attendance( int $attendance_id ): int {
+		return $this->handler->get_event_id_for_attendee( $attendance_id );
+	}
+
+	// ─── Ticket-specific overrides ──────────────────────────
+
+	/**
+	 * Load WordPress data for an entity.
 	 *
-	 * Events use the handler's parse method (dual-model aware).
-	 * Tickets use standard reverse field mapping from parent.
+	 * Adds ticket loading on top of the base event + attendance dispatch.
 	 *
 	 * @param string $entity_type Entity type.
-	 * @param array  $odoo_data   Raw Odoo record data.
+	 * @param int    $wp_id       WordPress ID.
 	 * @return array<string, mixed>
 	 */
-	public function map_from_odoo( string $entity_type, array $odoo_data ): array {
-		if ( 'event' === $entity_type ) {
-			return $this->handler->parse_event_from_odoo( $odoo_data, $this->has_event_model() );
+	protected function load_wp_data( string $entity_type, int $wp_id ): array {
+		if ( 'ticket' === $entity_type ) {
+			return $this->handler->load_ticket( $wp_id );
 		}
 
-		return parent::map_from_odoo( $entity_type, $odoo_data );
-	}
-
-	/**
-	 * Save pulled data to WordPress.
-	 *
-	 * @param string $entity_type Entity type.
-	 * @param array  $data        Mapped data.
-	 * @param int    $wp_id       Existing WP ID (0 if new).
-	 * @return int The WordPress entity ID (0 on failure).
-	 */
-	protected function save_wp_data( string $entity_type, array $data, int $wp_id = 0 ): int {
-		return match ( $entity_type ) {
-			'event'  => $this->handler->save_event( $data, $wp_id ),
-			'ticket' => $this->handler->save_ticket( $data, $wp_id ),
-			default  => 0,
-		};
-	}
-
-	/**
-	 * Delete a WordPress entity during pull.
-	 *
-	 * @param string $entity_type Entity type.
-	 * @param int    $wp_id       WordPress post ID.
-	 * @return bool
-	 */
-	protected function delete_wp_data( string $entity_type, int $wp_id ): bool {
-		if ( 'event' === $entity_type || 'ticket' === $entity_type ) {
-			$deleted = \wp_delete_post( $wp_id, true );
-			return false !== $deleted && null !== $deleted;
-		}
-
-		return false;
-	}
-
-	// ─── Push override ─────────────────────────────────────
-
-	/**
-	 * Push a WordPress entity to Odoo.
-	 *
-	 * For attendees: skip if event.event not available, ensure event synced.
-	 * For tickets: standard push (product.product always available).
-	 *
-	 * @param string $entity_type The entity type.
-	 * @param string $action      'create', 'update', or 'delete'.
-	 * @param int    $wp_id       WordPress entity ID.
-	 * @param int    $odoo_id     Odoo ID (0 if creating).
-	 * @param array  $payload     Additional data.
-	 * @return \WP4Odoo\Sync_Result
-	 */
-	public function push_to_odoo( string $entity_type, string $action, int $wp_id, int $odoo_id = 0, array $payload = [] ): \WP4Odoo\Sync_Result {
-		// Attendees require the Odoo Events module.
-		if ( 'attendee' === $entity_type && 'delete' !== $action ) {
-			if ( ! $this->has_event_model() ) {
-				$this->logger->info( 'event.event not available — skipping attendee push.', [ 'attendee_id' => $wp_id ] );
-				return \WP4Odoo\Sync_Result::success();
-			}
-			$this->ensure_event_synced_for_attendee( $wp_id );
-		}
-
-		return parent::push_to_odoo( $entity_type, $action, $wp_id, $odoo_id, $payload );
+		return parent::load_wp_data( $entity_type, $wp_id );
 	}
 
 	/**
 	 * Map WP data to Odoo values.
 	 *
-	 * Events and attendees bypass standard mapping — the data is pre-formatted
-	 * by the handler. Tickets use standard field mapping plus a hardcoded type.
+	 * Tickets use standard field mapping plus a hardcoded service type.
+	 * Events and attendees handled by parent (identity pass-through).
 	 *
 	 * @param string $entity_type Entity type.
 	 * @param array  $wp_data     WordPress data from load_wp_data().
 	 * @return array<string, mixed> Odoo-ready data.
 	 */
 	public function map_to_odoo( string $entity_type, array $wp_data ): array {
-		if ( 'event' === $entity_type || 'attendee' === $entity_type ) {
-			return $wp_data;
-		}
-
 		$mapped = parent::map_to_odoo( $entity_type, $wp_data );
 
 		if ( 'ticket' === $entity_type ) {
@@ -428,92 +281,76 @@ class Events_Calendar_Module extends Module_Base {
 		return $mapped;
 	}
 
-	// ─── Data access ───────────────────────────────────────
-
 	/**
-	 * Load WordPress data for an entity.
+	 * Pull an Odoo entity to WordPress.
+	 *
+	 * Adds ticket pull setting check on top of base pull logic.
 	 *
 	 * @param string $entity_type Entity type.
-	 * @param int    $wp_id       WordPress ID.
-	 * @return array<string, mixed>
+	 * @param string $action      'create', 'update', or 'delete'.
+	 * @param int    $odoo_id     Odoo record ID.
+	 * @param int    $wp_id       WordPress entity ID (0 if unknown).
+	 * @param array  $payload     Additional data.
+	 * @return \WP4Odoo\Sync_Result
 	 */
-	protected function load_wp_data( string $entity_type, int $wp_id ): array {
-		return match ( $entity_type ) {
-			'event'    => $this->load_event_data( $wp_id ),
-			'ticket'   => $this->handler->load_ticket( $wp_id ),
-			'attendee' => $this->load_attendee_data( $wp_id ),
-			default    => [],
-		};
+	public function pull_from_odoo( string $entity_type, string $action, int $odoo_id, int $wp_id = 0, array $payload = [] ): \WP4Odoo\Sync_Result {
+		if ( 'ticket' === $entity_type && empty( $this->get_settings()['pull_tickets'] ) ) {
+			return \WP4Odoo\Sync_Result::success();
+		}
+
+		return parent::pull_from_odoo( $entity_type, $action, $odoo_id, $wp_id, $payload );
 	}
 
 	/**
-	 * Load and format an event for the target Odoo model.
+	 * Save pulled data to WordPress.
 	 *
-	 * @param int $post_id Event post ID.
-	 * @return array<string, mixed>
+	 * Adds ticket save on top of base event save.
+	 *
+	 * @param string $entity_type Entity type.
+	 * @param array  $data        Mapped data.
+	 * @param int    $wp_id       Existing WP ID (0 if new).
+	 * @return int The WordPress entity ID (0 on failure).
 	 */
-	private function load_event_data( int $post_id ): array {
-		$data = $this->handler->load_event( $post_id );
-		if ( empty( $data ) ) {
-			return [];
+	protected function save_wp_data( string $entity_type, array $data, int $wp_id = 0 ): int {
+		if ( 'ticket' === $entity_type ) {
+			return $this->handler->save_ticket( $data, $wp_id );
 		}
 
-		return $this->handler->format_event( $data, $this->has_event_model() );
+		return parent::save_wp_data( $entity_type, $data, $wp_id );
 	}
 
 	/**
-	 * Load and resolve an attendee with Odoo references.
+	 * Delete a WordPress entity during pull.
 	 *
-	 * @param int $attendee_id Attendee post ID.
-	 * @return array<string, mixed>
+	 * Adds ticket delete on top of base event delete.
+	 *
+	 * @param string $entity_type Entity type.
+	 * @param int    $wp_id       WordPress post ID.
+	 * @return bool
 	 */
-	private function load_attendee_data( int $attendee_id ): array {
-		$data = $this->handler->load_attendee( $attendee_id );
-		if ( empty( $data ) ) {
-			return [];
+	protected function delete_wp_data( string $entity_type, int $wp_id ): bool {
+		if ( 'ticket' === $entity_type ) {
+			$deleted = \wp_delete_post( $wp_id, true );
+			return false !== $deleted && null !== $deleted;
 		}
 
-		// Resolve attendee → Odoo partner.
-		$email = $data['email'] ?? '';
-		$name  = $data['name'] ?? '';
-
-		if ( empty( $email ) ) {
-			$this->logger->warning( 'RSVP attendee has no email.', [ 'attendee_id' => $attendee_id ] );
-			return [];
-		}
-
-		$partner_id = $this->resolve_partner_from_email( $email, $name ?: $email );
-
-		if ( ! $partner_id ) {
-			$this->logger->warning( 'Cannot resolve partner for attendee.', [ 'attendee_id' => $attendee_id ] );
-			return [];
-		}
-
-		// Resolve event → Odoo event ID.
-		$event_wp_id   = $data['event_id'] ?? 0;
-		$event_odoo_id = 0;
-		if ( $event_wp_id > 0 ) {
-			$event_odoo_id = $this->get_mapping( 'event', $event_wp_id ) ?? 0;
-		}
-
-		if ( ! $event_odoo_id ) {
-			$this->logger->warning( 'Cannot resolve Odoo event for attendee.', [ 'event_id' => $event_wp_id ] );
-			return [];
-		}
-
-		return $this->handler->format_attendee( $data, $partner_id, $event_odoo_id );
+		return parent::delete_wp_data( $entity_type, $wp_id );
 	}
 
-	// ─── Event auto-sync ───────────────────────────────────
-
 	/**
-	 * Ensure the event is synced before pushing an attendee.
+	 * Deduplication domain for search-before-create.
 	 *
-	 * @param int $attendee_id Attendee post ID.
-	 * @return void
+	 * Adds ticket dedup on top of base event + attendee dedup.
+	 *
+	 * @param string $entity_type Entity type.
+	 * @param array  $odoo_values Odoo-ready field values.
+	 * @return array Odoo domain filter, or empty to skip dedup.
 	 */
-	private function ensure_event_synced_for_attendee( int $attendee_id ): void {
-		$event_id = $this->handler->get_event_id_for_attendee( $attendee_id );
-		$this->ensure_entity_synced( 'event', $event_id );
+	protected function get_dedup_domain( string $entity_type, array $odoo_values ): array {
+		if ( 'ticket' === $entity_type && ! empty( $odoo_values['name'] ) ) {
+			return [ [ 'name', '=', $odoo_values['name'] ] ];
+		}
+
+		return parent::get_dedup_domain( $entity_type, $odoo_values );
 	}
 }

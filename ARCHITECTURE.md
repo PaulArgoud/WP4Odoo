@@ -186,15 +186,16 @@ WordPress For Odoo/
 │   │   ├── trait-loyalty-card-resolver.php     # Shared find-or-create loyalty.card logic (WC Points & GamiPress)
 │   │   │
 │   │   ├── # ─── Events (Events Calendar + MEC + FooEvents) ────
+│   │   ├── class-events-module-base.php     # Shared: abstract base class for event modules (dual-model, attendance resolution)
 │   │   ├── trait-events-calendar-hooks.php   # Events Calendar: hook callbacks (event save, ticket save, attendee created)
 │   │   ├── class-events-calendar-handler.php # Events Calendar: event/ticket/attendee data load + formatting
-│   │   ├── class-events-calendar-module.php  # Events Calendar: exclusive group: events, dual-model (event.event / calendar.event)
+│   │   ├── class-events-calendar-module.php  # Events Calendar: extends Events_Module_Base, exclusive group: events
 │   │   ├── trait-mec-hooks.php              # MEC: hook callbacks (event save, booking completed)
 │   │   ├── class-mec-handler.php            # MEC: event/booking data load from CPT + mec_events table
-│   │   ├── class-mec-module.php             # MEC: exclusive group: events, dual-model (event.event / calendar.event)
+│   │   ├── class-mec-module.php             # MEC: extends Events_Module_Base, exclusive group: events
 │   │   ├── trait-fooevents-hooks.php        # FooEvents: hook callbacks (event product save, ticket save)
 │   │   ├── class-fooevents-handler.php      # FooEvents: event data from WC product meta, attendee from ticket CPT
-│   │   ├── class-fooevents-module.php       # FooEvents: dual-model, requires WooCommerce, events + attendees
+│   │   ├── class-fooevents-module.php       # FooEvents: extends Events_Module_Base, requires WooCommerce
 │   │   │
 │   │   ├── # ─── Invoicing (Sprout Invoices + WP-Invoice) ──
 │   │   ├── trait-sprout-invoices-hooks.php   # SI: hook callbacks (invoice save, payment)
@@ -687,11 +688,12 @@ Module_Base (abstract)
 ├── WC_Inventory_Module         → stock.warehouse, stock.location, stock.move        [bidirectional]
 ├── WC_Shipping_Module          → stock.picking, delivery.carrier                    [bidirectional]
 ├── WC_Returns_Module           → account.move (out_refund), stock.picking           [bidirectional]
-├── Events_Calendar_Module      → event.event / calendar.event, product.product,     [bidirectional]
-│                                 event.registration  (exclusive group: events)
-├── MEC_Module                  → event.event / calendar.event, event.registration   [bidirectional]
-│                                 (exclusive group: events)
-├── FooEvents_Module            → event.event / calendar.event, event.registration   [bidirectional]
+├── Events_Module_Base (abstract)
+│   ├── Events_Calendar_Module  → event.event / calendar.event, product.product,     [bidirectional]
+│   │                             event.registration  (exclusive group: events)
+│   ├── MEC_Module              → event.event / calendar.event, event.registration   [bidirectional]
+│   │                             (exclusive group: events)
+│   └── FooEvents_Module        → event.event / calendar.event, event.registration   [bidirectional]
 │                                 (requires: woocommerce)
 ├── Sprout_Invoices_Module      → account.move, account.payment                      [bidirectional]
 ├── WP_Invoice_Module           → account.move                                       [WP → Odoo]
@@ -778,7 +780,7 @@ Both patterns are intentional and follow a clear convention:
 
 ### Abstract Method Naming Convention
 
-Intermediate base classes (`Membership_Module_Base`, `Dual_Accounting_Module_Base`, `Booking_Module_Base`, `Helpdesk_Module_Base`, `LMS_Module_Base`) define abstract methods for subclass configuration. Two naming prefixes distinguish their purpose:
+Intermediate base classes (`Membership_Module_Base`, `Dual_Accounting_Module_Base`, `Booking_Module_Base`, `Events_Module_Base`, `Helpdesk_Module_Base`, `LMS_Module_Base`) define abstract methods for subclass configuration. Two naming prefixes distinguish their purpose:
 
 - **`handler_*()`** — delegates to the handler class for data operations (load, save, parse, delete). These methods interact with the WordPress database or plugin APIs. Examples: `handler_load_level()`, `handler_load_child()`, `handler_parse_service_from_odoo()`, `handler_save_service()`.
 
@@ -976,7 +978,25 @@ Six booking modules (Amelia, Bookly, FluentBooking, JetAppointments, JetBooking,
 
 Used by `Amelia_Module`, `Bookly_Module`, `Fluent_Booking_Module`, `Jet_Appointments_Module`, `Jet_Booking_Module`, and `WC_Bookings_Module`.
 
-### 11. Shared Helpdesk Infrastructure
+### 11. Shared Events Infrastructure
+
+Three event modules (Events Calendar, MEC, FooEvents) share a common event/attendance sync pattern:
+
+**`Events_Module_Base`** (`class-events-module-base.php`):
+- Abstract base class extending `Module_Base`
+- Shared dual-model detection: `has_event_model()` probes Odoo for `event.event` at runtime, falls back to `calendar.event`
+- Shared `push_to_odoo()`: attendance (attendees/bookings) requires `event.event` model, auto-syncs the event first
+- Shared `pull_from_odoo()`: attendance is push-only, events gated on `pull_events` setting
+- Shared `map_to_odoo()` / `map_from_odoo()`: events and attendance bypass field mapping (pre-formatted), events use shared parse for pull
+- Shared `load_event_data()` / `load_attendance_data()`: loads data via handler, resolves attendee→Odoo partner, resolves event→Odoo event ID, formats for `event.registration`
+- Shared `format_event_for_odoo()` / `parse_event_from_odoo_data()`: dual-format for `event.event` (date_begin/date_end/date_tz) vs `calendar.event` (start/stop/allday)
+- Shared `get_translatable_fields()`: name + description for events
+- Shared `get_dedup_domain()`: events by name, attendance by email + event_id
+- 4 abstract methods: `get_attendance_entity_type()`, `handler_load_event()`, `handler_load_attendance()`, `handler_save_event()`, `handler_get_event_id_for_attendance()`
+
+Used by `Events_Calendar_Module` (extends with ticket entity type), `MEC_Module`, and `FooEvents_Module`.
+
+### 12. Shared Helpdesk Infrastructure
 
 Two helpdesk modules (Awesome Support, SupportCandy) share a common ticket sync pattern:
 
@@ -1002,7 +1022,7 @@ Shared abstract base `Helpdesk_Module_Base` extends `Module_Base`, providing dua
 | `SupportCandy_Handler` | Custom table data access via `$wpdb` (`wpsc_ticket`, `wpsc_ticketmeta`), priority mapping |
 | `SupportCandy_Module` | Extends `Helpdesk_Module_Base`: detection `WPSC_VERSION`, `helpdesk` exclusive group (second in registration order), 4 settings |
 
-### 12. Translation Infrastructure (i18n)
+### 13. Translation Infrastructure (i18n)
 
 The `Translation_Service` (`includes/i18n/class-translation-service.php`) is a cross-cutting service (like `Partner_Service`) that enables any module to push translated content to Odoo. It is **not a module** — it is accessible via `$this->translation_service()` from `Sync_Helpers` (composed into `Module_Helpers`).
 
@@ -1729,27 +1749,25 @@ All user inputs are sanitized with:
 
 ### Events Calendar — COMPLETE
 
-**Files:** `class-events-calendar-module.php` (push sync coordinator, uses `Events_Calendar_Hooks` trait), `trait-events-calendar-hooks.php` (hook callbacks), `class-events-calendar-handler.php` (event/ticket/attendee data load and formatting)
+**Files:** `class-events-calendar-module.php` (extends `Events_Module_Base`, uses `Events_Calendar_Hooks` trait), `trait-events-calendar-hooks.php` (hook callbacks), `class-events-calendar-handler.php` (event/ticket/attendee data load and formatting)
 
 **Odoo models:** `event.event` (events — preferred), `calendar.event` (events — fallback), `product.product` (RSVP tickets), `event.registration` (attendees)
 
 **Key features:**
-- Push-only (WP → Odoo) — events, RSVP tickets, RSVP attendees
+- Bidirectional events/tickets, push-only attendees
 - Requires The Events Calendar; `boot()` guards with `class_exists('Tribe__Events__Main')`
 - Event Tickets optional: ticket and attendee sync only if `class_exists('Tribe__Tickets__Main')`
 - Exclusive group `events` — mutually exclusive with Modern Events Calendar (MEC)
-- **Dual-model detection**: probes `ir.model` for `event.event` (cached 1h); falls back to `calendar.event`
-- Attendees require `event.event` (skipped in fallback mode); tickets always use `product.product`
-- Event auto-sync: `ensure_event_synced_for_attendee()` pushes event before dependent attendee
-- Attendee → Odoo partner resolution via `Partner_Service::get_or_create()`
-- Different field mapping per model: `date_begin`/`date_end`/`date_tz` (event.event) vs `start`/`stop`/`allday` (calendar.event)
-- Translation pull support: `get_translatable_fields()` maps `name → post_title`, `description → post_content` for events
+- Inherits dual-model detection, attendance resolution, event formatting from `Events_Module_Base`
+- Extends base with ticket entity type: `load_wp_data()`, `save_wp_data()`, `delete_wp_data()`, `get_dedup_domain()` overrides for tickets
+- Tickets always use `product.product` with hardcoded `type=service`; attendees require `event.event`
+- Translation pull support inherited from `Events_Module_Base`
 
-**Settings:** `sync_events`, `sync_tickets`, `sync_attendees`
+**Settings:** `sync_events`, `sync_tickets`, `sync_attendees`, `pull_events`, `pull_tickets`
 
 ### Modern Events Calendar (MEC) — COMPLETE
 
-**Files:** `class-mec-module.php` (extends `Module_Base`, uses `MEC_Hooks` trait), `trait-mec-hooks.php` (hook callbacks), `class-mec-handler.php` (event/booking data load from CPT + custom `mec_events` table)
+**Files:** `class-mec-module.php` (extends `Events_Module_Base`, uses `MEC_Hooks` trait), `trait-mec-hooks.php` (hook callbacks), `class-mec-handler.php` (event/booking data load from CPT + custom `mec_events` table)
 
 **Odoo models:** `event.event` (events — preferred), `calendar.event` (events — fallback), `event.registration` (bookings/attendees)
 
@@ -1757,18 +1775,15 @@ All user inputs are sanitized with:
 - Bidirectional events, push-only bookings (MEC Pro)
 - Requires Modern Events Calendar; `boot()` guards with `defined('MEC_VERSION') || class_exists('MEC')`
 - Exclusive group `events` — mutually exclusive with The Events Calendar
-- **Dual-model detection**: probes `ir.model` for `event.event` (cached 1h); falls back to `calendar.event`
-- Bookings require `event.event` (skipped in fallback mode)
+- Inherits dual-model detection, attendance resolution, event formatting from `Events_Module_Base`
 - Data access: CPT `mec-events` for post data + `mec_events` custom table for dates
-- Event auto-sync: `ensure_event_synced_for_booking()` pushes event before dependent booking
-- Booking → Odoo partner resolution via `resolve_partner_from_email()`
-- Translation pull support: `get_translatable_fields()` maps `name → post_title`, `description → post_content`
+- Translation pull support inherited from `Events_Module_Base`
 
 **Settings:** `sync_events`, `sync_bookings`, `pull_events`
 
 ### FooEvents for WooCommerce — COMPLETE
 
-**Files:** `class-fooevents-module.php` (extends `Module_Base`, uses `FooEvents_Hooks` trait), `trait-fooevents-hooks.php` (hook callbacks), `class-fooevents-handler.php` (event data from WC product meta, attendee data from ticket CPT)
+**Files:** `class-fooevents-module.php` (extends `Events_Module_Base`, uses `FooEvents_Hooks` trait), `trait-fooevents-hooks.php` (hook callbacks), `class-fooevents-handler.php` (event data from WC product meta, attendee data from ticket CPT)
 
 **Odoo models:** `event.event` (events — preferred), `calendar.event` (events — fallback), `event.registration` (attendees)
 
@@ -1776,13 +1791,11 @@ All user inputs are sanitized with:
 - Bidirectional events, push-only attendees
 - Requires FooEvents for WooCommerce; `boot()` guards with `class_exists('FooEvents') || defined('FOOEVENTS_VERSION')`
 - Requires WooCommerce module (`get_required_modules()` returns `['woocommerce']`)
-- **Dual-model detection**: probes `ir.model` for `event.event` (cached 1h); falls back to `calendar.event`
-- Attendees require `event.event` (skipped in fallback mode)
+- Inherits dual-model detection, attendance resolution, event formatting from `Events_Module_Base`
 - FooEvents marks WC products as events via `WooCommerceEventsEvent = 'Event'` post meta
 - Tickets stored as `event_magic_tickets` CPT with attendee name/email meta
 - Hook priority 20 on `save_post_product` (after WooCommerce module at priority 10)
-- Event auto-sync: `ensure_event_synced_for_attendee()` pushes event before dependent attendee
-- Attendee → Odoo partner resolution via `resolve_partner_from_email()`
+- Translation pull support inherited from `Events_Module_Base`
 
 **Settings:** `sync_events`, `sync_attendees`, `pull_events`
 
