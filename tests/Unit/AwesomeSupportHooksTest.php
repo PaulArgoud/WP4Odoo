@@ -48,7 +48,7 @@ class AwesomeSupportHooksTest extends Module_Test_Case {
 		];
 
 		// Simulate importing state via reflection.
-		$prop = ( new \ReflectionClass( \WP4Odoo\Module_Base::class ) )->getProperty( 'importing' );
+		$prop = ( new \ReflectionClass( \WP4Odoo\Module_Base::class ) )->getProperty( 'importing_request_local' );
 		$prop->setAccessible( true );
 		$prop->setValue( null, [ 'awesome_support' => true ] );
 
@@ -115,7 +115,7 @@ class AwesomeSupportHooksTest extends Module_Test_Case {
 			'odoo_project_id' => 0,
 		];
 
-		$prop = ( new \ReflectionClass( \WP4Odoo\Module_Base::class ) )->getProperty( 'importing' );
+		$prop = ( new \ReflectionClass( \WP4Odoo\Module_Base::class ) )->getProperty( 'importing_request_local' );
 		$prop->setAccessible( true );
 		$prop->setValue( null, [ 'awesome_support' => true ] );
 

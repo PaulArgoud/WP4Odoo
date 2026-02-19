@@ -127,7 +127,7 @@ abstract class Module_Base {
 	 *
 	 * @var array<string, bool>
 	 */
-	private static array $importing = [];
+	private static array $importing_request_local = [];
 
 	/**
 	 * Injectable Queue_Manager instance.
@@ -489,7 +489,7 @@ abstract class Module_Base {
 	 * @return bool True if this module has a pull/import in progress.
 	 */
 	protected function is_importing(): bool {
-		return ! empty( self::$importing[ $this->id ] );
+		return ! empty( self::$importing_request_local[ $this->id ] );
 	}
 
 	/**
@@ -498,7 +498,7 @@ abstract class Module_Base {
 	 * @return void
 	 */
 	protected function mark_importing(): void {
-		self::$importing[ $this->id ] = true;
+		self::$importing_request_local[ $this->id ] = true;
 	}
 
 	/**
@@ -507,7 +507,7 @@ abstract class Module_Base {
 	 * @return void
 	 */
 	protected function clear_importing(): void {
-		unset( self::$importing[ $this->id ] );
+		unset( self::$importing_request_local[ $this->id ] );
 	}
 
 	// -------------------------------------------------------------------------

@@ -34,7 +34,7 @@ class WCRentalModuleTest extends TestCase {
 
 	protected function tearDown(): void {
 		$reflection = new \ReflectionClass( \WP4Odoo\Module_Base::class );
-		$prop       = $reflection->getProperty( 'importing' );
+		$prop       = $reflection->getProperty( 'importing_request_local' );
 		$prop->setValue( null, [] );
 	}
 
@@ -206,7 +206,7 @@ class WCRentalModuleTest extends TestCase {
 		$GLOBALS['_wp_options']['wp4odoo_module_wc_rental_settings'] = [ 'sync_rentals' => true ];
 
 		$reflection = new \ReflectionClass( \WP4Odoo\Module_Base::class );
-		$prop       = $reflection->getProperty( 'importing' );
+		$prop       = $reflection->getProperty( 'importing_request_local' );
 		$prop->setValue( null, [ 'wc_rental' => true ] );
 
 		$this->module->on_order_status_changed( 100, 'pending', 'completed' );

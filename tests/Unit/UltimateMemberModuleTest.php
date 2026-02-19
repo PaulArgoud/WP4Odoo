@@ -40,7 +40,7 @@ class UltimateMemberModuleTest extends TestCase {
 
 	protected function tearDown(): void {
 		$reflection = new \ReflectionClass( \WP4Odoo\Module_Base::class );
-		$prop       = $reflection->getProperty( 'importing' );
+		$prop       = $reflection->getProperty( 'importing_request_local' );
 		$prop->setValue( null, [] );
 	}
 
@@ -409,7 +409,7 @@ class UltimateMemberModuleTest extends TestCase {
 		$GLOBALS['_wp_options']['wp4odoo_module_ultimate_member_settings'] = [ 'sync_profiles' => true ];
 
 		$reflection = new \ReflectionClass( \WP4Odoo\Module_Base::class );
-		$prop       = $reflection->getProperty( 'importing' );
+		$prop       = $reflection->getProperty( 'importing_request_local' );
 		$prop->setValue( null, [ 'ultimate_member' => true ] );
 
 		$this->module->on_profile_updated( 1 );

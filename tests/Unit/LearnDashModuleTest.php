@@ -334,7 +334,7 @@ class LearnDashModuleTest extends LMSModuleTestBase {
 		$GLOBALS['_wp_options']['wp4odoo_module_learndash_settings'] = [ 'sync_courses' => true ];
 
 		$reflection = new \ReflectionClass( \WP4Odoo\Module_Base::class );
-		$prop       = $reflection->getProperty( 'importing' );
+		$prop       = $reflection->getProperty( 'importing_request_local' );
 		$prop->setValue( null, [ 'learndash' => true ] );
 
 		$this->module->on_course_save( 100 );
@@ -413,7 +413,7 @@ class LearnDashModuleTest extends LMSModuleTestBase {
 		$GLOBALS['_wp_options']['wp4odoo_module_learndash_settings'] = [ 'sync_transactions' => true ];
 
 		$reflection = new \ReflectionClass( \WP4Odoo\Module_Base::class );
-		$prop       = $reflection->getProperty( 'importing' );
+		$prop       = $reflection->getProperty( 'importing_request_local' );
 		$prop->setValue( null, [ 'learndash' => true ] );
 
 		$this->module->on_transaction_created( 300 );

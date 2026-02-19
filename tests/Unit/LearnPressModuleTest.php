@@ -209,7 +209,7 @@ class LearnPressModuleTest extends LMSModuleTestBase {
 		$GLOBALS['_wp_options']['wp4odoo_module_learnpress_settings'] = [ 'sync_courses' => true ];
 
 		$reflection = new \ReflectionClass( \WP4Odoo\Module_Base::class );
-		$prop       = $reflection->getProperty( 'importing' );
+		$prop       = $reflection->getProperty( 'importing_request_local' );
 		$prop->setValue( null, [ 'learnpress' => true ] );
 
 		$this->module->on_course_save( 100 );
@@ -259,7 +259,7 @@ class LearnPressModuleTest extends LMSModuleTestBase {
 		$GLOBALS['_wp_options']['wp4odoo_module_learnpress_settings'] = [ 'sync_orders' => true ];
 
 		$reflection = new \ReflectionClass( \WP4Odoo\Module_Base::class );
-		$prop       = $reflection->getProperty( 'importing' );
+		$prop       = $reflection->getProperty( 'importing_request_local' );
 		$prop->setValue( null, [ 'learnpress' => true ] );
 
 		$this->module->on_order_completed( 300 );
@@ -301,7 +301,7 @@ class LearnPressModuleTest extends LMSModuleTestBase {
 		$GLOBALS['_wp_options']['wp4odoo_module_learnpress_settings'] = [ 'sync_enrollments' => true ];
 
 		$reflection = new \ReflectionClass( \WP4Odoo\Module_Base::class );
-		$prop       = $reflection->getProperty( 'importing' );
+		$prop       = $reflection->getProperty( 'importing_request_local' );
 		$prop->setValue( null, [ 'learnpress' => true ] );
 
 		$this->module->on_enrollment( 400, 100, 5 );

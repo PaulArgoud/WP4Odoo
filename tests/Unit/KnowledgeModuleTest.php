@@ -403,7 +403,7 @@ class KnowledgeModuleTest extends TestCase {
 
 		// Simulate importing.
 		$reflection = new \ReflectionClass( \WP4Odoo\Module_Base::class );
-		$prop       = $reflection->getProperty( 'importing' );
+		$prop       = $reflection->getProperty( 'importing_request_local' );
 		$prop->setValue( null, [ 'knowledge' => true ] );
 
 		$this->module->on_article_save( 100 );

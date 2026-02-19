@@ -41,7 +41,7 @@ class BuddyBossModuleTest extends TestCase {
 	protected function tearDown(): void {
 		// Clean up importing flag.
 		$reflection = new \ReflectionClass( \WP4Odoo\Module_Base::class );
-		$prop       = $reflection->getProperty( 'importing' );
+		$prop       = $reflection->getProperty( 'importing_request_local' );
 		$prop->setValue( null, [] );
 
 		unset(
@@ -493,7 +493,7 @@ class BuddyBossModuleTest extends TestCase {
 		$GLOBALS['_wp_options']['wp4odoo_module_buddyboss_settings'] = [ 'sync_profiles' => true ];
 
 		$reflection = new \ReflectionClass( \WP4Odoo\Module_Base::class );
-		$prop       = $reflection->getProperty( 'importing' );
+		$prop       = $reflection->getProperty( 'importing_request_local' );
 		$prop->setValue( null, [ 'buddyboss' => true ] );
 
 		$this->module->on_profile_updated( 1, [ 1 ], false );

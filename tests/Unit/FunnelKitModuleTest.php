@@ -511,7 +511,7 @@ class FunnelKitModuleTest extends TestCase {
 		$GLOBALS['_wp_options']['wp4odoo_module_funnelkit_settings'] = [ 'sync_contacts' => true ];
 
 		$reflection = new \ReflectionClass( \WP4Odoo\Module_Base::class );
-		$prop       = $reflection->getProperty( 'importing' );
+		$prop       = $reflection->getProperty( 'importing_request_local' );
 		$prop->setValue( null, [ 'funnelkit' => true ] );
 
 		$this->module->on_contact_created( 1 );

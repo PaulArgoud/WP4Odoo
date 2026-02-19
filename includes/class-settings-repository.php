@@ -29,9 +29,19 @@ class Settings_Repository {
 	 * Keyed by blog ID to prevent stale data when switch_to_blog()
 	 * changes the active site in multisite environments.
 	 *
+	 * Auto-invalidated via update_option_{$key} hooks when any process
+	 * (WP-CLI, cron, direct update_option() call) modifies a tracked option.
+	 *
 	 * @var array<int, array<string, array>>
 	 */
 	private array $cache = [];
+
+	/**
+	 * Whether cache-invalidation hooks have been registered.
+	 *
+	 * @var bool
+	 */
+	private bool $hooks_registered = false;
 
 	// ── Option key constants ───────────────────────────────
 
@@ -70,6 +80,40 @@ class Settings_Repository {
 		'retention_days' => 30,
 	];
 
+	// ── Hook registration ─────────────────────────────────
+
+	/**
+	 * Register cache-invalidation hooks for tracked options.
+	 *
+	 * Listens to update_option_{$key} so that external modifications
+	 * (WP-CLI, cron, another plugin) automatically flush the cache.
+	 *
+	 * @since 3.8.0
+	 *
+	 * @return void
+	 */
+	private function register_invalidation_hooks(): void {
+		if ( $this->hooks_registered ) {
+			return;
+		}
+		$this->hooks_registered = true;
+
+		$options = [
+			self::OPT_CONNECTION,
+			self::OPT_SYNC_SETTINGS,
+			self::OPT_LOG_SETTINGS,
+		];
+
+		foreach ( $options as $opt ) {
+			add_action(
+				"update_option_{$opt}",
+				function () {
+					$this->flush_cache();
+				}
+			);
+		}
+	}
+
 	// ── Connection ─────────────────────────────────────────
 
 	/**
@@ -78,6 +122,7 @@ class Settings_Repository {
 	 * @return array
 	 */
 	public function get_connection(): array {
+		$this->register_invalidation_hooks();
 		$blog_id = (int) get_current_blog_id();
 
 		if ( isset( $this->cache[ $blog_id ]['connection'] ) ) {
@@ -142,6 +187,7 @@ class Settings_Repository {
 	 * @return array
 	 */
 	public function get_sync_settings(): array {
+		$this->register_invalidation_hooks();
 		$blog_id = (int) get_current_blog_id();
 
 		if ( isset( $this->cache[ $blog_id ]['sync'] ) ) {
@@ -243,6 +289,7 @@ class Settings_Repository {
 	 * @return array
 	 */
 	public function get_log_settings(): array {
+		$this->register_invalidation_hooks();
 		$blog_id = (int) get_current_blog_id();
 
 		if ( isset( $this->cache[ $blog_id ]['log'] ) ) {

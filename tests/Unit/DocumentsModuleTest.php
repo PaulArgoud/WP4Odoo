@@ -402,7 +402,7 @@ class DocumentsModuleTest extends TestCase {
 		$this->create_post( 100, 'document', 'Doc', '', 'publish' );
 
 		$reflection = new \ReflectionClass( \WP4Odoo\Module_Base::class );
-		$prop       = $reflection->getProperty( 'importing' );
+		$prop       = $reflection->getProperty( 'importing_request_local' );
 		$prop->setValue( null, [ 'documents' => true ] );
 
 		$this->module->on_document_delete( 100 );

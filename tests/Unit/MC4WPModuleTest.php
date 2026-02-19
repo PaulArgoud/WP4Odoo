@@ -412,7 +412,7 @@ class MC4WPModuleTest extends TestCase {
 		$GLOBALS['_wp_users'][1] = $user;
 
 		$reflection = new \ReflectionClass( \WP4Odoo\Module_Base::class );
-		$prop       = $reflection->getProperty( 'importing' );
+		$prop       = $reflection->getProperty( 'importing_request_local' );
 		$prop->setValue( null, [ 'mc4wp' => true ] );
 
 		$form = new \MC4WP_Form();

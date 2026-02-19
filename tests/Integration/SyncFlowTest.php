@@ -184,4 +184,117 @@ class SyncFlowTest extends WP4Odoo_TestCase {
 		}
 		$this->assertTrue( $found, 'Pull job should appear in fetch_pending results.' );
 	}
+
+	// ─── Test 6: Transport failure triggers retry ──────────
+
+	public function test_transport_failure_triggers_retry(): void {
+		global $wpdb;
+
+		$user_id = self::factory()->user->create( [
+			'user_email' => 'retry-test@example.com',
+			'first_name' => 'Retry',
+			'last_name'  => 'Test',
+		] );
+
+		$this->transport->should_fail = true;
+
+		$job_id = $this->queue->enqueue( [
+			'module'      => 'crm',
+			'direction'   => 'wp_to_odoo',
+			'entity_type' => 'contact',
+			'action'      => 'create',
+			'wp_id'       => $user_id,
+		] );
+
+		$crm    = $this->create_crm_module();
+		$engine = $this->create_engine( $crm );
+		$engine->process_queue();
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Integration test.
+		$row = $wpdb->get_row(
+			$wpdb->prepare(
+				"SELECT status, attempts, error_message FROM {$wpdb->prefix}wp4odoo_sync_queue WHERE id = %d",
+				$job_id
+			)
+		);
+
+		$this->assertNotNull( $row, 'Job should still exist in the queue.' );
+		$this->assertSame( 'pending', $row->status, 'Failed job should be reset to pending for retry.' );
+		$this->assertSame( 1, (int) $row->attempts, 'Attempts should be incremented to 1.' );
+		$this->assertNotEmpty( $row->error_message, 'Error message should be recorded.' );
+	}
+
+	// ─── Test 7: Max attempts exhausted → permanent failure ─
+
+	public function test_max_attempts_exhausted_marks_failed(): void {
+		global $wpdb;
+
+		$user_id = self::factory()->user->create( [
+			'user_email' => 'maxretry-test@example.com',
+			'first_name' => 'MaxRetry',
+			'last_name'  => 'Test',
+		] );
+
+		$this->transport->should_fail = true;
+
+		$job_id = $this->queue->enqueue( [
+			'module'       => 'crm',
+			'direction'    => 'wp_to_odoo',
+			'entity_type'  => 'contact',
+			'action'       => 'create',
+			'wp_id'        => $user_id,
+			'max_attempts' => 1,
+		] );
+
+		$crm    = $this->create_crm_module();
+		$engine = $this->create_engine( $crm );
+		$engine->process_queue();
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Integration test.
+		$row = $wpdb->get_row(
+			$wpdb->prepare(
+				"SELECT status, attempts FROM {$wpdb->prefix}wp4odoo_sync_queue WHERE id = %d",
+				$job_id
+			)
+		);
+
+		$this->assertNotNull( $row, 'Job should still exist in the queue.' );
+		$this->assertSame( 'failed', $row->status, 'Job should be permanently failed after max attempts.' );
+		$this->assertSame( 1, (int) $row->attempts, 'Attempts should equal max_attempts.' );
+	}
+
+	// ─── Test 8: Update job resolves entity map ─────────────
+
+	public function test_update_job_uses_existing_mapping(): void {
+		$user_id = self::factory()->user->create( [
+			'user_email' => 'update-test@example.com',
+			'first_name' => 'Update',
+			'last_name'  => 'Test',
+		] );
+
+		// Pre-create an entity map entry.
+		$this->entity_map->save( 'crm', 'contact', $user_id, 77, 'res.partner' );
+
+		$crm    = $this->create_crm_module();
+		$engine = $this->create_engine( $crm );
+
+		$this->queue->enqueue( [
+			'module'      => 'crm',
+			'direction'   => 'wp_to_odoo',
+			'entity_type' => 'contact',
+			'action'      => 'update',
+			'wp_id'       => $user_id,
+			'odoo_id'     => 77,
+		] );
+
+		$processed = $engine->process_queue();
+		$this->assertGreaterThan( 0, $processed );
+
+		// Verify write (not create) was called on the correct ID.
+		$write_calls = array_filter(
+			$this->transport->calls,
+			fn( $c ) => 'write' === $c['method'] && 'res.partner' === $c['model']
+		);
+		$this->assertNotEmpty( $write_calls, 'An update job should result in a write call.' );
+	}
 }

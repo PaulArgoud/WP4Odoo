@@ -267,7 +267,7 @@ class TutorLMSModuleTest extends LMSModuleTestBase {
 		$GLOBALS['_wp_options']['wp4odoo_module_tutorlms_settings'] = [ 'sync_courses' => true ];
 
 		$reflection = new \ReflectionClass( \WP4Odoo\Module_Base::class );
-		$prop       = $reflection->getProperty( 'importing' );
+		$prop       = $reflection->getProperty( 'importing_request_local' );
 		$prop->setValue( null, [ 'tutorlms' => true ] );
 
 		$this->module->on_course_save( 100 );
@@ -317,7 +317,7 @@ class TutorLMSModuleTest extends LMSModuleTestBase {
 		$GLOBALS['_wp_options']['wp4odoo_module_tutorlms_settings'] = [ 'sync_orders' => true ];
 
 		$reflection = new \ReflectionClass( \WP4Odoo\Module_Base::class );
-		$prop       = $reflection->getProperty( 'importing' );
+		$prop       = $reflection->getProperty( 'importing_request_local' );
 		$prop->setValue( null, [ 'tutorlms' => true ] );
 
 		$this->module->on_order_placed( 300 );

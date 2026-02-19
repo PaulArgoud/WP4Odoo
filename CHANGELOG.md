@@ -49,12 +49,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **PHP 8.1+ first-class callable syntax** — Replaced 17 string-based callables (`'intval'`, `'strval'`) with first-class callable syntax (`intval( ... )`, `strval( ... )`) across 9 files. Better IDE support, type-safe, catches typos at parse time
 - **PHP 8.0+ `str_contains()`** — Replaced 2 `strpos() !== false` patterns with `str_contains()` in `GamiPress_Handler`
 
+### Fixed (Core)
+- **Module_Registry materialization safety** — `get()` now returns `null` instead of accessing an undefined array key when a deferred module's constructor throws. Failed module IDs are tracked in a `$failed` set to prevent repeated instantiation attempts
+- **Settings_Repository auto-invalidation** — Cached settings now auto-flush via `update_option_{$key}` hooks when any process (WP-CLI, cron, direct `update_option()` call) modifies a tracked option. Previously, external option updates within the same PHP request could return stale cached values
+
+### Changed (Core)
+- **Connection pooling** — `Retryable_Http` now maintains a persistent cURL handle pool keyed by host. Reuses TCP+TLS connections across batch calls (~50 ms saved per additional call to the same Odoo host). Falls back to `wp_remote_post()` transparently when cURL is unavailable or the pool fails. Disable via `wp4odoo_enable_connection_pool` filter
+- **Anti-loop flag rename** — `Module_Base::$importing` renamed to `$importing_request_local` to make its process-local limitation self-documenting. No behavioral change; all public APIs (`is_importing()`, `mark_importing()`, `clear_importing()`) are unchanged
+
 ### CI
 - **Composer audit** — Added `composer audit --no-dev` step to GitHub Actions CI pipeline to detect known vulnerabilities in dependencies
 
 ### Tests
 - Updated `SyncQueueRepositoryTest` — 2 tests adapted: stale recovery now asserts `attempts` increment, cleanup test matches prepared `IN (%s, %s)` pattern
 - Removed duplicate `documents-classes.php` stub require in `tests/bootstrap.php`
+- **Sync flow failure tests** — 3 new integration tests: transport failure triggers retry (attempts incremented, status reset to pending), max attempts exhausted marks job as permanently failed, update job resolves existing entity map entry and calls write instead of create
+- Updated 22 unit test files to reference renamed `$importing_request_local` property in reflection calls
 
 ## [3.6.0] - 2026-02-19
 

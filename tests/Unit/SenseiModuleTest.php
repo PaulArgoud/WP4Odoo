@@ -209,7 +209,7 @@ class SenseiModuleTest extends LMSModuleTestBase {
 		$GLOBALS['_wp_options']['wp4odoo_module_sensei_settings'] = [ 'sync_courses' => true ];
 
 		$reflection = new \ReflectionClass( \WP4Odoo\Module_Base::class );
-		$prop       = $reflection->getProperty( 'importing' );
+		$prop       = $reflection->getProperty( 'importing_request_local' );
 		$prop->setValue( null, [ 'sensei' => true ] );
 
 		$this->module->on_course_save( 100 );
@@ -259,7 +259,7 @@ class SenseiModuleTest extends LMSModuleTestBase {
 		$GLOBALS['_wp_options']['wp4odoo_module_sensei_settings'] = [ 'sync_orders' => true ];
 
 		$reflection = new \ReflectionClass( \WP4Odoo\Module_Base::class );
-		$prop       = $reflection->getProperty( 'importing' );
+		$prop       = $reflection->getProperty( 'importing_request_local' );
 		$prop->setValue( null, [ 'sensei' => true ] );
 
 		$this->module->on_order_completed( 300 );
@@ -301,7 +301,7 @@ class SenseiModuleTest extends LMSModuleTestBase {
 		$GLOBALS['_wp_options']['wp4odoo_module_sensei_settings'] = [ 'sync_enrollments' => true ];
 
 		$reflection = new \ReflectionClass( \WP4Odoo\Module_Base::class );
-		$prop       = $reflection->getProperty( 'importing' );
+		$prop       = $reflection->getProperty( 'importing_request_local' );
 		$prop->setValue( null, [ 'sensei' => true ] );
 
 		$this->module->on_enrollment( 5, 100 );

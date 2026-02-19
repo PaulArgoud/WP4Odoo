@@ -397,7 +397,7 @@ class MailPoetModuleTest extends TestCase {
 		$GLOBALS['_wp_options']['wp4odoo_module_mailpoet_settings'] = [ 'sync_subscribers' => true ];
 
 		$reflection = new \ReflectionClass( \WP4Odoo\Module_Base::class );
-		$prop       = $reflection->getProperty( 'importing' );
+		$prop       = $reflection->getProperty( 'importing_request_local' );
 		$prop->setValue( null, [ 'mailpoet' => true ] );
 
 		$this->module->on_subscriber_created( 1 );

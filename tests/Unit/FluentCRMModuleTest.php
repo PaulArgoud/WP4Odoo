@@ -443,7 +443,7 @@ class FluentCRMModuleTest extends TestCase {
 		$GLOBALS['_wp_options']['wp4odoo_module_fluentcrm_settings'] = [ 'sync_subscribers' => true ];
 
 		$reflection = new \ReflectionClass( \WP4Odoo\Module_Base::class );
-		$prop       = $reflection->getProperty( 'importing' );
+		$prop       = $reflection->getProperty( 'importing_request_local' );
 		$prop->setValue( null, [ 'fluentcrm' => true ] );
 
 		$subscriber     = new \FluentCrm\App\Models\Subscriber();

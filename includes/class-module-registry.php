@@ -57,6 +57,17 @@ class Module_Registry {
 	private array $deferred = [];
 
 	/**
+	 * Module IDs that failed to materialize.
+	 *
+	 * Prevents repeated instantiation attempts for modules whose
+	 * constructor throws. Checked by get() to return null immediately.
+	 *
+	 * @since 3.8.0
+	 * @var array<string, true>
+	 */
+	private array $failed = [];
+
+	/**
 	 * Client provider closure for deferred instantiation.
 	 *
 	 * @since 3.6.0
@@ -355,9 +366,9 @@ class Module_Registry {
 		if ( isset( $this->modules[ $id ] ) ) {
 			return $this->modules[ $id ];
 		}
-		if ( isset( $this->deferred[ $id ] ) ) {
+		if ( isset( $this->deferred[ $id ] ) && ! isset( $this->failed[ $id ] ) ) {
 			$this->materialize( $id );
-			return $this->modules[ $id ];
+			return $this->modules[ $id ] ?? null;
 		}
 		return null;
 	}
@@ -459,9 +470,10 @@ class Module_Registry {
 		try {
 			$this->modules[ $id ] = new $class( $this->client_provider, $this->entity_map, $this->settings );
 		} catch ( \Throwable $e ) {
-			// Log the failure instead of silently swallowing it.
-			// The module remains absent from $this->modules — get()
-			// will return null, which callers already handle.
+			// Track the failure so get() returns null immediately
+			// without attempting re-instantiation.
+			$this->failed[ $id ] = true;
+
 			$logger = Logger::for_channel( 'core' );
 			$logger->error(
 				'Failed to instantiate deferred module.',

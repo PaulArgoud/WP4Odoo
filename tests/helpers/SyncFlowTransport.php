@@ -32,6 +32,20 @@ class SyncFlowTransport implements Transport {
 	public int $create_id = 42;
 
 	/**
+	 * When true, execute_kw throws a RuntimeException.
+	 *
+	 * @var bool
+	 */
+	public bool $should_fail = false;
+
+	/**
+	 * Error message used when should_fail is true.
+	 *
+	 * @var string
+	 */
+	public string $fail_message = 'Simulated transport failure';
+
+	/**
 	 * Authenticate against Odoo.
 	 *
 	 * @param string $username The Odoo login.
@@ -55,6 +69,10 @@ class SyncFlowTransport implements Transport {
 	 */
 	public function execute_kw( string $model, string $method, array $args = [], array $kwargs = [] ): mixed {
 		$this->calls[] = compact( 'model', 'method', 'args', 'kwargs' );
+
+		if ( $this->should_fail ) {
+			throw new \RuntimeException( $this->fail_message );
+		}
 
 		return match ( $method ) {
 			'search', 'search_read' => [],

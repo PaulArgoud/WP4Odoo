@@ -34,7 +34,7 @@ class FieldServiceModuleTest extends TestCase {
 
 	protected function tearDown(): void {
 		$reflection = new \ReflectionClass( \WP4Odoo\Module_Base::class );
-		$prop       = $reflection->getProperty( 'importing' );
+		$prop       = $reflection->getProperty( 'importing_request_local' );
 		$prop->setValue( null, [] );
 	}
 
@@ -393,7 +393,7 @@ class FieldServiceModuleTest extends TestCase {
 		$GLOBALS['_wp_options']['wp4odoo_module_field_service_settings'] = [ 'sync_tasks' => true ];
 
 		$reflection = new \ReflectionClass( \WP4Odoo\Module_Base::class );
-		$prop       = $reflection->getProperty( 'importing' );
+		$prop       = $reflection->getProperty( 'importing_request_local' );
 		$prop->setValue( null, [ 'field_service' => true ] );
 
 		$this->module->on_task_save( 100 );
@@ -442,7 +442,7 @@ class FieldServiceModuleTest extends TestCase {
 		$this->module->save_mapping( 'task', 100, 555 );
 
 		$reflection = new \ReflectionClass( \WP4Odoo\Module_Base::class );
-		$prop       = $reflection->getProperty( 'importing' );
+		$prop       = $reflection->getProperty( 'importing_request_local' );
 		$prop->setValue( null, [ 'field_service' => true ] );
 
 		$this->module->on_task_delete( 100 );

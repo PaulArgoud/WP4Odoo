@@ -485,7 +485,7 @@ class GamiPressModuleTest extends TestCase {
 		$GLOBALS['_wp_options']['wp4odoo_module_gamipress_settings'] = [ 'sync_points' => true ];
 
 		$reflection = new \ReflectionClass( \WP4Odoo\Module_Base::class );
-		$prop       = $reflection->getProperty( 'importing' );
+		$prop       = $reflection->getProperty( 'importing_request_local' );
 		$prop->setValue( null, [ 'gamipress' => true ] );
 
 		$this->module->on_points_awarded( 42, 100, 'points' );

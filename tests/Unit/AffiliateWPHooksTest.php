@@ -88,7 +88,7 @@ class AffiliateWPHooksTest extends Module_Test_Case {
 			'auto_post_bills' => false,
 		];
 
-		$prop = ( new \ReflectionClass( \WP4Odoo\Module_Base::class ) )->getProperty( 'importing' );
+		$prop = ( new \ReflectionClass( \WP4Odoo\Module_Base::class ) )->getProperty( 'importing_request_local' );
 		$prop->setAccessible( true );
 		$prop->setValue( null, [ 'affiliatewp' => true ] );
 
@@ -162,7 +162,7 @@ class AffiliateWPHooksTest extends Module_Test_Case {
 			'auto_post_bills' => false,
 		];
 
-		$prop = ( new \ReflectionClass( \WP4Odoo\Module_Base::class ) )->getProperty( 'importing' );
+		$prop = ( new \ReflectionClass( \WP4Odoo\Module_Base::class ) )->getProperty( 'importing_request_local' );
 		$prop->setAccessible( true );
 		$prop->setValue( null, [ 'affiliatewp' => true ] );
 

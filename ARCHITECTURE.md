@@ -21,7 +21,7 @@ WordPress For Odoo/
 │   ├── api/
 │   │   ├── interface-transport.php         # Transport interface (authenticate, execute_kw, get_uid, get_server_version)
 │   │   ├── class-odoo-transport-base.php  # Abstract base: shared properties, constructor, ensure_authenticated()
-│   │   ├── trait-retryable-http.php       # Retryable_Http trait (single-attempt HTTP POST, fail-fast for queue-level retry)
+│   │   ├── trait-retryable-http.php       # Retryable_Http trait (HTTP POST with persistent cURL pool, fail-fast for queue-level retry)
 │   │   ├── class-odoo-client.php          # High-level client (CRUD, search, fields_get, reset(), session re-auth on 403)
 │   │   ├── class-odoo-jsonrpc.php         # JSON-RPC 2.0 transport (Odoo 17+) extends Odoo_Transport_Base
 │   │   ├── class-odoo-xmlrpc.php          # XML-RPC transport (legacy) extends Odoo_Transport_Base
@@ -374,7 +374,7 @@ WordPress For Odoo/
 ├── templates/
 │   └── customer-portal.php           #   Customer portal HTML template (orders/invoices tabs)
 │
-├── tests/                             # 5405 unit tests (8126 assertions) + 42 integration tests (wp-env)
+├── tests/                             # 5405 unit tests (8126 assertions) + 45 integration tests (wp-env)
 │   ├── bootstrap.php                 #   Unit test bootstrap: constants, stub loading, plugin class requires
 │   ├── bootstrap-integration.php     #   Integration test bootstrap: loads WP test framework (wp-env)
 │   ├── stubs/
@@ -742,7 +742,7 @@ Module_Base (abstract)
 - Entity mapping CRUD: `get_mapping()`, `save_mapping()`, `get_wp_mapping()`, `remove_mapping()` (delegates to `Entity_Map_Repository`)
 - Data transformation: `map_to_odoo()`, `map_from_odoo()`, `generate_sync_hash()`
 - Settings: `get_settings()`, `get_settings_fields()`, `get_default_settings()`, `get_dependency_status()` (external dependency check for admin UI) — delegates to injected `Settings_Repository`
-- Helpers: `is_importing()` (anti-loop guard, per-module static array keyed by module ID), `mark_importing()`, `clear_importing()` (try/finally in pull), `resolve_many2one_field()` (Many2one → scalar), `delete_wp_post()` (safe post deletion), `log_unsupported_entity()` (centralized warning), `partner_service()` (lazy `Partner_Service` factory), `resolve_partner_from_user()` (WP user → Odoo partner via Partner_Service), `resolve_partner_from_email()` (email → Odoo partner via Partner_Service), `check_dependency()` (version bounds + table existence via `get_required_tables()` + cron polling notice via `uses_cron_polling()`), `client()`, `auto_post_invoice(): bool` (setting check + mapping lookup + `action_post`, returns success/failure), `ensure_entity_synced()` (mapping check + auto-push if missing), `encode_synthetic_id()` / `decode_synthetic_id()` (static, with overflow guard — used by LMS modules for enrollment IDs)
+- Helpers: `is_importing()` (anti-loop guard, per-module static `$importing_request_local` array keyed by module ID — name reflects process-local limitation), `mark_importing()`, `clear_importing()` (try/finally in pull), `resolve_many2one_field()` (Many2one → scalar), `delete_wp_post()` (safe post deletion), `log_unsupported_entity()` (centralized warning), `partner_service()` (lazy `Partner_Service` factory), `resolve_partner_from_user()` (WP user → Odoo partner via Partner_Service), `resolve_partner_from_email()` (email → Odoo partner via Partner_Service), `check_dependency()` (version bounds + table existence via `get_required_tables()` + cron polling notice via `uses_cron_polling()`), `client()`, `auto_post_invoice(): bool` (setting check + mapping lookup + `action_post`, returns success/failure), `ensure_entity_synced()` (mapping check + auto-push if missing), `encode_synthetic_id()` / `decode_synthetic_id()` (static, with overflow guard — used by LMS modules for enrollment IDs)
 - Push helpers: `enqueue_push()` (mapping lookup + injectable Queue_Manager via `$this->queue()`), `handle_cpt_save()` (anti-loop + revision/autosave + post_type + settings guards → enqueue_push; used by 12 hooks traits)
 - Guard helpers: `should_sync(string $setting_key)` (consolidated `is_importing()` + settings check — used in ~40 hook callbacks), `poll_entity_changes(string $entity_type, array $items, string $id_field)` (SHA-256 hash-based diff against entity map — detects creates/updates/deletes, used by Bookly and Ecwid cron polling)
 - Graceful degradation: `safe_callback()` wraps hook callbacks in try/catch(`\Throwable`), logging crashes instead of crashing the WordPress request. All ~87 third-party hook registrations use this wrapper
@@ -865,7 +865,7 @@ POST /jsonrpc           POST /xmlrpc/2/common (auth)
     └──── both use Retryable_Http trait ──────────┘
 ```
 
-`Retryable_Http` provides `http_post_with_retry()` — single-attempt HTTP POST with TCP keep-alive. Fails immediately on WP_Error or HTTP 5xx, letting the `Sync_Engine` handle retry via queue-level exponential backoff. This avoids blocking the queue processor with in-process `usleep()`.
+`Retryable_Http` provides `http_post_with_retry()` — single-attempt HTTP POST with TCP keep-alive. Fails immediately on WP_Error or HTTP 5xx, letting the `Sync_Engine` handle retry via queue-level exponential backoff. This avoids blocking the queue processor with in-process `usleep()`. Includes a persistent cURL handle pool keyed by host for TCP+TLS connection reuse across batch calls (~50 ms saved per additional call). Falls back to `wp_remote_post()` transparently when cURL is unavailable or the pool fails. Toggle via `wp4odoo_enable_connection_pool` filter.
 
 `Odoo_Client::call()` includes automatic session re-authentication: if an API call throws a session-related error (HTTP 403, "session expired", "access denied"), the client resets the transport, re-authenticates, and retries the call once. This handles long-running batch processing where Odoo sessions may expire mid-sync.
 
@@ -1104,7 +1104,7 @@ Managed via `dbDelta()` in `Database_Migration::create_tables()`. Schema upgrade
 
 ### WordPress Options (`wp_options`)
 
-All option keys, default values, and typed accessors are centralized in `Settings_Repository` (`includes/class-settings-repository.php`). Uses 3 traits for separation of concerns: `Failure_Tracking_Settings` (failure counters), `UI_State_Settings` (onboarding/checklist/cron), `Network_Settings` (multisite). Option key constants (e.g., `Settings_Repository::OPT_CONNECTION`) are used throughout the codebase instead of string literals.
+All option keys, default values, and typed accessors are centralized in `Settings_Repository` (`includes/class-settings-repository.php`). Uses 3 traits for separation of concerns: `Failure_Tracking_Settings` (failure counters), `UI_State_Settings` (onboarding/checklist/cron), `Network_Settings` (multisite). Option key constants (e.g., `Settings_Repository::OPT_CONNECTION`) are used throughout the codebase instead of string literals. Instance-level cache is keyed by `blog_id` and auto-invalidated via `update_option_{$key}` hooks for external modifications (WP-CLI, cron, direct `update_option()` calls).
 
 | Key | Constant | Type | Description |
 |-----|----------|------|-------------|

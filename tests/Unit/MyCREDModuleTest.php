@@ -368,7 +368,7 @@ class MyCREDModuleTest extends TestCase {
 		$GLOBALS['_wp_options']['wp4odoo_module_mycred_settings'] = [ 'sync_points' => true ];
 
 		$reflection = new \ReflectionClass( \WP4Odoo\Module_Base::class );
-		$prop       = $reflection->getProperty( 'importing' );
+		$prop       = $reflection->getProperty( 'importing_request_local' );
 		$prop->setValue( null, [ 'mycred' => true ] );
 
 		$this->module->on_points_change( 42, 100, 'mycred_default', '' );
