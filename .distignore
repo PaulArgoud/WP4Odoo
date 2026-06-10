@@ -1,0 +1,54 @@
+# Files and directories excluded from the distributed plugin build.
+# Used by `wp dist-archive` / release tooling to produce a clean ZIP.
+
+# VCS
+/.git
+/.github
+/.gitignore
+/.distignore
+
+# Dev dependencies & lockfiles
+/node_modules
+/composer.phar
+/composer.lock
+/package.json
+/package-lock.json
+
+# Tests & QA tooling
+/tests
+/.phpunit.cache
+/.phpunit.result.cache
+/phpunit.xml
+/phpunit-integration.xml
+/phpunit-api-surface.xml
+/phpstan.neon
+/phpstan-bootstrap.php
+/phpstan-bookly-stubs.php
+/phpstan-edd-stubs.php
+/phpstan-mailpoet-stubs.php
+/phpstan-surecart-stubs.php
+/phpstan-wp-cli-stubs.php
+/.phpcs.xml.dist
+/.phpcs.xml
+
+# wp-env
+/.wp-env.json
+/.wp-env.override.json
+
+# Editor / OS
+/.vscode
+/.idea
+*.code-workspace
+.DS_Store
+Thumbs.db
+
+# Internal docs & tooling (keep README.md / readme.txt for distribution)
+/CLAUDE.md
+/CONTRIBUTING.md
+/.claude
+/.env
+
+# Gettext intermediates (shipped: languages/*.mo + *.po)
+/messages.mo
+/messages.po
+*.po~

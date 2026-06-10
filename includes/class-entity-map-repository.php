@@ -13,8 +13,11 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Centralizes all database operations on the entity mapping table
  * that links WordPress entities to Odoo records.
  *
- * Includes a per-request static cache to avoid redundant DB lookups
- * for the same entity during batch processing.
+ * Includes a per-request array cache to avoid redundant DB lookups for the
+ * same entity during batch processing, plus an optional persistent
+ * object-cache layer (active only when an external object cache such as
+ * Redis/Memcached is installed) that caches positive mappings across
+ * requests, invalidated per-blog via a generation salt.
  *
  * @package WP4Odoo
  * @since   1.2.0
@@ -46,6 +49,22 @@ class Entity_Map_Repository {
 	public const POLL_LIMIT = 50000;
 
 	/**
+	 * Object cache group for cross-request mapping persistence.
+	 *
+	 * Only active when a persistent external object cache (Redis/Memcached)
+	 * is installed; otherwise the per-request array cache is the only layer.
+	 */
+	private const CACHE_GROUP = 'wp4odoo_entity_map';
+
+	/**
+	 * Safety-net TTL (seconds) for persistent cache entries.
+	 *
+	 * Bulk invalidation is handled by the generation salt; this TTL only
+	 * bounds the lifetime of entries the generation bump cannot reach.
+	 */
+	private const CACHE_TTL = 3600;
+
+	/**
 	 * Blog ID for multisite scoping.
 	 *
 	 * Defaults to the current blog ID. Single-site installs always
@@ -66,12 +85,33 @@ class Entity_Map_Repository {
 	private array $cache = [];
 
 	/**
+	 * Whether a persistent external object cache is available.
+	 *
+	 * When false, the per-request array cache is the only layer and the
+	 * persistent-cache helpers are no-ops (no behavior change).
+	 *
+	 * @var bool
+	 */
+	private bool $use_object_cache;
+
+	/**
+	 * Cached generation salt for the current request (lazily loaded).
+	 *
+	 * Bumped on flush/bulk-delete to invalidate every persistent key for
+	 * this blog at once without enumerating them.
+	 *
+	 * @var int|null
+	 */
+	private ?int $cache_generation = null;
+
+	/**
 	 * Constructor.
 	 *
 	 * @param int|null $blog_id Optional blog ID for multisite scoping. Defaults to current blog.
 	 */
 	public function __construct( ?int $blog_id = null ) {
-		$this->blog_id = $blog_id ?? (int) get_current_blog_id();
+		$this->blog_id          = $blog_id ?? (int) get_current_blog_id();
+		$this->use_object_cache = function_exists( 'wp_using_ext_object_cache' ) && wp_using_ext_object_cache();
 	}
 
 	/**
@@ -91,6 +131,13 @@ class Entity_Map_Repository {
 			unset( $this->cache[ $cache_key ] );
 			$this->cache[ $cache_key ] = $value;
 			return $value;
+		}
+
+		$persisted = $this->object_cache_get( 'wp', $module, $entity_type, $wp_id );
+		if ( null !== $persisted ) {
+			$this->cache[ $cache_key ]                                   = $persisted;
+			$this->cache[ "{$module}:{$entity_type}:odoo:{$persisted}" ] = $wp_id;
+			return $persisted;
 		}
 
 		global $wpdb;
@@ -113,6 +160,7 @@ class Entity_Map_Repository {
 
 		if ( null !== $result ) {
 			$this->cache[ "{$module}:{$entity_type}:odoo:{$result}" ] = $wp_id;
+			$this->object_cache_put( $module, $entity_type, $wp_id, $result );
 		}
 
 		return $result;
@@ -137,6 +185,13 @@ class Entity_Map_Repository {
 			return $value;
 		}
 
+		$persisted = $this->object_cache_get( 'odoo', $module, $entity_type, $odoo_id );
+		if ( null !== $persisted ) {
+			$this->cache[ $cache_key ]                                 = $persisted;
+			$this->cache[ "{$module}:{$entity_type}:wp:{$persisted}" ] = $odoo_id;
+			return $persisted;
+		}
+
 		global $wpdb;
 
 		$table = $wpdb->prefix . 'wp4odoo_entity_map';
@@ -157,6 +212,7 @@ class Entity_Map_Repository {
 
 		if ( null !== $result ) {
 			$this->cache[ "{$module}:{$entity_type}:wp:{$result}" ] = $odoo_id;
+			$this->object_cache_put( $module, $entity_type, $result, $odoo_id );
 		}
 
 		return $result;
@@ -222,6 +278,7 @@ class Entity_Map_Repository {
 
 					$this->cache[ "{$module}:{$entity_type}:odoo:{$o_id}" ] = $w_id;
 					$this->cache[ "{$module}:{$entity_type}:wp:{$w_id}" ]   = $o_id;
+					$this->object_cache_put( $module, $entity_type, $w_id, $o_id );
 				}
 			}
 		}
@@ -291,6 +348,7 @@ class Entity_Map_Repository {
 
 					$this->cache[ "{$module}:{$entity_type}:wp:{$w_id}" ]   = $o_id;
 					$this->cache[ "{$module}:{$entity_type}:odoo:{$o_id}" ] = $w_id;
+					$this->object_cache_put( $module, $entity_type, $w_id, $o_id );
 				}
 			}
 		}
@@ -314,6 +372,10 @@ class Entity_Map_Repository {
 	 * @return bool True on success.
 	 */
 	public function save( string $module, string $entity_type, int $wp_id, int $odoo_id, string $odoo_model, string $sync_hash = '' ): bool {
+		// Capture any prior mapping so a changed odoo_id can drop its stale
+		// reverse persistent entry before the new one is written.
+		$prior_odoo_id = $this->cache[ "{$module}:{$entity_type}:wp:{$wp_id}" ] ?? null;
+
 		global $wpdb;
 
 		$table = $wpdb->prefix . 'wp4odoo_entity_map';
@@ -342,6 +404,11 @@ class Entity_Map_Repository {
 			$this->cache[ "{$module}:{$entity_type}:wp:{$wp_id}" ]     = $odoo_id;
 			$this->cache[ "{$module}:{$entity_type}:odoo:{$odoo_id}" ] = $wp_id;
 			$this->evict_cache();
+
+			if ( null !== $prior_odoo_id && $prior_odoo_id !== $odoo_id ) {
+				$this->object_cache_forget( $module, $entity_type, $wp_id, $prior_odoo_id );
+			}
+			$this->object_cache_put( $module, $entity_type, $wp_id, $odoo_id );
 		}
 
 		return false !== $result;
@@ -383,6 +450,8 @@ class Entity_Map_Repository {
 		if ( null !== $odoo_id ) {
 			unset( $this->cache[ "{$module}:{$entity_type}:odoo:{$odoo_id}" ] );
 		}
+
+		$this->object_cache_forget( $module, $entity_type, $wp_id, $odoo_id );
 
 		return $deleted > 0;
 	}
@@ -671,6 +740,7 @@ class Entity_Map_Repository {
 	 */
 	public function flush_cache(): void {
 		$this->cache = [];
+		$this->bump_generation();
 	}
 
 	/**
@@ -687,6 +757,134 @@ class Entity_Map_Repository {
 	 */
 	public function invalidate_key( string $module, string $entity_type, int $wp_id ): void {
 		unset( $this->cache[ "{$module}:{$entity_type}:wp:{$wp_id}" ] );
+
+		if ( $this->use_object_cache ) {
+			wp_cache_delete( $this->object_cache_key( 'wp', $module, $entity_type, $wp_id ), self::CACHE_GROUP );
+		}
+	}
+
+	/**
+	 * Read a positive mapping from the persistent object cache.
+	 *
+	 * Only positive (existing) mappings are persisted across requests;
+	 * negative lookups stay in the per-request array cache to avoid stale
+	 * "not mapped" entries surviving after another process creates the link.
+	 *
+	 * @param string $direction 'wp' (wp_id key) or 'odoo' (odoo_id key).
+	 * @param string $module      Module identifier.
+	 * @param string $entity_type Entity type.
+	 * @param int    $id          The keyed ID (wp_id or odoo_id).
+	 * @return int|null The mapped counterpart ID, or null on miss.
+	 */
+	private function object_cache_get( string $direction, string $module, string $entity_type, int $id ): ?int {
+		if ( ! $this->use_object_cache ) {
+			return null;
+		}
+
+		$value = wp_cache_get( $this->object_cache_key( $direction, $module, $entity_type, $id ), self::CACHE_GROUP );
+
+		return is_int( $value ) ? $value : null;
+	}
+
+	/**
+	 * Write both directions of a mapping to the persistent object cache.
+	 *
+	 * @param string $module      Module identifier.
+	 * @param string $entity_type Entity type.
+	 * @param int    $wp_id       WordPress ID.
+	 * @param int    $odoo_id     Odoo ID.
+	 * @return void
+	 */
+	private function object_cache_put( string $module, string $entity_type, int $wp_id, int $odoo_id ): void {
+		if ( ! $this->use_object_cache ) {
+			return;
+		}
+
+		wp_cache_set( $this->object_cache_key( 'wp', $module, $entity_type, $wp_id ), $odoo_id, self::CACHE_GROUP, self::CACHE_TTL );
+		wp_cache_set( $this->object_cache_key( 'odoo', $module, $entity_type, $odoo_id ), $wp_id, self::CACHE_GROUP, self::CACHE_TTL );
+	}
+
+	/**
+	 * Drop both directions of a mapping from the persistent object cache.
+	 *
+	 * @param string   $module      Module identifier.
+	 * @param string   $entity_type Entity type.
+	 * @param int      $wp_id       WordPress ID.
+	 * @param int|null $odoo_id     Odoo ID, when known (reverse key).
+	 * @return void
+	 */
+	private function object_cache_forget( string $module, string $entity_type, int $wp_id, ?int $odoo_id ): void {
+		if ( ! $this->use_object_cache ) {
+			return;
+		}
+
+		wp_cache_delete( $this->object_cache_key( 'wp', $module, $entity_type, $wp_id ), self::CACHE_GROUP );
+		if ( null !== $odoo_id ) {
+			wp_cache_delete( $this->object_cache_key( 'odoo', $module, $entity_type, $odoo_id ), self::CACHE_GROUP );
+		}
+	}
+
+	/**
+	 * Build a generation-versioned, blog-scoped object cache key.
+	 *
+	 * Embedding the generation salt lets flush/bulk-delete invalidate every
+	 * entry at once (by bumping the salt) without enumerating keys.
+	 *
+	 * @param string $direction 'wp' or 'odoo'.
+	 * @param string $module      Module identifier.
+	 * @param string $entity_type Entity type.
+	 * @param int    $id          The keyed ID.
+	 * @return string
+	 */
+	private function object_cache_key( string $direction, string $module, string $entity_type, int $id ): string {
+		return sprintf( 'v%d:%d:%s:%s:%s:%d', $this->cache_generation(), $this->blog_id, $module, $entity_type, $direction, $id );
+	}
+
+	/**
+	 * Get the current generation salt for this blog, lazily loaded and memoized.
+	 *
+	 * @return int
+	 */
+	private function cache_generation(): int {
+		if ( null !== $this->cache_generation ) {
+			return $this->cache_generation;
+		}
+
+		$gen_key = "gen:{$this->blog_id}";
+		$gen     = wp_cache_get( $gen_key, self::CACHE_GROUP );
+
+		if ( ! is_int( $gen ) ) {
+			$gen = 1;
+			wp_cache_set( $gen_key, $gen, self::CACHE_GROUP );
+		}
+
+		$this->cache_generation = $gen;
+
+		return $this->cache_generation;
+	}
+
+	/**
+	 * Invalidate every persistent entry for this blog by bumping the generation.
+	 *
+	 * Old versioned keys become unreachable and lapse via their TTL.
+	 *
+	 * @return void
+	 */
+	private function bump_generation(): void {
+		if ( ! $this->use_object_cache ) {
+			return;
+		}
+
+		$gen_key = "gen:{$this->blog_id}";
+		$next    = wp_cache_incr( $gen_key, 1, self::CACHE_GROUP );
+
+		if ( ! is_int( $next ) ) {
+			// Key absent: seed at 2 so any pre-existing v1 entries are abandoned.
+			$next = 2;
+			wp_cache_set( $gen_key, $next, self::CACHE_GROUP );
+		}
+
+		$this->cache_generation = $next;
 	}
 
 	/**

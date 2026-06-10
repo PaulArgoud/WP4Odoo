@@ -21,12 +21,17 @@ class EntityMapRepositoryTest extends TestCase {
 		$this->wpdb = new \WP_DB_Stub();
 		$wpdb       = $this->wpdb;
 
+		$GLOBALS['_wp_cache']                  = [];
+		$GLOBALS['_wp_using_ext_object_cache'] = false;
+
 		$this->repo = new Entity_Map_Repository();
 		$this->repo->flush_cache();
 	}
 
 	protected function tearDown(): void {
 		$this->repo->flush_cache();
+		$GLOBALS['_wp_cache']                  = [];
+		$GLOBALS['_wp_using_ext_object_cache'] = false;
 	}
 
 	// ─── get_odoo_id() ─────────────────────────────────────
@@ -552,6 +557,61 @@ class EntityMapRepositoryTest extends TestCase {
 			array_filter( $this->wpdb->calls, fn( $c ) => $c['method'] === 'get_var' )
 		);
 		$this->assertEmpty( $get_var_calls, 'Recent entry should have both directions cached, no DB query expected.' );
+	}
+
+	// ─── Persistent object cache ───────────────────────────
+
+	public function test_persistent_cache_serves_mapping_across_requests(): void {
+		$GLOBALS['_wp_using_ext_object_cache'] = true;
+
+		$writer = new Entity_Map_Repository();
+		$writer->save( 'crm', 'contact', 10, 42, 'res.partner' );
+
+		// Fresh instance = empty per-request cache; DB would miss (null).
+		$reader                     = new Entity_Map_Repository();
+		$this->wpdb->get_var_return = null;
+
+		$this->assertSame( 42, $reader->get_odoo_id( 'crm', 'contact', 10 ), 'Should be served from the persistent object cache.' );
+		$this->assertSame( 10, $reader->get_wp_id( 'crm', 'contact', 42 ), 'Reverse direction should be served too.' );
+		$this->assertEmpty( $this->get_calls( 'get_var' ), 'No DB query expected when the object cache hits.' );
+	}
+
+	public function test_persistent_cache_inactive_without_external_object_cache(): void {
+		$GLOBALS['_wp_using_ext_object_cache'] = false;
+
+		$writer = new Entity_Map_Repository();
+		$writer->save( 'crm', 'contact', 10, 42, 'res.partner' );
+
+		$reader                     = new Entity_Map_Repository();
+		$this->wpdb->get_var_return = null;
+
+		$this->assertNull( $reader->get_odoo_id( 'crm', 'contact', 10 ), 'Without an external object cache the mapping must not persist across instances.' );
+	}
+
+	public function test_flush_cache_invalidates_persistent_entries(): void {
+		$GLOBALS['_wp_using_ext_object_cache'] = true;
+
+		$writer = new Entity_Map_Repository();
+		$writer->save( 'crm', 'contact', 10, 42, 'res.partner' );
+		$writer->flush_cache(); // Bumps the generation salt.
+
+		$reader                     = new Entity_Map_Repository();
+		$this->wpdb->get_var_return = null;
+
+		$this->assertNull( $reader->get_odoo_id( 'crm', 'contact', 10 ), 'Generation bump should make the old persistent entry unreachable.' );
+	}
+
+	public function test_remove_invalidates_persistent_entry(): void {
+		$GLOBALS['_wp_using_ext_object_cache'] = true;
+
+		$writer = new Entity_Map_Repository();
+		$writer->save( 'crm', 'contact', 10, 42, 'res.partner' );
+		$writer->remove( 'crm', 'contact', 10 );
+
+		$reader                     = new Entity_Map_Repository();
+		$this->wpdb->get_var_return = null;
+
+		$this->assertNull( $reader->get_odoo_id( 'crm', 'contact', 10 ), 'Removed mapping must be evicted from the persistent cache.' );
 	}
 
 	// ─── Helpers ───────────────────────────────────────────

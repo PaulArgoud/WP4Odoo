@@ -5,12 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [3.9.2] - Unreleased
+## [3.9.2] - 2026-06-11
+
+### Added
+- **Persistent entity-map cache** — `Entity_Map_Repository` now layers an optional cross-request object cache (active only when an external object cache such as Redis/Memcached is installed) over the per-request array cache. Positive WP↔Odoo ID mappings are cached, scoped per blog, and invalidated via a generation salt on flush/bulk-delete and per-entry on `save()`/`remove()`/`invalidate_key()`
+
+### Changed
+- **`composer.lock` committed** — Removed `composer.lock` from `.gitignore` so CI dependency caching (`hashFiles('composer.lock')`) is effective and builds are reproducible
+- **Distribution packaging** — Added `.distignore` (clean release ZIP excluding tests, tooling, and dev artifacts) and a wordpress.org `readme.txt`
+- **CI** — Added the Composer dependency cache to the integration test job (previously only the unit and coverage jobs cached it)
 
 ### Fixed
 - **CI integration tests flaky** — Added retry with backoff (3 attempts, 15/30/45s) to `wp-env start` step to handle Docker Hub 429 rate limiting
 - **CI badge not displaying** — Fixed repository name in badge URL (`wordpress-for-odoo` → `wp4odoo`) in README
 - **Codecov token passing** — Moved `CODECOV_TOKEN` from `env` to `with.token` input, matching `codecov-action@v4` requirements
+- **Repository hygiene** — Removed stray `.po~` gettext backup files from version control and added `*.po~` to `.gitignore`
 
 ## [3.9.1] - 2026-02-23
 

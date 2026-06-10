@@ -35,6 +35,17 @@ class RateLimiterTest extends TestCase {
 		];
 	}
 
+	/**
+	 * Reset object-cache globals so the "external cache" flag does not leak
+	 * into later test classes (e.g. Entity_Map_Repository reads it).
+	 *
+	 * @return void
+	 */
+	protected function tearDown(): void {
+		$GLOBALS['_wp_cache']                  = [];
+		$GLOBALS['_wp_using_ext_object_cache'] = false;
+	}
+
 	// ─── Transient path (no external object cache) ───────
 
 	/**
