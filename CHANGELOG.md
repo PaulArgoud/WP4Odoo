@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **CI badge not displaying** — Fixed repository name in badge URL (`wordpress-for-odoo` → `wp4odoo`) in README
 - **Codecov token passing** — Moved `CODECOV_TOKEN` from `env` to `with.token` input, matching `codecov-action@v4` requirements
 - **Repository hygiene** — Removed stray `.po~` gettext backup files from version control and added `*.po~` to `.gitignore`
+- **CI Composer audit** — Switched `composer audit --no-dev` to `--locked` so the audit runs against the now-committed `composer.lock`; with only dev dependencies present, `--no-dev` left nothing to audit and failed under Composer 2's stricter check
 
 ## [3.9.1] - 2026-02-23
 
