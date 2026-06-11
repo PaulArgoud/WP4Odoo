@@ -9,11 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **Persistent entity-map cache** — `Entity_Map_Repository` now layers an optional cross-request object cache (active only when an external object cache such as Redis/Memcached is installed) over the per-request array cache. Positive WP↔Odoo ID mappings are cached, scoped per blog, and invalidated via a generation salt on flush/bulk-delete and per-entry on `save()`/`remove()`/`invalidate_key()`
+- **Automatic queue purge** — The daily maintenance cron now also deletes completed/failed sync-queue jobs beyond their retention window (filterable via `wp4odoo_queue_retention_days`, default 7 days). Previously only logs were auto-purged; the queue required a manual admin action or WP-CLI. Log and queue purges are isolated so one failure cannot block the other
 
 ### Changed
 - **`composer.lock` committed** — Removed `composer.lock` from `.gitignore` so CI dependency caching (`hashFiles('composer.lock')`) is effective and builds are reproducible
 - **Distribution packaging** — Added `.distignore` (clean release ZIP excluding tests, tooling, and dev artifacts) and a wordpress.org `readme.txt`
 - **CI** — Added the Composer dependency cache to the integration test job (previously only the unit and coverage jobs cached it)
+- **CI runner modernization** — Bumped GitHub Actions to Node 24-compatible majors (`actions/checkout@v5`, `actions/cache@v5`, `codecov/codecov-action@v5`) ahead of the June 16 2026 forced Node 20 removal
 
 ### Fixed
 - **CI integration tests flaky** — Added retry with backoff (3 attempts, 15/30/45s) to `wp-env start` step to handle Docker Hub 429 rate limiting

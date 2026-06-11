@@ -129,7 +129,7 @@ final class WP4Odoo_Plugin {
 
 		// Cron for sync
 		add_action( 'wp4odoo_scheduled_sync', [ $this, 'run_scheduled_sync' ] );
-		add_action( 'wp4odoo_log_cleanup', [ $this, 'run_log_cleanup' ] );
+		add_action( 'wp4odoo_log_cleanup', [ $this, 'run_scheduled_maintenance' ] );
 		add_filter( 'cron_schedules', [ $this, 'add_cron_intervals' ] );
 
 		// WooCommerce HPOS compatibility
@@ -355,13 +355,31 @@ final class WP4Odoo_Plugin {
 	}
 
 	/**
-	 * Run automatic log cleanup (daily WP-Cron event).
+	 * Run daily maintenance (WP-Cron event).
 	 *
-	 * Deletes log entries older than the configured retention period.
+	 * Purges log entries past their retention period and completed/failed
+	 * queue jobs older than the queue retention window. Each task is isolated
+	 * so a failure in one cannot prevent the other from running.
+	 *
+	 * The hook name (`wp4odoo_log_cleanup`) is retained for backward
+	 * compatibility with events already scheduled on live installs.
 	 */
-	public function run_log_cleanup(): void {
-		$logger = new WP4Odoo\Logger( 'system', $this->settings );
-		$logger->cleanup();
+	public function run_scheduled_maintenance(): void {
+		try {
+			$logger = new WP4Odoo\Logger( 'system', $this->settings );
+			$logger->cleanup();
+		} catch ( \Throwable ) {
+			// A cleanup failure must not abort the rest of the maintenance run.
+		}
+
+		try {
+			$queue_retention_days = (int) apply_filters( 'wp4odoo_queue_retention_days', 7 );
+			if ( $queue_retention_days > 0 ) {
+				WP4Odoo\Queue_Manager::cleanup( $queue_retention_days );
+			}
+		} catch ( \Throwable ) {
+			// See above: isolate queue purge failures.
+		}
 	}
 
 	/**

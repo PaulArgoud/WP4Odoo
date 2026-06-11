@@ -66,9 +66,9 @@ Yes. Each site in a network can sync with a specific Odoo company, sharing a sin
 == Changelog ==
 
 = 3.9.2 =
-* Added: Optional persistent object-cache layer for WP↔Odoo entity mappings (Redis/Memcached).
-* Changed: Distribution packaging (.distignore, readme.txt) and reproducible builds (committed composer.lock); CI dependency caching for integration tests.
-* Fixed: CI integration test flakiness (wp-env start retry with backoff), README CI badge URL, Codecov token passing.
+* Added: Optional persistent object-cache layer for WP↔Odoo entity mappings (Redis/Memcached); automatic daily purge of completed/failed queue jobs.
+* Changed: Distribution packaging (.distignore, readme.txt) and reproducible builds (committed composer.lock); CI dependency caching and Node 24-compatible GitHub Actions.
+* Fixed: CI integration test flakiness (wp-env start retry with backoff), README CI badge URL, Codecov token passing, Composer audit.
 
 = 3.9.1 =
 * Fixed: WP Crowdfunding 2.x compatibility, unescaped admin outputs, PHPDoc array types.
