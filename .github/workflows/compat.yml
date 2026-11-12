@@ -1,0 +1,90 @@
+name: Compatibility (latest Odoo + latest plugins)
+
+# Runs the plugin against REAL Odoo servers (Docker) and the latest releases of the
+# free third-party plugins, inside wp-env. Complements the weekly API Surface scan
+# (source-level) with an execution-level check. See tests/compat/README.md.
+on:
+  schedule:
+    - cron: '0 5 * * 1' # Weekly on Monday at 5:00 UTC
+  workflow_dispatch:
+  push:
+    paths:
+      - 'tests/compat/**'
+      - '.github/workflows/compat.yml'
+
+jobs:
+  compat:
+    name: Odoo 19 / 20 and latest plugins
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: wp4odoo
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          path: wp4odoo
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, xml, json, sodium
+          tools: composer:v2
+          coverage: none
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist --no-dev
+
+      - name: Install npm dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Start wp-env
+        run: |
+          for i in 1 2 3; do
+            npx wp-env start && break
+            echo "Attempt $i failed (likely rate-limited), retrying in $((i * 15))s…"
+            sleep $((i * 15))
+          done
+
+      - name: Start and initialise Odoo 19 and 20
+        run: tests/compat/odoo-setup.sh
+
+      - name: Attach Odoo to the wp-env network
+        run: tests/compat/connect-network.sh
+
+      - name: Odoo schema — mapped fields exist (or are renamed)
+        run: npx wp-env run tests-cli wp eval-file wp-content/plugins/wp4odoo/tests/compat/odoo-fields.php
+
+      - name: Odoo flows — JSON-2, JSON-RPC and XML-RPC
+        if: always()
+        run: npx wp-env run tests-cli wp eval-file wp-content/plugins/wp4odoo/tests/compat/odoo-flows.php
+
+      - name: Latest plugin releases — detection and dependency checks
+        if: always()
+        shell: bash
+        run: npx wp-env run tests-cli bash wp-content/plugins/wp4odoo/tests/compat/plugins.sh | tee "$RUNNER_TEMP/plugins.log"
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo '### Compatibility run'
+            echo
+            echo '```'
+            grep -E '^\[(PASS|FAIL|KNOWN)\]|verified' "$RUNNER_TEMP/plugins.log" || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Stop wp-env and Odoo
+        if: always()
+        run: |
+          npx wp-env stop || true
+          docker compose -f tests/compat/docker-compose.odoo.yml down -v || true

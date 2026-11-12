@@ -36,3 +36,8 @@ messages.po
 
 # Environment / Secrets
 .env
+# Compatibility run: generated Odoo API keys
+tests/compat/.keys/
+
+# Stray files created by SMB network volumes
+.smbdelete*

@@ -214,7 +214,7 @@ composer install
 composer check          # Runs PHPCS + PHPUnit + PHPStan (mirrors CI)
 ```
 
-Integration tests require Docker.
+Integration tests require Docker. A compatibility run against real Odoo servers and the latest releases of the free third-party plugins is described in [tests/compat/README.md](tests/compat/README.md).
 
 - 📖 [ARCHITECTURE.md](ARCHITECTURE.md) — Class diagrams, data flows, REST API endpoints, hooks & filters reference
 - 📝 [CHANGELOG.md](CHANGELOG.md) — Version history

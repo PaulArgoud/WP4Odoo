@@ -166,6 +166,14 @@ class Odoo_XmlRPC extends Odoo_Transport_Base {
 				$context['method'] = $params[4];
 			}
 
+			// Odoo's XML-RPC server cannot serialise a `None` result (e.g. stock.quant
+			// action_apply_inventory). The method has already run and committed when
+			// the response is built, so this fault is a successful call without a value.
+			if ( str_contains( (string) $fault_string, 'cannot marshal None unless allow_none is enabled' ) ) {
+				$this->logger->debug( 'Odoo XML-RPC call returned None (not serialisable); treated as success.', $context );
+				return null;
+			}
+
 			$this->logger->error( 'Odoo XML-RPC fault.', $context );
 
 			throw new \RuntimeException(

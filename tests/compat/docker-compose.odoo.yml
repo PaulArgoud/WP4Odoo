@@ -1,0 +1,33 @@
+# Odoo instances used by the compatibility run (tests/compat).
+# Started and initialised by odoo-setup.sh; add a version here to cover it.
+name: wp4odoo-compat
+
+services:
+  pg:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: odoo
+      POSTGRES_PASSWORD: odoo
+      POSTGRES_DB: postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U odoo"]
+      interval: 3s
+      retries: 20
+
+  odoo19:
+    image: odoo:19.0
+    depends_on:
+      pg:
+        condition: service_healthy
+    ports: ["8069:8069"]
+    environment: { HOST: pg, USER: odoo, PASSWORD: odoo }
+    command: ["odoo", "-d", "db19", "--db-filter=^db19$$"]
+
+  odoo20:
+    image: odoo:20.0
+    depends_on:
+      pg:
+        condition: service_healthy
+    ports: ["8070:8069"]
+    environment: { HOST: pg, USER: odoo, PASSWORD: odoo }
+    command: ["odoo", "-d", "db20", "--db-filter=^db20$$"]
