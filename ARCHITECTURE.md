@@ -348,7 +348,7 @@ WordPress For Odoo/
 │   ├── class-sync-result.php          # Value object: success/fail, ?int entity_id, error message, Error_Type
 │   ├── class-error-type.php           # Backed enum: Transient, Permanent (retry strategy)
 │   ├── class-odoo-model.php           # String-backed enum: 47 Odoo model names (mrp.bom, mrp.bom.line, product.pricelist, stock.picking, etc.)
-│   ├── class-database-migration.php   # Table creation (dbDelta), default options, versioned migrations (schema_version)
+│   ├── class-database-migration.php   # Table creation (plain CREATE TABLE IF NOT EXISTS), ensure_tables() self-repair, default options, versioned migrations (schema_version)
 │   ├── class-settings-repository.php  # Centralized option access: keys, defaults, typed accessors (DI)
 │   ├── class-module-registry.php      # Module registration, mutual exclusivity, lifecycle
 │   ├── class-module-base.php          # Abstract base class for modules (mapping, anti-loop, trait composition)
@@ -386,7 +386,7 @@ WordPress For Odoo/
 │   ├── class-schema-drop-log.php     # Fields dropped from pushes (unknown to the Odoo version): batched option write, shown in the Health tab
 │   ├── class-schema-cache.php        # fields_get() cache (memory + transient) for field validation; flush_all() clears transients + fires action
 │   ├── class-reconciler.php          # Entity map reconciliation against live Odoo records
-│   ├── class-cli.php                 # WP-CLI commands (loaded only in CLI context, includes cleanup orphans, cache flush)
+│   ├── class-cli.php                 # WP-CLI commands (loaded only in CLI context); uses the CLI_Queue_Commands, CLI_Module_Commands, CLI_System_Commands (health, db, breaker, logs) and CLI_Config_Commands (connection, webhook, bulk products) traits
 │   ├── trait-cli-queue-commands.php   # CLI queue subcommands (stats, list, retry, cleanup, cancel)
 │   ├── trait-cli-module-commands.php  # CLI module subcommands (list, enable, disable)
 │   └── class-logger.php              # DB-backed logger with level filtering, 4KB context truncation, for_channel() factory, write buffer (50 entries, flush at threshold or shutdown)
@@ -419,7 +419,7 @@ WordPress For Odoo/
 │   └── customer-portal.php           #   Customer portal HTML template (orders/invoices tabs)
 │
 ├── tests/compat/                      # Compatibility run: real Odoo 19/20 + latest free plugins (see tests/compat/README.md)
-├── tests/                             # 5618 unit tests (8503 assertions) + 50 integration tests (wp-env)
+├── tests/                             # 5633 unit tests (8551 assertions) + 52 integration tests (wp-env)
 │   ├── bootstrap.php                 #   Unit test bootstrap: constants, stub loading, plugin class requires
 │   ├── bootstrap-integration.php     #   Integration test bootstrap: loads WP test framework (wp-env)
 │   ├── stubs/
@@ -482,7 +482,8 @@ WordPress For Odoo/
 │   │   └── MockTransport.php            #   Shared mock Transport for API tests
 │   ├── Integration/                       #   wp-env integration tests (real WordPress + MySQL)
 │   │   ├── WP4Odoo_TestCase.php          #   Base test case for integration tests
-│   │   ├── DatabaseMigrationTest.php     #   7 tests for table creation, options seeding
+│   │   ├── DatabaseMigrationTest.php     #   9 tests for table creation (from scratch + self-repair regression for issue #4), options seeding
+│   │   ├── XmlRpcTransportTest.php       #   3 tests for XML-RPC fault handling (real IXR parser)
 │   │   ├── EntityMapRepositoryTest.php   #   7 tests for entity map CRUD
 │   │   ├── SyncQueueRepositoryTest.php   #   10 tests for sync queue operations
 │   │   └── SyncEngineLockTest.php        #   2 tests for advisory locking
@@ -508,6 +509,10 @@ WordPress For Odoo/
 │       ├── OdooAuthTest.php             #   20 tests for Odoo_Auth
 │       ├── OdooClientTest.php           #   21 tests for Odoo_Client
 │       ├── OdooJson2Test.php            #   17 tests for Odoo_Json2 (auth, argument translation, errors, classification)
+│       ├── OdooJsonRpcTest.php          #   4 tests for Odoo_JsonRPC authentication (API key via common.authenticate, session fallback)
+│       ├── SchemaReconciliationTest.php #   10 tests for orchestrator-level schema reconciliation (renames, drops, dual-model, Health log)
+│       ├── SchemaDropLogTest.php        #   5 tests for Schema_Drop_Log
+│       ├── ModuleDetectionTest.php      #   Tests that every registry module has a static detect() consistent with the stubs
 │       ├── QueryServiceTest.php         #   15 tests for Query_Service
 │       ├── ContactRefinerTest.php       #   19 tests for Contact_Refiner
 │       ├── SettingsPageTest.php         #   22 tests for Settings_Page
@@ -646,7 +651,7 @@ WordPress For Odoo/
 │       ├── WPERPModuleTest.php         # 101 tests for WP ERP module
 │       ├── ErrorClassificationTest.php # 19 tests for Error_Classification trait
 │       ├── PushDedupLockTest.php      #   6 tests for Push_Lock advisory lock
-│       ├── DatabaseMigrationTest.php  #   9 tests for Database_Migration (migrations 1–10)
+│       ├── DatabaseMigrationTest.php  #   16 tests for Database_Migration (migrations 1–10, ensure_tables() self-repair)
 │       ├── MultisiteTest.php          #   29 tests for multisite (blog_id scoping, company_id, network fallback)
 │       ├── JetBookingModuleTest.php   # Tests for Jet_Booking_Module
 │       ├── JetBookingHandlerTest.php  # Tests for Jet_Booking_Handler
@@ -661,7 +666,7 @@ WordPress For Odoo/
 │       ├── FieldServiceModuleTest.php #  63 tests for Field_Service_Module
 │       └── FluentSupportModuleTest.php # 26 tests for Fluent_Support_Module
 │
-├── uninstall.php                      # Cleanup on plugin uninstall
+├── uninstall.php                      # Full cleanup on uninstall: tables, options, transients, own CPT posts, added post/user/term/HPOS meta, cron, object cache; every site + network options on multisite
 │
 └── languages/                         # i18n files
     ├── wp4odoo.pot          #   Gettext template (source strings)
@@ -1157,9 +1162,9 @@ Translation_Service
 
 ## Database
 
-### Tables Created on Activation
+### Tables
 
-Managed via `dbDelta()` in `Database_Migration::create_tables()`, which runs at activation and, as a self-repair, from `Database_Migration::ensure_tables()` on `plugins_loaded` (stored plugin version differs from the running one, or — in admin/cron requests, at most every 12 h — a table is missing; failures are kept in the `wp4odoo_db_error` option and shown as an admin notice and in the Health tab). Schema upgrades use versioned migrations (`run_migrations()` with `schema_version` tracking):
+Created by `Database_Migration::create_tables()` with plain `CREATE TABLE IF NOT EXISTS` statements, executed one by one (not through `dbDelta()`: it indexes statements by the word after `CREATE TABLE`, which is `IF` for all of them, so only the last statement ran and the queue and entity-map tables were never created). It runs at activation and, as a self-repair, from `Database_Migration::ensure_tables()` on `plugins_loaded` (stored plugin version differs from the running one, or — in admin/cron requests, at most every 12 h — a table is missing; failures are kept in the `wp4odoo_db_error` option and shown as an admin notice and in the Health tab). Schema upgrades use versioned migrations (`run_migrations()` with `schema_version` tracking):
 
 **`{prefix}wp4odoo_sync_queue`** — Sync queue
 - Primary index: `(status, priority, scheduled_at)` for efficient polling
@@ -2505,7 +2510,14 @@ Shared service for managing WP user ↔ Odoo `res.partner` relationships. Access
 |---------|--------|
 | `wp wp4odoo status` | Connection info, queue stats, module list |
 | `wp wp4odoo test` | Test Odoo connection |
-| `wp wp4odoo sync run` | Process sync queue |
+| `wp wp4odoo sync run` | Process sync queue (`--dry-run`, `--yes`, `--blog_id`) |
+| `wp wp4odoo sync export-products` / `import-products` | Queue every WooCommerce product for Odoo / every Odoo product for WooCommerce (`--yes`) |
+| `wp wp4odoo health` | Health report, one row per check (`--format`; exits 1 on error, `--strict` also on warning) |
+| `wp wp4odoo db status` / `db repair` | Show the plugin tables / create missing tables and apply pending migrations |
+| `wp wp4odoo breaker status` / `breaker reset [<module>]` | Show or reset the circuit breakers |
+| `wp wp4odoo logs list` / `logs purge` | Browse logs (`--level`, `--module`, `--since`, `--until`, `--page`, `--per-page`, `--format`) / purge by retention (`--all --yes` deletes everything) |
+| `wp wp4odoo connection show` / `connection set` | Show (key masked) or change the Odoo connection (`--odoo-url`, `--database`, `--username`, `--api-key`, `--protocol`, `--timeout`, `--company-id`, `--allow-private-url`, `--test`) |
+| `wp wp4odoo webhook show` / `webhook rotate` | Show the webhook URL and token / generate a new token |
 | `wp wp4odoo queue stats` | Queue statistics (supports `--format`) |
 | `wp wp4odoo queue list` | Paginated job list (`--page`, `--per-page`) |
 | `wp wp4odoo queue retry` | Retry all failed jobs |
@@ -2514,6 +2526,7 @@ Shared service for managing WP user ↔ Odoo `res.partner` relationships. Access
 | `wp wp4odoo module list` | List modules with status |
 | `wp wp4odoo module enable <id>` | Enable a module (enforces mutual exclusivity) |
 | `wp wp4odoo module disable <id>` | Disable a module |
+| `wp wp4odoo module info <id>` / `settings <id>` / `set <id> <key> <value>` | Dependency status and models / effective settings / change one scalar setting |
 | `wp wp4odoo reconcile <module> <entity>` | Detect orphaned entity_map entries (`--fix` to remove, `--yes` to skip confirmation) |
 | `wp wp4odoo cleanup orphans` | Remove entity_map entries where WP post no longer exists (`--module`, `--dry-run`, `--yes`) |
 | `wp wp4odoo cache flush` | Flush Odoo schema cache (memory + transients) |

@@ -21,6 +21,8 @@ class CLI {
 
 	use CLI_Queue_Commands;
 	use CLI_Module_Commands;
+	use CLI_System_Commands;
+	use CLI_Config_Commands;
 
 	/**
 	 * Query service instance.
@@ -179,9 +181,12 @@ class CLI {
 	}
 
 	/**
-	 * Run sync queue processing.
+	 * Run sync queue processing, or bulk-queue products.
 	 *
 	 * ## OPTIONS
+	 *
+	 * [<subcommand>]
+	 * : run (default), export-products or import-products.
 	 *
 	 * [--dry-run]
 	 * : Preview what would be synced without making any changes.
@@ -198,6 +203,8 @@ class CLI {
 	 *     wp wp4odoo sync run --dry-run
 	 *     wp wp4odoo sync run --yes
 	 *     wp wp4odoo sync run --blog_id=3
+	 *     wp wp4odoo sync export-products --yes   # queue every WooCommerce product for Odoo
+	 *     wp wp4odoo sync import-products --yes   # queue every Odoo product for WooCommerce
 	 *
 	 * @subcommand sync
 	 * @when after_wp_load
@@ -208,9 +215,14 @@ class CLI {
 		try {
 			$sub = $args[0] ?? 'run';
 
+			if ( 'export-products' === $sub || 'import-products' === $sub ) {
+				$this->bulk_products( 'export-products' === $sub ? 'export' : 'import', $assoc_args );
+				return;
+			}
+
 			if ( 'run' !== $sub ) {
 				/* translators: %s: subcommand name */
-				\WP_CLI::error( sprintf( __( 'Unknown subcommand: %s. Usage: wp wp4odoo sync run', 'wp4odoo' ), $sub ) );
+				\WP_CLI::error( sprintf( __( 'Unknown subcommand: %s. Available: run, export-products, import-products', 'wp4odoo' ), $sub ) );
 			}
 
 			$dry_run = isset( $assoc_args['dry-run'] );
@@ -422,6 +434,9 @@ class CLI {
 	 *
 	 * ## OPTIONS
 	 *
+	 * [<subcommand>]
+	 * : orphans (default).
+	 *
 	 * [--module=<module>]
 	 * : Only clean up a specific module (e.g. crm, woocommerce).
 	 *
@@ -552,6 +567,9 @@ class CLI {
 	 *     wp wp4odoo module list
 	 *     wp wp4odoo module enable crm
 	 *     wp wp4odoo module disable crm
+	 *     wp wp4odoo module info woocommerce
+	 *     wp wp4odoo module settings woocommerce
+	 *     wp wp4odoo module set woocommerce sync_stock false
 	 *
 	 * @subcommand module
 	 * @when after_wp_load
@@ -560,11 +578,226 @@ class CLI {
 		$sub = $args[0] ?? 'list';
 
 		match ( $sub ) {
-			'list'    => $this->module_list(),
-			'enable'  => $this->module_toggle( $args[1] ?? '', true ),
-			'disable' => $this->module_toggle( $args[1] ?? '', false ),
+			'list'     => $this->module_list(),
+			'enable'   => $this->module_toggle( $args[1] ?? '', true ),
+			'disable'  => $this->module_toggle( $args[1] ?? '', false ),
+			'info'     => $this->module_info( $args[1] ?? '' ),
+			'settings' => $this->module_settings( $args[1] ?? '' ),
+			'set'      => $this->module_set( $args[1] ?? '', $args[2] ?? '', $args[3] ?? '' ),
 			/* translators: %s: subcommand name */
-			default   => \WP_CLI::error( sprintf( __( 'Unknown subcommand: %s. Available: list, enable, disable', 'wp4odoo' ), $sub ) ),
+			default    => \WP_CLI::error( sprintf( __( 'Unknown subcommand: %s. Available: list, enable, disable, info, settings, set', 'wp4odoo' ), $sub ) ),
 		};
+	}
+
+	/**
+	 * Print the health report: connection, database, queue, circuit breakers, cron, compatibility.
+	 *
+	 * Exits with status 1 when a check is in error, so it can be used for monitoring.
+	 *
+	 * ## OPTIONS
+	 *
+	 * [--format=<format>]
+	 * : Output format: table, json, csv or yaml.
+	 * ---
+	 * default: table
+	 * ---
+	 *
+	 * [--strict]
+	 * : Also exit with status 1 when a check is in warning.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     wp wp4odoo health
+	 *     wp wp4odoo health --format=json --strict
+	 *
+	 * @subcommand health
+	 * @when after_wp_load
+	 *
+	 * @since 3.10.0
+	 */
+	public function health( array $args, array $assoc_args = [] ): void {
+		$this->health_report( $assoc_args );
+	}
+
+	/**
+	 * Inspect or repair the plugin's database tables.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     wp wp4odoo db status
+	 *     wp wp4odoo db repair
+	 *
+	 * @subcommand db
+	 * @when after_wp_load
+	 *
+	 * @since 3.10.0
+	 */
+	public function db( array $args ): void {
+		$sub = $args[0] ?? 'status';
+
+		match ( $sub ) {
+			'status' => $this->db_status(),
+			'repair' => $this->db_repair(),
+			/* translators: %s: subcommand name */
+			default  => \WP_CLI::error( sprintf( __( 'Unknown subcommand: %s. Available: status, repair', 'wp4odoo' ), $sub ) ),
+		};
+	}
+
+	/**
+	 * Show or reset the circuit breakers (global and per module).
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     wp wp4odoo breaker status
+	 *     wp wp4odoo breaker reset
+	 *     wp wp4odoo breaker reset woocommerce
+	 *
+	 * @subcommand breaker
+	 * @when after_wp_load
+	 *
+	 * @since 3.10.0
+	 */
+	public function breaker( array $args ): void {
+		$this->breaker_run( $args );
+	}
+
+	/**
+	 * List or purge the plugin logs.
+	 *
+	 * ## OPTIONS
+	 *
+	 * [<subcommand>]
+	 * : list (default) or purge.
+	 *
+	 * [--level=<level>]
+	 * : Only entries of this level (debug, info, warning, error, critical).
+	 *
+	 * [--module=<module>]
+	 * : Only entries of this module.
+	 *
+	 * [--since=<date>]
+	 * : Only entries from this date (Y-m-d).
+	 *
+	 * [--until=<date>]
+	 * : Only entries up to this date (Y-m-d).
+	 *
+	 * [--page=<n>] [--per-page=<n>]
+	 * : Pagination (default 30 per page, max 500).
+	 *
+	 * [--format=<format>]
+	 * : Output format: table, json, csv or yaml.
+	 *
+	 * [--all]
+	 * : With "purge": delete every entry instead of applying the retention period.
+	 *
+	 * [--yes]
+	 * : Skip the confirmation prompt of "purge --all".
+	 *
+	 * [--blog_id=<id>]
+	 * : Target a specific site in multisite.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     wp wp4odoo logs list --level=error --since=2026-11-01
+	 *     wp wp4odoo logs list --module=woocommerce --format=json
+	 *     wp wp4odoo logs purge
+	 *     wp wp4odoo logs purge --all --yes
+	 *
+	 * @subcommand logs
+	 * @when after_wp_load
+	 *
+	 * @since 3.10.0
+	 */
+	public function logs( array $args, array $assoc_args = [] ): void {
+		$switched = $this->maybe_switch_blog( $assoc_args );
+
+		try {
+			$this->logs_run( $args, $assoc_args );
+		} finally {
+			if ( $switched ) {
+				restore_current_blog();
+			}
+		}
+	}
+
+	/**
+	 * Show or change the Odoo connection settings.
+	 *
+	 * ## OPTIONS
+	 *
+	 * [<subcommand>]
+	 * : show (default) or set.
+	 *
+	 * [--odoo-url=<url>]
+	 * : Odoo URL (not --url, which is WP-CLI's own option for the WordPress site).
+	 *
+	 * [--database=<name>]
+	 * : Odoo database.
+	 *
+	 * [--username=<login>]
+	 * : Odoo login.
+	 *
+	 * [--api-key=<key>]
+	 * : Odoo API key (stored encrypted). Kept unchanged when omitted.
+	 *
+	 * [--protocol=<protocol>]
+	 * : jsonrpc, json2 (Odoo 19+) or xmlrpc.
+	 *
+	 * [--timeout=<seconds>]
+	 * : HTTP timeout (5-120).
+	 *
+	 * [--company-id=<id>]
+	 * : Odoo company (res.company) to scope API calls to; 0 for the user's default company.
+	 *
+	 * [--allow-private-url]
+	 * : Accept a private or local URL (refused by default).
+	 *
+	 * [--test]
+	 * : Test the connection after saving.
+	 *
+	 * [--format=<format>]
+	 * : Output format for "show".
+	 *
+	 * [--blog_id=<id>]
+	 * : Target a specific site in multisite.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     wp wp4odoo connection show
+	 *     wp wp4odoo connection set --odoo-url=https://erp.example.com --database=prod --username=api@example.com --api-key=xxxx --protocol=json2 --test
+	 *     wp wp4odoo connection set --company-id=3
+	 *
+	 * @subcommand connection
+	 * @when after_wp_load
+	 *
+	 * @since 3.10.0
+	 */
+	public function connection( array $args, array $assoc_args = [] ): void {
+		$switched = $this->maybe_switch_blog( $assoc_args );
+
+		try {
+			$this->connection_run( $args, $assoc_args );
+		} finally {
+			if ( $switched ) {
+				restore_current_blog();
+			}
+		}
+	}
+
+	/**
+	 * Show or rotate the webhook token used by Odoo to call this site.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     wp wp4odoo webhook show
+	 *     wp wp4odoo webhook rotate --yes
+	 *
+	 * @subcommand webhook
+	 * @when after_wp_load
+	 *
+	 * @since 3.10.0
+	 */
+	public function webhook( array $args, array $assoc_args = [] ): void {
+		$this->webhook_run( $args, $assoc_args );
 	}
 }

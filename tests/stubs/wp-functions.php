@@ -898,3 +898,15 @@ if ( ! function_exists( 'wp_doing_cron' ) ) {
 		return (bool) ( $GLOBALS['_wp_doing_cron'] ?? false );
 	}
 }
+
+if ( ! function_exists( 'get_bloginfo' ) ) {
+	function get_bloginfo( $show = '' ) {
+		return 'version' === $show ? '7.1' : 'Test Site';
+	}
+}
+
+if ( ! function_exists( 'human_time_diff' ) ) {
+	function human_time_diff( $from, $to = 0 ) {
+		return abs( ( $to ?: time() ) - $from ) . ' seconds';
+	}
+}

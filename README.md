@@ -21,12 +21,13 @@ Modular WordPress plugin that creates a seamless, bidirectional bridge between W
 - **Triple Transport** — JSON-RPC 2.0 (default for Odoo 17+), JSON-2 (Odoo 19+, bearer API key — Odoo's replacement for the deprecated RPC endpoints) and XML-RPC (legacy), swappable via settings, shared HTTP layer via `Retryable_Http` trait. Retry orchestration at queue level (exponential backoff via `Sync_Engine`)
 - **Encrypted Credentials** — API keys encrypted at rest with libsodium (OpenSSL fallback)
 - **Webhooks** — REST API endpoints for real-time notifications from Odoo, with per-IP rate limiting
-- **Admin Dashboard** — 6-tab settings interface (Connection, Sync, Modules, Queue, Logs, Health) with guided onboarding and system health monitoring
+- **Admin Dashboard** — 6-tab settings interface (Connection, Sync, Modules, Queue, Logs, Health) with guided onboarding and system health monitoring. The Health tab also shows the detected Odoo version, the state of the plugin's database tables, the fields skipped on push because the Odoo version does not have them, and the plugins running above their tested version
+- **Self-healing database** — Missing tables or pending migrations (files copied or updated in place, activation hook skipped) are repaired automatically on the next admin request; a failure is reported in an admin notice and the Health tab
 - **WP-CLI** — Full command suite: `wp wp4odoo status|test|sync|queue|module` for headless management
 - **WPML / Polylang Translation Sync** — Multilingual product sync via WPML or Polylang: pushes translated names/descriptions to Odoo with language context, pulls translations back to create/update translated posts. Category and attribute value translations included
 - **Multisite** — WordPress Multisite support: each site in a network syncs with a specific Odoo company (`res.company`). Shared network connection with per-site company_id mapping. Network admin page for centralized configuration
 - **Extensible** — Register custom modules via `wp4odoo_register_modules`; filter data with `wp4odoo_map_to_odoo_*` / `wp4odoo_map_from_odoo_*`; map ACF or JetEngine custom fields to Odoo via meta-modules
-- **Multilingual** — 1022 translatable strings, ships with English, French, and Spanish. Translation-ready via `.po`/`.mo`
+- **Multilingual** — 1074 translatable strings, ships with English, French, and Spanish. Translation-ready via `.po`/`.mo`
 
 ## Requirements
 
@@ -46,14 +47,14 @@ PHP 8.2+, MySQL 8.0+ / MariaDB 10.5+, WordPress 6.0+, Odoo 17+ (JSON-RPC / JSON-
 >
 > ³ Works with both Odoo **Community** (free) and **Enterprise** editions — all required apps are included in Community.
 
-- **Odoo 17+** — uses JSON-RPC 2.0 (default, recommended). Verified against live Odoo 19.0 and 20.0 instances (core flows: Contacts, CRM, Sales, Invoicing, Inventory) over JSON-RPC, XML-RPC and JSON-2
+- **Odoo 17+** — uses JSON-RPC 2.0 (default, recommended); it authenticates with an Odoo API key or a password. Verified against live Odoo 19.0 and 20.0 instances (core flows: Contacts, CRM, Sales, Invoicing, Inventory) over JSON-RPC, XML-RPC and JSON-2
 - **Odoo 19+** — JSON-2 transport available (select *JSON-2* in the Connection tab). It authenticates with an Odoo API key only (passwords are not accepted) and, on Odoo 20, the key needs the `rpc` scope, which keys created from the Odoo user preferences have
 - **Odoo 14 – 16** — uses XML-RPC (legacy transport, select in plugin settings)
 - **Odoo < 14** — not supported (external API incompatibilities)
 
 WordPress compatibility: requires 6.0+, tested up to **WordPress 7.1** (PHP 8.3, WooCommerce 11.x).
 
-Odoo field changes: fields that a given Odoo version does not have (for example `res.partner.company_name` in Odoo 20) are skipped with a warning instead of making Odoo reject the record, and fields renamed between versions are translated automatically. The Odoo *Members* app (`membership`) does not exist in Odoo 19 and 20, so the membership modules (MemberPress, PMPro, RCP, WooCommerce Memberships) cannot push memberships there; Helpdesk, Subscriptions, Documents, Knowledge and Field Service remain Odoo Enterprise apps.
+Odoo field changes: fields that a given Odoo version does not have (for example `res.partner.company_name` in Odoo 20) are skipped with a warning (listed in the Health tab) instead of making Odoo reject the record, and fields renamed between versions are translated automatically. The Odoo *Members* app (`membership`) does not exist in Odoo 19 and 20, so the membership modules (MemberPress, PMPro, RCP, WooCommerce Memberships) cannot push memberships there; Helpdesk, Subscriptions, Documents, Knowledge and Field Service remain Odoo Enterprise apps.
 
 Stock sync on Odoo 18+: Odoo only holds stock for products that track inventory, so the plugin enables *Track Inventory* (`is_storable`) on the Odoo product automatically before pushing a stock quantity.
 
@@ -69,6 +70,8 @@ All hosting types expose the standard Odoo external API used by the plugin. No c
 4. Enter your Odoo credentials (URL, database, username, API key) in the **Connection** tab
 5. Click **Test Connection** to verify
 6. Enable the modules you need in the **Modules** tab
+
+If synchronization does nothing, open the **Health** tab: it reports missing database tables (which the plugin recreates automatically, or explains why it cannot, e.g. a database user without the `CREATE` privilege) and fields that were left out of the data sent to Odoo.
 
 ## Module System
 
@@ -166,6 +169,10 @@ Each Odoo domain is encapsulated in an independent module extending `Module_Base
 
 ```bash
 wp wp4odoo status                    # Connection info, queue stats, modules
+wp wp4odoo health                    # Health report (exits 1 on error; --strict also on warning)
+wp wp4odoo connection show           # Odoo connection (API key masked)
+wp wp4odoo connection set --odoo-url=https://erp.example.com --database=prod \
+    --username=api@example.com --api-key=xxxx --protocol=json2 --test
 wp wp4odoo test                      # Test Odoo connection
 wp wp4odoo sync run                  # Process sync queue
 wp wp4odoo sync run --dry-run        # Preview sync without changes
@@ -181,6 +188,13 @@ wp wp4odoo cache flush               # Flush Odoo schema cache
 wp wp4odoo module list               # List modules with status
 wp wp4odoo module enable crm         # Enable a module
 wp wp4odoo module disable crm        # Disable a module
+wp wp4odoo module info crm           # Dependency status, Odoo models
+wp wp4odoo module set crm archive_on_delete false   # Change a module setting
+wp wp4odoo sync export-products      # Queue every WooCommerce product for Odoo (import-products: the reverse)
+wp wp4odoo logs list --level=error   # Browse logs (logs purge to apply retention)
+wp wp4odoo db repair                 # Create missing tables, apply pending migrations
+wp wp4odoo breaker reset             # Reset circuit breakers
+wp wp4odoo webhook rotate            # New webhook token
 ```
 
 ### REST API & Hooks

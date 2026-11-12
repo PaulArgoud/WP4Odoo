@@ -131,6 +131,10 @@ if ( ! class_exists( 'WP_CLI' ) ) {
 			self::$calls[] = [ 'method' => 'confirm', 'args' => [ $message ] ];
 		}
 
+		public static function halt( int $return_code ): void {
+			self::$calls[] = [ 'method' => 'halt', 'args' => [ $return_code ] ];
+		}
+
 		public static function reset(): void {
 			self::$calls = [];
 		}

@@ -252,4 +252,185 @@ class CLITest extends TestCase {
 		$error_calls = $this->get_cli_calls( 'error' );
 		$this->assertNotEmpty( $error_calls, 'module(["unknown"]) should call WP_CLI::error()' );
 	}
+
+	// ─── Command declarations ─────────────────────────────
+
+	/**
+	 * WP-CLI validates arguments against the docblock synopsis: a command with an
+	 * OPTIONS block that does not declare its positional argument fails with
+	 * "Too many positional arguments" (this broke `sync run` and `cleanup orphans`).
+	 */
+	public function test_commands_with_an_options_block_declare_their_subcommand(): void {
+		$checked = 0;
+		foreach ( ( new \ReflectionClass( CLI::class ) )->getMethods( \ReflectionMethod::IS_PUBLIC ) as $method ) {
+			$doc = (string) $method->getDocComment();
+			if ( ! str_contains( $doc, '@subcommand' ) || ! str_contains( $doc, '## OPTIONS' ) ) {
+				continue;
+			}
+
+			$source = implode( '', array_slice( (array) file( (string) $method->getFileName() ), $method->getStartLine() - 1, $method->getEndLine() - $method->getStartLine() + 1 ) );
+			if ( ! str_contains( $source, '$args' ) || ! str_contains( $source, '$args[' ) && ! preg_match( '/\(\s*\$args\b/', $source ) ) {
+				continue; // The method does not read positional arguments.
+			}
+
+			++$checked;
+			$this->assertMatchesRegularExpression( '/^\s*\*\s*\[?<[a-z_]+>\]?\s*$/m', $doc, $method->getName() . '() reads positional arguments but its docblock declares none.' );
+		}
+
+		$this->assertGreaterThanOrEqual( 4, $checked, 'sync, cleanup, logs and connection read a subcommand.' );
+	}
+
+	public function test_every_documented_command_exists(): void {
+		foreach ( [ 'status', 'test', 'sync', 'queue', 'reconcile', 'cleanup', 'cache', 'module', 'health', 'db', 'breaker', 'logs', 'connection', 'webhook' ] as $command ) {
+			$this->assertTrue( method_exists( CLI::class, $command ), "wp wp4odoo $command is missing" );
+		}
+	}
+
+	// ─── health ───────────────────────────────────────────
+
+	public function test_health_reports_missing_tables_and_exits_with_an_error_status(): void {
+		$this->wpdb->get_var_return = null; // SHOW TABLES finds nothing.
+
+		$this->cli->health( [], [] );
+
+		$printed = $this->get_cli_calls( 'format_items' );
+		$this->assertNotEmpty( $printed );
+		$rows     = $printed[0]['args'][1];
+		$database = array_values( array_filter( $rows, fn( $r ) => 'database' === $r['check'] ) )[0];
+		$this->assertSame( 'error', $database['status'] );
+		$this->assertStringContainsString( 'wp wp4odoo db repair', $database['detail'] );
+		$this->assertSame( [ [ 'method' => 'halt', 'args' => [ 1 ] ] ], $this->get_cli_calls( 'halt' ) );
+	}
+
+	public function test_health_warns_when_the_connection_is_not_configured(): void {
+		$this->cli->health( [], [] );
+
+		$rows       = $this->get_cli_calls( 'format_items' )[0]['args'][1];
+		$connection = array_values( array_filter( $rows, fn( $r ) => 'connection' === $r['check'] ) )[0];
+		$this->assertSame( 'warning', $connection['status'] );
+	}
+
+	// ─── connection ───────────────────────────────────────
+
+	public function test_connection_set_requires_at_least_one_option(): void {
+		$this->cli->connection( [ 'set' ], [] );
+
+		$this->assertStringContainsString( 'Nothing to change', (string) $this->get_cli_calls( 'error' )[0]['args'][0] );
+	}
+
+	public function test_connection_set_rejects_an_invalid_protocol(): void {
+		$this->cli->connection( [ 'set' ], [ 'protocol' => 'soap' ] );
+
+		$this->assertStringContainsString( 'Invalid protocol', (string) $this->get_cli_calls( 'error' )[0]['args'][0] );
+	}
+
+	public function test_connection_set_rejects_private_urls_unless_forced(): void {
+		$this->cli->connection( [ 'set' ], [ 'odoo-url' => 'http://127.0.0.1:8069' ] );
+
+		$this->assertStringContainsString( 'public address', (string) $this->get_cli_calls( 'error' )[0]['args'][0] );
+		$this->assertArrayNotHasKey( 'wp4odoo_connection', $GLOBALS['_wp_options'] );
+	}
+
+	public function test_connection_set_stores_values_and_keeps_the_existing_api_key(): void {
+		\WP4Odoo\API\Odoo_Auth::save_credentials(
+			[
+				'url'      => 'https://erp.example.com',
+				'database' => 'prod',
+				'username' => 'api',
+				'api_key'  => 'secret-key',
+				'protocol' => 'jsonrpc',
+			]
+		);
+		\WP_CLI::reset();
+
+		$this->cli->connection( [ 'set' ], [ 'protocol' => 'json2', 'company-id' => '4', 'timeout' => '60' ] );
+
+		$credentials = \WP4Odoo\API\Odoo_Auth::get_credentials();
+		$this->assertSame( 'json2', $credentials['protocol'] );
+		$this->assertSame( 4, $credentials['company_id'] );
+		$this->assertSame( 60, $credentials['timeout'] );
+		$this->assertSame( 'secret-key', $credentials['api_key'], 'An omitted --api-key must not erase the stored key.' );
+		$this->assertSame( 'https://erp.example.com', $credentials['url'] );
+	}
+
+	public function test_connection_show_never_prints_the_api_key(): void {
+		\WP4Odoo\API\Odoo_Auth::save_credentials( [ 'url' => 'https://erp.example.com', 'database' => 'd', 'username' => 'u', 'api_key' => 'super-secret' ] );
+		\WP_CLI::reset();
+
+		$this->cli->connection( [ 'show' ], [] );
+
+		$rows = $this->get_cli_calls( 'format_items' )[0]['args'][1];
+		$this->assertStringNotContainsString( 'super-secret', (string) json_encode( $rows ) );
+	}
+
+	// ─── webhook ──────────────────────────────────────────
+
+	public function test_webhook_rotate_generates_and_stores_a_new_token(): void {
+		$settings = \WP4Odoo_Plugin::instance()->settings();
+		$settings->save_webhook_token( 'old-token' );
+
+		$this->cli->webhook( [ 'rotate' ], [ 'yes' => true ] );
+
+		$new = $settings->get_webhook_token();
+		$this->assertNotSame( 'old-token', $new );
+		$this->assertSame( 48, strlen( $new ) );
+		$this->assertNotEmpty( $this->get_cli_calls( 'confirm' ) );
+	}
+
+	// ─── unknown subcommands ──────────────────────────────
+
+	public function test_new_commands_reject_unknown_subcommands(): void {
+		$this->cli->db( [ 'bogus' ] );
+		$this->cli->breaker( [ 'bogus' ] );
+		$this->cli->logs( [ 'bogus' ], [] );
+		$this->cli->connection( [ 'bogus' ], [] );
+		$this->cli->webhook( [ 'bogus' ], [] );
+
+		$this->assertCount( 5, $this->get_cli_calls( 'error' ) );
+	}
+
+	// ─── module info / settings / set ─────────────────────
+
+	private function register_crm(): void {
+		\WP4Odoo_Plugin::instance()->register_module( 'crm', new \WP4Odoo\Modules\CRM_Module( wp4odoo_test_client_provider(), wp4odoo_test_entity_map(), wp4odoo_test_settings() ) );
+	}
+
+	public function test_module_set_updates_a_boolean_setting(): void {
+		$this->register_crm();
+
+		$this->cli->module( [ 'set', 'crm', 'archive_on_delete', 'false' ] );
+
+		$stored = \WP4Odoo_Plugin::instance()->settings()->get_module_settings( 'crm' );
+		$this->assertFalse( $stored['archive_on_delete'] );
+		$this->assertNotEmpty( $this->get_cli_calls( 'success' ) );
+	}
+
+	public function test_module_set_rejects_unknown_keys_and_bad_types(): void {
+		$this->register_crm();
+
+		$this->cli->module( [ 'set', 'crm', 'nope', '1' ] );
+		$this->cli->module( [ 'set', 'crm', 'archive_on_delete', 'maybe' ] );
+
+		$errors = $this->get_cli_calls( 'error' );
+		$this->assertStringContainsString( 'Unknown setting', (string) $errors[0]['args'][0] );
+		$this->assertStringContainsString( 'boolean', (string) $errors[1]['args'][0] );
+	}
+
+	public function test_module_info_and_settings_list_the_module(): void {
+		$this->register_crm();
+
+		$this->cli->module( [ 'info', 'crm' ] );
+		$this->cli->module( [ 'settings', 'crm' ] );
+
+		$tables = $this->get_cli_calls( 'format_items' );
+		$this->assertCount( 2, $tables );
+		$this->assertContains( 'res.partner, crm.lead', array_column( $tables[0]['args'][1], 'value' ) );
+		$this->assertContains( 'archive_on_delete', array_column( $tables[1]['args'][1], 'setting' ) );
+	}
+
+	public function test_module_commands_report_unknown_modules(): void {
+		$this->cli->module( [ 'info', 'nope' ] );
+
+		$this->assertStringContainsString( 'Unknown module', (string) $this->get_cli_calls( 'error' )[0]['args'][0] );
+	}
 }
