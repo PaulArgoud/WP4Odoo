@@ -3,14 +3,15 @@ declare( strict_types=1 );
 
 namespace WP4Odoo\Tests\Unit;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use WP4Odoo\Modules\WC_Addons_Module;
 
 /**
  * Unit tests for WC_Addons_Module.
  *
- * @covers \WP4Odoo\Modules\WC_Addons_Module
  */
+#[CoversClass(\WP4Odoo\Modules\WC_Addons_Module::class)]
 class WCAddonsModuleTest extends TestCase {
 
 	private WC_Addons_Module $module;

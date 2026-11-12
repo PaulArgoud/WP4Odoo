@@ -103,7 +103,7 @@ class Network_Admin {
 			'url'      => $url,
 			'database' => sanitize_text_field( wp_unslash( $_POST['wp4odoo_network_database'] ?? '' ) ),
 			'username' => sanitize_text_field( wp_unslash( $_POST['wp4odoo_network_username'] ?? '' ) ),
-			'protocol' => in_array( $_POST['wp4odoo_network_protocol'] ?? '', [ 'jsonrpc', 'xmlrpc' ], true )
+			'protocol' => in_array( $_POST['wp4odoo_network_protocol'] ?? '', [ 'jsonrpc', 'xmlrpc', 'json2' ], true )
 				? sanitize_key( $_POST['wp4odoo_network_protocol'] )
 				: 'jsonrpc',
 			'timeout'  => max( 5, min( 120, absint( $_POST['wp4odoo_network_timeout'] ?? 30 ) ) ),

@@ -3,6 +3,7 @@ declare( strict_types=1 );
 
 namespace WP4Odoo\Tests\Unit;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use WP4Odoo\Tests\Module_Test_Case;
 use WP4Odoo\Logger;
 use WP4Odoo\Modules\Survey_Quiz_Handler;
@@ -14,9 +15,9 @@ use WP4Odoo\Modules\Survey_Extractor;
  * Tests survey formatting, response formatting, question type mapping,
  * and plugin-specific data extraction from Ays Quiz Maker and QSM.
  *
- * @covers \WP4Odoo\Modules\Survey_Quiz_Handler
- * @covers \WP4Odoo\Modules\Survey_Extractor
  */
+#[CoversClass(\WP4Odoo\Modules\Survey_Quiz_Handler::class)]
+#[CoversClass(\WP4Odoo\Modules\Survey_Extractor::class)]
 class SurveyQuizHandlerTest extends Module_Test_Case {
 
 	private Survey_Quiz_Handler $handler;

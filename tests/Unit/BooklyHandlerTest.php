@@ -5,6 +5,7 @@ namespace WP4Odoo\Tests\Unit;
 
 use WP4Odoo\Logger;
 use WP4Odoo\Modules\Bookly_Handler;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -13,8 +14,8 @@ use PHPUnit\Framework\TestCase;
  * Tests service/booking loading, customer data retrieval,
  * and batch queries from Bookly's custom database tables via $wpdb.
  *
- * @covers \WP4Odoo\Modules\Bookly_Handler
  */
+#[CoversClass(\WP4Odoo\Modules\Bookly_Handler::class)]
 class BooklyHandlerTest extends TestCase {
 
 	private Bookly_Handler $handler;

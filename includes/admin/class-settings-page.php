@@ -254,7 +254,7 @@ class Settings_Page {
 			'database' => sanitize_text_field( $input['database'] ?? '' ),
 			'username' => sanitize_text_field( $input['username'] ?? '' ),
 			'api_key'  => '',
-			'protocol' => in_array( $input['protocol'] ?? '', [ 'jsonrpc', 'xmlrpc' ], true )
+			'protocol' => in_array( $input['protocol'] ?? '', [ 'jsonrpc', 'xmlrpc', 'json2' ], true )
 				? $input['protocol']
 				: 'jsonrpc',
 			'timeout'  => max( 5, min( 120, absint( $input['timeout'] ?? 30 ) ) ),

@@ -3,6 +3,7 @@ declare( strict_types=1 );
 
 namespace WP4Odoo\Tests\Unit;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use WP4Odoo\Modules\WPERP_Module;
 use WP4Odoo\Modules\WPERP_Handler;
 use WP4Odoo\Tests\Module_Test_Case;
@@ -14,9 +15,9 @@ use WP4Odoo\Tests\Module_Test_Case;
  * (load, save, delete, parse, status mapping, dependency resolution),
  * hook callbacks, pull guards, dedup domains, and push dependency chain.
  *
- * @covers \WP4Odoo\Modules\WPERP_Module
- * @covers \WP4Odoo\Modules\WPERP_Handler
  */
+#[CoversClass(\WP4Odoo\Modules\WPERP_Module::class)]
+#[CoversClass(\WP4Odoo\Modules\WPERP_Handler::class)]
 class WPERPModuleTest extends Module_Test_Case {
 
 	private WPERP_Module $module;

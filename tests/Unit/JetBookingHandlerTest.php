@@ -5,6 +5,7 @@ namespace WP4Odoo\Tests\Unit;
 
 use WP4Odoo\Logger;
 use WP4Odoo\Modules\Jet_Booking_Handler;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -13,8 +14,8 @@ use PHPUnit\Framework\TestCase;
  * Tests service loading from CPT and booking extraction from
  * JetBooking's custom `jet_apartment_bookings` table via $wpdb.
  *
- * @covers \WP4Odoo\Modules\Jet_Booking_Handler
  */
+#[CoversClass(\WP4Odoo\Modules\Jet_Booking_Handler::class)]
 class JetBookingHandlerTest extends TestCase {
 
 	private Jet_Booking_Handler $handler;

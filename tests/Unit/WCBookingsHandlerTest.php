@@ -5,6 +5,7 @@ namespace WP4Odoo\Tests\Unit;
 
 use WP4Odoo\Logger;
 use WP4Odoo\Modules\WC_Bookings_Handler;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -13,8 +14,8 @@ use PHPUnit\Framework\TestCase;
  * Tests product/booking loading, field extraction, and status checks
  * using WC CRUD class stubs.
  *
- * @covers \WP4Odoo\Modules\WC_Bookings_Handler
  */
+#[CoversClass(\WP4Odoo\Modules\WC_Bookings_Handler::class)]
 class WCBookingsHandlerTest extends TestCase {
 
 	private WC_Bookings_Handler $handler;

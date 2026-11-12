@@ -5,6 +5,7 @@ namespace WP4Odoo\Tests\Unit;
 
 use WP4Odoo\Logger;
 use WP4Odoo\Modules\Amelia_Handler;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -13,8 +14,8 @@ use PHPUnit\Framework\TestCase;
  * Tests service/appointment loading and customer data retrieval
  * from Amelia's custom database tables via $wpdb.
  *
- * @covers \WP4Odoo\Modules\Amelia_Handler
  */
+#[CoversClass(\WP4Odoo\Modules\Amelia_Handler::class)]
 class AmeliaHandlerTest extends TestCase {
 
 	private Amelia_Handler $handler;

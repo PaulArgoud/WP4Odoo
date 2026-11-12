@@ -3,6 +3,7 @@ declare( strict_types=1 );
 
 namespace WP4Odoo\Tests\Unit;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use WP4Odoo\Modules\LearnDash_Handler;
 use WP4Odoo\Logger;
 use WP4Odoo\Tests\Module_Test_Case;
@@ -13,8 +14,8 @@ use WP4Odoo\Tests\Module_Test_Case;
  * Tests data loading for courses, groups, transactions, enrollments,
  * invoice/sale order formatting, Odoo parsing, and save methods.
  *
- * @covers \WP4Odoo\Modules\LearnDash_Handler
  */
+#[CoversClass(\WP4Odoo\Modules\LearnDash_Handler::class)]
 class LearnDashHandlerTest extends Module_Test_Case {
 
 	private LearnDash_Handler $handler;

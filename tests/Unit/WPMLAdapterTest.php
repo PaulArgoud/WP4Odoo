@@ -4,6 +4,7 @@ declare( strict_types=1 );
 namespace WP4Odoo\Tests\Unit;
 
 use WP4Odoo\I18n\WPML_Adapter;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -11,8 +12,8 @@ use PHPUnit\Framework\TestCase;
  *
  * Tests WPML filter-based API integration for translation detection.
  *
- * @covers \WP4Odoo\I18n\WPML_Adapter
  */
+#[CoversClass(\WP4Odoo\I18n\WPML_Adapter::class)]
 class WPMLAdapterTest extends TestCase {
 
 	private WPML_Adapter $adapter;

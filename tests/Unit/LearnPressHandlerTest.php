@@ -3,6 +3,7 @@ declare( strict_types=1 );
 
 namespace WP4Odoo\Tests\Unit;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use WP4Odoo\Modules\LearnPress_Handler;
 use WP4Odoo\Logger;
 use WP4Odoo\Tests\Module_Test_Case;
@@ -13,8 +14,8 @@ use WP4Odoo\Tests\Module_Test_Case;
  * Tests data loading for courses, orders, and enrollments,
  * invoice/sale order formatting, Odoo parsing, and save methods.
  *
- * @covers \WP4Odoo\Modules\LearnPress_Handler
  */
+#[CoversClass(\WP4Odoo\Modules\LearnPress_Handler::class)]
 class LearnPressHandlerTest extends Module_Test_Case {
 
 	private LearnPress_Handler $handler;

@@ -3,14 +3,15 @@ declare( strict_types=1 );
 
 namespace WP4Odoo\Tests\Unit;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use WP4Odoo\Tests\Module_Test_Case;
 use WP4Odoo\Modules\Food_Ordering_Module;
 
 /**
  * Unit tests for Food_Ordering_Module.
  *
- * @covers \WP4Odoo\Modules\Food_Ordering_Module
  */
+#[CoversClass(\WP4Odoo\Modules\Food_Ordering_Module::class)]
 class FoodOrderingModuleTest extends Module_Test_Case {
 
 	private Food_Ordering_Module $module;

@@ -5,13 +5,14 @@ namespace WP4Odoo\Tests\Unit;
 
 use WP4Odoo\Logger;
 use WP4Odoo\Modules\Project_Manager_Handler;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
 /**
  * Unit tests for Project_Manager_Handler.
  *
- * @covers \WP4Odoo\Modules\Project_Manager_Handler
  */
+#[CoversClass(\WP4Odoo\Modules\Project_Manager_Handler::class)]
 class ProjectManagerHandlerTest extends TestCase {
 
 	private Project_Manager_Handler $handler;

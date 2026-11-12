@@ -5,6 +5,7 @@ namespace WP4Odoo\Tests\Unit;
 
 use WP4Odoo\Logger;
 use WP4Odoo\Modules\WPERP_CRM_Handler;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -12,8 +13,8 @@ use PHPUnit\Framework\TestCase;
  *
  * Tests contact/activity loading from WP ERP CRM tables via $wpdb stubs.
  *
- * @covers \WP4Odoo\Modules\WPERP_CRM_Handler
  */
+#[CoversClass(\WP4Odoo\Modules\WPERP_CRM_Handler::class)]
 class WPERPCRMHandlerTest extends TestCase {
 
 	private WPERP_CRM_Handler $handler;

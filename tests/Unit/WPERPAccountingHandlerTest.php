@@ -5,6 +5,7 @@ namespace WP4Odoo\Tests\Unit;
 
 use WP4Odoo\Logger;
 use WP4Odoo\Modules\WPERP_Accounting_Handler;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -14,8 +15,8 @@ use PHPUnit\Framework\TestCase;
  * Accounting tables via $wpdb stubs. Also covers status mapping and
  * account type mapping.
  *
- * @covers \WP4Odoo\Modules\WPERP_Accounting_Handler
  */
+#[CoversClass(\WP4Odoo\Modules\WPERP_Accounting_Handler::class)]
 class WPERPAccountingHandlerTest extends TestCase {
 
 	private WPERP_Accounting_Handler $handler;

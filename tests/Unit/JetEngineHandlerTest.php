@@ -4,13 +4,14 @@ declare( strict_types=1 );
 namespace WP4Odoo\Tests\Unit;
 
 use WP4Odoo\Modules\JetEngine_Handler;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
 /**
  * Unit tests for JetEngine_Handler.
  *
- * @covers \WP4Odoo\Modules\JetEngine_Handler
  */
+#[CoversClass(\WP4Odoo\Modules\JetEngine_Handler::class)]
 class JetEngineHandlerTest extends TestCase {
 
 	private JetEngine_Handler $handler;

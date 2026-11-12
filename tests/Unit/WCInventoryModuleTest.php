@@ -4,14 +4,15 @@ declare( strict_types=1 );
 namespace WP4Odoo\Tests\Unit;
 
 use WP4Odoo\Modules\WC_Inventory_Module;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
 /**
  * Unit tests for WC_Inventory_Module.
  *
- * @covers \WP4Odoo\Modules\WC_Inventory_Module
- * @covers \WP4Odoo\Modules\WC_Inventory_Hooks
  */
+#[CoversClass(\WP4Odoo\Modules\WC_Inventory_Module::class)]
+#[CoversClass(\WP4Odoo\Modules\WC_Inventory_Hooks::class)]
 class WCInventoryModuleTest extends TestCase {
 
 	private WC_Inventory_Module $module;

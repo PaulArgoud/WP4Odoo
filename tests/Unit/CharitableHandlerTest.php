@@ -3,13 +3,12 @@ declare( strict_types=1 );
 
 namespace WP4Odoo\Tests\Unit;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use WP4Odoo\Modules\Charitable_Handler;
 use WP4Odoo\Logger;
 use WP4Odoo\Tests\Module_Test_Case;
 
-/**
- * @covers \WP4Odoo\Modules\Charitable_Handler
- */
+#[CoversClass(\WP4Odoo\Modules\Charitable_Handler::class)]
 class CharitableHandlerTest extends Module_Test_Case {
 
 	private Charitable_Handler $handler;

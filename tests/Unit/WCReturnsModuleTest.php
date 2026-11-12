@@ -4,14 +4,15 @@ declare( strict_types=1 );
 namespace WP4Odoo\Tests\Unit;
 
 use WP4Odoo\Modules\WC_Returns_Module;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
 /**
  * Unit tests for WC_Returns_Module.
  *
- * @covers \WP4Odoo\Modules\WC_Returns_Module
- * @covers \WP4Odoo\Modules\WC_Returns_Hooks
  */
+#[CoversClass(\WP4Odoo\Modules\WC_Returns_Module::class)]
+#[CoversClass(\WP4Odoo\Modules\WC_Returns_Hooks::class)]
 class WCReturnsModuleTest extends TestCase {
 
 	private WC_Returns_Module $module;

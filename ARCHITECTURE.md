@@ -25,6 +25,7 @@ WordPress For Odoo/
 │   │   ├── class-odoo-client.php          # High-level client (CRUD, search, fields_get, reset(), session re-auth on 403)
 │   │   ├── class-odoo-jsonrpc.php         # JSON-RPC 2.0 transport (Odoo 17+) extends Odoo_Transport_Base
 │   │   ├── class-odoo-xmlrpc.php          # XML-RPC transport (legacy) extends Odoo_Transport_Base
+│   │   ├── class-odoo-json2.php           # JSON-2 transport (Odoo 19+, bearer API key) extends Odoo_Transport_Base
 │   │   └── class-odoo-auth.php            # Auth, API key encryption (+ credential cache), connection testing
 │   │
 │   ├── modules/
@@ -416,7 +417,7 @@ WordPress For Odoo/
 ├── templates/
 │   └── customer-portal.php           #   Customer portal HTML template (orders/invoices tabs)
 │
-├── tests/                             # 5414 unit tests (8147 assertions) + 45 integration tests (wp-env)
+├── tests/                             # 5434 unit tests (8194 assertions) + 45 integration tests (wp-env)
 │   ├── bootstrap.php                 #   Unit test bootstrap: constants, stub loading, plugin class requires
 │   ├── bootstrap-integration.php     #   Integration test bootstrap: loads WP test framework (wp-env)
 │   ├── stubs/
@@ -925,7 +926,11 @@ POST /jsonrpc           POST /xmlrpc/2/common (auth)
 
 The protocol is configurable in options (`wp4odoo_connection.protocol`). JSON-RPC is the default for Odoo 17+.
 
-**Compatibility status:** both transports were verified against live Odoo 19.0 and 20.0 servers (authentication, CRUD, `search_read`, `fields_get`, sale order confirmation, invoice posting, modern context-based translations) and the integration suite against WordPress 7.1.4. Both transports target `/jsonrpc` and `/xmlrpc/2`, which Odoo has deprecated in favour of `/json/2` (bearer API key, `POST /json/2/<model>/<method>`); they still work on Odoo 20, and a future `Odoo_Json2` transport implementing `Transport` would be the migration path. On Odoo 18+, `Stock_Handler::push_via_quant()` requires the target product to be storable (`is_storable`): Odoo rejects quants for non-storable products.
+**Compatibility status:** all three transports were verified against live Odoo 19.0 and 20.0 servers (authentication, CRUD, `search_read`, `fields_get`, sale order confirmation, invoice posting, modern context-based translations, stock adjustment) and the integration suite against WordPress 7.1.4.
+
+`Odoo_Json2` targets `POST /json/2/<model>/<method>` (Odoo's replacement for the deprecated `/jsonrpc` and `/xmlrpc/2`). It authenticates with a bearer API key and the `X-Odoo-Database` header, resolves the uid through `res.users/context_get`, and reads the server version from `/web/webclient/version_info` (best effort). Because `Odoo_Client` speaks the `execute_kw` dialect, the transport translates positional arguments into JSON-2 named arguments (`search`/`search_read`/`search_count` → `domain`, `read` → `ids`+`fields`, `write` → `ids`+`vals`, `create` → `vals_list`, record actions such as `action_confirm` → `ids`); a single-dict `create` still returns an int. JSON-2 reports Odoo errors with HTTP 4xx/5xx and a JSON body, so the transport parses 5xx bodies (via the `$parse_server_errors` flag of `Retryable_Http::http_post_with_retry()`) and appends the Odoo exception class to the message; 401/403/404/422 are classified as permanent by `Error_Classification`.
+
+On Odoo 18+, `Stock_Handler::push_stock()` first calls `ensure_storable()`: Odoo rejects quants for non-storable products, so the product template is switched to `is_storable = true` when it is not already.
 
 **Server version detection:** Both transports capture the Odoo server version during authentication. JSON-RPC extracts `server_version` from the `/web/session/authenticate` response. XML-RPC calls `version()` on `/xmlrpc/2/common` after auth (non-blocking try/catch). The version is stored in `Odoo_Transport_Base::$server_version` and accessible via `get_server_version(): ?string`. On successful connection test, the AJAX handler persists the version in `wp4odoo_odoo_version` option for use in compatibility reporting and diagnostics.
 

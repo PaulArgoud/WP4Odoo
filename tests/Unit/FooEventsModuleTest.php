@@ -3,6 +3,7 @@ declare( strict_types=1 );
 
 namespace WP4Odoo\Tests\Unit;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use WP4Odoo\Module_Base;
 use WP4Odoo\Modules\FooEvents_Module;
 
@@ -12,8 +13,8 @@ use WP4Odoo\Modules\FooEvents_Module;
  * Tests module identity, required modules, Odoo models, settings,
  * field mappings, dependency status, boot guard, and pull support.
  *
- * @covers \WP4Odoo\Modules\FooEvents_Module
  */
+#[CoversClass(\WP4Odoo\Modules\FooEvents_Module::class)]
 class FooEventsModuleTest extends EventsModuleTestBase {
 
 	protected function get_module_id(): string {

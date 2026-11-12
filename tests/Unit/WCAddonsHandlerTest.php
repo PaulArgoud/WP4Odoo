@@ -4,13 +4,14 @@ declare( strict_types=1 );
 namespace WP4Odoo\Tests\Unit;
 
 use WP4Odoo\Modules\WC_Addons_Handler;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
 /**
  * Unit tests for WC_Addons_Handler.
  *
- * @covers \WP4Odoo\Modules\WC_Addons_Handler
  */
+#[CoversClass(\WP4Odoo\Modules\WC_Addons_Handler::class)]
 class WCAddonsHandlerTest extends TestCase {
 
 	private WC_Addons_Handler $handler;

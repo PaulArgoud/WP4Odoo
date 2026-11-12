@@ -3,16 +3,15 @@ declare( strict_types=1 );
 
 namespace WP4Odoo\Tests\Unit;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use WP4Odoo\Tests\Module_Test_Case;
 use WP4Odoo\Modules\WP_Invoice_Module;
 use WP4Odoo\Modules\WP_Invoice_Handler;
 use WP4Odoo\Logger;
 
-/**
- * @covers \WP4Odoo\Modules\WP_Invoice_Module
- * @covers \WP4Odoo\Modules\WP_Invoice_Handler
- * @covers \WP4Odoo\Modules\WP_Invoice_Hooks
- */
+#[CoversClass(\WP4Odoo\Modules\WP_Invoice_Module::class)]
+#[CoversClass(\WP4Odoo\Modules\WP_Invoice_Handler::class)]
+#[CoversClass(\WP4Odoo\Modules\WP_Invoice_Hooks::class)]
 class WPInvoiceModuleTest extends Module_Test_Case {
 
 	private WP_Invoice_Module $module;

@@ -3,6 +3,7 @@ declare( strict_types=1 );
 
 namespace WP4Odoo\Tests\Unit;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use WP4Odoo\Entity_Map_Repository;
 use WP4Odoo\Sync_Queue_Repository;
@@ -16,12 +17,12 @@ use WP4Odoo\API\Odoo_Client;
  * Tests blog_id scoping in repositories, company_id injection
  * in the Odoo client, and multisite credential resolution.
  *
- * @covers \WP4Odoo\Entity_Map_Repository
- * @covers \WP4Odoo\Sync_Queue_Repository
- * @covers \WP4Odoo\Settings_Repository
- * @covers \WP4Odoo\API\Odoo_Auth
- * @covers \WP4Odoo\API\Odoo_Client
  */
+#[CoversClass(\WP4Odoo\Entity_Map_Repository::class)]
+#[CoversClass(\WP4Odoo\Sync_Queue_Repository::class)]
+#[CoversClass(\WP4Odoo\Settings_Repository::class)]
+#[CoversClass(\WP4Odoo\API\Odoo_Auth::class)]
+#[CoversClass(\WP4Odoo\API\Odoo_Client::class)]
 class MultisiteTest extends TestCase {
 
 	private \WP_DB_Stub $wpdb;

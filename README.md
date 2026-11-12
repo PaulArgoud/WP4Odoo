@@ -18,7 +18,7 @@ Modular WordPress plugin that creates a seamless, bidirectional bridge between W
 ## Features
 
 - **Async Queue** — No API calls during user requests; all sync jobs go through a persistent database queue with exponential backoff, deduplication, and configurable batch size
-- **Dual Transport** — JSON-RPC 2.0 (default for Odoo 17+) and XML-RPC (legacy), swappable via settings, shared HTTP layer via `Retryable_Http` trait. Retry orchestration at queue level (exponential backoff via `Sync_Engine`)
+- **Triple Transport** — JSON-RPC 2.0 (default for Odoo 17+), JSON-2 (Odoo 19+, bearer API key — Odoo's replacement for the deprecated RPC endpoints) and XML-RPC (legacy), swappable via settings, shared HTTP layer via `Retryable_Http` trait. Retry orchestration at queue level (exponential backoff via `Sync_Engine`)
 - **Encrypted Credentials** — API keys encrypted at rest with libsodium (OpenSSL fallback)
 - **Webhooks** — REST API endpoints for real-time notifications from Odoo, with per-IP rate limiting
 - **Admin Dashboard** — 6-tab settings interface (Connection, Sync, Modules, Queue, Logs, Health) with guided onboarding and system health monitoring
@@ -26,11 +26,11 @@ Modular WordPress plugin that creates a seamless, bidirectional bridge between W
 - **WPML / Polylang Translation Sync** — Multilingual product sync via WPML or Polylang: pushes translated names/descriptions to Odoo with language context, pulls translations back to create/update translated posts. Category and attribute value translations included
 - **Multisite** — WordPress Multisite support: each site in a network syncs with a specific Odoo company (`res.company`). Shared network connection with per-site company_id mapping. Network admin page for centralized configuration
 - **Extensible** — Register custom modules via `wp4odoo_register_modules`; filter data with `wp4odoo_map_to_odoo_*` / `wp4odoo_map_from_odoo_*`; map ACF or JetEngine custom fields to Odoo via meta-modules
-- **Multilingual** — 1006 translatable strings, ships with English, French, and Spanish. Translation-ready via `.po`/`.mo`
+- **Multilingual** — 1008 translatable strings, ships with English, French, and Spanish. Translation-ready via `.po`/`.mo`
 
 ## Requirements
 
-PHP 8.2+, MySQL 8.0+ / MariaDB 10.5+, WordPress 6.0+, Odoo 17+ (JSON-RPC) or 14+ (XML-RPC).
+PHP 8.2+, MySQL 8.0+ / MariaDB 10.5+, WordPress 6.0+, Odoo 17+ (JSON-RPC / JSON-2) or 14+ (XML-RPC).
 
 ### Odoo Compatibility
 
@@ -46,13 +46,14 @@ PHP 8.2+, MySQL 8.0+ / MariaDB 10.5+, WordPress 6.0+, Odoo 17+ (JSON-RPC) or 14+
 >
 > ³ Works with both Odoo **Community** (free) and **Enterprise** editions — all required apps are included in Community.
 
-- **Odoo 17+** — uses JSON-RPC 2.0 (default, recommended). Verified against live Odoo 19.0 and 20.0 instances (core flows: Contacts, CRM, Sales, Invoicing, Inventory) over both JSON-RPC and XML-RPC
+- **Odoo 17+** — uses JSON-RPC 2.0 (default, recommended). Verified against live Odoo 19.0 and 20.0 instances (core flows: Contacts, CRM, Sales, Invoicing, Inventory) over JSON-RPC, XML-RPC and JSON-2
+- **Odoo 19+** — JSON-2 transport available (select *JSON-2* in the Connection tab). It authenticates with an Odoo API key only (passwords are not accepted) and, on Odoo 20, the key needs the `rpc` scope, which keys created from the Odoo user preferences have
 - **Odoo 14 – 16** — uses XML-RPC (legacy transport, select in plugin settings)
 - **Odoo < 14** — not supported (external API incompatibilities)
 
 WordPress compatibility: tested up to **WordPress 7.1** (PHP 8.3, WooCommerce 11.x).
 
-> **Note on Odoo's external API:** Odoo has deprecated the `/jsonrpc` and `/xmlrpc` endpoints in favour of `/json/2`, which the plugin does not use yet. The deprecated endpoints still work on Odoo 20. For products tracked in stock on Odoo 18+, the Odoo product must have *Track Inventory* enabled (`is_storable`) for stock pushes to succeed.
+> **Note on Odoo's external API:** Odoo has deprecated the `/jsonrpc` and `/xmlrpc` endpoints in favour of `/json/2`. The deprecated endpoints still work on Odoo 20, and the plugin supports both: keep JSON-RPC/XML-RPC, or switch to JSON-2 on Odoo 19+.
 
 All hosting types expose the standard Odoo external API used by the plugin. No custom Odoo modules are required — only the standard apps listed in the module tables below.
 

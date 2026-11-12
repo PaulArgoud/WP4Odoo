@@ -48,6 +48,11 @@ trait Error_Classification {
 			return Error_Type::Transient;
 		}
 
+		// JSON-2 rejections (unauthorized, forbidden, missing record, user/validation error): retrying cannot help.
+		if ( in_array( $code, [ 401, 403, 404, 422 ], true ) ) {
+			return Error_Type::Permanent;
+		}
+
 		// Other HTTP 5xx: transient (server overload / temporary unavailability).
 		if ( $code >= 500 && $code < 600 ) {
 			return Error_Type::Transient;

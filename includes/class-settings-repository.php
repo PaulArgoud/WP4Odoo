@@ -136,7 +136,7 @@ class Settings_Repository {
 		$merged = array_merge( self::DEFAULTS_CONNECTION, $stored );
 
 		// Defense-in-depth: clamp and validate even if data was saved unchecked.
-		$merged['protocol']   = Settings_Validator::enum( $merged['protocol'], [ 'jsonrpc', 'xmlrpc' ], 'jsonrpc' );
+		$merged['protocol']   = Settings_Validator::enum( $merged['protocol'], [ 'jsonrpc', 'xmlrpc', 'json2' ], 'jsonrpc' );
 		$merged['timeout']    = Settings_Validator::clamp( $merged['timeout'], 5, 120 );
 		$merged['company_id'] = max( 0, (int) ( $merged['company_id'] ?? 0 ) );
 
@@ -170,7 +170,7 @@ class Settings_Repository {
 	private function validate_connection( array $data ): array {
 		$data = array_merge( self::DEFAULTS_CONNECTION, $data );
 
-		$data['protocol']   = Settings_Validator::enum( $data['protocol'], [ 'jsonrpc', 'xmlrpc' ], 'jsonrpc' );
+		$data['protocol']   = Settings_Validator::enum( $data['protocol'], [ 'jsonrpc', 'xmlrpc', 'json2' ], 'jsonrpc' );
 		$data['timeout']    = Settings_Validator::clamp( $data['timeout'], 5, 120 );
 		$data['url']        = Settings_Validator::non_empty_string( $data['url'] );
 		$data['database']   = Settings_Validator::non_empty_string( $data['database'] );

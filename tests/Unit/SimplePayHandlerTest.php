@@ -3,13 +3,12 @@ declare( strict_types=1 );
 
 namespace WP4Odoo\Tests\Unit;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use WP4Odoo\Modules\SimplePay_Handler;
 use WP4Odoo\Logger;
 use WP4Odoo\Tests\Module_Test_Case;
 
-/**
- * @covers \WP4Odoo\Modules\SimplePay_Handler
- */
+#[CoversClass(\WP4Odoo\Modules\SimplePay_Handler::class)]
 class SimplePayHandlerTest extends Module_Test_Case {
 
 	private SimplePay_Handler $handler;

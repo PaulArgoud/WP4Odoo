@@ -3,6 +3,7 @@ declare( strict_types=1 );
 
 namespace WP4Odoo\Tests\Unit;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use WP4Odoo\Modules\Crowdfunding_Handler;
 use WP4Odoo\Logger;
 use WP4Odoo\Tests\Module_Test_Case;
@@ -13,8 +14,8 @@ use WP4Odoo\Tests\Module_Test_Case;
  * Tests campaign loading, description building, crowdfunding detection,
  * and edge cases.
  *
- * @covers \WP4Odoo\Modules\Crowdfunding_Handler
  */
+#[CoversClass(\WP4Odoo\Modules\Crowdfunding_Handler::class)]
 class CrowdfundingHandlerTest extends Module_Test_Case {
 
 	private Crowdfunding_Handler $handler;

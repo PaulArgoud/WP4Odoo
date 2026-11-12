@@ -6,13 +6,14 @@ namespace WP4Odoo\Tests\Unit;
 use WP4Odoo\Entity_Map_Repository;
 use WP4Odoo\Logger;
 use WP4Odoo\Modules\WC_Inventory_Handler;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
 /**
  * Unit tests for WC_Inventory_Handler.
  *
- * @covers \WP4Odoo\Modules\WC_Inventory_Handler
  */
+#[CoversClass(\WP4Odoo\Modules\WC_Inventory_Handler::class)]
 class WCInventoryHandlerTest extends TestCase {
 
 	private WC_Inventory_Handler $handler;

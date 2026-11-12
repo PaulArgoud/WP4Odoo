@@ -3,6 +3,7 @@ declare( strict_types=1 );
 
 namespace WP4Odoo\Tests\Unit;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use WP4Odoo\Modules\WPERP_Accounting_Module;
 use WP4Odoo\Tests\Module_Test_Case;
 
@@ -13,9 +14,9 @@ use WP4Odoo\Tests\Module_Test_Case;
  * dependency status, boot guard, dedup domains, pull guards, map_to_odoo
  * passthrough, map_from_odoo delegation, save/delete/load delegation.
  *
- * @covers \WP4Odoo\Modules\WPERP_Accounting_Module
- * @covers \WP4Odoo\Modules\WPERP_Accounting_Hooks
  */
+#[CoversClass(\WP4Odoo\Modules\WPERP_Accounting_Module::class)]
+#[CoversClass(\WP4Odoo\Modules\WPERP_Accounting_Hooks::class)]
 class WPERPAccountingModuleTest extends Module_Test_Case {
 
 	private WPERP_Accounting_Module $module;

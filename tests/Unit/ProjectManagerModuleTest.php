@@ -3,14 +3,15 @@ declare( strict_types=1 );
 
 namespace WP4Odoo\Tests\Unit;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use WP4Odoo\Modules\Project_Manager_Module;
 
 /**
  * Unit tests for Project_Manager_Module.
  *
- * @covers \WP4Odoo\Modules\Project_Manager_Module
  */
+#[CoversClass(\WP4Odoo\Modules\Project_Manager_Module::class)]
 class ProjectManagerModuleTest extends TestCase {
 
 	private Project_Manager_Module $module;

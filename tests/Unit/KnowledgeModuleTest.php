@@ -6,6 +6,7 @@ namespace WP4Odoo\Tests\Unit;
 use WP4Odoo\Modules\Knowledge_Module;
 use WP4Odoo\Modules\Knowledge_Handler;
 use WP4Odoo\Logger;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -14,9 +15,9 @@ use PHPUnit\Framework\TestCase;
  * Tests module configuration, handler data loading/saving/parsing,
  * hook guard logic, translation fields, dedup domain, and pull guard.
  *
- * @covers \WP4Odoo\Modules\Knowledge_Module
- * @covers \WP4Odoo\Modules\Knowledge_Handler
  */
+#[CoversClass(\WP4Odoo\Modules\Knowledge_Module::class)]
+#[CoversClass(\WP4Odoo\Modules\Knowledge_Handler::class)]
 class KnowledgeModuleTest extends TestCase {
 
 	private Knowledge_Module $module;

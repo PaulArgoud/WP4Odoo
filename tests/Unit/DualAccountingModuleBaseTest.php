@@ -118,9 +118,8 @@ class DualAccountingModuleBaseTestModule extends Dual_Accounting_Module_Base {
  * Tests sync direction, deduplication domains, load_wp_data dispatch
  * (parent, child, unknown), child data resolution pipeline, and
  * map_to_odoo identity pass-through for child entities.
- *
- * @covers \WP4Odoo\Modules\Dual_Accounting_Module_Base
  */
+#[CoversClass(\WP4Odoo\Modules\Dual_Accounting_Module_Base::class)]
 class DualAccountingModuleBaseTest extends Module_Test_Case {
 
 	private DualAccountingModuleBaseTestModule $module;

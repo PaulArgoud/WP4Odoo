@@ -4,14 +4,15 @@ declare( strict_types=1 );
 namespace WP4Odoo\Tests\Unit;
 
 use WP4Odoo\Modules\WC_Shipping_Module;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
 /**
  * Unit tests for WC_Shipping_Module.
  *
- * @covers \WP4Odoo\Modules\WC_Shipping_Module
- * @covers \WP4Odoo\Modules\WC_Shipping_Hooks
  */
+#[CoversClass(\WP4Odoo\Modules\WC_Shipping_Module::class)]
+#[CoversClass(\WP4Odoo\Modules\WC_Shipping_Hooks::class)]
 class WCShippingModuleTest extends TestCase {
 
 	private WC_Shipping_Module $module;

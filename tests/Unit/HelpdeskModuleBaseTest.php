@@ -128,9 +128,8 @@ class HelpdeskModuleBaseTestModule extends Helpdesk_Module_Base {
  * load_wp_data dispatch, dual-model detection (helpdesk.ticket vs
  * project.task), map_to_odoo ticket injection, pull gating, save/delete
  * delegation, and map_from_odoo routing.
- *
- * @covers \WP4Odoo\Modules\Helpdesk_Module_Base
  */
+#[CoversClass(\WP4Odoo\Modules\Helpdesk_Module_Base::class)]
 class HelpdeskModuleBaseTest extends Module_Test_Case {
 
 	private HelpdeskModuleBaseTestModule $module;

@@ -5,6 +5,7 @@ namespace WP4Odoo\Tests\Unit;
 
 use WP4Odoo\Logger;
 use WP4Odoo\Modules\Jet_Appointments_Handler;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -13,8 +14,8 @@ use PHPUnit\Framework\TestCase;
  * Tests service/appointment loading from JetAppointments CPTs via
  * WordPress functions (get_post, get_post_meta).
  *
- * @covers \WP4Odoo\Modules\Jet_Appointments_Handler
  */
+#[CoversClass(\WP4Odoo\Modules\Jet_Appointments_Handler::class)]
 class JetAppointmentsHandlerTest extends TestCase {
 
 	private Jet_Appointments_Handler $handler;

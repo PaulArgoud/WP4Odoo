@@ -3,13 +3,14 @@ declare( strict_types=1 );
 
 namespace WP4Odoo\Tests\Unit;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use WP4Odoo\Modules\Jet_Appointments_Module;
 
 /**
  * Unit tests for Jet_Appointments_Module.
  *
- * @covers \WP4Odoo\Modules\Jet_Appointments_Module
  */
+#[CoversClass(\WP4Odoo\Modules\Jet_Appointments_Module::class)]
 class JetAppointmentsModuleTest extends BookingModuleTestBase {
 
 	protected function setUp(): void {

@@ -3,13 +3,12 @@ declare( strict_types=1 );
 
 namespace WP4Odoo\Tests\Unit;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use WP4Odoo\Modules\GiveWP_Handler;
 use WP4Odoo\Logger;
 use WP4Odoo\Tests\Module_Test_Case;
 
-/**
- * @covers \WP4Odoo\Modules\GiveWP_Handler
- */
+#[CoversClass(\WP4Odoo\Modules\GiveWP_Handler::class)]
 class GiveWPHandlerTest extends Module_Test_Case {
 
 	private GiveWP_Handler $handler;

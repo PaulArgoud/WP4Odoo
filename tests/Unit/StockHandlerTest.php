@@ -41,6 +41,70 @@ class StockHandlerTest extends TestCase {
 		$this->assertFalse( $result->succeeded() );
 	}
 
+	// ─── Storable products (Odoo 18+) ──────────────────────
+
+	public function test_push_stock_enables_inventory_tracking_on_odoo_18(): void {
+		$GLOBALS['_wp_options']['wp4odoo_odoo_version'] = '18.0';
+
+		$call_log = [];
+		$client   = $this->create_mock_client( function ( string $model, string $method, array $args ) use ( &$call_log ) {
+			$call_log[] = [ $model, $method, $args ];
+
+			if ( 'product.product' === $model && 'read' === $method ) {
+				return [ [ 'id' => 100, 'is_storable' => false, 'product_tmpl_id' => [ 55, 'Widget' ] ] ];
+			}
+			if ( 'stock.quant' === $model && 'search_read' === $method ) {
+				return [ [ 'id' => 42, 'location_id' => [ 8, 'Stock' ] ] ];
+			}
+			return true;
+		} );
+
+		$result = $this->handler->push_stock( $client, 100, 25.0 );
+
+		$this->assertTrue( $result->succeeded() );
+		$this->assertSame( [ 'product.product', 'read' ], array_slice( $call_log[0], 0, 2 ) );
+		$this->assertSame( [ 'product.template', 'write' ], array_slice( $call_log[1], 0, 2 ) );
+		$this->assertSame( [ [ 55 ], [ 'is_storable' => true ] ], $call_log[1][2] );
+	}
+
+	public function test_push_stock_skips_write_when_product_already_storable(): void {
+		$GLOBALS['_wp_options']['wp4odoo_odoo_version'] = '19.0';
+
+		$call_log = [];
+		$client   = $this->create_mock_client( function ( string $model, string $method ) use ( &$call_log ) {
+			$call_log[] = [ $model, $method ];
+
+			if ( 'product.product' === $model && 'read' === $method ) {
+				return [ [ 'id' => 100, 'is_storable' => true, 'product_tmpl_id' => [ 55, 'Widget' ] ] ];
+			}
+			if ( 'stock.quant' === $model && 'search_read' === $method ) {
+				return [ [ 'id' => 42, 'location_id' => [ 8, 'Stock' ] ] ];
+			}
+			return true;
+		} );
+
+		$this->handler->push_stock( $client, 100, 25.0 );
+
+		$this->assertNotContains( [ 'product.template', 'write' ], $call_log );
+	}
+
+	public function test_push_stock_does_not_probe_storable_before_odoo_18(): void {
+		$GLOBALS['_wp_options']['wp4odoo_odoo_version'] = '17.0';
+
+		$call_log = [];
+		$client   = $this->create_mock_client( function ( string $model, string $method ) use ( &$call_log ) {
+			$call_log[] = [ $model, $method ];
+			if ( 'stock.quant' === $model && 'search_read' === $method ) {
+				return [ [ 'id' => 42, 'location_id' => [ 8, 'Stock' ] ] ];
+			}
+			return true;
+		} );
+
+		$this->handler->push_stock( $client, 100, 25.0 );
+
+		$this->assertNotContains( [ 'product.product', 'read' ], $call_log );
+	}
+
 	// ─── Push stock: quant API (v16+) ──────────────────────
 
 	public function test_push_stock_quant_updates_existing_quant(): void {

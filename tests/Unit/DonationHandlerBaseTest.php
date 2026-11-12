@@ -5,6 +5,7 @@ namespace WP4Odoo\Tests\Unit;
 
 use WP4Odoo\Logger;
 use WP4Odoo\Modules\Donation_Handler_Base;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -56,9 +57,8 @@ class ConcreteDonationHandler extends Donation_Handler_Base {
  *
  * Verifies constructor injection, CPT-based form loading, and
  * dual-model donation formatting (OCA donation vs account.move).
- *
- * @covers \WP4Odoo\Modules\Donation_Handler_Base
  */
+#[CoversClass(\WP4Odoo\Modules\Donation_Handler_Base::class)]
 class DonationHandlerBaseTest extends TestCase {
 
 	private ConcreteDonationHandler $handler;

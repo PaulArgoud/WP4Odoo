@@ -3,6 +3,7 @@ declare( strict_types=1 );
 
 namespace WP4Odoo\Tests\Unit;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use WP4Odoo\Logger;
 use WP4Odoo\Modules\JetEngine_Meta_Handler;
@@ -10,8 +11,8 @@ use WP4Odoo\Modules\JetEngine_Meta_Handler;
 /**
  * Unit tests for JetEngine_Meta_Handler.
  *
- * @covers \WP4Odoo\Modules\JetEngine_Meta_Handler
  */
+#[CoversClass(\WP4Odoo\Modules\JetEngine_Meta_Handler::class)]
 class JetEngineMetaHandlerTest extends TestCase {
 
 	private JetEngine_Meta_Handler $handler;

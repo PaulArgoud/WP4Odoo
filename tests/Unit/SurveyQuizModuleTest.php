@@ -3,6 +3,7 @@ declare( strict_types=1 );
 
 namespace WP4Odoo\Tests\Unit;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use WP4Odoo\Tests\Module_Test_Case;
 use WP4Odoo\Modules\Survey_Quiz_Module;
 
@@ -12,8 +13,8 @@ use WP4Odoo\Modules\Survey_Quiz_Module;
  * Tests module configuration, entity type declarations, default settings,
  * deduplication domains, load_wp_data dispatch, and boot safety.
  *
- * @covers \WP4Odoo\Modules\Survey_Quiz_Module
  */
+#[CoversClass(\WP4Odoo\Modules\Survey_Quiz_Module::class)]
 class SurveyQuizModuleTest extends Module_Test_Case {
 
 	private Survey_Quiz_Module $module;

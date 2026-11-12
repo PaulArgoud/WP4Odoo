@@ -4,13 +4,14 @@ declare( strict_types=1 );
 namespace WP4Odoo\Tests\Unit;
 
 use WP4Odoo\Modules\Fluent_Support_Module;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
 /**
  * Unit tests for Fluent_Support_Module.
  *
- * @covers \WP4Odoo\Modules\Fluent_Support_Module
  */
+#[CoversClass(\WP4Odoo\Modules\Fluent_Support_Module::class)]
 class FluentSupportModuleTest extends TestCase {
 
 	private Fluent_Support_Module $module;

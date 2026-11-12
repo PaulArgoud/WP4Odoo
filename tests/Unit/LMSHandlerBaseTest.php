@@ -5,6 +5,7 @@ namespace WP4Odoo\Tests\Unit;
 
 use WP4Odoo\Logger;
 use WP4Odoo\Modules\LMS_Handler_Base;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -69,9 +70,8 @@ class ConcreteLMSHandler extends LMS_Handler_Base {
  *
  * Verifies constructor injection, invoice building (with and without
  * auto-post), sale order building, and product name resolution.
- *
- * @covers \WP4Odoo\Modules\LMS_Handler_Base
  */
+#[CoversClass(\WP4Odoo\Modules\LMS_Handler_Base::class)]
 class LMSHandlerBaseTest extends TestCase {
 
 	private ConcreteLMSHandler $handler;

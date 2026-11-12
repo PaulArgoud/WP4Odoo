@@ -37,6 +37,14 @@ class Stock_Handler {
 	private const QUANT_API_MIN_VERSION = 16;
 
 	/**
+	 * Odoo version from which only "storable" products can hold stock.
+	 *
+	 * Odoo 18 replaced `detailed_type = 'product'` with the `is_storable`
+	 * flag (Track Inventory) and rejects quants on non-storable products.
+	 */
+	private const STORABLE_MIN_VERSION = 18;
+
+	/**
 	 * Logger instance.
 	 *
 	 * @var Logger
@@ -74,6 +82,9 @@ class Stock_Handler {
 			$odoo_major = $this->get_odoo_major_version();
 
 			if ( $odoo_major >= self::QUANT_API_MIN_VERSION ) {
+				if ( $odoo_major >= self::STORABLE_MIN_VERSION ) {
+					$this->ensure_storable( $client, $odoo_product_id );
+				}
 				$this->push_via_quant( $client, $odoo_product_id, $quantity );
 			} else {
 				$this->push_via_wizard( $client, $odoo_product_id, $quantity );
@@ -109,6 +120,42 @@ class Stock_Handler {
 				$error_type
 			);
 		}
+	}
+
+	/**
+	 * Make sure the Odoo product tracks inventory (Odoo 18+).
+	 *
+	 * A WooCommerce product that manages stock must be storable in Odoo,
+	 * otherwise Odoo refuses to create quants for it ("Quants cannot be
+	 * created for consumables or services").
+	 *
+	 * @param Odoo_Client $client          Odoo API client.
+	 * @param int         $odoo_product_id Odoo product.product ID.
+	 * @return void
+	 */
+	private function ensure_storable( Odoo_Client $client, int $odoo_product_id ): void {
+		$rows = $client->read( 'product.product', [ $odoo_product_id ], [ 'is_storable', 'product_tmpl_id' ] );
+
+		if ( empty( $rows[0] ) || ! array_key_exists( 'is_storable', $rows[0] ) || ! empty( $rows[0]['is_storable'] ) ) {
+			return;
+		}
+
+		$template    = $rows[0]['product_tmpl_id'] ?? null;
+		$template_id = is_array( $template ) ? (int) $template[0] : (int) ( $template ?? 0 );
+
+		if ( $template_id <= 0 ) {
+			return;
+		}
+
+		$client->write( 'product.template', [ $template_id ], [ 'is_storable' => true ] );
+
+		$this->logger->info(
+			'Enabled inventory tracking on Odoo product.',
+			[
+				'odoo_product_id'  => $odoo_product_id,
+				'odoo_template_id' => $template_id,
+			]
+		);
 	}
 
 	/**

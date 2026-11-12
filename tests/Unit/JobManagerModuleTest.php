@@ -3,12 +3,11 @@ declare( strict_types=1 );
 
 namespace WP4Odoo\Tests\Unit;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use WP4Odoo\Modules\Job_Manager_Module;
 
-/**
- * @covers \WP4Odoo\Modules\Job_Manager_Module
- */
+#[CoversClass(\WP4Odoo\Modules\Job_Manager_Module::class)]
 class JobManagerModuleTest extends TestCase {
 
 	private Job_Manager_Module $module;

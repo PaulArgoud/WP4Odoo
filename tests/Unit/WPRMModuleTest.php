@@ -3,12 +3,11 @@ declare( strict_types=1 );
 
 namespace WP4Odoo\Tests\Unit;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use WP4Odoo\Modules\WPRM_Module;
 
-/**
- * @covers \WP4Odoo\Modules\WPRM_Module
- */
+#[CoversClass(\WP4Odoo\Modules\WPRM_Module::class)]
 class WPRMModuleTest extends TestCase {
 
 	private WPRM_Module $module;

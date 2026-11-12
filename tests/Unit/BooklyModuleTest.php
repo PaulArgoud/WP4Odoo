@@ -3,13 +3,14 @@ declare( strict_types=1 );
 
 namespace WP4Odoo\Tests\Unit;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use WP4Odoo\Modules\Bookly_Module;
 
 /**
  * Unit tests for Bookly_Module.
  *
- * @covers \WP4Odoo\Modules\Bookly_Module
  */
+#[CoversClass(\WP4Odoo\Modules\Bookly_Module::class)]
 class BooklyModuleTest extends BookingModuleTestBase {
 
 	protected function setUp(): void {

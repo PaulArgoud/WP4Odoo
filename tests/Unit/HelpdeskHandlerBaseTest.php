@@ -5,6 +5,7 @@ namespace WP4Odoo\Tests\Unit;
 
 use WP4Odoo\Logger;
 use WP4Odoo\Modules\Helpdesk_Handler_Base;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -37,9 +38,8 @@ class ConcreteHelpdeskHandler extends Helpdesk_Handler_Base {
  *
  * Verifies constructor injection, priority mapping, Odoo ticket
  * parsing, and the PRIORITY_MAP constant.
- *
- * @covers \WP4Odoo\Modules\Helpdesk_Handler_Base
  */
+#[CoversClass(\WP4Odoo\Modules\Helpdesk_Handler_Base::class)]
 class HelpdeskHandlerBaseTest extends TestCase {
 
 	private ConcreteHelpdeskHandler $handler;

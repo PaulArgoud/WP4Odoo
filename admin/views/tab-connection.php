@@ -143,6 +143,9 @@ endif;
 					<option value="xmlrpc" <?php selected( $credentials['protocol'], 'xmlrpc' ); ?>>
 						<?php esc_html_e( 'XML-RPC (Odoo 14+)', 'wp4odoo' ); ?>
 					</option>
+					<option value="json2" <?php selected( $credentials['protocol'], 'json2' ); ?>>
+						<?php esc_html_e( 'JSON-2 (Odoo 19+, API key required)', 'wp4odoo' ); ?>
+					</option>
 				</select>
 			</td>
 		</tr>

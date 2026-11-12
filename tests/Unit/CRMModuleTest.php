@@ -3,6 +3,7 @@ declare( strict_types=1 );
 
 namespace WP4Odoo\Tests\Unit;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use WP4Odoo\Tests\Module_Test_Case;
 use WP4Odoo\Modules\CRM_Module;
 
@@ -13,10 +14,10 @@ use WP4Odoo\Modules\CRM_Module;
  * default settings, contact/lead data loading, push mapping, pull mapping,
  * and dedup domain logic.
  *
- * @covers \WP4Odoo\Modules\CRM_Module
- * @covers \WP4Odoo\Modules\Contact_Manager
- * @covers \WP4Odoo\Modules\Lead_Manager
  */
+#[CoversClass(\WP4Odoo\Modules\CRM_Module::class)]
+#[CoversClass(\WP4Odoo\Modules\Contact_Manager::class)]
+#[CoversClass(\WP4Odoo\Modules\Lead_Manager::class)]
 class CRMModuleTest extends Module_Test_Case {
 
 	private CRM_Module $module;

@@ -3,6 +3,7 @@ declare( strict_types=1 );
 
 namespace WP4Odoo\Tests\Unit;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use WP4Odoo\Modules\ShopWP_Handler;
 use WP4Odoo\Logger;
 use WP4Odoo\Tests\Module_Test_Case;
@@ -13,8 +14,8 @@ use WP4Odoo\Tests\Module_Test_Case;
  * Tests product loading from the wps_products CPT and variant lookup
  * from the custom shopwp_variants table.
  *
- * @covers \WP4Odoo\Modules\ShopWP_Handler
  */
+#[CoversClass(\WP4Odoo\Modules\ShopWP_Handler::class)]
 class ShopWPHandlerTest extends Module_Test_Case {
 
 	private ShopWP_Handler $handler;

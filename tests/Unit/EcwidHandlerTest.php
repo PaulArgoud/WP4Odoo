@@ -5,6 +5,7 @@ namespace WP4Odoo\Tests\Unit;
 
 use WP4Odoo\Modules\Ecwid_Handler;
 use WP4Odoo\Logger;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -13,8 +14,8 @@ use PHPUnit\Framework\TestCase;
  * Tests product and order data transformation from Ecwid REST API format
  * to Odoo-compatible format.
  *
- * @covers \WP4Odoo\Modules\Ecwid_Handler
  */
+#[CoversClass(\WP4Odoo\Modules\Ecwid_Handler::class)]
 class EcwidHandlerTest extends TestCase {
 
 	private Ecwid_Handler $handler;

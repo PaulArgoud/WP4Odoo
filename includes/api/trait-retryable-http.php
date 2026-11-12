@@ -50,10 +50,13 @@ trait Retryable_Http {
 	 * @param string               $url           Full URL.
 	 * @param array<string, mixed> $request_args  Arguments for wp_remote_post().
 	 * @param string               $endpoint      Endpoint label for log context.
+	 * @param bool                 $parse_server_errors When true, HTTP 5xx (except 429) is returned to the
+	 *                                                  caller instead of thrown, because the API reports
+	 *                                                  Odoo errors in the body of 5xx responses (JSON-2).
 	 * @return array The successful response (WP HTTP API format).
 	 * @throws \RuntimeException On HTTP error or server error (5xx).
 	 */
-	protected function http_post_with_retry( string $url, array $request_args, string $endpoint ): array {
+	protected function http_post_with_retry( string $url, array $request_args, string $endpoint, bool $parse_server_errors = false ): array {
 		// Enable TCP connection reuse across batch calls.
 		if ( ! isset( $request_args['headers']['Connection'] ) ) {
 			$request_args['headers']['Connection'] = 'keep-alive';
@@ -79,7 +82,7 @@ trait Retryable_Http {
 
 		$status_code = wp_remote_retrieve_response_code( $response );
 
-		if ( 429 === $status_code || $status_code >= 500 ) {
+		if ( 429 === $status_code || ( $status_code >= 500 && ! $parse_server_errors ) ) {
 			$error_msg = sprintf(
 				/* translators: 1: HTTP status code, 2: endpoint */
 				__( 'Server error HTTP %1$d on %2$s.', 'wp4odoo' ),

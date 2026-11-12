@@ -6,13 +6,14 @@ namespace WP4Odoo\Tests\Unit;
 use WP4Odoo\Entity_Map_Repository;
 use WP4Odoo\Logger;
 use WP4Odoo\Modules\WC_Shipping_Handler;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
 /**
  * Unit tests for WC_Shipping_Handler.
  *
- * @covers \WP4Odoo\Modules\WC_Shipping_Handler
  */
+#[CoversClass(\WP4Odoo\Modules\WC_Shipping_Handler::class)]
 class WCShippingHandlerTest extends TestCase {
 
 	private WC_Shipping_Handler $handler;

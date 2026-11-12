@@ -133,6 +133,13 @@ class Odoo_Client {
 				$credentials['api_key'],
 				$timeout
 			);
+		} elseif ( 'json2' === $credentials['protocol'] ) {
+			$this->transport = new Odoo_Json2(
+				$credentials['url'],
+				$credentials['database'],
+				$credentials['api_key'],
+				$timeout
+			);
 		} else {
 			$this->transport = new Odoo_JsonRPC(
 				$credentials['url'],

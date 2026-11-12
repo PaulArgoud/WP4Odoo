@@ -6,6 +6,7 @@ namespace WP4Odoo\Tests\Unit;
 use WP4Odoo\Modules\Documents_Module;
 use WP4Odoo\Modules\Documents_Handler;
 use WP4Odoo\Logger;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -14,9 +15,9 @@ use PHPUnit\Framework\TestCase;
  * Tests module configuration, handler data loading/saving/parsing/formatting,
  * hook guard logic, pull overrides, and dedup domains.
  *
- * @covers \WP4Odoo\Modules\Documents_Module
- * @covers \WP4Odoo\Modules\Documents_Handler
  */
+#[CoversClass(\WP4Odoo\Modules\Documents_Module::class)]
+#[CoversClass(\WP4Odoo\Modules\Documents_Handler::class)]
 class DocumentsModuleTest extends TestCase {
 
 	private Documents_Module $module;

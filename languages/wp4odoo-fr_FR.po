@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: WP4Odoo 3.9.2\n"
 "Report-Msgid-Bugs-To: support@avalia.io\n"
-"POT-Creation-Date: 2026-02-23 10:37+0100\n"
+"POT-Creation-Date: 2026-11-12 01:36+0100\n"
 "PO-Revision-Date: 2026-02-15 12:00+0100\n"
 "Last-Translator: \n"
 "Language-Team: French\n"
@@ -150,9 +150,9 @@ msgstr ""
 msgid "%d product(s) enqueued for export."
 msgstr "%d produit(s) mis en file d'attente pour l'export."
 
-#: includes/modules/class-survey-quiz-module.php:234
-#: includes/modules/class-forms-module.php:629
 #: includes/modules/class-food-ordering-module.php:244
+#: includes/modules/class-forms-module.php:629
+#: includes/modules/class-survey-quiz-module.php:234
 #, php-format
 msgid "%s is not active."
 msgstr "%s n'est pas actif."
@@ -214,7 +214,7 @@ msgstr "Action"
 msgid "Actions"
 msgstr "Actions"
 
-#: admin/views/tab-connection.php:244
+#: admin/views/tab-connection.php:247
 msgid ""
 "Activate the developer mode, then go to Settings > Technical > Automation > "
 "Automated Actions."
@@ -242,7 +242,7 @@ msgstr "Ajouter une commande"
 msgid "Add New Task"
 msgstr "Ajouter une tâche"
 
-#: admin/views/tab-connection.php:235
+#: admin/views/tab-connection.php:238
 #, php-format
 msgid "Add a custom header %s with the token shown above."
 msgstr "Ajoutez un en-tête personnalisé %s avec le jeton ci-dessus."
@@ -329,7 +329,7 @@ msgstr "Rendez-vous"
 msgid "Archive on delete"
 msgstr "Archiver à la suppression"
 
-#: admin/views/network-settings.php:110
+#: admin/views/network-settings.php:113
 msgid ""
 "Assign an Odoo Company ID to each site. All API calls from that site will be "
 "scoped to the specified res.company. Leave at 0 for no company restriction."
@@ -362,7 +362,12 @@ msgstr "Au moins un plugin de quiz ou d'enquête doit être installé et activé
 msgid "Attempts"
 msgstr "Tentatives"
 
-#: includes/api/class-odoo-jsonrpc.php:49 includes/api/class-odoo-xmlrpc.php:48
+#: includes/api/class-odoo-json2.php:84
+msgid "Authentication failed: %s"
+msgstr "Échec de l'authentification : %s"
+
+#: includes/api/class-odoo-json2.php:96 includes/api/class-odoo-jsonrpc.php:49
+#: includes/api/class-odoo-xmlrpc.php:48
 msgid "Authentication failed: invalid credentials."
 msgstr "Échec de l'authentification : identifiants invalides."
 
@@ -379,17 +384,17 @@ msgstr "Confirmer automatiquement les commandes"
 msgid "Auto-post credit notes"
 msgstr "Valider automatiquement les avoirs"
 
-#: includes/modules/class-wc-subscriptions-module.php:184
-#: includes/modules/class-pmpro-module.php:180
-#: includes/modules/class-wp-invoice-module.php:141
-#: includes/modules/class-rcp-module.php:168
-#: includes/modules/class-memberpress-module.php:159
-#: includes/modules/class-sprout-invoices-module.php:160
 #: includes/modules/class-learndash-module.php:188
-#: includes/modules/class-lifterlms-module.php:201
-#: includes/modules/class-tutorlms-module.php:171
 #: includes/modules/class-learnpress-module.php:175
+#: includes/modules/class-lifterlms-module.php:201
+#: includes/modules/class-memberpress-module.php:159
+#: includes/modules/class-pmpro-module.php:180
+#: includes/modules/class-rcp-module.php:168
 #: includes/modules/class-sensei-module.php:175
+#: includes/modules/class-sprout-invoices-module.php:160
+#: includes/modules/class-tutorlms-module.php:171
+#: includes/modules/class-wc-subscriptions-module.php:184
+#: includes/modules/class-wp-invoice-module.php:141
 msgid "Auto-post invoices"
 msgstr "Valider automatiquement les factures"
 
@@ -398,8 +403,8 @@ msgstr "Valider automatiquement les factures"
 msgid "Auto-post vendor bills"
 msgstr "Valider automatiquement les factures fournisseur"
 
-#: includes/modules/class-givewp-module.php:146
 #: includes/modules/class-charitable-module.php:146
+#: includes/modules/class-givewp-module.php:146
 msgid "Auto-validate donations"
 msgstr "Valider automatiquement les dons"
 
@@ -425,11 +430,11 @@ msgid "Automatically confirm invoices in Odoo for completed invoices."
 msgstr ""
 "Confirmer automatiquement les factures dans Odoo pour les factures terminées."
 
-#: includes/modules/class-pmpro-module.php:182
-#: includes/modules/class-lifterlms-module.php:203
-#: includes/modules/class-tutorlms-module.php:173
 #: includes/modules/class-learnpress-module.php:177
+#: includes/modules/class-lifterlms-module.php:203
+#: includes/modules/class-pmpro-module.php:182
 #: includes/modules/class-sensei-module.php:177
+#: includes/modules/class-tutorlms-module.php:173
 msgid "Automatically confirm invoices in Odoo for completed orders."
 msgstr ""
 "Confirmer automatiquement les factures dans Odoo pour les commandes "
@@ -440,8 +445,8 @@ msgid "Automatically confirm invoices in Odoo for completed payments."
 msgstr ""
 "Confirmer automatiquement les factures dans Odoo pour les paiements terminés."
 
-#: includes/modules/class-memberpress-module.php:161
 #: includes/modules/class-learndash-module.php:190
+#: includes/modules/class-memberpress-module.php:161
 msgid "Automatically confirm invoices in Odoo for completed transactions."
 msgstr ""
 "Valider automatiquement les factures dans Odoo pour les transactions "
@@ -480,8 +485,8 @@ msgstr ""
 "Valider automatiquement les bons de livraison Odoo lorsque le suivi est "
 "envoyé."
 
-#: includes/modules/class-givewp-module.php:148
 #: includes/modules/class-charitable-module.php:148
+#: includes/modules/class-givewp-module.php:148
 msgid "Automatically validate donations in Odoo after creation."
 msgstr "Valider automatiquement les dons dans Odoo après leur création."
 
@@ -505,8 +510,8 @@ msgstr "Module Awesome Support activé mais Awesome Support n'est pas actif."
 msgid "BOM components (requires Manufacturing)"
 msgstr "Composants de nomenclature (nécessite Fabrication)"
 
-#: includes/modules/class-wc-bundle-bom-module.php:146
 #: includes/modules/class-jeero-configurator-module.php:144
+#: includes/modules/class-wc-bundle-bom-module.php:146
 msgid "BOM type"
 msgstr "Type de nomenclature"
 
@@ -525,7 +530,7 @@ msgstr "Sauvegardez vos bases de données avant toute synchronisation."
 msgid "Batch size"
 msgstr "Taille du lot"
 
-#: admin/views/tab-sync.php:28 admin/views/tab-modules.php:32
+#: admin/views/tab-modules.php:32 admin/views/tab-sync.php:28
 msgid "Bidirectional"
 msgstr "Bidirectionnelle"
 
@@ -539,9 +544,9 @@ msgid "Blog ID %d does not exist."
 msgstr "L'identifiant de blog %d n'existe pas."
 
 #: includes/modules/class-bookly-module.php:190
-#: includes/modules/class-wc-bookings-module.php:185
-#: includes/modules/class-jet-booking-module.php:169
 #: includes/modules/class-fluent-booking-module.php:177
+#: includes/modules/class-jet-booking-module.php:169
+#: includes/modules/class-wc-bookings-module.php:185
 msgid "Booking"
 msgstr "Réservation"
 
@@ -578,7 +583,7 @@ msgstr "CRM"
 msgid "CRM:"
 msgstr "CRM :"
 
-#: includes/admin/class-admin.php:120 admin/views/tab-queue.php:147
+#: admin/views/tab-queue.php:147 includes/admin/class-admin.php:120
 msgid "Cancel"
 msgstr "Annuler"
 
@@ -591,7 +596,7 @@ msgstr "Annuler ce job ?"
 msgid "Cannot be active simultaneously with \"%s\"."
 msgstr "Ne peut pas être actif en même temps que « %s »."
 
-#: includes/modules/class-stock-handler.php:162
+#: includes/modules/class-stock-handler.php:209
 msgid "Cannot determine warehouse stock location."
 msgstr "Impossible de déterminer l'emplacement de stock de l'entrepôt."
 
@@ -655,12 +660,12 @@ msgstr "Entreprise : %s"
 msgid "Compatibility warnings"
 msgstr "Avertissements de compatibilité"
 
-#: includes/admin/class-admin.php:123 admin/views/tab-queue.php:25
-#: admin/views/tab-queue.php:43
+#: admin/views/tab-queue.php:25 admin/views/tab-queue.php:43
+#: includes/admin/class-admin.php:123
 msgid "Completed"
 msgstr "Terminé"
 
-#: admin/views/tab-connection.php:199
+#: admin/views/tab-connection.php:202
 #, php-format
 msgid "Configure this token in Odoo as the %s header."
 msgstr "Configurez ce token dans Odoo comme en-tête %s."
@@ -704,7 +709,7 @@ msgstr "Connexion réussie !"
 msgid "Connection successful! UID: %d"
 msgstr "Connexion réussie ! UID : %d"
 
-#: includes/api/class-odoo-auth.php:267
+#: includes/api/class-odoo-auth.php:269
 msgid "Connection successful."
 msgstr "Connexion réussie."
 
@@ -747,7 +752,7 @@ msgstr "Cuisson : %smin"
 msgid "Copied!"
 msgstr "Copié !"
 
-#: admin/views/tab-connection.php:193
+#: admin/views/tab-connection.php:196
 msgid "Copy"
 msgstr "Copier"
 
@@ -800,7 +805,7 @@ msgstr "Créer des leads Odoo depuis les soumissions Ninja Forms."
 msgid "Create Odoo leads from WPForms submissions."
 msgstr "Créer des leads Odoo à partir des soumissions WPForms."
 
-#: admin/views/tab-connection.php:221
+#: admin/views/tab-connection.php:224
 msgid ""
 "Create a new webhook for each model you want to sync (e.g. res.partner, "
 "sale.order)."
@@ -808,7 +813,7 @@ msgstr ""
 "Créez un nouveau webhook pour chaque modèle à synchroniser (par ex. "
 "res.partner, sale.order)."
 
-#: admin/views/tab-connection.php:245
+#: admin/views/tab-connection.php:248
 msgid "Create an action for each model (e.g. res.partner)."
 msgstr "Créez une action pour chaque modèle (par ex. res.partner)."
 
@@ -885,7 +890,7 @@ msgstr "Détecter les langues"
 msgid "Detecting languages..."
 msgstr "Détection des langues…"
 
-#: admin/views/tab-sync.php:23 admin/views/tab-queue.php:84
+#: admin/views/tab-queue.php:84 admin/views/tab-sync.php:23
 msgid "Direction"
 msgstr "Direction"
 
@@ -914,8 +919,8 @@ msgstr ""
 msgid "Dokan module enabled but Dokan is not active."
 msgstr "Le module Dokan est activé mais Dokan n'est pas actif."
 
-#: includes/modules/class-givewp-handler.php:84
 #: includes/modules/class-charitable-handler.php:94
+#: includes/modules/class-givewp-handler.php:84
 msgid "Donation"
 msgstr "Don"
 
@@ -1045,7 +1050,7 @@ msgid "Events Calendar module enabled but The Events Calendar is not active."
 msgstr ""
 "Module Events Calendar activé mais The Events Calendar n'est pas actif."
 
-#: wp4odoo.php:380
+#: wp4odoo.php:398
 msgid "Every 15 Minutes"
 msgstr "Toutes les 15 minutes"
 
@@ -1053,7 +1058,7 @@ msgstr "Toutes les 15 minutes"
 msgid "Every 15 minutes"
 msgstr "Toutes les 15 minutes"
 
-#: wp4odoo.php:376
+#: wp4odoo.php:394
 msgid "Every 5 Minutes"
 msgstr "Toutes les 5 minutes"
 
@@ -1073,8 +1078,8 @@ msgstr ""
 "Exporter tous les produits vers Odoo ? Cela ajoutera des jobs de "
 "synchronisation pour tous les produits WooCommerce."
 
-#: includes/admin/class-admin.php:124 admin/views/tab-queue.php:26
-#: admin/views/tab-queue.php:47
+#: admin/views/tab-queue.php:26 admin/views/tab-queue.php:47
+#: includes/admin/class-admin.php:124
 msgid "Failed"
 msgstr "Échoué"
 
@@ -1100,8 +1105,8 @@ msgstr "Échec de l'enregistrement du lead."
 msgid "Failed to save settings."
 msgstr "Échec de l'enregistrement des paramètres."
 
-#: includes/modules/class-field-service-module.php:124
 #: includes/modules/class-field-service-handler.php:212
+#: includes/modules/class-field-service-module.php:124
 msgid "Field Service Task"
 msgstr "Tâche Field Service"
 
@@ -1200,7 +1205,7 @@ msgstr ""
 "Allez dans Paramètres > Activez le mode développeur (depuis la page des "
 "paramètres généraux)."
 
-#: admin/views/tab-connection.php:220
+#: admin/views/tab-connection.php:223
 msgid "Go to Settings > Technical > Automation > Webhooks."
 msgstr "Allez dans Paramètres > Technique > Automatisation > Webhooks."
 
@@ -1217,7 +1222,12 @@ msgstr "Aller aux paramètres"
 msgid "Gravity Forms: %s"
 msgstr "Gravity Forms : %s"
 
-#: includes/api/trait-retryable-http.php:67
+#: includes/api/class-odoo-json2.php:279
+#, php-format
+msgid "HTTP %d"
+msgstr "HTTP %d"
+
+#: includes/api/trait-retryable-http.php:70
 #, php-format
 msgid "HTTP error: %s"
 msgstr "Erreur HTTP : %s"
@@ -1226,7 +1236,7 @@ msgstr "Erreur HTTP : %s"
 msgid "Have you backed up your WordPress and Odoo databases?"
 msgstr "Avez-vous sauvegardé vos bases de données WordPress et Odoo ?"
 
-#: includes/admin/class-settings-page.php:48 admin/views/tab-health.php:33
+#: admin/views/tab-health.php:33 includes/admin/class-settings-page.php:48
 msgid "Health"
 msgstr "Santé"
 
@@ -1235,8 +1245,8 @@ msgid "Healthy"
 msgstr "Opérationnel"
 
 #: includes/modules/class-awesome-support-module.php:124
-#: includes/modules/class-supportcandy-module.php:136
 #: includes/modules/class-fluent-support-module.php:124
+#: includes/modules/class-supportcandy-module.php:136
 msgid "Helpdesk Team ID"
 msgstr "ID de l'équipe Helpdesk"
 
@@ -1263,7 +1273,7 @@ msgstr ""
 "S'intégrer à YITH WooCommerce Return & Warranty pour des processus de retour "
 "améliorés."
 
-#: admin/views/tab-connection.php:216
+#: admin/views/tab-connection.php:219
 msgid "How to configure webhooks in Odoo"
 msgstr "Comment configurer les webhooks dans Odoo"
 
@@ -1325,6 +1335,7 @@ msgstr "Intervalle"
 msgid "Invalid JSON payload in job #%d."
 msgstr "Payload JSON invalide dans le job #%d."
 
+#: includes/api/class-odoo-json2.php:315
 #: includes/api/class-odoo-jsonrpc.php:137
 #, php-format
 msgid "Invalid JSON response from Odoo (HTTP %d)."
@@ -1373,6 +1384,10 @@ msgstr "Facture %s"
 msgid "Invoices"
 msgstr "Factures"
 
+#: admin/views/network-settings.php:92 admin/views/tab-connection.php:147
+msgid "JSON-2 (Odoo 19+, API key required)"
+msgstr "JSON-2 (Odoo 19+, clé API requise)"
+
 #: admin/views/network-settings.php:86 admin/views/tab-connection.php:141
 msgid "JSON-RPC (Odoo 17+)"
 msgstr "JSON-RPC (Odoo 17+)"
@@ -1407,13 +1422,13 @@ msgstr "Job annulé."
 msgid "Journal line"
 msgstr "Ligne d'écriture comptable"
 
-#: includes/modules/class-wc-bundle-bom-module.php:150
 #: includes/modules/class-jeero-configurator-module.php:148
+#: includes/modules/class-wc-bundle-bom-module.php:150
 msgid "Kit (phantom)"
 msgstr "Kit (phantom)"
 
-#: includes/modules/class-wc-bundle-bom-module.php:148
 #: includes/modules/class-jeero-configurator-module.php:146
+#: includes/modules/class-wc-bundle-bom-module.php:148
 msgid ""
 "Kit (phantom) auto-explodes at delivery. Manufacture (normal) creates "
 "production orders."
@@ -1430,7 +1445,7 @@ msgstr "Article Knowledge"
 msgid "Last completed: %s"
 msgstr "Dernier traitement : %s"
 
-#: includes/admin/class-admin.php:119 admin/views/tab-queue.php:68
+#: admin/views/tab-queue.php:68 includes/admin/class-admin.php:119
 #, php-format
 msgid "Last sync: %s"
 msgstr "Dernière synchro : %s"
@@ -1518,7 +1533,7 @@ msgstr "Enregistrer les événements dans la base de données"
 msgid "Logging"
 msgstr "Journalisation"
 
-#: includes/admin/class-settings-page.php:47 admin/views/tab-logs.php:16
+#: admin/views/tab-logs.php:16 includes/admin/class-settings-page.php:47
 msgid "Logs"
 msgstr "Journaux"
 
@@ -1534,8 +1549,8 @@ msgstr "Module MEC activé mais Modern Events Calendar n'est pas actif."
 msgid "MailPoet module enabled but MailPoet is not active."
 msgstr "Le module MailPoet est activé mais MailPoet n'est pas actif."
 
-#: includes/modules/class-wc-bundle-bom-module.php:151
 #: includes/modules/class-jeero-configurator-module.php:149
+#: includes/modules/class-wc-bundle-bom-module.php:151
 msgid "Manufacture (normal)"
 msgstr "Fabrication (normal)"
 
@@ -1637,7 +1652,7 @@ msgid "Memberships module enabled but WooCommerce Memberships is not active."
 msgstr ""
 "Module Memberships activé mais WooCommerce Memberships n'est pas actif."
 
-#: includes/modules/class-lead-manager.php:129 admin/views/tab-logs.php:97
+#: admin/views/tab-logs.php:97 includes/modules/class-lead-manager.php:129
 msgid "Message"
 msgstr "Message"
 
@@ -1667,8 +1682,8 @@ msgstr "Champs requis manquants : module, entity_type, odoo_id."
 msgid "Missing translation parameters."
 msgstr "Paramètres de traduction manquants."
 
-#: admin/views/tab-logs.php:96 admin/views/tab-queue.php:82
-#: admin/views/tab-health.php:196
+#: admin/views/tab-health.php:196 admin/views/tab-logs.php:96
+#: admin/views/tab-queue.php:82
 msgid "Module"
 msgstr "Module"
 
@@ -1698,7 +1713,7 @@ msgstr "Module « %s » activé."
 msgid "Module \"%s\" not found or not registered."
 msgstr "Module « %s » introuvable ou non enregistré."
 
-#: includes/class-webhook-handler.php:356 includes/class-cli.php:336
+#: includes/class-cli.php:336 includes/class-webhook-handler.php:356
 #, php-format
 msgid "Module \"%s\" not found."
 msgstr "Module « %s » introuvable."
@@ -1712,8 +1727,8 @@ msgstr "Disjoncteurs par module"
 msgid "Module failed to load (%1$s): %2$s"
 msgstr "Échec du chargement du module (%1$s) : %2$s"
 
-#: includes/admin/class-settings-page.php:45 admin/views/tab-logs.php:39
-#: admin/views/tab-modules.php:14
+#: admin/views/tab-logs.php:39 admin/views/tab-modules.php:14
+#: includes/admin/class-settings-page.php:45
 msgid "Modules"
 msgstr "Modules"
 
@@ -1789,7 +1804,7 @@ msgstr "Aucun lead trouvé."
 msgid "No log entries."
 msgstr "Aucun journal."
 
-#: includes/trait-cli-module-commands.php:32 admin/views/tab-modules.php:360
+#: admin/views/tab-modules.php:360 includes/trait-cli-module-commands.php:32
 msgid "No modules registered."
 msgstr "Aucun module enregistré."
 
@@ -1862,11 +1877,11 @@ msgstr ""
 msgid "Odoo 14-16"
 msgstr "Odoo 14-16"
 
-#: admin/views/tab-connection.php:242
+#: admin/views/tab-connection.php:245
 msgid "Odoo 14-16 (Automated Actions)"
 msgstr "Odoo 14-16 (Actions automatisées)"
 
-#: admin/views/tab-connection.php:218
+#: admin/views/tab-connection.php:221
 msgid "Odoo 17+ (native webhooks)"
 msgstr "Odoo 17+ (webhooks natifs)"
 
@@ -1874,7 +1889,7 @@ msgstr "Odoo 17+ (webhooks natifs)"
 msgid "Odoo 17+ (recommended)"
 msgstr "Odoo 17+ (recommandé)"
 
-#: admin/views/network-settings.php:119 admin/views/tab-connection.php:161
+#: admin/views/network-settings.php:122 admin/views/tab-connection.php:164
 msgid "Odoo Company ID"
 msgstr "ID de la société Odoo"
 
@@ -1882,9 +1897,9 @@ msgstr "ID de la société Odoo"
 msgid "Odoo Connection"
 msgstr "Connexion Odoo"
 
+#: includes/admin/class-admin.php:57 includes/admin/class-admin.php:58
 #: includes/admin/class-network-admin.php:55
-#: includes/admin/class-network-admin.php:56 includes/admin/class-admin.php:57
-#: includes/admin/class-admin.php:58
+#: includes/admin/class-network-admin.php:56
 msgid "Odoo Connector"
 msgstr "Connecteur Odoo"
 
@@ -1893,23 +1908,23 @@ msgid "Odoo Connector — Network Settings"
 msgstr "Odoo Connector — Paramètres réseau"
 
 #: includes/modules/class-awesome-support-module.php:126
-#: includes/modules/class-supportcandy-module.php:138
 #: includes/modules/class-fluent-support-module.php:126
+#: includes/modules/class-supportcandy-module.php:138
 msgid ""
 "Odoo Helpdesk team ID (Enterprise). Leave 0 if using project.task fallback."
 msgstr ""
 "ID de l'équipe Helpdesk Odoo (Enterprise). Laisser 0 pour utiliser "
 "project.task."
 
-#: includes/modules/class-wc-points-rewards-module.php:150
 #: includes/modules/class-gamipress-module.php:176
 #: includes/modules/class-mycred-module.php:159
+#: includes/modules/class-wc-points-rewards-module.php:150
 msgid "Odoo Loyalty Program ID"
 msgstr "ID du programme de fidélité Odoo"
 
-#: includes/modules/class-wc-points-rewards-module.php:292
 #: includes/modules/class-gamipress-module.php:282
 #: includes/modules/class-mycred-module.php:263
+#: includes/modules/class-wc-points-rewards-module.php:292
 msgid "Odoo Loyalty Program ID not configured."
 msgstr "ID du programme de fidélité Odoo non configuré."
 
@@ -1922,8 +1937,8 @@ msgid "Odoo Pricelist ID"
 msgstr "ID de liste de prix Odoo"
 
 #: includes/modules/class-awesome-support-module.php:131
-#: includes/modules/class-supportcandy-module.php:143
 #: includes/modules/class-fluent-support-module.php:131
+#: includes/modules/class-supportcandy-module.php:143
 msgid ""
 "Odoo Project ID (Community fallback). Used when helpdesk.ticket is "
 "unavailable."
@@ -1931,6 +1946,7 @@ msgstr ""
 "ID du projet Odoo (Community). Utilisé lorsque helpdesk.ticket n'est pas "
 "disponible."
 
+#: includes/api/class-odoo-json2.php:303
 #: includes/api/class-odoo-jsonrpc.php:166
 #, php-format
 msgid "Odoo RPC error: %s"
@@ -1969,7 +1985,7 @@ msgstr "Odoo prioritaire"
 msgid "Odoo product.pricelist ID for wholesale pricing rules."
 msgstr "ID product.pricelist Odoo pour les règles de tarification grossiste."
 
-#: admin/views/tab-connection.php:168
+#: admin/views/tab-connection.php:171
 msgid ""
 "Odoo res.company ID for multi-company setups. Leave at 0 for no company "
 "restriction."
@@ -1996,8 +2012,8 @@ msgstr ""
 "ID de l'entrepôt Odoo pour les mouvements de stock (0 pour détection "
 "automatique)."
 
-#: includes/admin/class-admin.php:133 admin/views/tab-modules.php:34
-#: admin/views/tab-queue.php:19
+#: admin/views/tab-modules.php:34 admin/views/tab-queue.php:19
+#: includes/admin/class-admin.php:133
 msgid "Odoo → WP"
 msgstr "Odoo → WP"
 
@@ -2067,16 +2083,16 @@ msgstr "Crochets Packlink"
 msgid "Page %1$d/%2$d (%3$d total)"
 msgstr "Page %1$d/%2$d (%3$d au total)"
 
+#: includes/modules/class-simplepay-handler.php:286
 #: includes/modules/class-sprout-invoices-handler.php:116
 #: includes/modules/class-sprout-invoices-handler.php:291
-#: includes/modules/class-simplepay-handler.php:286
 #: templates/customer-portal.php:87
 msgid "Payment"
 msgstr "Paiement"
 
-#: includes/admin/class-admin.php:121 admin/views/tab-queue.php:23
-#: admin/views/tab-queue.php:35 admin/views/tab-health.php:50
-#: admin/views/tab-health.php:197
+#: admin/views/tab-health.php:50 admin/views/tab-health.php:197
+#: admin/views/tab-queue.php:23 admin/views/tab-queue.php:35
+#: includes/admin/class-admin.php:121
 msgid "Pending"
 msgstr "En attente"
 
@@ -2133,8 +2149,8 @@ msgstr "ID de la liste de prix"
 msgid "Process the sync queue now?"
 msgstr "Traiter la file de synchronisation maintenant ?"
 
-#: includes/admin/class-admin.php:122 admin/views/tab-queue.php:24
-#: admin/views/tab-queue.php:39
+#: admin/views/tab-queue.php:24 admin/views/tab-queue.php:39
+#: includes/admin/class-admin.php:122
 msgid "Processing"
 msgstr "En cours"
 
@@ -2159,8 +2175,8 @@ msgid "Product meta key identifying a rental product (e.g. _rental)."
 msgstr "Clé meta produit identifiant un produit de location (ex. _rental)."
 
 #: includes/modules/class-awesome-support-module.php:129
-#: includes/modules/class-supportcandy-module.php:141
 #: includes/modules/class-fluent-support-module.php:129
+#: includes/modules/class-supportcandy-module.php:141
 msgid "Project ID"
 msgstr "ID du projet"
 
@@ -2285,18 +2301,18 @@ msgid "Pull contacts from Odoo"
 msgstr "Importer les contacts depuis Odoo"
 
 #: includes/modules/class-learndash-module.php:195
-#: includes/modules/class-lifterlms-module.php:208
-#: includes/modules/class-tutorlms-module.php:178
 #: includes/modules/class-learnpress-module.php:182
+#: includes/modules/class-lifterlms-module.php:208
 #: includes/modules/class-sensei-module.php:182
+#: includes/modules/class-tutorlms-module.php:178
 msgid "Pull course changes from Odoo back to WordPress."
 msgstr "Récupérer les modifications de cours depuis Odoo vers WordPress."
 
 #: includes/modules/class-learndash-module.php:193
-#: includes/modules/class-lifterlms-module.php:206
-#: includes/modules/class-tutorlms-module.php:176
 #: includes/modules/class-learnpress-module.php:180
+#: includes/modules/class-lifterlms-module.php:206
 #: includes/modules/class-sensei-module.php:180
+#: includes/modules/class-tutorlms-module.php:176
 msgid "Pull courses from Odoo"
 msgstr "Récupérer les cours depuis Odoo"
 
@@ -2343,8 +2359,8 @@ msgstr ""
 "produits sont principalement gérés par le module WooCommerce."
 
 #: includes/modules/class-events-calendar-module.php:180
-#: includes/modules/class-mec-module.php:149
 #: includes/modules/class-fooevents-module.php:150
+#: includes/modules/class-mec-module.php:149
 msgid "Pull events from Odoo"
 msgstr "Récupérer les événements depuis Odoo"
 
@@ -2564,8 +2580,8 @@ msgstr ""
 "Récupérer les changements de statut d'abonnement depuis Odoo vers "
 "WooCommerce."
 
-#: includes/modules/class-wc-subscriptions-module.php:189
 #: includes/modules/class-surecart-module.php:189
+#: includes/modules/class-wc-subscriptions-module.php:189
 msgid "Pull subscription updates from Odoo"
 msgstr "Récupérer les mises à jour d'abonnements depuis Odoo"
 
@@ -2582,8 +2598,8 @@ msgid "Pull ticket product changes from Odoo back to WordPress."
 msgstr "Récupérer les modifications de billets depuis Odoo vers WordPress."
 
 #: includes/modules/class-awesome-support-module.php:119
-#: includes/modules/class-supportcandy-module.php:131
 #: includes/modules/class-fluent-support-module.php:119
+#: includes/modules/class-supportcandy-module.php:131
 msgid "Pull ticket status"
 msgstr "Récupérer le statut des tickets"
 
@@ -2639,7 +2655,8 @@ msgstr "Envoyer les sous-commandes %s vers Odoo en tant que bons de commande."
 #: includes/modules/class-marketplace-module-base.php:187
 #, php-format
 msgid "Push %s vendors to Odoo as supplier partners."
-msgstr "Envoyer les fournisseurs %s vers Odoo en tant que partenaires fournisseurs."
+msgstr ""
+"Envoyer les fournisseurs %s vers Odoo en tant que partenaires fournisseurs."
 
 #: includes/modules/class-amelia-module.php:141
 msgid "Push Amelia appointments to Odoo as calendar events."
@@ -3126,8 +3143,8 @@ msgstr ""
 msgid "Push approved withdrawals to Odoo as payments."
 msgstr "Envoyer les retraits approuvés vers Odoo en tant que paiements."
 
-#: includes/modules/class-givewp-module.php:143
 #: includes/modules/class-charitable-module.php:143
+#: includes/modules/class-givewp-module.php:143
 msgid "Push completed donations to Odoo (includes recurring payments)."
 msgstr ""
 "Envoyer les dons finalisés vers Odoo (inclut les paiements récurrents)."
@@ -3154,10 +3171,10 @@ msgstr ""
 "Envoyer les commissions confirmées vers Odoo comme factures fournisseur."
 
 #: includes/modules/class-learndash-module.php:185
-#: includes/modules/class-lifterlms-module.php:198
-#: includes/modules/class-tutorlms-module.php:168
 #: includes/modules/class-learnpress-module.php:172
+#: includes/modules/class-lifterlms-module.php:198
 #: includes/modules/class-sensei-module.php:172
+#: includes/modules/class-tutorlms-module.php:168
 msgid "Push course enrollments to Odoo as sale orders."
 msgstr "Envoyer les inscriptions aux cours vers Odoo comme bons de commande."
 
@@ -3208,8 +3225,8 @@ msgstr "Envoyer les ajustements de stock"
 msgid "Push subscription status to Odoo membership lines."
 msgstr "Envoyer le statut des abonnements vers les lignes d'adhésion Odoo."
 
-#: includes/modules/class-wc-subscriptions-module.php:176
 #: includes/modules/class-surecart-module.php:186
+#: includes/modules/class-wc-subscriptions-module.php:176
 msgid "Push subscriptions to Odoo sale.subscription (Enterprise only)."
 msgstr ""
 "Envoyer les abonnements vers Odoo sale.subscription (Enterprise uniquement)."
@@ -3266,8 +3283,8 @@ msgid "Push wholesale prices to Odoo as pricelist items."
 msgstr ""
 "Envoyer les prix grossiste vers Odoo en tant qu'éléments de liste de prix."
 
-#: includes/admin/class-settings-page.php:46 admin/views/tab-logs.php:35
-#: admin/views/tab-queue.php:29
+#: admin/views/tab-logs.php:35 admin/views/tab-queue.php:29
+#: includes/admin/class-settings-page.php:46
 msgid "Queue"
 msgstr "File d'attente"
 
@@ -3317,7 +3334,7 @@ msgstr "Remboursement pour la commande #%d"
 msgid "Refund item"
 msgstr "Article remboursé"
 
-#: includes/admin/class-admin.php:132 admin/views/tab-modules.php:243
+#: admin/views/tab-modules.php:243 includes/admin/class-admin.php:132
 msgid "Remove"
 msgstr "Supprimer"
 
@@ -3325,7 +3342,7 @@ msgstr "Supprimer"
 msgid "Rental product meta key"
 msgstr "Clé meta produit de location"
 
-#: includes/admin/class-admin.php:319 admin/views/tab-modules.php:76
+#: admin/views/tab-modules.php:76 includes/admin/class-admin.php:319
 msgid "Report compatibility"
 msgstr "Signaler la compatibilité"
 
@@ -3390,11 +3407,11 @@ msgstr "Ventes (sale_management) + Facturation (account)"
 msgid "Sales:"
 msgstr "Ventes :"
 
-#: admin/views/tab-sync.php:143 admin/views/tab-connection.php:181
+#: admin/views/tab-connection.php:184 admin/views/tab-sync.php:143
 msgid "Save"
 msgstr "Enregistrer"
 
-#: admin/views/network-settings.php:139
+#: admin/views/network-settings.php:142
 msgid "Save Network Settings"
 msgstr "Enregistrer les paramètres réseau"
 
@@ -3446,7 +3463,7 @@ msgstr ""
 "Sélectionnez les langues pour importer les traductions produits depuis Odoo "
 "(nécessite WPML ou Polylang)."
 
-#: admin/views/tab-connection.php:240
+#: admin/views/tab-connection.php:243
 msgid "Select the events: Create, Update, Delete (as needed)."
 msgstr ""
 "Sélectionnez les événements : Création, Modification, Suppression (selon les "
@@ -3485,7 +3502,7 @@ msgstr "Module Sensei activé mais Sensei LMS n'est pas actif."
 msgid "Server communication error."
 msgstr "Erreur de communication avec le serveur."
 
-#: includes/api/trait-retryable-http.php:85
+#: includes/api/trait-retryable-http.php:88
 #, php-format
 msgid "Server error HTTP %1$d on %2$s."
 msgstr "Erreur serveur HTTP %1$d sur %2$s."
@@ -3499,7 +3516,7 @@ msgstr "Portions : %s"
 msgid "Set active=false in Odoo instead of deleting the record."
 msgstr "Définir active=false dans Odoo au lieu de supprimer l'enregistrement."
 
-#: admin/views/tab-connection.php:226
+#: admin/views/tab-connection.php:229
 #, php-format
 msgid "Set the URL to: %s"
 msgstr "Définissez l'URL : %s"
@@ -3510,7 +3527,7 @@ msgstr ""
 "Définir la liste de prix Odoo correspondante sur les partenaires clients "
 "grossistes."
 
-#: admin/views/tab-connection.php:246
+#: admin/views/tab-connection.php:249
 msgid ""
 "Set trigger to \"On Creation & Update\" and action type to \"Execute Python "
 "Code\"."
@@ -3522,8 +3539,8 @@ msgstr ""
 msgid "Settings"
 msgstr "Réglages"
 
+#: admin/views/network-settings.php:22 includes/admin/class-admin.php:113
 #: includes/admin/trait-ajax-module-handlers.php:228
-#: includes/admin/class-admin.php:113 admin/views/network-settings.php:22
 msgid "Settings saved."
 msgstr "Paramètres enregistrés."
 
@@ -3563,15 +3580,15 @@ msgstr "Module ShopWP activé mais ShopWP n'est pas actif."
 msgid "SimplePay"
 msgstr "SimplePay"
 
-#: admin/views/network-settings.php:116
+#: admin/views/network-settings.php:119
 msgid "Site ID"
 msgstr "ID du site"
 
-#: admin/views/network-settings.php:117
+#: admin/views/network-settings.php:120
 msgid "Site Name"
 msgstr "Nom du site"
 
-#: admin/views/network-settings.php:108
+#: admin/views/network-settings.php:111
 msgid "Site → Odoo Company Mapping"
 msgstr "Association site → société Odoo"
 
@@ -3601,7 +3618,7 @@ msgstr "Clé meta date de début"
 msgid "Status"
 msgstr "Statut"
 
-#: includes/modules/class-stock-handler.php:106
+#: includes/modules/class-stock-handler.php:117
 #, php-format
 msgid "Stock push failed: %s"
 msgstr "Échec de l'envoi du stock : %s"
@@ -3614,7 +3631,7 @@ msgstr "Envoi du stock : produit WC introuvable ou ne gérant pas le stock."
 msgid "Stock push: no Odoo mapping for WC product."
 msgstr "Envoi du stock : aucune correspondance Odoo pour le produit WC."
 
-#: includes/modules/class-stock-handler.php:68
+#: includes/modules/class-stock-handler.php:76
 msgid "Stock push: no Odoo product ID."
 msgstr "Envoi du stock : aucun identifiant produit Odoo."
 
@@ -3745,10 +3762,10 @@ msgid "Sync badge types"
 msgstr "Synchroniser les types de badges"
 
 #: includes/modules/class-bookly-module.php:149
-#: includes/modules/class-wc-bookings-module.php:135
-#: includes/modules/class-jet-booking-module.php:125
 #: includes/modules/class-fluent-booking-module.php:136
+#: includes/modules/class-jet-booking-module.php:125
 #: includes/modules/class-mec-module.php:144
+#: includes/modules/class-wc-bookings-module.php:135
 msgid "Sync bookings"
 msgstr "Synchroniser les réservations"
 
@@ -3790,10 +3807,10 @@ msgid "Sync contacts as leads"
 msgstr "Synchroniser les contacts en tant que pistes"
 
 #: includes/modules/class-learndash-module.php:168
-#: includes/modules/class-lifterlms-module.php:181
-#: includes/modules/class-tutorlms-module.php:156
 #: includes/modules/class-learnpress-module.php:160
+#: includes/modules/class-lifterlms-module.php:181
 #: includes/modules/class-sensei-module.php:160
+#: includes/modules/class-tutorlms-module.php:156
 msgid "Sync courses"
 msgstr "Synchroniser les cours"
 
@@ -3809,8 +3826,8 @@ msgstr "Synchroniser les documents"
 msgid "Sync donation forms"
 msgstr "Synchroniser les formulaires de dons"
 
-#: includes/modules/class-givewp-module.php:141
 #: includes/modules/class-charitable-module.php:141
+#: includes/modules/class-givewp-module.php:141
 msgid "Sync donations"
 msgstr "Synchroniser les dons"
 
@@ -3823,16 +3840,16 @@ msgid "Sync employees"
 msgstr "Synchroniser les employés"
 
 #: includes/modules/class-learndash-module.php:183
-#: includes/modules/class-lifterlms-module.php:196
-#: includes/modules/class-tutorlms-module.php:166
 #: includes/modules/class-learnpress-module.php:170
+#: includes/modules/class-lifterlms-module.php:196
 #: includes/modules/class-sensei-module.php:170
+#: includes/modules/class-tutorlms-module.php:166
 msgid "Sync enrollments"
 msgstr "Synchroniser les inscriptions"
 
 #: includes/modules/class-events-calendar-module.php:165
-#: includes/modules/class-mec-module.php:139
 #: includes/modules/class-fooevents-module.php:140
+#: includes/modules/class-mec-module.php:139
 msgid "Sync events"
 msgstr "Synchroniser les événements"
 
@@ -3853,8 +3870,8 @@ msgstr "Synchroniser les adhésions de groupe"
 msgid "Sync groups"
 msgstr "Synchroniser les groupes"
 
-#: includes/modules/class-wp-invoice-module.php:136
 #: includes/modules/class-sprout-invoices-module.php:150
+#: includes/modules/class-wp-invoice-module.php:136
 msgid "Sync invoices"
 msgstr "Synchroniser les factures"
 
@@ -3885,14 +3902,14 @@ msgstr "Synchroniser les listes"
 msgid "Sync membership levels"
 msgstr "Synchroniser les niveaux d'adhésion"
 
-#: includes/modules/class-memberships-module.php:150
 #: includes/modules/class-memberpress-module.php:144
+#: includes/modules/class-memberships-module.php:150
 msgid "Sync membership plans"
 msgstr "Synchroniser les plans d'adhésion"
 
+#: includes/modules/class-lifterlms-module.php:186
 #: includes/modules/class-pmpro-module.php:175
 #: includes/modules/class-rcp-module.php:163
-#: includes/modules/class-lifterlms-module.php:186
 msgid "Sync memberships"
 msgstr "Synchroniser les adhésions"
 
@@ -3900,15 +3917,15 @@ msgstr "Synchroniser les adhésions"
 msgid "Sync mode"
 msgstr "Mode de synchronisation"
 
-#: includes/modules/class-surecart-module.php:179
 #: includes/modules/class-ecwid-module.php:152
-#: includes/modules/class-pmpro-module.php:170
 #: includes/modules/class-edd-module.php:158
-#: includes/modules/class-woocommerce-module.php:411
-#: includes/modules/class-lifterlms-module.php:191
-#: includes/modules/class-tutorlms-module.php:161
 #: includes/modules/class-learnpress-module.php:165
+#: includes/modules/class-lifterlms-module.php:191
+#: includes/modules/class-pmpro-module.php:170
 #: includes/modules/class-sensei-module.php:165
+#: includes/modules/class-surecart-module.php:179
+#: includes/modules/class-tutorlms-module.php:161
+#: includes/modules/class-woocommerce-module.php:411
 msgid "Sync orders"
 msgstr "Synchroniser les commandes"
 
@@ -3916,8 +3933,8 @@ msgstr "Synchroniser les commandes"
 msgid "Sync payment forms"
 msgstr "Synchroniser les formulaires de paiement"
 
-#: includes/modules/class-simplepay-module.php:144
 #: includes/modules/class-rcp-module.php:158
+#: includes/modules/class-simplepay-module.php:144
 #: includes/modules/class-sprout-invoices-module.php:155
 msgid "Sync payments"
 msgstr "Synchroniser les paiements"
@@ -3926,9 +3943,9 @@ msgstr "Synchroniser les paiements"
 msgid "Sync payouts"
 msgstr "Synchroniser les paiements"
 
-#: includes/modules/class-wc-points-rewards-module.php:140
 #: includes/modules/class-gamipress-module.php:156
 #: includes/modules/class-mycred-module.php:144
+#: includes/modules/class-wc-points-rewards-module.php:140
 msgid "Sync point balances"
 msgstr "Synchroniser les soldes de points"
 
@@ -3944,10 +3961,10 @@ msgstr "Synchroniser les suppléments produit"
 msgid "Sync product images"
 msgstr "Synchroniser les images produit"
 
-#: includes/modules/class-wc-bookings-module.php:130
-#: includes/modules/class-surecart-module.php:174
-#: includes/modules/class-shopwp-module.php:137
 #: includes/modules/class-ecwid-module.php:147
+#: includes/modules/class-shopwp-module.php:137
+#: includes/modules/class-surecart-module.php:174
+#: includes/modules/class-wc-bookings-module.php:130
 #: includes/modules/class-woocommerce-module.php:406
 msgid "Sync products"
 msgstr "Synchroniser les produits"
@@ -4038,9 +4055,9 @@ msgstr "Synchroniser les abonnés"
 msgid "Sync subscription products"
 msgstr "Synchroniser les produits d'abonnement"
 
-#: includes/modules/class-wc-subscriptions-module.php:174
-#: includes/modules/class-surecart-module.php:184
 #: includes/modules/class-memberpress-module.php:154
+#: includes/modules/class-surecart-module.php:184
+#: includes/modules/class-wc-subscriptions-module.php:174
 msgid "Sync subscriptions"
 msgstr "Synchroniser les abonnements"
 
@@ -4048,15 +4065,15 @@ msgstr "Synchroniser les abonnements"
 msgid "Sync tags"
 msgstr "Synchroniser les étiquettes"
 
-#: includes/modules/class-project-manager-module.php:152
 #: includes/modules/class-field-service-module.php:162
+#: includes/modules/class-project-manager-module.php:152
 msgid "Sync tasks"
 msgstr "Synchroniser les tâches"
 
 #: includes/modules/class-awesome-support-module.php:114
-#: includes/modules/class-supportcandy-module.php:126
-#: includes/modules/class-fluent-support-module.php:114
 #: includes/modules/class-events-calendar-module.php:170
+#: includes/modules/class-fluent-support-module.php:114
+#: includes/modules/class-supportcandy-module.php:126
 msgid "Sync tickets"
 msgstr "Synchroniser les billets"
 
@@ -4064,8 +4081,8 @@ msgstr "Synchroniser les billets"
 msgid "Sync timesheets"
 msgstr "Synchroniser les feuilles de temps"
 
-#: includes/modules/class-memberpress-module.php:149
 #: includes/modules/class-learndash-module.php:178
+#: includes/modules/class-memberpress-module.php:149
 msgid "Sync transactions"
 msgstr "Synchroniser les transactions"
 
@@ -4097,7 +4114,7 @@ msgstr "Synchroniser les règles de tarification grossiste"
 msgid "Sync wholesale roles as pricelists"
 msgstr "Synchroniser les rôles grossistes en tant que listes de prix"
 
-#: includes/admin/class-settings-page.php:44 admin/views/tab-sync.php:18
+#: admin/views/tab-sync.php:18 includes/admin/class-settings-page.php:44
 msgid "Synchronization"
 msgstr "Synchronisation"
 
@@ -4145,7 +4162,7 @@ msgstr "Module cible"
 msgid "Tax mapping"
 msgstr "Association des taxes"
 
-#: admin/views/tab-connection.php:176
+#: admin/views/tab-connection.php:179
 msgid "Test connection"
 msgstr "Tester la connexion"
 
@@ -4180,6 +4197,12 @@ msgid "The ID of the root Odoo document folder. Leave 0 to use the root."
 msgstr ""
 "L'ID du dossier racine dans Odoo Documents. Laissez 0 pour utiliser la "
 "racine."
+
+#: includes/api/class-odoo-json2.php:172
+#, php-format
+msgid ""
+"The JSON-2 transport cannot translate positional arguments for method \"%s\"."
+msgstr "Le transport JSON-2 ne peut pas traduire les arguments positionnels de la méthode « %s »."
 
 #: includes/modules/class-funnelkit-module.php:162
 msgid "The Odoo CRM team (pipeline) ID to assign stages to."
@@ -4279,12 +4302,12 @@ msgid "This will permanently remove orphaned entity mappings. Continue?"
 msgstr ""
 "Ceci supprimera définitivement les correspondances orphelines. Continuer ?"
 
-#: includes/modules/class-project-manager-module.php:440
 #: includes/modules/class-project-manager-handler.php:285
+#: includes/modules/class-project-manager-module.php:440
 msgid "Time entry"
 msgstr "Saisie de temps"
 
-#: admin/views/network-settings.php:96 admin/views/tab-connection.php:151
+#: admin/views/network-settings.php:99 admin/views/tab-connection.php:154
 msgid "Timeout (seconds)"
 msgstr "Timeout (secondes)"
 
@@ -4292,7 +4315,7 @@ msgstr "Timeout (secondes)"
 msgid "To"
 msgstr "Au"
 
-#: admin/views/tab-connection.php:189
+#: admin/views/tab-connection.php:192
 msgid "Token"
 msgstr "Token"
 
@@ -4329,7 +4352,7 @@ msgstr "Module TutorLMS activé mais Tutor LMS n'est pas actif."
 msgid "Type"
 msgstr "Type"
 
-#: admin/views/network-settings.php:118
+#: admin/views/network-settings.php:121
 msgid "URL"
 msgstr "URL"
 
@@ -4419,7 +4442,7 @@ msgstr "Sous-commande inconnue : %s. Utilisation : wp wp4odoo sync run"
 msgid "Usage: wp wp4odoo reconcile <module> <entity_type> [--fix]"
 msgstr "Utilisation : wp wp4odoo reconcile <module> <entity_type> [--fix]"
 
-#: admin/views/tab-connection.php:248
+#: admin/views/tab-connection.php:251
 msgid "Use the following Python code template:"
 msgstr "Utilisez le modèle de code Python suivant :"
 
@@ -4531,7 +4554,7 @@ msgstr ""
 msgid "WC Vendors module enabled but WC Vendors is not active."
 msgstr "Le module WC Vendors est activé mais WC Vendors n'est pas actif."
 
-#: includes/modules/class-wc-inventory-handler.php:198
+#: includes/modules/class-wc-inventory-handler.php:188
 #, php-format
 msgid "WC stock adjustment: %s"
 msgstr "Ajustement de stock WC : %s"
@@ -4608,8 +4631,8 @@ msgstr "Module WP Recipe Maker activé mais WP Recipe Maker n'est pas actif."
 msgid "WP Simple Pay module enabled but WP Simple Pay is not active."
 msgstr "Module WP Simple Pay activé mais WP Simple Pay n'est pas actif."
 
-#: includes/admin/class-admin.php:128 admin/views/tab-modules.php:33
-#: admin/views/tab-queue.php:18
+#: admin/views/tab-modules.php:33 admin/views/tab-queue.php:18
+#: includes/admin/class-admin.php:128
 msgid "WP → Odoo"
 msgstr "WP → Odoo"
 
@@ -4665,11 +4688,11 @@ msgstr "WPRM"
 msgid "Warning"
 msgstr "Avertissement"
 
-#: admin/views/tab-connection.php:186
+#: admin/views/tab-connection.php:189
 msgid "Webhook"
 msgstr "Webhook"
 
-#: admin/views/tab-connection.php:207
+#: admin/views/tab-connection.php:210
 msgid "Webhook URL"
 msgstr "URL du webhook"
 
@@ -4694,8 +4717,8 @@ msgstr "Le module WooCommerce n'est pas enregistré."
 msgid "WooCommerce:"
 msgstr "WooCommerce :"
 
-#: includes/admin/class-admin.php:194 includes/admin/class-admin.php:238
-#: admin/views/page-settings.php:16
+#: admin/views/page-settings.php:16 includes/admin/class-admin.php:194
+#: includes/admin/class-admin.php:238
 msgid "WordPress For Odoo"
 msgstr "WordPress For Odoo"
 

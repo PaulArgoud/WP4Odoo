@@ -143,9 +143,8 @@ class BookingModuleBaseTestModule extends Booking_Module_Base {
  * (service, booking, unknown), booking data resolution pipeline,
  * map_to_odoo overrides, pull gating, save/delete delegation, and
  * map_from_odoo routing.
- *
- * @covers \WP4Odoo\Modules\Booking_Module_Base
  */
+#[CoversClass(\WP4Odoo\Modules\Booking_Module_Base::class)]
 class BookingModuleBaseTest extends Module_Test_Case {
 
 	private BookingModuleBaseTestModule $module;

@@ -3,6 +3,7 @@ declare( strict_types=1 );
 
 namespace WP4Odoo\Tests\Unit;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -33,9 +34,7 @@ class ModuleHealthManifestTest extends TestCase {
 		$this->assertIsArray( self::$manifest );
 	}
 
-	/**
-	 * @dataProvider functionProvider
-	 */
+	#[DataProvider( 'functionProvider' )]
 	public function test_manifest_function_exists( string $module_id, string $function_name ): void {
 		$this->assertTrue(
 			function_exists( $function_name ),
@@ -43,9 +42,7 @@ class ModuleHealthManifestTest extends TestCase {
 		);
 	}
 
-	/**
-	 * @dataProvider classProvider
-	 */
+	#[DataProvider( 'classProvider' )]
 	public function test_manifest_class_exists( string $module_id, string $class_name ): void {
 		$this->assertTrue(
 			class_exists( $class_name ),
@@ -53,9 +50,7 @@ class ModuleHealthManifestTest extends TestCase {
 		);
 	}
 
-	/**
-	 * @dataProvider constantProvider
-	 */
+	#[DataProvider( 'constantProvider' )]
 	public function test_manifest_constant_defined( string $module_id, string $constant_name ): void {
 		$this->assertTrue(
 			defined( $constant_name ),

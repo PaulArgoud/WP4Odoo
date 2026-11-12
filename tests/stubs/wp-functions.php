@@ -771,6 +771,7 @@ if ( ! function_exists( 'wp_remote_get' ) ) {
 
 if ( ! function_exists( 'wp_remote_post' ) ) {
 	function wp_remote_post( $url, $args = [] ) {
+		$GLOBALS['_wp_remote_requests'][] = [ 'url' => $url, 'args' => $args ];
 		// Support sequential response queue for multi-call tests.
 		if ( ! empty( $GLOBALS['_wp_remote_responses'] ) ) {
 			return array_shift( $GLOBALS['_wp_remote_responses'] );

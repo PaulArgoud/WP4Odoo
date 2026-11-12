@@ -8,13 +8,14 @@ use WP4Odoo\Logger;
 use WP4Odoo\Modules\Odoo_Accounting_Formatter;
 use WP4Odoo\Modules\WC_Returns_Handler;
 use WP4Odoo\Partner_Service;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
 /**
  * Unit tests for WC_Returns_Handler.
  *
- * @covers \WP4Odoo\Modules\WC_Returns_Handler
  */
+#[CoversClass(\WP4Odoo\Modules\WC_Returns_Handler::class)]
 class WCReturnsHandlerTest extends TestCase {
 
 	private WC_Returns_Handler $handler;

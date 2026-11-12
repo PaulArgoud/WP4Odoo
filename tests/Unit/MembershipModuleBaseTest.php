@@ -130,9 +130,8 @@ class MembershipModuleBaseTestModule extends Membership_Module_Base {
  * Tests sync direction, exclusive group, deduplication domains,
  * load_wp_data dispatch (level, payment, membership, unknown),
  * and the payment/membership resolution pipelines.
- *
- * @covers \WP4Odoo\Modules\Membership_Module_Base
  */
+#[CoversClass(\WP4Odoo\Modules\Membership_Module_Base::class)]
 class MembershipModuleBaseTest extends Module_Test_Case {
 
 	private MembershipModuleBaseTestModule $module;

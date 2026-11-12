@@ -3,14 +3,15 @@ declare( strict_types=1 );
 
 namespace WP4Odoo\Tests\Unit;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use WP4Odoo\Modules\WPERP_CRM_Module;
 use WP4Odoo\Tests\Module_Test_Case;
 
 /**
  * Unit tests for WPERP_CRM_Module.
  *
- * @covers \WP4Odoo\Modules\WPERP_CRM_Module
  */
+#[CoversClass(\WP4Odoo\Modules\WPERP_CRM_Module::class)]
 class WPERPCRMModuleTest extends Module_Test_Case {
 
 	private WPERP_CRM_Module $module;

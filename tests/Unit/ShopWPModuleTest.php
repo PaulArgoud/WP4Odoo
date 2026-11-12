@@ -3,16 +3,15 @@ declare( strict_types=1 );
 
 namespace WP4Odoo\Tests\Unit;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use WP4Odoo\Tests\Module_Test_Case;
 use WP4Odoo\Modules\ShopWP_Module;
 use WP4Odoo\Modules\ShopWP_Handler;
 use WP4Odoo\Logger;
 
-/**
- * @covers \WP4Odoo\Modules\ShopWP_Module
- * @covers \WP4Odoo\Modules\ShopWP_Handler
- * @covers \WP4Odoo\Modules\ShopWP_Hooks
- */
+#[CoversClass(\WP4Odoo\Modules\ShopWP_Module::class)]
+#[CoversClass(\WP4Odoo\Modules\ShopWP_Handler::class)]
+#[CoversClass(\WP4Odoo\Modules\ShopWP_Hooks::class)]
 class ShopWPModuleTest extends Module_Test_Case {
 
 	private ShopWP_Module $module;

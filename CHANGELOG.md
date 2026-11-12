@@ -7,13 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Changed
-- **WordPress 7.1 compatibility** — `Tested up to` raised from 6.7 to 7.1 in `readme.txt` after running the unit suite (5414 tests) and the 45 integration tests on WordPress 7.1.4 (PHP 8.3, WooCommerce 11.3)
-- **Odoo 19 / 20 verification** — Authentication, CRUD, search, `fields_get`, sale order confirmation, invoice posting and context-based translation writes confirmed against live Odoo 19.0 and 20.0 servers over both JSON-RPC and XML-RPC. README compatibility table now lists Odoo 17 – 20
+### Added
+- **JSON-2 transport (`Odoo_Json2`)** — New protocol option for Odoo 19+ using `POST /json/2/<model>/<method>` with a bearer API key, Odoo's replacement for the deprecated `/jsonrpc` and `/xmlrpc` endpoints. Translates `execute_kw` positional arguments to JSON-2 named arguments, resolves the uid via `res.users/context_get`, and is selectable in the Connection tab and the network settings. Verified against live Odoo 19.0 and 20.0 servers
+- **`Retryable_Http::http_post_with_retry()` `$parse_server_errors` flag** — Lets a transport read the body of HTTP 5xx responses (429 still throws), used by JSON-2 where Odoo errors such as `ValueError` come back as HTTP 500 with a JSON body
 
-### Documentation
-- Noted that Odoo has deprecated `/jsonrpc` and `/xmlrpc` in favour of `/json/2` (still functional on Odoo 20; a `/json/2` transport is not implemented yet)
-- Noted that stock pushes on Odoo 18+ require the Odoo product to be storable (`is_storable`)
+### Changed
+- **WordPress 7.1 compatibility** — `Tested up to` raised from 6.7 to 7.1 in `readme.txt` after running the unit suite and the 45 integration tests on WordPress 7.1.4 (PHP 8.3, WooCommerce 11.3)
+- **Odoo 19 / 20 verification** — Authentication, CRUD, search, `fields_get`, sale order confirmation, invoice posting, stock adjustment and context-based translation writes confirmed against live Odoo 19.0 and 20.0 servers over JSON-RPC, XML-RPC and JSON-2. README compatibility table now lists Odoo 17 – 20
+- **Error classification** — HTTP 401, 403, 404 and 422 (JSON-2 rejections) are now permanent errors instead of defaulting to transient, so rejected jobs no longer retry
+- **PHPUnit 12 readiness** — Replaced doc-comment metadata (`@covers`, `@dataProvider`) with attributes (`#[CoversClass]`, `#[DataProvider]`); the unit suite now runs without PHPUnit deprecations
+- **Translations** — New strings translated in French and Spanish (1008 strings)
+
+### Fixed
+- **Stock push on Odoo 18+** — Pushing stock for a product that was not storable failed with "Quants cannot be created for consumables or services". `Stock_Handler` now enables *Track Inventory* (`is_storable`) on the Odoo product template before writing the quant
 
 ## [3.9.2] - 2026-06-11
 

@@ -5,6 +5,7 @@ namespace WP4Odoo\Tests\Unit;
 
 use WP4Odoo\Modules\WP_Invoice_Handler;
 use WP4Odoo\Logger;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -13,8 +14,8 @@ use PHPUnit\Framework\TestCase;
  * Tests invoice loading, user data extraction, status mapping,
  * and line item formatting from WPI_Invoice data.
  *
- * @covers \WP4Odoo\Modules\WP_Invoice_Handler
  */
+#[CoversClass(\WP4Odoo\Modules\WP_Invoice_Handler::class)]
 class WPInvoiceHandlerTest extends TestCase {
 
 	private WP_Invoice_Handler $handler;

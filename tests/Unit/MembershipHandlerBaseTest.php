@@ -5,6 +5,7 @@ namespace WP4Odoo\Tests\Unit;
 
 use WP4Odoo\Logger;
 use WP4Odoo\Modules\Membership_Handler_Base;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -27,9 +28,8 @@ class ConcreteMembershipHandler extends Membership_Handler_Base {
  *
  * Verifies that the abstract base class correctly stores and
  * exposes the Logger dependency to subclasses.
- *
- * @covers \WP4Odoo\Modules\Membership_Handler_Base
  */
+#[CoversClass(\WP4Odoo\Modules\Membership_Handler_Base::class)]
 class MembershipHandlerBaseTest extends TestCase {
 
 	private ConcreteMembershipHandler $handler;

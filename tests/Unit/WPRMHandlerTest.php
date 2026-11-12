@@ -3,13 +3,12 @@ declare( strict_types=1 );
 
 namespace WP4Odoo\Tests\Unit;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use WP4Odoo\Modules\WPRM_Handler;
 use WP4Odoo\Logger;
 
-/**
- * @covers \WP4Odoo\Modules\WPRM_Handler
- */
+#[CoversClass(\WP4Odoo\Modules\WPRM_Handler::class)]
 class WPRMHandlerTest extends TestCase {
 
 	private WPRM_Handler $handler;

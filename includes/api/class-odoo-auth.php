@@ -189,7 +189,7 @@ class Odoo_Auth {
 			'database'   => sanitize_text_field( $credentials['database'] ?? '' ),
 			'username'   => sanitize_text_field( $credentials['username'] ?? '' ),
 			'api_key'    => '',
-			'protocol'   => in_array( $credentials['protocol'] ?? '', [ 'jsonrpc', 'xmlrpc' ], true )
+			'protocol'   => in_array( $credentials['protocol'] ?? '', [ 'jsonrpc', 'xmlrpc', 'json2' ], true )
 				? $credentials['protocol']
 				: 'jsonrpc',
 			'timeout'    => absint( $credentials['timeout'] ?? 30 ),
@@ -215,7 +215,7 @@ class Odoo_Auth {
 	 * @param string|null        $database     Database name (uses stored if null).
 	 * @param string|null        $username     Username (uses stored if null).
 	 * @param string|null        $api_key      API key in plaintext (uses stored if null).
-	 * @param string             $protocol     'jsonrpc' or 'xmlrpc'.
+	 * @param string             $protocol     'jsonrpc', 'xmlrpc' or 'json2'.
 	 * @param array<int, string> $check_models Optional Odoo model names to verify after auth.
 	 * @return array{success: bool, uid: int|null, version: string|null, message: string, models?: array{available: string[], missing: string[]}}
 	 */
@@ -255,6 +255,8 @@ class Odoo_Auth {
 
 			if ( 'xmlrpc' === $protocol ) {
 				$transport = new Odoo_XmlRPC( $url, $database, $api_key, $timeout );
+			} elseif ( 'json2' === $protocol ) {
+				$transport = new Odoo_Json2( $url, $database, $api_key, $timeout );
 			} else {
 				$transport = new Odoo_JsonRPC( $url, $database, $api_key, $timeout );
 			}

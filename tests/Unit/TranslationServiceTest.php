@@ -7,6 +7,7 @@ use WP4Odoo\API\Odoo_Client;
 use WP4Odoo\I18n\Translation_Service;
 use WP4Odoo\I18n\WPML_Adapter;
 use WP4Odoo\I18n\Polylang_Adapter;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -15,8 +16,8 @@ use PHPUnit\Framework\TestCase;
  * Tests adapter detection, locale mapping, Odoo version detection,
  * and the dual-path translation push.
  *
- * @covers \WP4Odoo\I18n\Translation_Service
  */
+#[CoversClass(\WP4Odoo\I18n\Translation_Service::class)]
 class TranslationServiceTest extends TestCase {
 
 	private Translation_Service $service;
