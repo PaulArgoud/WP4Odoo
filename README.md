@@ -47,7 +47,7 @@ PHP 8.2+, MySQL 8.0+ / MariaDB 10.5+, WordPress 6.0+, Odoo 17+ (JSON-RPC / JSON-
 >
 > ³ Works with both Odoo **Community** (free) and **Enterprise** editions — all required apps are included in Community.
 
-- **Odoo 17+** — uses JSON-RPC 2.0 (default, recommended); it authenticates with an Odoo API key or a password. Verified against live Odoo 19.0 and 20.0 instances (core flows: Contacts, CRM, Sales, Invoicing, Inventory) over JSON-RPC, XML-RPC and JSON-2
+- **Odoo 17+** — uses JSON-RPC 2.0 (default, recommended); it authenticates with an Odoo API key or a password. Verified against live Odoo 17, 18, 19 and 20 instances (core flows: Contacts, CRM, Sales, Invoicing, Inventory) over JSON-RPC and XML-RPC, plus JSON-2 on 19 and 20
 - **Odoo 19+** — JSON-2 transport available (select *JSON-2* in the Connection tab). It authenticates with an Odoo API key only (passwords are not accepted) and, on Odoo 20, the key needs the `rpc` scope, which keys created from the Odoo user preferences have
 - **Odoo 14 – 16** — uses XML-RPC (legacy transport, select in plugin settings)
 - **Odoo < 14** — not supported (external API incompatibilities)

@@ -10,6 +10,8 @@
 # Dev dependencies & lockfiles
 /node_modules
 /composer.phar
+/composer.json
+/vendor
 /composer.lock
 /package.json
 /package-lock.json

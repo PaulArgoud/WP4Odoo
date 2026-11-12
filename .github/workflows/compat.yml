@@ -1,6 +1,6 @@
-name: Compatibility (latest Odoo + latest plugins)
+name: Compatibility (Odoo 17 to 20 + latest plugins)
 
-# Runs the plugin against REAL Odoo servers (Docker) and the latest releases of the
+# Runs the plugin against REAL Odoo 17, 18, 19 and 20 servers (Docker) and the latest releases of the
 # free third-party plugins, inside wp-env. Complements the weekly API Surface scan
 # (source-level) with an execution-level check. See tests/compat/README.md.
 on:
@@ -14,7 +14,7 @@ on:
 
 jobs:
   compat:
-    name: Odoo 19 / 20 and latest plugins
+    name: Odoo 17 to 20 and latest plugins
     runs-on: ubuntu-latest
     timeout-minutes: 45
     defaults:
@@ -54,7 +54,7 @@ jobs:
             sleep $((i * 15))
           done
 
-      - name: Start and initialise Odoo 19 and 20
+      - name: Start and initialise Odoo 17, 18, 19 and 20
         run: bash tests/compat/odoo-setup.sh
 
       - name: Attach Odoo to the wp-env network
@@ -63,7 +63,7 @@ jobs:
       - name: Odoo schema — mapped fields exist (or are renamed)
         run: npx wp-env run tests-cli wp eval-file wp-content/plugins/wp4odoo/tests/compat/odoo-fields.php
 
-      - name: Odoo flows — JSON-2, JSON-RPC and XML-RPC
+      - name: Odoo flows — JSON-RPC and XML-RPC (plus JSON-2 on Odoo 19+)
         if: always()
         run: npx wp-env run tests-cli wp eval-file wp-content/plugins/wp4odoo/tests/compat/odoo-flows.php
 

@@ -1,0 +1,56 @@
+name: Release package
+
+# Builds the installable plugin ZIP (everything listed in .distignore is left out) and attaches
+# it to the GitHub release of a version tag. Run it by hand to package an existing tag.
+on:
+  push:
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing version tag to package (e.g. 3.10.1)'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    name: Build and attach the ZIP
+    runs-on: ubuntu-latest
+    env:
+      TAG: ${{ inputs.tag || github.ref_name }}
+      GH_TOKEN: ${{ github.token }}
+
+    steps:
+      - name: Checkout the tag
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.tag || github.ref_name }}
+
+      - name: Check that the tag matches the plugin version
+        run: |
+          header=$(sed -n 's/^ \* Version: *//p' wp4odoo.php | head -1)
+          const=$(sed -n "s/^define( 'WP4ODOO_VERSION', '\(.*\)' );/\1/p" wp4odoo.php | head -1)
+          stable=$(sed -n 's/^Stable tag: *//p' readme.txt | head -1)
+          echo "tag=$TAG header=$header constant=$const stable-tag=$stable"
+          [ "$header" = "$TAG" ] && [ "$const" = "$TAG" ] && [ "$stable" = "$TAG" ] || {
+            echo "::error::The tag $TAG does not match the version in wp4odoo.php / readme.txt"; exit 1; }
+
+      - name: Build the ZIP
+        run: |
+          mkdir -p build/wp4odoo
+          rsync -a --exclude-from=.distignore ./ build/wp4odoo/
+          (cd build && zip -qr "wp4odoo-$TAG.zip" wp4odoo)
+          unzip -l "build/wp4odoo-$TAG.zip" | tail -1
+          # Sanity checks: the plugin file is there, development files are not.
+          unzip -l "build/wp4odoo-$TAG.zip" | grep -q ' wp4odoo/wp4odoo.php$'
+          if unzip -l "build/wp4odoo-$TAG.zip" | grep -E ' wp4odoo/(tests|vendor|\.github|node_modules)/|composer\.(json|lock)|CLAUDE'; then
+            echo "::error::Development files leaked into the package"; exit 1
+          fi
+
+      - name: Attach the ZIP to the release
+        run: |
+          gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" --title "$TAG" --generate-notes
+          gh release upload "$TAG" "build/wp4odoo-$TAG.zip" --clobber

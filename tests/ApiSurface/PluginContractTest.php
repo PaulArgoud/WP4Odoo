@@ -3,6 +3,7 @@ declare( strict_types=1 );
 
 namespace WP4Odoo\Tests\ApiSurface;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -37,9 +38,7 @@ class PluginContractTest extends TestCase {
 		}
 	}
 
-	/**
-	 * @dataProvider classProvider
-	 */
+	#[DataProvider( 'classProvider' )]
 	public function test_class_exists_in_plugin( string $plugin_key, string $class ): void {
 		$this->assert_plugin_available( $plugin_key );
 		$index = self::$indices[ $plugin_key ];
@@ -55,9 +54,7 @@ class PluginContractTest extends TestCase {
 		);
 	}
 
-	/**
-	 * @dataProvider functionProvider
-	 */
+	#[DataProvider( 'functionProvider' )]
 	public function test_function_exists_in_plugin( string $plugin_key, string $function ): void {
 		$this->assert_plugin_available( $plugin_key );
 		$index = self::$indices[ $plugin_key ];
@@ -73,9 +70,7 @@ class PluginContractTest extends TestCase {
 		);
 	}
 
-	/**
-	 * @dataProvider constantProvider
-	 */
+	#[DataProvider( 'constantProvider' )]
 	public function test_constant_defined_in_plugin( string $plugin_key, string $constant ): void {
 		$this->assert_plugin_available( $plugin_key );
 		$index = self::$indices[ $plugin_key ];
@@ -91,9 +86,7 @@ class PluginContractTest extends TestCase {
 		);
 	}
 
-	/**
-	 * @dataProvider actionProvider
-	 */
+	#[DataProvider( 'actionProvider' )]
 	public function test_action_fired_in_plugin( string $plugin_key, string $action ): void {
 		$this->assert_plugin_available( $plugin_key );
 		$index = self::$indices[ $plugin_key ];

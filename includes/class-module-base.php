@@ -72,7 +72,10 @@ abstract class Module_Base {
 	 * when the model schema lacks `old_field` but has `new_field`, the value is
 	 * sent under the new name (e.g. hr.employee `gender` → `sex` in Odoo 19).
 	 *
-	 * @var array<string, array<string, string>>
+	 * A field renamed more than once lists its names in order of preference
+	 * (e.g. pos.order `note` → `internal_note` in Odoo 19+, `general_note` in 18).
+	 *
+	 * @var array<string, array<string, string|array<int, string>>>
 	 */
 	protected array $odoo_field_renames = [];
 
@@ -361,10 +364,11 @@ abstract class Module_Base {
 				continue;
 			}
 
-			$alias = $this->odoo_field_renames[ $entity_type ][ $field ] ?? null;
-			if ( null !== $alias && isset( $schema[ $alias ] ) && ! array_key_exists( $alias, $odoo_values ) ) {
-				$reconciled[ $alias ] = $value;
-				continue;
+			foreach ( (array) ( $this->odoo_field_renames[ $entity_type ][ $field ] ?? [] ) as $alias ) {
+				if ( isset( $schema[ $alias ] ) && ! array_key_exists( $alias, $odoo_values ) ) {
+					$reconciled[ $alias ] = $value;
+					continue 2;
+				}
 			}
 
 			Schema_Drop_Log::record( $this->id, $model, (string) $field );

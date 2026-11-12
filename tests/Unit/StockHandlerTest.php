@@ -72,6 +72,9 @@ class StockHandlerTest extends TestCase {
 
 		$call_log = [];
 		$client   = $this->create_mock_client( function ( string $model, string $method ) use ( &$call_log ) {
+			if ( 'product.product' === $model && 'read' === $method ) {
+				return [ [ 'detailed_type' => 'product', 'type' => 'product', 'is_storable' => true, 'product_tmpl_id' => [ 55, 'W' ] ] ];
+			}
 			$call_log[] = [ $model, $method ];
 
 			if ( 'product.product' === $model && 'read' === $method ) {
@@ -88,16 +91,65 @@ class StockHandlerTest extends TestCase {
 		$this->assertNotContains( [ 'product.template', 'write' ], $call_log );
 	}
 
-	public function test_push_stock_does_not_probe_storable_before_odoo_18(): void {
-		$GLOBALS['_wp_options']['wp4odoo_odoo_version'] = '17.0';
+	/**
+	 * Run a push with a product read returning $row and report the field probed and any template write.
+	 *
+	 * @param array<string, mixed> $row Row returned for the product.product read.
+	 * @return array{read: array<int, mixed>, write: array<int, mixed>|null}
+	 */
+	private function storable_probe( string $version, array $row ): array {
+		$GLOBALS['_wp_options']['wp4odoo_odoo_version'] = $version;
 
-		$call_log = [];
-		$client   = $this->create_mock_client( function ( string $model, string $method ) use ( &$call_log ) {
-			$call_log[] = [ $model, $method ];
+		$seen   = [ 'read' => [], 'write' => null ];
+		$client = $this->create_mock_client( function ( string $model, string $method, array $args, array $kwargs ) use ( &$seen, $row ) {
+			if ( 'product.product' === $model && 'read' === $method ) {
+				$seen['read'] = $kwargs['fields'] ?? [];
+				return [ $row ];
+			}
+			if ( 'product.template' === $model && 'write' === $method ) {
+				$seen['write'] = $args;
+				return true;
+			}
 			if ( 'stock.quant' === $model && 'search_read' === $method ) {
 				return [ [ 'id' => 42, 'location_id' => [ 8, 'Stock' ] ] ];
 			}
 			return true;
+		} );
+
+		$this->handler->push_stock( $client, 100, 25.0 );
+
+		return $seen;
+	}
+
+	public function test_odoo_17_products_are_made_storable_through_detailed_type(): void {
+		$seen = $this->storable_probe( '17.0', [ 'detailed_type' => 'consu', 'product_tmpl_id' => [ 55, 'W' ] ] );
+
+		$this->assertContains( 'detailed_type', $seen['read'] );
+		$this->assertSame( [ [ 55 ], [ 'detailed_type' => 'product' ] ], $seen['write'] );
+	}
+
+	public function test_odoo_14_and_15_products_are_made_storable_through_type(): void {
+		$seen = $this->storable_probe( '15.0', [ 'type' => 'consu', 'product_tmpl_id' => [ 55, 'W' ] ] );
+
+		$this->assertContains( 'type', $seen['read'] );
+		$this->assertSame( [ [ 55 ], [ 'type' => 'product' ] ], $seen['write'] );
+	}
+
+	public function test_storable_products_are_left_alone_on_every_version(): void {
+		$this->assertNull( $this->storable_probe( '17.0', [ 'detailed_type' => 'product', 'product_tmpl_id' => [ 55, 'W' ] ] )['write'] );
+		$this->assertNull( $this->storable_probe( '15.0', [ 'type' => 'product', 'product_tmpl_id' => [ 55, 'W' ] ] )['write'] );
+	}
+
+	public function test_nothing_is_probed_when_the_odoo_version_is_unknown(): void {
+		unset( $GLOBALS['_wp_options']['wp4odoo_odoo_version'] );
+
+		$call_log = [];
+		$client   = $this->create_mock_client( function ( string $model, string $method ) use ( &$call_log ) {
+			if ( 'product.product' === $model && 'read' === $method ) {
+				return [ [ 'detailed_type' => 'product', 'type' => 'product', 'is_storable' => true, 'product_tmpl_id' => [ 55, 'W' ] ] ];
+			}
+			$call_log[] = [ $model, $method ];
+			return 'search_read' === $method ? [ [ 'id' => 42, 'location_id' => [ 8, 'Stock' ] ] ] : true;
 		} );
 
 		$this->handler->push_stock( $client, 100, 25.0 );
@@ -112,6 +164,9 @@ class StockHandlerTest extends TestCase {
 
 		$call_log = [];
 		$client   = $this->create_mock_client( function ( string $model, string $method, array $args ) use ( &$call_log ) {
+			if ( 'product.product' === $model && 'read' === $method ) {
+				return [ [ 'detailed_type' => 'product', 'type' => 'product', 'is_storable' => true, 'product_tmpl_id' => [ 55, 'W' ] ] ];
+			}
 			$call_log[] = [ $model, $method ];
 
 			// search_read for existing quant → return one.
@@ -149,6 +204,9 @@ class StockHandlerTest extends TestCase {
 
 		$call_log = [];
 		$client   = $this->create_mock_client( function ( string $model, string $method, array $args ) use ( &$call_log ) {
+			if ( 'product.product' === $model && 'read' === $method ) {
+				return [ [ 'detailed_type' => 'product', 'type' => 'product', 'is_storable' => true, 'product_tmpl_id' => [ 55, 'W' ] ] ];
+			}
 			$call_log[] = [ $model, $method ];
 
 			// search_read for existing quant → empty.
@@ -188,6 +246,9 @@ class StockHandlerTest extends TestCase {
 
 		$call_log = [];
 		$client   = $this->create_mock_client( function ( string $model, string $method, array $args ) use ( &$call_log ) {
+			if ( 'product.product' === $model && 'read' === $method ) {
+				return [ [ 'detailed_type' => 'product', 'type' => 'product', 'is_storable' => true, 'product_tmpl_id' => [ 55, 'W' ] ] ];
+			}
 			$call_log[] = [ $model, $method ];
 
 			// create wizard.
@@ -216,6 +277,9 @@ class StockHandlerTest extends TestCase {
 
 		$call_log = [];
 		$client   = $this->create_mock_client( function ( string $model, string $method ) use ( &$call_log ) {
+			if ( 'product.product' === $model && 'read' === $method ) {
+				return [ [ 'detailed_type' => 'product', 'type' => 'product', 'is_storable' => true, 'product_tmpl_id' => [ 55, 'W' ] ] ];
+			}
 			$call_log[] = [ $model, $method ];
 
 			if ( 'create' === $method ) {
@@ -250,6 +314,9 @@ class StockHandlerTest extends TestCase {
 
 		$call_log = [];
 		$client   = $this->create_mock_client( function ( string $model, string $method ) use ( &$call_log ) {
+			if ( 'product.product' === $model && 'read' === $method ) {
+				return [ [ 'detailed_type' => 'product', 'type' => 'product', 'is_storable' => true, 'product_tmpl_id' => [ 55, 'W' ] ] ];
+			}
 			$call_log[] = [ $model, $method ];
 
 			if ( 'search_read' === $method ) {

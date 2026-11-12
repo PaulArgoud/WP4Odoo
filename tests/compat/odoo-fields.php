@@ -6,7 +6,7 @@
  * Usage: wp eval-file wp-content/plugins/wp4odoo/tests/compat/odoo-fields.php
  */
 
-use WP4Odoo\API\Odoo_Json2;
+use WP4Odoo\API\Odoo_JsonRPC;
 
 require_once __DIR__ . '/lib.php';
 
@@ -49,7 +49,7 @@ foreach ( compat_modules() as $id => $class ) {
 
 $failed = 0;
 foreach ( $targets as $version => [ $url, $db, $key ] ) {
-	$t = new Odoo_Json2( $url, $db, $key, 60 );
+	$t = new Odoo_JsonRPC( $url, $db, $key, 60 );
 	$t->authenticate( 'admin' );
 	echo "== Odoo $version\n";
 
@@ -74,8 +74,8 @@ foreach ( $targets as $version => [ $url, $db, $key ] ) {
 			}
 			foreach ( array_unique( $spec['fields'] ) as $field ) {
 				++$checked;
-				$alias = $spec['renames'][ $field ] ?? null;
-				if ( in_array( $field, $schemas[ $model ], true ) || ( null !== $alias && in_array( $alias, $schemas[ $model ], true ) ) ) {
+				$aliases = (array) ( $spec['renames'][ $field ] ?? [] );
+				if ( in_array( $field, $schemas[ $model ], true ) || array_intersect( $aliases, $schemas[ $model ] ) ) {
 					continue;
 				}
 				if ( isset( $known['fields_absent'][ "$model.$field" ] ) ) {

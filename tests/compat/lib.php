@@ -33,7 +33,8 @@ function compat_modules(): array {
 function compat_odoo_targets(): array {
 	$dir     = __DIR__ . '/.keys';
 	$targets = [];
-	foreach ( explode( ' ', (string) ( getenv( 'ODOO_VERSIONS' ) ?: '19 20' ) ) as $v ) {
+	// Every version that has a key file was set up by odoo-setup.sh.
+	foreach ( [ '17', '18', '19', '20' ] as $v ) {
 		$file = "$dir/odoo$v.key";
 		if ( is_readable( $file ) ) {
 			$targets[ $v ] = [ "http://odoo$v:8069", "db$v", trim( (string) file_get_contents( $file ) ) ];

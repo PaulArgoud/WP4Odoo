@@ -6,8 +6,8 @@ API Surface scan (`tests/ApiSurface`, source-level).
 
 | Script | What it verifies |
 |---|---|
-| `odoo-fields.php` | Every field a module maps by default exists in the Odoo schema (or is renamed through `$odoo_field_renames`), for each Odoo version. |
-| `odoo-flows.php` | Contacts, CRM leads, products, stock, sale orders, invoices and error handling, through JSON-2, JSON-RPC and XML-RPC. |
+| `odoo-fields.php` | Every field a module maps by default exists in the Odoo schema (or is renamed through `$odoo_field_renames`), for each Odoo version (17 to 20). |
+| `odoo-flows.php` | Contacts, CRM leads, products, stock, sale orders, invoices and error handling, through JSON-RPC and XML-RPC (and JSON-2 from Odoo 19). |
 | `plugins.sh` + `check-plugin.php` | For each free plugin: install the latest release, activate it, and check that its module is detected (`detect()`) and its dependency check reports no problem. |
 
 Anything that fails and is not listed in `known-issues.php` fails the run; that file documents the
@@ -24,7 +24,7 @@ Requires Docker and Node 22 (`wp-env` does not start under newer Node versions).
 ```bash
 npm ci
 npx wp-env start
-tests/compat/odoo-setup.sh          # starts Odoo 19 and 20, installs apps, writes .keys/
+tests/compat/odoo-setup.sh          # starts Odoo 17, 18, 19 and 20, installs apps, writes .keys/
 tests/compat/connect-network.sh     # makes them reachable as http://odoo19:8069 / http://odoo20:8069
 
 npx wp-env run tests-cli wp eval-file wp-content/plugins/wp4odoo/tests/compat/odoo-fields.php

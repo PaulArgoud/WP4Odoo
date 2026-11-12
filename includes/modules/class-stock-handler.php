@@ -37,12 +37,14 @@ class Stock_Handler {
 	private const QUANT_API_MIN_VERSION = 16;
 
 	/**
-	 * Odoo version from which only "storable" products can hold stock.
+	 * Odoo versions that changed how a product is flagged as "storable" (able to hold stock).
 	 *
-	 * Odoo 18 replaced `detailed_type = 'product'` with the `is_storable`
-	 * flag (Track Inventory) and rejects quants on non-storable products.
+	 * Odoo 14-15 use `type = 'product'`, Odoo 16-17 use `detailed_type = 'product'`, and
+	 * Odoo 18+ use the `is_storable` flag (Track Inventory). Odoo refuses quants on
+	 * non-storable products ("Quants cannot be created for consumables or services").
 	 */
-	private const STORABLE_MIN_VERSION = 18;
+	private const DETAILED_TYPE_MIN_VERSION = 16;
+	private const IS_STORABLE_MIN_VERSION   = 18;
 
 	/**
 	 * Logger instance.
@@ -81,10 +83,12 @@ class Stock_Handler {
 		try {
 			$odoo_major = $this->get_odoo_major_version();
 
+			// With an unknown Odoo version the right field is unknown too: leave the product alone.
+			if ( '' !== (string) get_option( 'wp4odoo_odoo_version', '' ) ) {
+				$this->ensure_storable( $client, $odoo_product_id, $odoo_major );
+			}
+
 			if ( $odoo_major >= self::QUANT_API_MIN_VERSION ) {
-				if ( $odoo_major >= self::STORABLE_MIN_VERSION ) {
-					$this->ensure_storable( $client, $odoo_product_id );
-				}
 				$this->push_via_quant( $client, $odoo_product_id, $quantity );
 			} else {
 				$this->push_via_wizard( $client, $odoo_product_id, $quantity );
@@ -123,20 +127,35 @@ class Stock_Handler {
 	}
 
 	/**
-	 * Make sure the Odoo product tracks inventory (Odoo 18+).
+	 * Make sure the Odoo product can hold stock.
 	 *
-	 * A WooCommerce product that manages stock must be storable in Odoo,
-	 * otherwise Odoo refuses to create quants for it ("Quants cannot be
-	 * created for consumables or services").
+	 * A WooCommerce product that manages stock must be storable in Odoo, otherwise
+	 * Odoo refuses to create quants (or to apply the quantity wizard) for it. The
+	 * field that carries this depends on the Odoo version (see the constants).
 	 *
 	 * @param Odoo_Client $client          Odoo API client.
 	 * @param int         $odoo_product_id Odoo product.product ID.
+	 * @param int         $odoo_major      Odoo major version.
 	 * @return void
 	 */
-	private function ensure_storable( Odoo_Client $client, int $odoo_product_id ): void {
-		$rows = $client->read( 'product.product', [ $odoo_product_id ], [ 'is_storable', 'product_tmpl_id' ] );
+	private function ensure_storable( Odoo_Client $client, int $odoo_product_id, int $odoo_major ): void {
+		if ( $odoo_major >= self::IS_STORABLE_MIN_VERSION ) {
+			$field = 'is_storable';
+			$is_ok = static fn( $value ): bool => ! empty( $value );
+			$fix   = [ 'is_storable' => true ];
+		} elseif ( $odoo_major >= self::DETAILED_TYPE_MIN_VERSION ) {
+			$field = 'detailed_type';
+			$is_ok = static fn( $value ): bool => 'product' === $value;
+			$fix   = [ 'detailed_type' => 'product' ];
+		} else {
+			$field = 'type';
+			$is_ok = static fn( $value ): bool => 'product' === $value;
+			$fix   = [ 'type' => 'product' ];
+		}
 
-		if ( empty( $rows[0] ) || ! array_key_exists( 'is_storable', $rows[0] ) || ! empty( $rows[0]['is_storable'] ) ) {
+		$rows = $client->read( 'product.product', [ $odoo_product_id ], [ $field, 'product_tmpl_id' ] );
+
+		if ( empty( $rows[0] ) || ! array_key_exists( $field, $rows[0] ) || $is_ok( $rows[0][ $field ] ) ) {
 			return;
 		}
 
@@ -147,13 +166,14 @@ class Stock_Handler {
 			return;
 		}
 
-		$client->write( 'product.template', [ $template_id ], [ 'is_storable' => true ] );
+		$client->write( 'product.template', [ $template_id ], $fix );
 
 		$this->logger->info(
-			'Enabled inventory tracking on Odoo product.',
+			'Made the Odoo product storable.',
 			[
 				'odoo_product_id'  => $odoo_product_id,
 				'odoo_template_id' => $template_id,
+				'field'            => $field,
 			]
 		);
 	}

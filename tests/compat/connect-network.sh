@@ -2,7 +2,7 @@
 # Attach the Odoo containers to the wp-env network so the tests-cli container
 # reaches them as http://odoo19:8069 and http://odoo20:8069 (works on Linux and macOS).
 set -euo pipefail
-VERSIONS=${ODOO_VERSIONS:-"19 20"}
+VERSIONS=${ODOO_VERSIONS:-"17 18 19 20"}
 cli=$(docker ps --format '{{.Names}}' | grep -m1 'tests-cli')
 net=$(docker inspect "$cli" --format '{{range $k,$v := .NetworkSettings.Networks}}{{$k}} {{end}}' | awk '{print $1}')
 for v in $VERSIONS; do

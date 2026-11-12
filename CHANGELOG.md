@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- **Release package** — `.github/workflows/release.yml` builds the installable ZIP (everything in `.distignore` left out, version checked against `wp4odoo.php` and `readme.txt`) and attaches it to the GitHub release when a version tag is pushed; it can also be run by hand for an existing tag. `.distignore` now also excludes `composer.json` and `vendor/`
+- **Wider test matrix** — CI also runs PHP 8.4 and 8.5 and an integration job against the WordPress development version (all three allowed to fail until proven green); the compatibility run now covers Odoo 17 and 18 as well as 19 and 20 (JSON-2 only from Odoo 19). The on-demand API Surface workflow is re-enabled (it was disabled by GitHub for inactivity) and no longer scheduled
+
+### Fixed
+- **Stock sync on Odoo 14 to 17** — Odoo refuses quants on products that are not storable on every version, but only Odoo 18+ was handled. The product is now made storable with the field of the connected version (`type` on 14–15, `detailed_type` on 16–17, `is_storable` on 18+); nothing is touched while the Odoo version is unknown. Found by the new Odoo 17 compatibility run
+- **Food Ordering note on Odoo 18** — `pos.order.note` is `general_note` in Odoo 18 and `internal_note` from 19; a rename can now list several candidates in order of preference
+
 ## [3.10.1] - 2026-11-12
 
 ### Added

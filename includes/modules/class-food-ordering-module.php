@@ -43,12 +43,12 @@ class Food_Ordering_Module extends Module_Base {
 	];
 
 	/**
-	 * Fields renamed in newer Odoo versions (`note` → `internal_note` on pos.order in Odoo 18+).
+	 * Fields renamed in newer Odoo versions (pos.order `note` → `general_note` in Odoo 18, `internal_note` in 19+).
 	 *
-	 * @var array<string, array<string, string>>
+	 * @var array<string, array<string, string|array<int, string>>>
 	 */
 	protected array $odoo_field_renames = [
-		'order' => [ 'note' => 'internal_note' ],
+		'order' => [ 'note' => [ 'internal_note', 'general_note' ] ],
 	];
 
 	/**

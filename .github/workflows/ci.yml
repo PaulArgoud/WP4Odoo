@@ -10,11 +10,18 @@ jobs:
   test:
     name: PHP ${{ matrix.php }}
     runs-on: ubuntu-latest
+    # Newer PHP versions are tried but do not block the build until proven green.
+    continue-on-error: ${{ matrix.experimental == true }}
 
     strategy:
       fail-fast: false
       matrix:
         php: [ '8.2', '8.3' ]
+        include:
+          - php: '8.4'
+            experimental: true
+          - php: '8.5'
+            experimental: true
 
     steps:
       - name: Checkout code
@@ -97,6 +104,61 @@ jobs:
             echo "Attempt $i failed (likely rate-limited), retrying in $((i * 15))s…"
             sleep $((i * 15))
           done
+
+      - name: Run integration tests
+        run: npm run test:integration
+
+      - name: Stop wp-env
+        if: always()
+        run: npx wp-env stop
+
+  integration-next:
+    name: Integration Tests (WordPress development version)
+    runs-on: ubuntu-latest
+    needs: test
+    # Upcoming WordPress releases are in beta: failures here are an early warning, not a blocker.
+    continue-on-error: true
+    env:
+      WP_ENV_CORE: WordPress/WordPress#master
+    defaults:
+      run:
+        working-directory: wp4odoo
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          path: wp4odoo
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, xml, json, sodium
+          tools: composer:v2
+          coverage: none
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Install npm dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Start wp-env (WordPress development version)
+        run: |
+          for i in 1 2 3; do
+            npx wp-env start && break
+            echo "Attempt $i failed (likely rate-limited), retrying in $((i * 15))s…"
+            sleep $((i * 15))
+          done
+
+      - name: Show the WordPress version under test
+        run: npx wp-env run tests-cli wp core version
 
       - name: Run integration tests
         run: npm run test:integration

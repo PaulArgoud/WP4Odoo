@@ -14,6 +14,24 @@ services:
       interval: 3s
       retries: 20
 
+  odoo17:
+    image: odoo:17.0
+    depends_on:
+      pg:
+        condition: service_healthy
+    ports: ["8067:8069"]
+    environment: { HOST: pg, USER: odoo, PASSWORD: odoo }
+    command: ["odoo", "-d", "db17", "--db-filter=^db17$$"]
+
+  odoo18:
+    image: odoo:18.0
+    depends_on:
+      pg:
+        condition: service_healthy
+    ports: ["8068:8069"]
+    environment: { HOST: pg, USER: odoo, PASSWORD: odoo }
+    command: ["odoo", "-d", "db18", "--db-filter=^db18$$"]
+
   odoo19:
     image: odoo:19.0
     depends_on:

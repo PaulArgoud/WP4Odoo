@@ -41,6 +41,7 @@ return [
 		'crm.lead.mobile'                                           => 'Removed from crm.lead in Odoo 17+.',
 		'hr.job.state'                                              => 'Removed from hr.job; the module now expresses the status through no_of_recruitment and drops state.',
 		'product.product.membership'                                => 'Belongs to the Members app, removed in Odoo 18+.',
+		'delivery.carrier.tracking_url'                              => 'Added to delivery.carrier in Odoo 18; dropped on Odoo 17.',
 		'stock.move.name'                                           => 'Removed from stock.move in recent Odoo versions.',
 		'sale.order.is_rental'                                      => 'Odoo Rental app (Enterprise).',
 		'sale.order.pickup_date'                                    => 'Odoo Rental app (Enterprise).',
