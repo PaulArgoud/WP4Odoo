@@ -50,6 +50,15 @@ abstract class Marketplace_Module_Base extends Module_Base {
 	];
 
 	/**
+	 * Fields renamed in newer Odoo versions (`ref` → `memo` on account.payment in Odoo 18+).
+	 *
+	 * @var array<string, array<string, string>>
+	 */
+	protected array $odoo_field_renames = [
+		'payout' => [ 'ref' => 'memo' ],
+	];
+
+	/**
 	 * Default field mappings.
 	 *
 	 * Vendor mappings rename WP keys to Odoo partner fields.
@@ -252,8 +261,13 @@ abstract class Marketplace_Module_Base extends Module_Base {
 			return [ [ 'ref', '=', $odoo_values['ref'] ] ];
 		}
 
-		if ( 'payout' === $entity_type && ! empty( $odoo_values['ref'] ) ) {
-			return [ [ 'ref', '=', $odoo_values['ref'] ] ];
+		if ( 'payout' === $entity_type ) {
+			// `ref` on Odoo < 18, `memo` afterwards (see $odoo_field_renames).
+			foreach ( [ 'ref', 'memo' ] as $field ) {
+				if ( ! empty( $odoo_values[ $field ] ) ) {
+					return [ [ $field, '=', $odoo_values[ $field ] ] ];
+				}
+			}
 		}
 
 		return [];

@@ -66,6 +66,17 @@ abstract class Module_Base {
 	protected array $default_mappings = [];
 
 	/**
+	 * Odoo fields renamed in newer Odoo versions.
+	 *
+	 * Structure: [entity_type => [old_field => new_field, ...]]. At push time,
+	 * when the model schema lacks `old_field` but has `new_field`, the value is
+	 * sent under the new name (e.g. hr.employee `gender` → `sex` in Odoo 19).
+	 *
+	 * @var array<string, array<string, string>>
+	 */
+	protected array $odoo_field_renames = [];
+
+	/**
 	 * Exclusive group name.
 	 *
 	 * Modules in the same group cannot be active simultaneously.
@@ -288,23 +299,7 @@ abstract class Module_Base {
 			}
 		}
 
-		// Validate mapped Odoo fields exist in the model schema (warning only, non-blocking).
-		if ( ! empty( $odoo_values ) && isset( $this->odoo_models[ $entity_type ] ) ) {
-			$schema = Schema_Cache::get_fields( fn() => $this->client(), $this->odoo_models[ $entity_type ] );
-			if ( ! empty( $schema ) ) {
-				foreach ( $odoo_values as $field => $value ) {
-					if ( ! isset( $schema[ $field ] ) ) {
-						$this->logger->warning(
-							"Mapped Odoo field '{$field}' not found in model schema.",
-							[
-								'entity_type' => $entity_type,
-								'model'       => $this->odoo_models[ $entity_type ],
-							]
-						);
-					}
-				}
-			}
-		}
+		$odoo_values = $this->reconcile_with_schema( $entity_type, $odoo_values );
 
 		/**
 		 * Filter the mapped Odoo values before push.
@@ -318,6 +313,54 @@ abstract class Module_Base {
 		$filtered = apply_filters( "wp4odoo_map_to_odoo_{$this->id}_{$entity_type}", $odoo_values, $wp_data, $entity_type );
 
 		return is_array( $filtered ) ? $filtered : $odoo_values; // @phpstan-ignore function.alreadyNarrowedType
+	}
+
+	/**
+	 * Reconcile Odoo values with the model schema.
+	 *
+	 * A field Odoo does not know (removed or renamed in this Odoo version) would
+	 * make Odoo reject the whole record, so it is renamed when an alias is declared
+	 * in `$odoo_field_renames`, otherwise dropped with a warning. Does nothing when
+	 * the schema is unavailable (API unreachable). Modules that return pre-formatted
+	 * Odoo data from `map_to_odoo()` should call this too.
+	 *
+	 * @param string               $entity_type Entity type.
+	 * @param array<string, mixed> $odoo_values Odoo-ready values.
+	 * @return array<string, mixed> Reconciled values.
+	 */
+	protected function reconcile_with_schema( string $entity_type, array $odoo_values ): array {
+		if ( empty( $odoo_values ) || ! isset( $this->odoo_models[ $entity_type ] ) ) {
+			return $odoo_values;
+		}
+
+		$schema = Schema_Cache::get_fields( fn() => $this->client(), $this->odoo_models[ $entity_type ] );
+		if ( empty( $schema ) ) {
+			return $odoo_values;
+		}
+
+		$reconciled = [];
+		foreach ( $odoo_values as $field => $value ) {
+			if ( isset( $schema[ $field ] ) ) {
+				$reconciled[ $field ] = $value;
+				continue;
+			}
+
+			$alias = $this->odoo_field_renames[ $entity_type ][ $field ] ?? null;
+			if ( null !== $alias && isset( $schema[ $alias ] ) && ! array_key_exists( $alias, $odoo_values ) ) {
+				$reconciled[ $alias ] = $value;
+				continue;
+			}
+
+			$this->logger->warning(
+				"Mapped Odoo field '{$field}' not found in model schema; dropped from the push.",
+				[
+					'entity_type' => $entity_type,
+					'model'       => $this->odoo_models[ $entity_type ],
+				]
+			);
+		}
+
+		return $reconciled;
 	}
 
 	/**

@@ -167,12 +167,12 @@ class Module_Registry {
 			[ 'fluent_booking', Modules\Fluent_Booking_Module::class, fn() => defined( 'FLUENT_BOOKING_VERSION' ) ],
 			[ 'jet_appointments', Modules\Jet_Appointments_Module::class, fn() => defined( 'JET_APB_VERSION' ) || class_exists( 'JET_APB\Plugin' ) ],
 			[ 'jet_booking', Modules\Jet_Booking_Module::class, fn() => defined( 'JET_ABAF_VERSION' ) || class_exists( 'JET_ABAF\Plugin' ) ],
-			[ 'project_manager', Modules\Project_Manager_Module::class, fn() => defined( 'CPM_VERSION' ) || class_exists( 'WeDevs\PM\Core\WP\WP_Project_Manager' ) ],
+			[ 'project_manager', Modules\Project_Manager_Module::class, fn() => defined( 'CPM_VERSION' ) || class_exists( 'WeDevs\PM\Core\WP\WP_Project_Manager' ) || ( defined( 'PM_VERSION' ) && class_exists( 'WeDevs\PM\Core\Config\Config' ) ) ],
 			[ 'learndash', Modules\LearnDash_Module::class, fn() => defined( 'LEARNDASH_VERSION' ) ],
 			[ 'tutorlms', Modules\TutorLMS_Module::class, fn() => defined( 'TUTOR_VERSION' ) ],
 			[ 'lifterlms', Modules\LifterLMS_Module::class, fn() => defined( 'LLMS_VERSION' ) ],
 			[ 'wc_subscriptions', Modules\WC_Subscriptions_Module::class, fn() => class_exists( 'WC_Subscriptions' ) ],
-			[ 'wc_b2b', Modules\WC_B2B_Module::class, fn() => defined( 'WWP_PLUGIN_VERSION' ) || class_exists( 'B2bking' ) ],
+			[ 'wc_b2b', Modules\WC_B2B_Module::class, fn() => defined( 'WWP_PLUGIN_VERSION' ) || defined( 'WWP_PLUGIN_FILE' ) || class_exists( 'B2bking' ) ],
 			[ 'wc_points_rewards', Modules\WC_Points_Rewards_Module::class, fn() => class_exists( 'WC_Points_Rewards' ) ],
 			[ 'wc_bookings', Modules\WC_Bookings_Module::class, fn() => class_exists( 'WC_Product_Booking' ) ],
 			[ 'events_calendar', Modules\Events_Calendar_Module::class, fn() => class_exists( 'Tribe__Events__Main' ) ],
@@ -194,7 +194,7 @@ class Module_Registry {
 			[ 'wp_invoice', Modules\WP_Invoice_Module::class, fn() => class_exists( 'WPI_Invoice' ) ],
 
 			// E-commerce group (secondary).
-			[ 'surecart', Modules\SureCart_Module::class, fn() => defined( 'SURECART_VERSION' ) ],
+			[ 'surecart', Modules\SureCart_Module::class, fn() => defined( 'SURECART_VERSION' ) || class_exists( 'SureCart' ) ],
 			[ 'ecwid', Modules\Ecwid_Module::class, fn() => defined( 'ECWID_PLUGIN_DIR' ) ],
 			[ 'shopwp', Modules\ShopWP_Module::class, fn() => defined( 'SHOPWP_PLUGIN_DIR' ) ],
 			[ 'crowdfunding', Modules\Crowdfunding_Module::class, fn() => defined( 'WPCF_VERSION' ) ],
@@ -221,7 +221,7 @@ class Module_Registry {
 			[ 'funnelkit', Modules\FunnelKit_Module::class, fn() => defined( 'WFFN_VERSION' ) ],
 
 			// Gamification / Loyalty.
-			[ 'gamipress', Modules\GamiPress_Module::class, fn() => defined( 'GAMIPRESS_VERSION' ) ],
+			[ 'gamipress', Modules\GamiPress_Module::class, fn() => defined( 'GAMIPRESS_VERSION' ) || defined( 'GAMIPRESS_VER' ) ],
 			[ 'mycred', Modules\MyCRED_Module::class, fn() => defined( 'myCRED_VERSION' ) ],
 
 			// Community.
@@ -248,7 +248,7 @@ class Module_Registry {
 			[ 'knowledge', Modules\Knowledge_Module::class, null ],
 
 			// Documents — WP Document Revisions / WP Download Manager.
-			[ 'documents', Modules\Documents_Module::class, fn() => class_exists( 'Document_Revisions' ) || defined( 'WPDM_VERSION' ) ],
+			[ 'documents', Modules\Documents_Module::class, fn() => class_exists( 'Document_Revisions' ) || class_exists( 'WP_Document_Revisions' ) || defined( 'WPDM_VERSION' ) ],
 
 			// Generic CPT mapping.
 			[ 'jetengine', Modules\JetEngine_Module::class, fn() => defined( 'JET_ENGINE_VERSION' ) || class_exists( 'Jet_Engine' ) ],
@@ -260,7 +260,7 @@ class Module_Registry {
 
 			// Aggregate modules — compound detection (any of N plugins).
 			[ 'food_ordering', Modules\Food_Ordering_Module::class, fn() => defined( 'FLAVOR_FLAVOR_VERSION' ) || defined( 'WPPIZZA_VERSION' ) || defined( 'RP_VERSION' ) ],
-			[ 'survey_quiz', Modules\Survey_Quiz_Module::class, fn() => defined( 'QUIZ_MAKER_VERSION' ) || defined( 'QSM_PLUGIN_INSTALLED' ) ],
+			[ 'survey_quiz', Modules\Survey_Quiz_Module::class, fn() => defined( 'QUIZ_MAKER_VERSION' ) || defined( 'AYS_QUIZ_VERSION' ) || defined( 'QSM_PLUGIN_INSTALLED' ) ],
 			[
 				'forms',
 				Modules\Forms_Module::class,

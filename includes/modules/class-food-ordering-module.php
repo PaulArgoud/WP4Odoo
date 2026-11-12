@@ -43,6 +43,15 @@ class Food_Ordering_Module extends Module_Base {
 	];
 
 	/**
+	 * Fields renamed in newer Odoo versions (`note` → `internal_note` on pos.order in Odoo 18+).
+	 *
+	 * @var array<string, array<string, string>>
+	 */
+	protected array $odoo_field_renames = [
+		'order' => [ 'note' => 'internal_note' ],
+	];
+
+	/**
 	 * Default field mappings.
 	 *
 	 * Order data is pre-formatted by the handler (identity pass-through).
@@ -300,7 +309,7 @@ class Food_Ordering_Module extends Module_Base {
 	 * @return array<string, mixed>
 	 */
 	public function map_to_odoo( string $entity_type, array $wp_data ): array {
-		return $wp_data;
+		return $this->reconcile_with_schema( $entity_type, $wp_data );
 	}
 
 	// ─── Private Helpers ─────────────────────────────────────

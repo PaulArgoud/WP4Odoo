@@ -99,7 +99,7 @@ class Documents_Module extends Module_Base {
 	 * @return void
 	 */
 	public function boot(): void {
-		if ( ! class_exists( 'Document_Revisions' ) && ! defined( 'WPDM_VERSION' ) ) {
+		if ( ! class_exists( 'Document_Revisions' ) && ! class_exists( 'WP_Document_Revisions' ) && ! defined( 'WPDM_VERSION' ) ) {
 			$this->logger->warning( __( 'Documents module enabled but neither WP Document Revisions nor WP Download Manager is active.', 'wp4odoo' ) );
 			return;
 		}
@@ -183,7 +183,7 @@ class Documents_Module extends Module_Base {
 	 */
 	public function get_dependency_status(): array {
 		return $this->check_dependency(
-			class_exists( 'Document_Revisions' ) || defined( 'WPDM_VERSION' ),
+			class_exists( 'Document_Revisions' ) || class_exists( 'WP_Document_Revisions' ) || defined( 'WPDM_VERSION' ),
 			'WP Document Revisions / WP Download Manager'
 		);
 	}
@@ -227,7 +227,7 @@ class Documents_Module extends Module_Base {
 	 * @return string 'wp_document_revisions', 'wpdm', or ''.
 	 */
 	private function detect_source(): string {
-		if ( class_exists( 'Document_Revisions' ) ) {
+		if ( class_exists( 'Document_Revisions' ) || class_exists( 'WP_Document_Revisions' ) ) {
 			return 'wp_document_revisions';
 		}
 		if ( defined( 'WPDM_VERSION' ) ) {

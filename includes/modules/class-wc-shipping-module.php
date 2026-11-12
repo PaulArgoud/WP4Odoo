@@ -31,7 +31,7 @@ class WC_Shipping_Module extends Module_Base {
 	use WC_Shipping_Hooks;
 
 	protected const PLUGIN_MIN_VERSION  = '7.0';
-	protected const PLUGIN_TESTED_UP_TO = '10.5';
+	protected const PLUGIN_TESTED_UP_TO = '11.3';
 
 	/**
 	 * Odoo models by entity type.

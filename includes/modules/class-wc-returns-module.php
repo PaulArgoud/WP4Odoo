@@ -31,7 +31,7 @@ class WC_Returns_Module extends Module_Base {
 	use WC_Returns_Hooks;
 
 	protected const PLUGIN_MIN_VERSION  = '7.0';
-	protected const PLUGIN_TESTED_UP_TO = '10.5';
+	protected const PLUGIN_TESTED_UP_TO = '11.3';
 
 	/**
 	 * Odoo models by entity type.
@@ -41,6 +41,15 @@ class WC_Returns_Module extends Module_Base {
 	protected array $odoo_models = [
 		'refund'         => 'account.move',
 		'return_picking' => 'stock.picking',
+	];
+
+	/**
+	 * Fields renamed in newer Odoo versions (`move_ids_without_package` → `move_ids` on stock.picking in Odoo 19+).
+	 *
+	 * @var array<string, array<string, string>>
+	 */
+	protected array $odoo_field_renames = [
+		'return_picking' => [ 'move_ids_without_package' => 'move_ids' ],
 	];
 
 	/**

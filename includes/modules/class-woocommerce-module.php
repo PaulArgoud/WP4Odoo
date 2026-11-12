@@ -39,7 +39,7 @@ class WooCommerce_Module extends Module_Base {
 	use WooCommerce_Hooks;
 
 	protected const PLUGIN_MIN_VERSION  = '7.0';
-	protected const PLUGIN_TESTED_UP_TO = '10.5';
+	protected const PLUGIN_TESTED_UP_TO = '11.3';
 
 	protected string $exclusive_group = 'ecommerce';
 

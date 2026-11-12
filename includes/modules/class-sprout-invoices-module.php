@@ -55,6 +55,15 @@ class Sprout_Invoices_Module extends Module_Base {
 	];
 
 	/**
+	 * Fields renamed in newer Odoo versions (`ref` → `memo` on account.payment in Odoo 18+).
+	 *
+	 * @var array<string, array<string, string>>
+	 */
+	protected array $odoo_field_renames = [
+		'payment' => [ 'ref' => 'memo' ],
+	];
+
+	/**
 	 * Default field mappings.
 	 *
 	 * Identity mappings because load_invoice() / load_payment() return
@@ -202,8 +211,17 @@ class Sprout_Invoices_Module extends Module_Base {
 	 * @return array Odoo domain filter, or empty to skip dedup.
 	 */
 	protected function get_dedup_domain( string $entity_type, array $odoo_values ): array {
-		if ( in_array( $entity_type, [ 'invoice', 'payment' ], true ) && ! empty( $odoo_values['ref'] ) ) {
+		if ( 'invoice' === $entity_type && ! empty( $odoo_values['ref'] ) ) {
 			return [ [ 'ref', '=', $odoo_values['ref'] ] ];
+		}
+
+		if ( 'payment' === $entity_type ) {
+			// `ref` on Odoo < 18, `memo` afterwards (see $odoo_field_renames).
+			foreach ( [ 'ref', 'memo' ] as $field ) {
+				if ( ! empty( $odoo_values[ $field ] ) ) {
+					return [ [ $field, '=', $odoo_values[ $field ] ] ];
+				}
+			}
 		}
 
 		return [];

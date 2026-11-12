@@ -4,9 +4,9 @@
 ![PHP 8.2+](https://img.shields.io/badge/PHP-8.2%2B-8892BF?logo=php&logoColor=white)
 ![MySQL 8.0+](https://img.shields.io/badge/MySQL-8.0%2B-4479A1?logo=mysql&logoColor=white)
 ![MariaDB 10.5+](https://img.shields.io/badge/MariaDB-10.5%2B-003545?logo=mariadb&logoColor=white)
-![WordPress 6.0+](https://img.shields.io/badge/WordPress-6.0%2B-21759B?logo=wordpress&logoColor=white)
+![WordPress 6.0+](https://img.shields.io/badge/WordPress-6.0%E2%80%937.1-21759B?logo=wordpress&logoColor=white)
 ![72 Modules](https://img.shields.io/badge/Modules-72-success)
-![Odoo 14+](https://img.shields.io/badge/Odoo-14%2B-714B67?logo=odoo&logoColor=white)
+![Odoo 14+](https://img.shields.io/badge/Odoo-14%E2%80%9320-714B67?logo=odoo&logoColor=white)
 ![License: GPL v2+](https://img.shields.io/badge/License-GPL%20v2%2B-blue)
 
 Modular WordPress plugin that creates a seamless, bidirectional bridge between WordPress/WooCommerce and Odoo ERP (v14+). Built on a clean, extensible architecture with 72 integration modules, an async sync queue, WordPress Multisite support (per-site company scoping), and full WP-CLI support. Ships in **3 languages** (English, French, Spanish).
@@ -51,7 +51,11 @@ PHP 8.2+, MySQL 8.0+ / MariaDB 10.5+, WordPress 6.0+, Odoo 17+ (JSON-RPC / JSON-
 - **Odoo 14 – 16** — uses XML-RPC (legacy transport, select in plugin settings)
 - **Odoo < 14** — not supported (external API incompatibilities)
 
-WordPress compatibility: tested up to **WordPress 7.1** (PHP 8.3, WooCommerce 11.x).
+WordPress compatibility: requires 6.0+, tested up to **WordPress 7.1** (PHP 8.3, WooCommerce 11.x).
+
+Odoo field changes: fields that a given Odoo version does not have (for example `res.partner.company_name` in Odoo 20) are skipped with a warning instead of making Odoo reject the record, and fields renamed between versions are translated automatically. The Odoo *Members* app (`membership`) does not exist in Odoo 19 and 20, so the membership modules (MemberPress, PMPro, RCP, WooCommerce Memberships) cannot push memberships there; Helpdesk, Subscriptions, Documents, Knowledge and Field Service remain Odoo Enterprise apps.
+
+Stock sync on Odoo 18+: Odoo only holds stock for products that track inventory, so the plugin enables *Track Inventory* (`is_storable`) on the Odoo product automatically before pushing a stock quantity.
 
 > **Note on Odoo's external API:** Odoo has deprecated the `/jsonrpc` and `/xmlrpc` endpoints in favour of `/json/2`. The deprecated endpoints still work on Odoo 20, and the plugin supports both: keep JSON-RPC/XML-RPC, or switch to JSON-2 on Odoo 19+.
 

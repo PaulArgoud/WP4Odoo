@@ -115,7 +115,7 @@ class SureCart_Module extends Module_Base {
 	 * @return void
 	 */
 	public function boot(): void {
-		if ( ! defined( 'SURECART_VERSION' ) ) {
+		if ( ! defined( 'SURECART_VERSION' ) && ! class_exists( 'SureCart' ) ) {
 			$this->logger->warning( __( 'SureCart module enabled but SureCart is not active.', 'wp4odoo' ) );
 			return;
 		}
@@ -199,14 +199,24 @@ class SureCart_Module extends Module_Base {
 	 * @return array{available: bool, notices: array<array{type: string, message: string}>}
 	 */
 	public function get_dependency_status(): array {
-		return $this->check_dependency( defined( 'SURECART_VERSION' ), 'SureCart' );
+		return $this->check_dependency( defined( 'SURECART_VERSION' ) || class_exists( 'SureCart' ), 'SureCart' );
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
 	protected function get_plugin_version(): string {
-		return defined( 'SURECART_VERSION' ) ? SURECART_VERSION : '';
+		if ( defined( 'SURECART_VERSION' ) ) {
+			return (string) SURECART_VERSION;
+		}
+
+		// Current SureCart releases no longer define a version constant: read the plugin header.
+		if ( defined( 'SURECART_PLUGIN_FILE' ) ) {
+			$data = get_file_data( SURECART_PLUGIN_FILE, [ 'Version' => 'Version' ] );
+			return (string) ( $data['Version'] ?? '' );
+		}
+
+		return '';
 	}
 
 	// ─── Deduplication ─────────────────────────────────────

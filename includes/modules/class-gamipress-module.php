@@ -193,7 +193,12 @@ class GamiPress_Module extends Module_Base {
 	 * {@inheritDoc}
 	 */
 	protected function get_plugin_version(): string {
-		return defined( 'GAMIPRESS_VERSION' ) ? GAMIPRESS_VERSION : '';
+		if ( defined( 'GAMIPRESS_VERSION' ) ) {
+			return (string) GAMIPRESS_VERSION;
+		}
+
+		// Current GamiPress releases use GAMIPRESS_VER.
+		return defined( 'GAMIPRESS_VER' ) ? (string) GAMIPRESS_VER : '';
 	}
 
 	// ─── Model detection ──────────────────────────────────

@@ -29,7 +29,7 @@ class WP_All_Import_Module extends \WP4Odoo\Module_Base {
 
 	use WPAI_Hooks;
 
-	protected const PLUGIN_MIN_VERSION  = '4.7';
+	protected const PLUGIN_MIN_VERSION  = '4.0';
 	protected const PLUGIN_TESTED_UP_TO = '4.9';
 
 	/**

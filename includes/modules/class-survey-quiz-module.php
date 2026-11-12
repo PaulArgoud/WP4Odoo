@@ -100,7 +100,7 @@ class Survey_Quiz_Module extends Module_Base {
 		$settings = $this->get_settings();
 
 		// Quiz Maker (Ays) hooks.
-		if ( ! empty( $settings['sync_ays_quizzes'] ) && defined( 'QUIZ_MAKER_VERSION' ) ) {
+		if ( ! empty( $settings['sync_ays_quizzes'] ) && ( defined( 'QUIZ_MAKER_VERSION' ) || defined( 'AYS_QUIZ_VERSION' ) ) ) {
 			add_action( 'ays_qm_front_end_save_result', $this->safe_callback( [ $this, 'on_ays_result' ] ), 10, 1 );
 		}
 
@@ -205,7 +205,7 @@ class Survey_Quiz_Module extends Module_Base {
 	 */
 	public function get_dependency_status(): array {
 		$plugins = [
-			'Quiz Maker'             => defined( 'QUIZ_MAKER_VERSION' ),
+			'Quiz Maker'             => defined( 'QUIZ_MAKER_VERSION' ) || defined( 'AYS_QUIZ_VERSION' ),
 			'Quiz And Survey Master' => defined( 'QSM_PLUGIN_INSTALLED' ),
 		];
 

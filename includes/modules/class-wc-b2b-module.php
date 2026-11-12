@@ -203,7 +203,7 @@ class WC_B2B_Module extends Module_Base {
 	 */
 	public function get_dependency_status(): array {
 		return $this->check_dependency(
-			defined( 'WWP_PLUGIN_VERSION' ) || class_exists( 'B2bking' ),
+			defined( 'WWP_PLUGIN_VERSION' ) || defined( 'WWP_PLUGIN_FILE' ) || class_exists( 'B2bking' ),
 			'Wholesale Suite or B2BKing'
 		);
 	}

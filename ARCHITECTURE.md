@@ -23,7 +23,7 @@ WordPress For Odoo/
 │   │   ├── class-odoo-transport-base.php  # Abstract base: shared properties, constructor, ensure_authenticated()
 │   │   ├── trait-retryable-http.php       # Retryable_Http trait (HTTP POST with persistent cURL pool, fail-fast for queue-level retry)
 │   │   ├── class-odoo-client.php          # High-level client (CRUD, search, fields_get, reset(), session re-auth on 403)
-│   │   ├── class-odoo-jsonrpc.php         # JSON-RPC 2.0 transport (Odoo 17+) extends Odoo_Transport_Base
+│   │   ├── class-odoo-jsonrpc.php         # JSON-RPC 2.0 transport (Odoo 17+, default) extends Odoo_Transport_Base
 │   │   ├── class-odoo-xmlrpc.php          # XML-RPC transport (legacy) extends Odoo_Transport_Base
 │   │   ├── class-odoo-json2.php           # JSON-2 transport (Odoo 19+, bearer API key) extends Odoo_Transport_Base
 │   │   └── class-odoo-auth.php            # Auth, API key encryption (+ credential cache), connection testing
@@ -417,7 +417,7 @@ WordPress For Odoo/
 ├── templates/
 │   └── customer-portal.php           #   Customer portal HTML template (orders/invoices tabs)
 │
-├── tests/                             # 5434 unit tests (8194 assertions) + 45 integration tests (wp-env)
+├── tests/                             # 5443 unit tests (8211 assertions) + 45 integration tests (wp-env)
 │   ├── bootstrap.php                 #   Unit test bootstrap: constants, stub loading, plugin class requires
 │   ├── bootstrap-integration.php     #   Integration test bootstrap: loads WP test framework (wp-env)
 │   ├── stubs/
@@ -505,6 +505,7 @@ WordPress For Odoo/
 │       ├── SyncEngineTest.php           #   16 tests for Sync_Engine
 │       ├── OdooAuthTest.php             #   20 tests for Odoo_Auth
 │       ├── OdooClientTest.php           #   21 tests for Odoo_Client
+│       ├── OdooJson2Test.php            #   17 tests for Odoo_Json2 (auth, argument translation, errors, classification)
 │       ├── QueryServiceTest.php         #   15 tests for Query_Service
 │       ├── ContactRefinerTest.php       #   19 tests for Contact_Refiner
 │       ├── SettingsPageTest.php         #   22 tests for Settings_Page
@@ -629,7 +630,7 @@ WordPress For Odoo/
 │       ├── ShopWPHandlerTest.php       #   8 tests for ShopWP_Handler
 │       ├── SproutInvoicesHandlerTest.php # 37 tests for Sprout_Invoices_Handler
 │       ├── WPInvoiceHandlerTest.php    #   18 tests for WP_Invoice_Handler
-│       ├── StockHandlerTest.php        #   10 tests for Stock_Handler
+│       ├── StockHandlerTest.php        #   11 tests for Stock_Handler
 │       ├── TutorLMSModuleTest.php      #   66 tests for TutorLMS_Module + Handler + Hooks
 │       ├── FluentCRMModuleTest.php     #   69 tests for FluentCRM_Module + Handler + Hooks
 │       ├── FunnelKitModuleTest.php    #   73 tests — FunnelKit contact/step sync, stage resolution, dedup
@@ -905,22 +906,22 @@ interface Transport {
 }
 
 trait Retryable_Http {
-    protected function http_post_with_retry( string $url, array $request_args, string $endpoint ): array;
+    protected function http_post_with_retry( string $url, array $request_args, string $endpoint, bool $parse_server_errors = false ): array;
 }
 ```
 
 ```
 Odoo_Client ── uses ── Transport (interface)
                             │
-    ┌───────────────────────┼──────────────────────┐
-    │                       │                      │
-Odoo_JsonRPC            Odoo_XmlRPC
-POST /jsonrpc           POST /xmlrpc/2/common (auth)
-                        POST /xmlrpc/2/object (CRUD)
-    └──── both use Retryable_Http trait ──────────┘
+    ┌───────────────────────┼──────────────────────┬──────────────────────┐
+    │                       │                      │                      │
+Odoo_JsonRPC            Odoo_XmlRPC            Odoo_Json2
+POST /jsonrpc           POST /xmlrpc/2/common  POST /json/2/<model>/<method>
+                        POST /xmlrpc/2/object  (bearer API key, Odoo 19+)
+    └──────────── all use Retryable_Http trait ───────────────────────────┘
 ```
 
-`Retryable_Http` provides `http_post_with_retry()` — single-attempt HTTP POST with TCP keep-alive. Fails immediately on WP_Error or HTTP 5xx, letting the `Sync_Engine` handle retry via queue-level exponential backoff. This avoids blocking the queue processor with in-process `usleep()`. Includes a persistent cURL handle pool keyed by host for TCP+TLS connection reuse across batch calls (~50 ms saved per additional call). Falls back to `wp_remote_post()` transparently when cURL is unavailable or the pool fails. Toggle via `wp4odoo_enable_connection_pool` filter.
+`Retryable_Http` provides `http_post_with_retry()` — single-attempt HTTP POST with TCP keep-alive. Fails immediately on WP_Error or HTTP 5xx, letting the `Sync_Engine` handle retry via queue-level exponential backoff (the optional `$parse_server_errors` flag returns 5xx responses other than 429 to the caller so `Odoo_Json2` can read the Odoo error in the body). This avoids blocking the queue processor with in-process `usleep()`. Includes a persistent cURL handle pool keyed by host for TCP+TLS connection reuse across batch calls (~50 ms saved per additional call). Falls back to `wp_remote_post()` transparently when cURL is unavailable or the pool fails. Toggle via `wp4odoo_enable_connection_pool` filter.
 
 `Odoo_Client::call()` includes automatic session re-authentication: if an API call throws a session-related error (HTTP 403, "session expired", "access denied"), the client resets the transport, re-authenticates, and retries the call once. This handles long-running batch processing where Odoo sessions may expire mid-sync.
 
@@ -930,9 +931,11 @@ The protocol is configurable in options (`wp4odoo_connection.protocol`). JSON-RP
 
 `Odoo_Json2` targets `POST /json/2/<model>/<method>` (Odoo's replacement for the deprecated `/jsonrpc` and `/xmlrpc/2`). It authenticates with a bearer API key and the `X-Odoo-Database` header, resolves the uid through `res.users/context_get`, and reads the server version from `/web/webclient/version_info` (best effort). Because `Odoo_Client` speaks the `execute_kw` dialect, the transport translates positional arguments into JSON-2 named arguments (`search`/`search_read`/`search_count` → `domain`, `read` → `ids`+`fields`, `write` → `ids`+`vals`, `create` → `vals_list`, record actions such as `action_confirm` → `ids`); a single-dict `create` still returns an int. JSON-2 reports Odoo errors with HTTP 4xx/5xx and a JSON body, so the transport parses 5xx bodies (via the `$parse_server_errors` flag of `Retryable_Http::http_post_with_retry()`) and appends the Odoo exception class to the message; 401/403/404/422 are classified as permanent by `Error_Classification`.
 
+**Schema reconciliation:** `Module_Base::map_to_odoo()` calls `reconcile_with_schema()`, which compares the mapped values with the model's `fields_get()` result (via `Schema_Cache`). A field the Odoo version does not know is renamed when the module declares an alias in `$odoo_field_renames` (`[entity_type => [old_field => new_field]]`, e.g. `hr.employee` `gender` → `sex`, `account.payment` `ref` → `memo`) and otherwise dropped with a warning, because Odoo rejects a whole record that contains an unknown field. Modules that return pre-formatted Odoo data from `map_to_odoo()` must call `reconcile_with_schema()` themselves (WP ERP, Food Ordering do). Nothing is changed when the schema is unavailable. De-duplication domains must account for renamed fields (marketplace payouts and Sprout Invoices payments search `memo` or `ref`).
+
 On Odoo 18+, `Stock_Handler::push_stock()` first calls `ensure_storable()`: Odoo rejects quants for non-storable products, so the product template is switched to `is_storable = true` when it is not already.
 
-**Server version detection:** Both transports capture the Odoo server version during authentication. JSON-RPC extracts `server_version` from the `/web/session/authenticate` response. XML-RPC calls `version()` on `/xmlrpc/2/common` after auth (non-blocking try/catch). The version is stored in `Odoo_Transport_Base::$server_version` and accessible via `get_server_version(): ?string`. On successful connection test, the AJAX handler persists the version in `wp4odoo_odoo_version` option for use in compatibility reporting and diagnostics.
+**Server version detection:** All transports capture the Odoo server version during authentication. JSON-RPC extracts `server_version` from the `/web/session/authenticate` response. XML-RPC calls `version()` on `/xmlrpc/2/common` after auth (non-blocking try/catch). JSON-2 reads it from `/web/webclient/version_info` (best effort, since JSON-2 has no version call). The version is stored in `Odoo_Transport_Base::$server_version` and accessible via `get_server_version(): ?string`. On successful connection test, the AJAX handler persists the version in `wp4odoo_odoo_version` option for use in compatibility reporting and diagnostics.
 
 ### 5. Entity Mapping
 
@@ -1231,7 +1234,7 @@ The webhook is authenticated via an `X-Odoo-Token` header compared against `wp4o
 4. Dedup: if get_dedup_domain() non-empty, search Odoo first (idempotent create)
 5. Job added to queue via Sync_Engine::enqueue()
 6. Cron runs process_queue() — batch creates grouped by module:entity_type
-7. Odoo_Client::create() or write() via JSON-RPC/XML-RPC
+7. Odoo_Client::create() or write() via JSON-RPC/JSON-2/XML-RPC
 8. Mapping saved in entity_map
 9. Status updated (completed/failed)
 ```
@@ -1368,7 +1371,7 @@ All user inputs are sanitized with:
 - **Attribute value translation**: `Variant_Handler` tracks attribute value Odoo IDs in `entity_map`; accumulated per-taxonomy for translated term name pull
 - **Tax mapping**: configurable WC tax class → Odoo `account.tax` ID mapping; applied per order line during push as `tax_id` Many2many `[6, 0, [id]]` tuples
 - **Shipping mapping**: configurable WC shipping method → Odoo `delivery.carrier` ID mapping; sets `carrier_id` on `sale.order` during push
-- **Bidirectional stock sync**: `Stock_Handler` pushes WC stock changes to Odoo. Version-adaptive: `stock.quant` + `action_apply_inventory()` for Odoo 16+, `stock.change.product.qty` wizard for v14-15. Anti-loop guard via `mark_importing()` prevents re-enqueue during pull
+- **Bidirectional stock sync**: `Stock_Handler` pushes WC stock changes to Odoo. Version-adaptive: `stock.quant` + `action_apply_inventory()` for Odoo 16+, `stock.change.product.qty` wizard for v14-15. On Odoo 18+, the Odoo product is first switched to storable (`is_storable`) when needed. Anti-loop guard via `mark_importing()` prevents re-enqueue during pull
 
 **Settings:** `sync_products`, `sync_orders`, `sync_stock`, `sync_product_images`, `sync_gallery_images`, `sync_pricelist`, `sync_shipments`, `convert_currency`, `auto_confirm_orders`, `sync_taxes`, `tax_mapping`, `sync_shipping`, `shipping_mapping` — `sync_products` and `sync_orders` are checked at callback level (each hook checks the relevant setting before enqueuing)
 

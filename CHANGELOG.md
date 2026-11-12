@@ -16,9 +16,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Odoo 19 / 20 verification** — Authentication, CRUD, search, `fields_get`, sale order confirmation, invoice posting, stock adjustment and context-based translation writes confirmed against live Odoo 19.0 and 20.0 servers over JSON-RPC, XML-RPC and JSON-2. README compatibility table now lists Odoo 17 – 20
 - **Error classification** — HTTP 401, 403, 404 and 422 (JSON-2 rejections) are now permanent errors instead of defaulting to transient, so rejected jobs no longer retry
 - **PHPUnit 12 readiness** — Replaced doc-comment metadata (`@covers`, `@dataProvider`) with attributes (`#[CoversClass]`, `#[DataProvider]`); the unit suite now runs without PHPUnit deprecations
+- **WooCommerce 11.3** — Tested-up-to raised from 10.5 to 11.3 for the WooCommerce, Inventory, Shipping and Returns modules (integration suite run against WooCommerce 11.3)
 - **Translations** — New strings translated in French and Spanish (1008 strings)
 
 ### Fixed
+- **Fields removed or renamed in Odoo 18 – 20** — Mapped fields unknown to the Odoo model (checked against the model schema before every push) used to be sent anyway, so Odoo rejected the whole record (e.g. `res.partner.company_name` no longer exists in Odoo 20, `crm.lead.mobile` and `hr.job.state` are gone). They are now dropped with a warning, and known renames are applied through the new `$odoo_field_renames` module property and `Module_Base::reconcile_with_schema()`: `hr.employee.gender` → `sex` (WP ERP), `account.payment.ref` → `memo` (Sprout Invoices, Dokan, WCFM, WC Vendors), `stock.picking.move_ids_without_package` → `move_ids` (WC Returns), `pos.order.note` → `internal_note` (Food Ordering). Payout/payment de-duplication now searches `memo` when the field was renamed
+- **Dokan (current releases)** — `dokan_get_earning_by_order()` and `dokan_get_withdraw()` no longer exist in Dokan Lite 5.x; commissions and payouts now use `dokan()->commission` and `dokan()->withdraw` when the legacy helpers are missing
+- **Third-party plugin detection with their latest releases** — Modules were not activated with: WP Project Manager 4.x (`PM_VERSION` instead of `CPM_VERSION`), SureCart 4.x (no version constant; the version is read from the plugin header), GamiPress 8.x (`GAMIPRESS_VER`), WP Document Revisions 5.x (`WP_Document_Revisions` class), Ays Quiz Maker 6.x (`AYS_QUIZ_VERSION`) and Wholesale Suite 2.x (`WWP_PLUGIN_FILE`)
+- **WP All Import free edition blocked** — The minimum version (4.7) was higher than the current free release (4.2); lowered to 4.0
 - **Stock push on Odoo 18+** — Pushing stock for a product that was not storable failed with "Quants cannot be created for consumables or services". `Stock_Handler` now enables *Track Inventory* (`is_storable`) on the Odoo product template before writing the quant
 
 ## [3.9.2] - 2026-06-11

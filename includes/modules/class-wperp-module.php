@@ -56,6 +56,15 @@ class WPERP_Module extends Module_Base {
 	];
 
 	/**
+	 * Fields renamed in newer Odoo versions (`gender` → `sex` in Odoo 19+).
+	 *
+	 * @var array<string, array<string, string>>
+	 */
+	protected array $odoo_field_renames = [
+		'employee' => [ 'gender' => 'sex' ],
+	];
+
+	/**
 	 * Default field mappings.
 	 *
 	 * Employee and leave data are pre-formatted by the handler (identity
@@ -360,7 +369,7 @@ class WPERP_Module extends Module_Base {
 	 */
 	public function map_to_odoo( string $entity_type, array $wp_data ): array {
 		if ( 'employee' === $entity_type || 'leave' === $entity_type ) {
-			return $wp_data;
+			return $this->reconcile_with_schema( $entity_type, $wp_data );
 		}
 
 		return parent::map_to_odoo( $entity_type, $wp_data );

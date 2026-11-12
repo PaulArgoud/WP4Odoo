@@ -144,7 +144,7 @@ class Dokan_Handler extends Marketplace_Handler_Base {
 	 * @return array<string, mixed> Payment data, or empty if not found.
 	 */
 	public function load_payout( int $withdraw_id, int $partner_id ): array {
-		$withdraw = dokan_get_withdraw( $withdraw_id );
+		$withdraw = $this->fetch_withdraw( $withdraw_id );
 		if ( ! $withdraw ) {
 			$this->logger->warning( 'Dokan withdraw not found.', [ 'withdraw_id' => $withdraw_id ] );
 			return [];
@@ -181,8 +181,64 @@ class Dokan_Handler extends Marketplace_Handler_Base {
 	 * @return int Vendor user ID, or 0 if not found.
 	 */
 	public function get_vendor_id_for_withdraw( int $withdraw_id ): int {
-		$withdraw = dokan_get_withdraw( $withdraw_id );
+		$withdraw = $this->fetch_withdraw( $withdraw_id );
 		return $withdraw ? (int) $withdraw->user_id : 0;
+	}
+
+	/**
+	 * Get the admin (marketplace) commission earned on a Dokan sub-order.
+	 *
+	 * @param int $order_id WC sub-order ID.
+	 * @return float Commission amount, or 0.0 when it cannot be determined.
+	 */
+	public function get_admin_earning( int $order_id ): float {
+		// Legacy helper (removed in current Dokan releases).
+		if ( function_exists( 'dokan_get_earning_by_order' ) ) {
+			return (float) dokan_get_earning_by_order( $order_id, 'admin' );
+		}
+
+		// Dokan 3+: commission service (returns WP_Error / null on failure).
+		$commission = function_exists( 'dokan' ) ? dokan()->commission : null;
+		if ( is_object( $commission ) && method_exists( $commission, 'get_earning_by_order' ) ) {
+			$earning = $commission->get_earning_by_order( $order_id, 'admin' );
+			return is_numeric( $earning ) ? (float) $earning : 0.0;
+		}
+
+		return 0.0;
+	}
+
+	/**
+	 * Fetch a Dokan withdraw request as a plain object (user_id, amount, date).
+	 *
+	 * Supports the legacy `dokan_get_withdraw()` helper and the withdraw
+	 * manager of current Dokan releases (`dokan()->withdraw->get()`).
+	 *
+	 * @param int $withdraw_id Dokan withdraw ID.
+	 * @return object|null Object with user_id, amount and date properties, or null.
+	 */
+	private function fetch_withdraw( int $withdraw_id ): ?object {
+		if ( function_exists( 'dokan_get_withdraw' ) ) {
+			$legacy = dokan_get_withdraw( $withdraw_id );
+			return $legacy ? (object) [
+				'user_id' => $legacy->user_id,
+				'amount'  => $legacy->amount,
+				'date'    => $legacy->date,
+			] : null;
+		}
+
+		$manager = function_exists( 'dokan' ) ? dokan()->withdraw : null;
+		if ( is_object( $manager ) && method_exists( $manager, 'get' ) ) {
+			$withdraw = $manager->get( $withdraw_id );
+			if ( is_object( $withdraw ) && method_exists( $withdraw, 'get_user_id' ) ) {
+				return (object) [
+					'user_id' => $withdraw->get_user_id(),
+					'amount'  => $withdraw->get_amount(),
+					'date'    => $withdraw->get_date(),
+				];
+			}
+		}
+
+		return null;
 	}
 
 	/**

@@ -140,7 +140,7 @@ class Dokan_Module extends Marketplace_Module_Base {
 			return [];
 		}
 
-		$amount = (float) dokan_get_earning_by_order( $order_id, 'admin' );
+		$amount = $this->handler->get_admin_earning( $order_id );
 
 		return $this->handler->load_commission( $order_id, $partner_id, $amount );
 	}

@@ -178,7 +178,7 @@ class Project_Manager_Module extends Module_Base {
 	 */
 	public function get_dependency_status(): array {
 		return $this->check_dependency(
-			defined( 'CPM_VERSION' ) || class_exists( 'WeDevs\PM\Core\WP\WP_Project_Manager' ),
+			defined( 'CPM_VERSION' ) || class_exists( 'WeDevs\PM\Core\WP\WP_Project_Manager' ) || ( defined( 'PM_VERSION' ) && class_exists( 'WeDevs\PM\Core\Config\Config' ) ),
 			'WP Project Manager'
 		);
 	}
@@ -187,7 +187,12 @@ class Project_Manager_Module extends Module_Base {
 	 * {@inheritDoc}
 	 */
 	protected function get_plugin_version(): string {
-		return defined( 'CPM_VERSION' ) ? (string) CPM_VERSION : '';
+		if ( defined( 'CPM_VERSION' ) ) {
+			return (string) CPM_VERSION;
+		}
+
+		// Project Manager 3.x+ renamed the constant.
+		return defined( 'PM_VERSION' ) ? (string) PM_VERSION : '';
 	}
 
 	// ─── Push override ────────────────────────────────────
