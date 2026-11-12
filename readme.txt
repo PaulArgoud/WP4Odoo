@@ -4,7 +4,7 @@ Tags: odoo, woocommerce, erp, sync, crm
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 8.2
-Stable tag: 3.10.0
+Stable tag: 3.10.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -65,6 +65,11 @@ Yes. Each site in a network can sync with a specific Odoo company, sharing a sin
 
 == Changelog ==
 
+= 3.10.1 =
+* Added: WP-CLI commands (health, db, breaker, logs, connection, webhook, bulk product sync, module info/settings/set); JSON-2 suggestion for Odoo 19+; warning when the Odoo Members app is missing.
+* Fixed: `wp wp4odoo sync run` and `cleanup orphans`; complete data removal on uninstall (including multisite); API key erased when saving credentials without one; Job Manager status on recent Odoo; WC Product Add-Ons attribute sync; wrong Odoo product template resolved by Add-Ons, Bundles and Jeero.
+* Changed: Cached Odoo schemas are flushed when the Odoo version changes; "invalid field" errors are no longer retried.
+
 = 3.10.0 =
 * Added: JSON-2 transport for Odoo 19+; Health tab shows the Odoo version, database table status and fields skipped on push; automatic repair of missing database tables.
 * Fixed: "Access Denied" when connecting with an API key over JSON-RPC (Odoo Online 19+); Odoo company ID not saved; bulk export reporting products as enqueued when nothing was queued; fields removed or renamed in Odoo 18–20 no longer make Odoo reject a record; stock push over XML-RPC; detection of current WP Project Manager, SureCart, GamiPress, WP Document Revisions, Quiz Maker and Wholesale Suite; FluentBooking and Dokan with their current releases.
@@ -85,6 +90,9 @@ Yes. Each site in a network can sync with a specific Odoo company, sharing a sin
 See [CHANGELOG.md](https://github.com/PaulArgoud/wp4odoo/blob/main/CHANGELOG.md) for the complete history.
 
 == Upgrade Notice ==
+
+= 3.10.1 =
+Adds a complete WP-CLI, fixes uninstall cleanup and several Odoo 19/20 compatibility issues. Safe upgrade.
 
 = 3.10.0 =
 Fixes connecting to Odoo Online with an API key over JSON-RPC, saving the Odoo company ID, and missing database tables; adds Odoo 19/20 compatibility and a JSON-2 transport. Safe upgrade.

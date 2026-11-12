@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [3.10.1] - 2026-11-12
 
 ### Added
 - **WP-CLI: new commands** — `health` (one row per check: connection, database, queue, circuit breakers, cron, compatibility, skipped fields; `--format`, exits 1 on error or, with `--strict`, on warning — usable for monitoring), `db status|repair`, `breaker status|reset [<module>]`, `logs list|purge` (filters, pagination, `--all`), `connection show|set` (`--odoo-url`, since `--url` is WP-CLI's own global option; `--database`, `--username`, `--api-key`, `--protocol`, `--timeout`, `--company-id`, `--test`; the API key is stored encrypted, never printed and kept when omitted; private URLs are refused unless `--allow-private-url`), `webhook show|rotate`, `sync export-products|import-products`, and `module info|settings|set`. The CLI now covers every operation of the admin UI, so a site can be provisioned and operated headlessly
