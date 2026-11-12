@@ -8,7 +8,10 @@ DIR=wp-content/plugins/wp4odoo/tests/compat
 fail=0
 total=0
 
-wp plugin install woocommerce --activate >/dev/null 2>&1 || true
+# wp-env installs WooCommerce as "woocommerce.latest-stable"; several plugins (e.g. WC Vendors)
+# check for the standard path woocommerce/woocommerce.php, so use the regular copy.
+wp plugin deactivate woocommerce.latest-stable >/dev/null 2>&1 || true
+wp plugin install woocommerce --activate >/dev/null 2>&1 || wp plugin activate woocommerce >/dev/null 2>&1 || true
 
 while read -r mod slug; do
 	[[ -z "$mod" || "$mod" == \#* ]] && continue
