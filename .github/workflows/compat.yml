@@ -55,10 +55,10 @@ jobs:
           done
 
       - name: Start and initialise Odoo 19 and 20
-        run: tests/compat/odoo-setup.sh
+        run: bash tests/compat/odoo-setup.sh
 
       - name: Attach Odoo to the wp-env network
-        run: tests/compat/connect-network.sh
+        run: bash tests/compat/connect-network.sh
 
       - name: Odoo schema — mapped fields exist (or are renamed)
         run: npx wp-env run tests-cli wp eval-file wp-content/plugins/wp4odoo/tests/compat/odoo-fields.php
