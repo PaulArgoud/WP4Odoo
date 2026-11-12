@@ -315,9 +315,14 @@ class AdminAjaxTest extends TestCase {
 		];
 
 		$GLOBALS['_wp_remote_responses'] = [
-			// Auth response (uid=2) — /web/session/authenticate returns {uid: 2}.
+			// Auth response (uid=2) — common.authenticate returns the uid.
 			[
-				'body'     => json_encode( [ 'jsonrpc' => '2.0', 'result' => [ 'uid' => 2 ], 'id' => 1 ] ),
+				'body'     => json_encode( [ 'jsonrpc' => '2.0', 'result' => 2, 'id' => 1 ] ),
+				'response' => [ 'code' => 200 ],
+			],
+			// common.version (best effort).
+			[
+				'body'     => json_encode( [ 'jsonrpc' => '2.0', 'result' => [ 'server_version' => '19.0' ], 'id' => 1 ] ),
 				'response' => [ 'code' => 200 ],
 			],
 			// ir.model search_read: only res.partner found.

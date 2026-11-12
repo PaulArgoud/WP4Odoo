@@ -67,6 +67,7 @@ final class Bulk_Handler {
 	public function import_products(): array {
 		$total     = $this->client->search_count( 'product.template', [] );
 		$enqueued  = 0;
+		$failed    = 0;
 		$offset    = 0;
 		$timed_out = false;
 		$start     = microtime( true );
@@ -91,12 +92,19 @@ final class Bulk_Handler {
 				$wp_id  = $map[ $odoo_id ] ?? 0;
 				$action = $wp_id ? 'update' : 'create';
 
-				Queue_Manager::pull( 'woocommerce', 'product', $action, $odoo_id, $wp_id, [], 5 );
+				if ( false === Queue_Manager::pull( 'woocommerce', 'product', $action, $odoo_id, $wp_id, [], 5 ) ) {
+					++$failed;
+					continue;
+				}
 				++$enqueued;
 			}
 
 			$offset += self::CHUNK_SIZE;
 		} while ( $fetched >= self::CHUNK_SIZE );
+
+		if ( $failed > 0 && 0 === $enqueued ) {
+			return $this->queue_failure( $failed );
+		}
 
 		if ( 0 === $enqueued ) {
 			return [
@@ -120,6 +128,11 @@ final class Bulk_Handler {
 				$total
 			);
 
+		if ( $failed > 0 ) {
+			/* translators: %d: number of items that could not be queued */
+			$message .= ' ' . sprintf( __( '%d could not be queued.', 'wp4odoo' ), $failed );
+		}
+
 		return [
 			'enqueued' => $enqueued,
 			'total'    => $total,
@@ -137,6 +150,7 @@ final class Bulk_Handler {
 	 */
 	public function export_products(): array {
 		$enqueued  = 0;
+		$failed    = 0;
 		$page      = 1;
 		$timed_out = false;
 		$start     = microtime( true );
@@ -167,12 +181,19 @@ final class Bulk_Handler {
 				$odoo_id = $map[ $wp_id ] ?? 0;
 				$action  = $odoo_id ? 'update' : 'create';
 
-				Queue_Manager::push( 'woocommerce', 'product', $action, $wp_id, $odoo_id );
+				if ( false === Queue_Manager::push( 'woocommerce', 'product', $action, $wp_id, $odoo_id ) ) {
+					++$failed;
+					continue;
+				}
 				++$enqueued;
 			}
 
 			++$page;
 		} while ( $fetched >= self::CHUNK_SIZE );
+
+		if ( $failed > 0 && 0 === $enqueued ) {
+			return $this->queue_failure( $failed );
+		}
 
 		if ( 0 === $enqueued ) {
 			return [
@@ -194,10 +215,35 @@ final class Bulk_Handler {
 				$enqueued
 			);
 
+		if ( $failed > 0 ) {
+			/* translators: %d: number of items that could not be queued */
+			$message .= ' ' . sprintf( __( '%d could not be queued.', 'wp4odoo' ), $failed );
+		}
+
 		return [
 			'enqueued' => $enqueued,
 			'total'    => $enqueued,
 			'message'  => $message,
+		];
+	}
+
+	/**
+	 * Result returned when every job failed to be written to the queue.
+	 *
+	 * Usually means the plugin's database tables are missing or not writable.
+	 *
+	 * @param int $failed Number of items that could not be queued.
+	 * @return array{enqueued: int, total: int, message: string}
+	 */
+	private function queue_failure( int $failed ): array {
+		return [
+			'enqueued' => 0,
+			'total'    => 0,
+			'message'  => sprintf(
+				/* translators: %d: number of items that could not be queued */
+				__( 'Could not queue %d item(s): the sync queue could not be written. The plugin database tables may be missing — see the Health tab, or deactivate and reactivate the plugin.', 'wp4odoo' ),
+				$failed
+			),
 		];
 	}
 }

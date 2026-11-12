@@ -367,6 +367,7 @@ abstract class Module_Base {
 				continue;
 			}
 
+			Schema_Drop_Log::record( $this->id, $model, (string) $field );
 			$this->logger->warning(
 				"Mapped Odoo field '{$field}' not found in model schema; dropped from the push.",
 				[

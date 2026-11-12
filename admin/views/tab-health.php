@@ -10,6 +10,10 @@
  * @var string $cron_warning     Cron warning message (empty if healthy).
  * @var int    $next_cron        Next scheduled cron run timestamp (0 if unscheduled).
  * @var array  $open_modules     Per-module circuit breaker open states (module_id => {failures, opened_at}).
+ * @var array  $missing_tables   Plugin database tables that do not exist (without the WordPress prefix).
+ * @var mixed  $db_error         Last table-creation failure (array with `tables` and `error`) or empty.
+ * @var array  $schema_drops     Fields dropped from pushes (model.field => {count, modules, last}).
+ * @var string $odoo_version     Odoo server version detected by the last connection test.
  *
  * @package WP4Odoo
  */
@@ -21,7 +25,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 // Determine overall system status.
 $is_cb_open    = ! empty( $cb_state['opened_at'] );
 $has_module_cb = ! empty( $open_modules );
-$has_warnings  = ! empty( $cron_warning ) || ! empty( $version_warnings ) || $is_cb_open || $has_module_cb;
+$has_warnings  = ! empty( $cron_warning ) || ! empty( $version_warnings ) || $is_cb_open || $has_module_cb || ! empty( $missing_tables ) || ! empty( $schema_drops );
 $success_rate  = $health_metrics['success_rate'] ?? 100.0;
 $is_degraded   = $has_warnings || $success_rate < 90.0;
 $status_class  = $is_degraded ? 'wp4odoo-health-degraded' : 'wp4odoo-health-ok';
@@ -157,6 +161,67 @@ $warning_count = count( $version_warnings );
 			</td>
 		</tr>
 		<?php endif; ?>
+
+		<!-- Odoo version -->
+		<tr>
+			<th scope="row"><?php esc_html_e( 'Odoo version', 'wp4odoo' ); ?></th>
+			<td>
+				<?php if ( '' !== $odoo_version ) : ?>
+					<?php echo esc_html( $odoo_version ); ?>
+				<?php else : ?>
+					<span class="description"><?php esc_html_e( 'Unknown — run a connection test in the Connection tab.', 'wp4odoo' ); ?></span>
+				<?php endif; ?>
+			</td>
+		</tr>
+
+		<!-- Database tables -->
+		<tr>
+			<th scope="row"><?php esc_html_e( 'Database tables', 'wp4odoo' ); ?></th>
+			<td>
+				<?php if ( empty( $missing_tables ) ) : ?>
+					<span class="wp4odoo-badge wp4odoo-badge-completed">
+						<?php esc_html_e( 'All present', 'wp4odoo' ); ?>
+					</span>
+				<?php else : ?>
+					<span class="wp4odoo-badge wp4odoo-badge-failed">
+						<?php esc_html_e( 'Missing', 'wp4odoo' ); ?>
+					</span>
+					<code><?php echo esc_html( implode( ', ', $missing_tables ) ); ?></code>
+					<p class="description">
+						<?php esc_html_e( 'Synchronization cannot work without these tables. The plugin retries creating them on every admin page load; if they stay missing, the database user probably lacks the CREATE privilege.', 'wp4odoo' ); ?>
+						<?php if ( is_array( $db_error ) && ! empty( $db_error['error'] ) ) : ?>
+							<br><?php echo esc_html( sprintf( /* translators: %s: database error message */ __( 'Database error: %s', 'wp4odoo' ), (string) $db_error['error'] ) ); ?>
+						<?php endif; ?>
+					</p>
+				<?php endif; ?>
+			</td>
+		</tr>
+
+		<!-- Fields skipped on push -->
+		<tr>
+			<th scope="row"><?php esc_html_e( 'Fields skipped on push', 'wp4odoo' ); ?></th>
+			<td>
+				<?php if ( empty( $schema_drops ) ) : ?>
+					0
+				<?php else : ?>
+					<span class="wp4odoo-badge wp4odoo-badge-warning"><?php echo esc_html( (string) count( $schema_drops ) ); ?></span>
+					<p class="description">
+						<?php esc_html_e( 'These fields do not exist in the Odoo version you are connected to, so they were left out of the data sent to Odoo. The rest of each record is still synchronized.', 'wp4odoo' ); ?>
+					</p>
+					<ul class="wp4odoo-health-warnings-list">
+						<?php foreach ( $schema_drops as $field_key => $drop ) : ?>
+							<li>
+								<code><?php echo esc_html( (string) $field_key ); ?></code>
+								—
+								<?php echo esc_html( implode( ', ', (array) ( $drop['modules'] ?? [] ) ) ); ?>
+								(<?php echo esc_html( sprintf( /* translators: %d: number of times */ _n( '%d time', '%d times', (int) ( $drop['count'] ?? 0 ), 'wp4odoo' ), (int) ( $drop['count'] ?? 0 ) ) ); ?>,
+								<?php echo esc_html( sprintf( /* translators: %s: human time difference */ __( 'last %s ago', 'wp4odoo' ), human_time_diff( (int) ( $drop['last'] ?? time() ), time() ) ) ); ?>)
+							</li>
+						<?php endforeach; ?>
+					</ul>
+				<?php endif; ?>
+			</td>
+		</tr>
 
 		<!-- Compatibility warnings -->
 		<tr>

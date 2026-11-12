@@ -37,14 +37,19 @@ $step   = function ( string $name, callable $fn ) use ( &$failed ) {
 foreach ( $targets as $version => [ $url, $db, $key ] ) {
 	foreach ( [
 		'json2'   => fn() => new Odoo_Json2( $url, $db, $key, 60 ),
-		'jsonrpc' => fn() => new Odoo_JsonRPC( $url, $db, 'admin', 60 ),
-		'xmlrpc'  => fn() => new Odoo_XmlRPC( $url, $db, 'admin', 60 ),
+		// An API key (not a password) is what Odoo Online users configure; the legacy
+		// protocols must accept it too (GitHub issues #2 and #4).
+		'jsonrpc' => fn() => new Odoo_JsonRPC( $url, $db, $key, 60 ),
+		'xmlrpc'  => fn() => new Odoo_XmlRPC( $url, $db, $key, 60 ),
 	] as $proto => $make ) {
 		echo "== Odoo $version / $proto\n";
 		$t   = $make();
 		$uid = $step( 'authenticate', fn() => 'uid=' . $t->authenticate( 'admin' ) );
 		if ( ! $uid ) {
 			continue;
+		}
+		if ( 'json2' !== $proto ) {
+			$step( 'authenticate with a password', fn() => 'uid=' . ( new ( get_class( $t ) )( $url, $db, 'admin', 60 ) )->authenticate( 'admin' ) );
 		}
 		$c    = new Odoo_Client( $t, null, fn() => [] );
 		$tag  = uniqid( $proto . $version, true );

@@ -19,6 +19,10 @@ class WP_DB_Stub {
 	public string $prefix = 'wp_';
 	public string $posts = 'wp_posts';
 	public int $insert_id = 0;
+	public string $last_error = '';
+
+	/** @var int|false Return value of insert() (false simulates a failed write). */
+	public int|false $insert_return = 1;
 
 	/** @var \Throwable|null Optional exception to throw from insert(). */
 	public ?\Throwable $insert_throws = null;
@@ -60,6 +64,10 @@ class WP_DB_Stub {
 
 	/** @var array<int, array{method: string, args: array}> */
 	public array $calls = [];
+
+	public function esc_like( string $text ): string {
+		return $text;
+	}
 
 	public function prepare( string $query, ...$args ): string {
 		$this->calls[] = [ 'method' => 'prepare', 'args' => [ $query, ...$args ] ];
@@ -113,7 +121,7 @@ class WP_DB_Stub {
 			throw $this->insert_throws;
 		}
 
-		return 1;
+		return $this->insert_return;
 	}
 
 	/** @return int|false */

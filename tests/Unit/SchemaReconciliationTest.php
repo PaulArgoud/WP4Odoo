@@ -148,6 +148,19 @@ class SchemaReconciliationTest extends TestCase {
 		$this->assertArrayNotHasKey( '_wp_entity_id', $sent );
 	}
 
+	public function test_dropped_fields_are_recorded_for_the_health_tab(): void {
+		\WP4Odoo\Schema_Drop_Log::clear();
+		$this->seed_schema( 'hr.employee', [ 'name' ] );
+
+		$this->push( [ 'name' => 'Ada', 'gender' => 'female' ] );
+		\WP4Odoo\Schema_Drop_Log::flush();
+
+		$all = \WP4Odoo\Schema_Drop_Log::all();
+		$this->assertArrayHasKey( 'hr.employee.gender', $all );
+		$this->assertSame( [ 'schema_test' ], $all['hr.employee.gender']['modules'] );
+		\WP4Odoo\Schema_Drop_Log::clear();
+	}
+
 	public function test_nothing_changes_when_schema_is_unavailable(): void {
 		$this->push( [ 'name' => 'Ada', 'gender' => 'female' ] );
 

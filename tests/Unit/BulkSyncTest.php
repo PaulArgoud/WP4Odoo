@@ -3,6 +3,8 @@ declare( strict_types=1 );
 
 namespace WP4Odoo\Tests\Unit;
 
+require_once dirname( __DIR__ ) . '/helpers/admin-wc-products.php';
+
 use WP4Odoo\Entity_Map_Repository;
 use WP4Odoo\Queue_Manager;
 use PHPUnit\Framework\TestCase;
@@ -201,5 +203,23 @@ class BulkSyncTest extends TestCase {
 
 		$queries = array_filter( $this->wpdb->calls, fn( $c ) => 'query' === $c['method'] && str_contains( $c['args'][0], 'INSERT INTO' ) );
 		$this->assertNotEmpty( $queries );
+	}
+
+	protected function tearDown(): void {
+		unset( $GLOBALS['_wc_products'] );
+	}
+
+	// ─── Honest feedback when the queue cannot be written (GitHub issue #4) ───
+
+	public function test_export_reports_failure_when_no_job_could_be_queued(): void {
+		$this->wpdb->insert_return = false; // The queue table does not exist.
+		$GLOBALS['_wc_products']   = [ 11, 12, 13 ];
+
+		$handler = new \WP4Odoo\Admin\Bulk_Handler( new \WP4Odoo\API\Odoo_Client(), $this->repo );
+		$result  = $handler->export_products();
+
+		$this->assertSame( 0, $result['enqueued'] );
+		$this->assertStringContainsString( 'Could not queue 3 item(s)', $result['message'] );
+		$this->assertStringNotContainsString( 'enqueued for export', $result['message'] );
 	}
 }

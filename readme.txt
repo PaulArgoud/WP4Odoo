@@ -4,7 +4,7 @@ Tags: odoo, woocommerce, erp, sync, crm
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 8.2
-Stable tag: 3.9.2
+Stable tag: 3.10.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -53,7 +53,7 @@ No. The plugin uses Odoo's standard external API (JSON-RPC / XML-RPC). Only the 
 
 = Which Odoo versions are supported? =
 
-Odoo 17+ uses JSON-RPC 2.0 (recommended). Odoo 14–16 uses XML-RPC (selectable in settings). Odoo < 14 is not supported.
+Odoo 17+ uses JSON-RPC 2.0 (recommended); Odoo 19+ can also use the JSON-2 API. Odoo 14–16 uses XML-RPC (selectable in settings). Odoo < 14 is not supported.
 
 = Is WooCommerce required? =
 
@@ -64,6 +64,11 @@ No. WooCommerce is optional and only needed for the WooCommerce-related modules.
 Yes. Each site in a network can sync with a specific Odoo company, sharing a single network connection.
 
 == Changelog ==
+
+= 3.10.0 =
+* Added: JSON-2 transport for Odoo 19+; Health tab shows the Odoo version, database table status and fields skipped on push; automatic repair of missing database tables.
+* Fixed: "Access Denied" when connecting with an API key over JSON-RPC (Odoo Online 19+); Odoo company ID not saved; bulk export reporting products as enqueued when nothing was queued; fields removed or renamed in Odoo 18–20 no longer make Odoo reject a record; stock push over XML-RPC; detection of current WP Project Manager, SureCart, GamiPress, WP Document Revisions, Quiz Maker and Wholesale Suite; FluentBooking and Dokan with their current releases.
+* Changed: Verified against Odoo 19 and 20 and WordPress 7.1; single plugin-detection point per module; schema reconciliation in the sync engine.
 
 = 3.9.2 =
 * Added: Optional persistent object-cache layer for WP↔Odoo entity mappings (Redis/Memcached); automatic daily purge of completed/failed queue jobs.
@@ -80,6 +85,9 @@ Yes. Each site in a network can sync with a specific Odoo company, sharing a sin
 See [CHANGELOG.md](https://github.com/PaulArgoud/wp4odoo/blob/main/CHANGELOG.md) for the complete history.
 
 == Upgrade Notice ==
+
+= 3.10.0 =
+Fixes connecting to Odoo Online with an API key over JSON-RPC, saving the Odoo company ID, and missing database tables; adds Odoo 19/20 compatibility and a JSON-2 transport. Safe upgrade.
 
 = 3.9.2 =
 Reliability, packaging, and an optional persistent entity-map cache. Safe upgrade.

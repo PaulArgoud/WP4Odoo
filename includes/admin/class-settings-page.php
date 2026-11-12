@@ -250,14 +250,16 @@ class Settings_Page {
 		}
 
 		$sanitized = [
-			'url'      => $url,
-			'database' => sanitize_text_field( $input['database'] ?? '' ),
-			'username' => sanitize_text_field( $input['username'] ?? '' ),
-			'api_key'  => '',
-			'protocol' => in_array( $input['protocol'] ?? '', [ 'jsonrpc', 'xmlrpc', 'json2' ], true )
+			'url'        => $url,
+			'database'   => sanitize_text_field( $input['database'] ?? '' ),
+			'username'   => sanitize_text_field( $input['username'] ?? '' ),
+			'api_key'    => '',
+			'protocol'   => in_array( $input['protocol'] ?? '', [ 'jsonrpc', 'xmlrpc', 'json2' ], true )
 				? $input['protocol']
 				: 'jsonrpc',
-			'timeout'  => max( 5, min( 120, absint( $input['timeout'] ?? 30 ) ) ),
+			'timeout'    => max( 5, min( 120, absint( $input['timeout'] ?? 30 ) ) ),
+			// Odoo company (res.company) used to scope every API call; 0 = the user's default company.
+			'company_id' => absint( $input['company_id'] ?? 0 ),
 		];
 
 		if ( ! empty( $input['api_key'] ) ) {
@@ -415,6 +417,11 @@ class Settings_Page {
 
 		$module_cb    = new \WP4Odoo\Module_Circuit_Breaker( \WP4Odoo\Logger::for_channel( 'health', $settings ) );
 		$open_modules = $module_cb->get_open_modules();
+
+		$missing_tables = \WP4Odoo\Database_Migration::missing_tables();
+		$db_error       = get_option( \WP4Odoo\Database_Migration::OPT_DB_ERROR, [] );
+		$schema_drops   = \WP4Odoo\Schema_Drop_Log::all();
+		$odoo_version   = (string) get_option( 'wp4odoo_odoo_version', '' );
 
 		include WP4ODOO_PLUGIN_DIR . 'admin/views/tab-health.php';
 	}

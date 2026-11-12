@@ -25,10 +25,6 @@ class DatabaseMigrationTest extends TestCase {
 		$GLOBALS['_wp_options'][ Database_Migration::OPT_SCHEMA_VERSION ] = 0;
 	}
 
-	protected function tearDown(): void {
-		unset( $GLOBALS['_wp_options'][ Database_Migration::OPT_SCHEMA_VERSION ] );
-	}
-
 	// ─── Schema version ────────────────────────────────────
 
 	public function test_get_schema_version_returns_zero_by_default(): void {
@@ -175,5 +171,131 @@ class DatabaseMigrationTest extends TestCase {
 			$this->assertSame( Database_Migration::class, $migrations[ $i ][0] );
 			$this->assertSame( "migration_{$i}", $migrations[ $i ][1] );
 		}
+	}
+
+	// ─── ensure_tables() self-repair (GitHub issue #4) ─────
+
+	/**
+	 * A $wpdb whose SHOW TABLES LIKE answers from a list of existing tables.
+	 *
+	 * @param array<int, string> $existing Table names (with prefix) that exist.
+	 */
+	private function wpdb_with_tables( array $existing ): \WP_DB_Stub {
+		$db = new class() extends \WP_DB_Stub {
+			/** @var array<int, string> */
+			public array $existing = [];
+			private string $last_like = '';
+
+			public function prepare( string $query, ...$args ): string {
+				$this->last_like = (string) ( $args[0] ?? '' );
+				return $query;
+			}
+
+			public function get_var( $query ) {
+				return in_array( $this->last_like, $this->existing, true ) ? $this->last_like : null;
+			}
+		};
+		$db->existing = $existing;
+
+		return $db;
+	}
+
+	private function all_tables(): array {
+		return [ 'wp_wp4odoo_sync_queue', 'wp_wp4odoo_entity_map', 'wp_wp4odoo_logs' ];
+	}
+
+	protected function tearDown(): void {
+		unset( $GLOBALS['_wp_options'][ Database_Migration::OPT_SCHEMA_VERSION ] );
+		$GLOBALS['_wp_is_admin']   = false;
+		$GLOBALS['_wp_transients'] = [];
+		unset( $GLOBALS['_wp_options'][ \WP4Odoo\Settings_Repository::OPT_DB_VERSION ], $GLOBALS['_wp_options'][ Database_Migration::OPT_DB_ERROR ] );
+	}
+
+	public function test_missing_tables_lists_what_does_not_exist(): void {
+		global $wpdb;
+		$wpdb = $this->wpdb_with_tables( [ 'wp_wp4odoo_logs' ] );
+
+		$this->assertSame( [ 'wp4odoo_sync_queue', 'wp4odoo_entity_map' ], Database_Migration::missing_tables() );
+	}
+
+	public function test_ensure_tables_does_nothing_when_current_and_not_in_admin(): void {
+		global $wpdb;
+		$wpdb = $this->wpdb_with_tables( [] );
+		$GLOBALS['_wp_options'][ \WP4Odoo\Settings_Repository::OPT_DB_VERSION ] = WP4ODOO_VERSION;
+		$created = false;
+
+		$this->assertTrue( Database_Migration::ensure_tables( function () use ( &$created ) { $created = true; } ) );
+		$this->assertFalse( $created, 'Front-end requests must not check or create tables.' );
+	}
+
+	public function test_ensure_tables_creates_tables_when_the_stored_version_differs(): void {
+		global $wpdb;
+		$wpdb = $this->wpdb_with_tables( [] );
+		$created = 0;
+
+		$result = Database_Migration::ensure_tables(
+			function () use ( &$created, $wpdb ) {
+				++$created;
+				$wpdb->existing = $this->all_tables();
+			}
+		);
+
+		$this->assertTrue( $result );
+		$this->assertSame( 1, $created );
+		$this->assertArrayNotHasKey( Database_Migration::OPT_DB_ERROR, $GLOBALS['_wp_options'] );
+	}
+
+	public function test_ensure_tables_repairs_missing_tables_in_admin(): void {
+		global $wpdb;
+		$wpdb                                                                       = $this->wpdb_with_tables( [ 'wp_wp4odoo_logs' ] );
+		$GLOBALS['_wp_is_admin']                                                    = true;
+		$GLOBALS['_wp_options'][ \WP4Odoo\Settings_Repository::OPT_DB_VERSION ] = WP4ODOO_VERSION;
+		$created                                                                    = 0;
+
+		$result = Database_Migration::ensure_tables(
+			function () use ( &$created, $wpdb ) {
+				++$created;
+				$wpdb->existing = $this->all_tables();
+			}
+		);
+
+		$this->assertTrue( $result );
+		$this->assertSame( 1, $created );
+	}
+
+	public function test_ensure_tables_checks_only_every_twelve_hours(): void {
+		global $wpdb;
+		$wpdb                                                                       = $this->wpdb_with_tables( $this->all_tables() );
+		$GLOBALS['_wp_is_admin']                                                    = true;
+		$GLOBALS['_wp_options'][ \WP4Odoo\Settings_Repository::OPT_DB_VERSION ] = WP4ODOO_VERSION;
+
+		$this->assertTrue( Database_Migration::ensure_tables() );
+		$wpdb->calls = [];
+		$this->assertTrue( Database_Migration::ensure_tables() );
+		$this->assertSame( [], $wpdb->calls, 'The second call is served from the transient.' );
+	}
+
+	public function test_ensure_tables_records_the_error_when_creation_fails(): void {
+		global $wpdb;
+		$wpdb             = $this->wpdb_with_tables( [] );
+		$wpdb->last_error = 'CREATE command denied to user';
+		$GLOBALS['_wp_is_admin'] = true;
+
+		$result = Database_Migration::ensure_tables( function () {} );
+
+		$this->assertFalse( $result );
+		$error = $GLOBALS['_wp_options'][ Database_Migration::OPT_DB_ERROR ];
+		$this->assertSame( [ 'wp4odoo_sync_queue', 'wp4odoo_entity_map', 'wp4odoo_logs' ], $error['tables'] );
+		$this->assertStringContainsString( 'denied', $error['error'] );
+	}
+
+	public function test_ensure_tables_survives_a_failing_creator(): void {
+		global $wpdb;
+		$wpdb = $this->wpdb_with_tables( [] );
+
+		$result = Database_Migration::ensure_tables( function () { throw new \RuntimeException( 'boom' ); } );
+
+		$this->assertFalse( $result );
+		$this->assertSame( 'boom', $GLOBALS['_wp_options'][ Database_Migration::OPT_DB_ERROR ]['error'] );
 	}
 }

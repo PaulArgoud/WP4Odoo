@@ -29,31 +29,36 @@ class Odoo_JsonRPC extends Odoo_Transport_Base {
 	/**
 	 * Authenticate against Odoo and retrieve the user ID.
 	 *
+	 * Uses the `common` service of `/jsonrpc`, which accepts both a password and an
+	 * API key. `/web/session/authenticate` only accepts a real password (Odoo rejects
+	 * API keys there with "Access Denied"), so it is used only as a fallback when the
+	 * `common` service is unavailable.
+	 *
 	 * @param string $username The Odoo login.
 	 * @return int The authenticated user ID (uid).
 	 * @throws \RuntimeException On authentication failure.
 	 */
 	public function authenticate( string $username ): int {
-		$result = $this->rpc_call(
-			'/web/session/authenticate',
-			[
-				'db'       => $this->database,
-				'login'    => $username,
-				'password' => $this->api_key,
-			]
-		);
-
-		if ( empty( $result['uid'] ) || false === $result['uid'] ) {
-
-			throw new \RuntimeException(
-				__( 'Authentication failed: invalid credentials.', 'wp4odoo' )
+		try {
+			$uid = $this->rpc_call(
+				'/jsonrpc',
+				[
+					'service' => 'common',
+					'method'  => 'authenticate',
+					'args'    => [ $this->database, $username, $this->api_key, (object) [] ],
+				]
 			);
-		}
 
-		$this->uid = (int) $result['uid'];
+			$this->uid = $this->validate_uid( $uid );
+			$this->fetch_server_version();
+		} catch ( \RuntimeException $e ) {
+			// Wrong credentials are final; anything else may mean the service is gone.
+			if ( str_contains( $e->getMessage(), 'Authentication failed' ) ) {
+				throw $e;
+			}
 
-		if ( ! empty( $result['server_version'] ) ) {
-			$this->server_version = (string) $result['server_version'];
+			$this->logger->debug( 'common.authenticate unavailable, falling back to session login.', [ 'error' => $e->getMessage() ] );
+			$this->authenticate_with_session( $username );
 		}
 
 		$this->logger->debug(
@@ -65,7 +70,72 @@ class Odoo_JsonRPC extends Odoo_Transport_Base {
 			]
 		);
 
-		return $this->uid;
+		return (int) $this->uid;
+	}
+
+	/**
+	 * Fallback: password login through /web/session/authenticate.
+	 *
+	 * @param string $username The Odoo login.
+	 * @return void
+	 * @throws \RuntimeException On authentication failure.
+	 */
+	private function authenticate_with_session( string $username ): void {
+		$result = $this->rpc_call(
+			'/web/session/authenticate',
+			[
+				'db'       => $this->database,
+				'login'    => $username,
+				'password' => $this->api_key,
+			]
+		);
+
+		$this->uid = $this->validate_uid( $result['uid'] ?? false );
+
+		if ( ! empty( $result['server_version'] ) ) {
+			$this->server_version = (string) $result['server_version'];
+		}
+	}
+
+	/**
+	 * Check an authentication result.
+	 *
+	 * @param mixed $uid Value returned by Odoo (user ID or false).
+	 * @return int
+	 * @throws \RuntimeException When Odoo rejected the credentials.
+	 */
+	private function validate_uid( mixed $uid ): int {
+		if ( empty( $uid ) || false === $uid || ! is_numeric( $uid ) ) {
+			throw new \RuntimeException(
+				__( 'Authentication failed: invalid credentials.', 'wp4odoo' )
+			);
+		}
+
+		return (int) $uid;
+	}
+
+	/**
+	 * Best-effort lookup of the Odoo server version (common.version).
+	 *
+	 * @return void
+	 */
+	private function fetch_server_version(): void {
+		try {
+			$info = $this->rpc_call(
+				'/jsonrpc',
+				[
+					'service' => 'common',
+					'method'  => 'version',
+					'args'    => [],
+				]
+			);
+
+			if ( is_array( $info ) && ! empty( $info['server_version'] ) ) {
+				$this->server_version = (string) $info['server_version'];
+			}
+		} catch ( \Throwable $e ) {
+			$this->logger->debug( 'Could not read Odoo server version.', [ 'error' => $e->getMessage() ] );
+		}
 	}
 
 	/**

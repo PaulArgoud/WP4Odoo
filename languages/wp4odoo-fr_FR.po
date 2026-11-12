@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: WP4Odoo 3.9.2\n"
 "Report-Msgid-Bugs-To: support@avalia.io\n"
-"POT-Creation-Date: 2026-11-12 02:27+0100\n"
+"POT-Creation-Date: 2026-11-12 04:05+0100\n"
 "PO-Revision-Date: 2026-02-15 12:00+0100\n"
 "Last-Translator: \n"
 "Language-Team: French\n"
@@ -35,7 +35,7 @@ msgstr ""
 msgid "%1$d / %2$d completed"
 msgstr "%1$d / %2$d terminé(s)"
 
-#: admin/views/tab-health.php:82 admin/views/tab-health.php:109
+#: admin/views/tab-health.php:86 admin/views/tab-health.php:113
 #, php-format
 msgid "%1$d failures — opened %2$s"
 msgstr "%1$d échecs — ouvert le %2$s"
@@ -45,13 +45,13 @@ msgstr "%1$d échecs — ouvert le %2$s"
 msgid "%1$d job(s) deleted (older than %2$d days)."
 msgstr "%1$d tâche(s) supprimée(s) (plus de %2$d jours)."
 
-#: includes/admin/class-bulk-handler.php:118
+#: includes/admin/class-bulk-handler.php:126
 #, php-format
 msgid "%1$d product(s) enqueued for import (%2$d found in Odoo)."
 msgstr ""
 "%1$d produit(s) mis en file d'attente pour l'import (%2$d trouvés dans Odoo)."
 
-#: includes/admin/class-bulk-handler.php:112
+#: includes/admin/class-bulk-handler.php:120
 #, php-format
 msgid ""
 "%1$d product(s) enqueued for import so far (%2$d found in Odoo). Operation "
@@ -82,12 +82,12 @@ msgstr ""
 "Tables de base de données %1$s manquantes : %2$s. Le plugin n'est peut-être "
 "pas entièrement installé."
 
-#: includes/class-module-registry.php:329
+#: includes/class-module-registry.php:315
 #, php-format
 msgid "%1$s requires the following modules to be active: %2$s."
 msgstr "%1$s nécessite l'activation des modules suivants : %2$s."
 
-#: includes/class-module-registry.php:346
+#: includes/class-module-registry.php:332
 #, php-format
 msgid ""
 "%1$s was not started because \"%2$s\" is already active in the \"%3$s\" "
@@ -100,6 +100,12 @@ msgstr ""
 #, php-format
 msgid "%1$s — %2$s"
 msgstr "%1$s — %2$s"
+
+#: includes/admin/class-bulk-handler.php:133
+#: includes/admin/class-bulk-handler.php:220
+#, php-format
+msgid "%d could not be queued."
+msgstr "%d n'ont pas pu être mis en file."
 
 #: includes/trait-cli-queue-commands.php:123
 #, php-format
@@ -136,7 +142,7 @@ msgstr "%d entrée(s) de journal supprimée(s)."
 msgid "%d orphaned mapping(s) removed."
 msgstr "%d correspondance(s) orpheline(s) supprimée(s)."
 
-#: includes/admin/class-bulk-handler.php:188
+#: includes/admin/class-bulk-handler.php:209
 #, php-format
 msgid ""
 "%d product(s) enqueued for export so far. Operation timed out — run again to "
@@ -145,14 +151,21 @@ msgstr ""
 "%d produit(s) mis en file d'attente pour l'export. Opération expirée — "
 "relancez pour continuer."
 
-#: includes/admin/class-bulk-handler.php:193
+#: includes/admin/class-bulk-handler.php:214
 #, php-format
 msgid "%d product(s) enqueued for export."
 msgstr "%d produit(s) mis en file d'attente pour l'export."
 
-#: includes/modules/class-food-ordering-module.php:253
-#: includes/modules/class-forms-module.php:629
-#: includes/modules/class-survey-quiz-module.php:234
+#: admin/views/tab-health.php:217
+#, php-format
+msgid "%d time"
+msgid_plural "%d times"
+msgstr[0] "%d fois"
+msgstr[1] "%d fois"
+
+#: includes/modules/class-food-ordering-module.php:265
+#: includes/modules/class-forms-module.php:641
+#: includes/modules/class-survey-quiz-module.php:246
 #, php-format
 msgid "%s is not active."
 msgstr "%s n'est pas actif."
@@ -222,7 +235,7 @@ msgstr ""
 "Activez le mode développeur, puis allez dans Paramètres > Technique > "
 "Automatisation > Actions automatisées."
 
-#: admin/views/tab-health.php:46
+#: admin/views/tab-health.php:50
 msgid "Active modules"
 msgstr "Modules actifs"
 
@@ -268,7 +281,7 @@ msgstr "Module AffiliateWP activé mais AffiliateWP n'est pas actif."
 msgid "All caches flushed (%d schema transient(s) deleted)."
 msgstr "Tous les caches vidés (%d transient(s) de schéma supprimé(s))."
 
-#: admin/views/tab-health.php:118
+#: admin/views/tab-health.php:122
 msgid "All closed"
 msgstr "Tous fermés"
 
@@ -279,6 +292,10 @@ msgstr "Tous les niveaux"
 #: admin/views/tab-logs.php:31
 msgid "All modules"
 msgstr "Tous les modules"
+
+#: admin/views/tab-health.php:183
+msgid "All present"
+msgstr "Toutes présentes"
 
 #: includes/modules/class-crm-module.php:162
 msgid "All roles"
@@ -320,8 +337,8 @@ msgstr ""
 msgid "An error occurred. Please try again."
 msgstr "Une erreur est survenue. Veuillez réessayer."
 
-#: includes/modules/class-amelia-module.php:180
-#: includes/modules/class-jet-appointments-module.php:169
+#: includes/modules/class-amelia-module.php:192
+#: includes/modules/class-jet-appointments-module.php:181
 msgid "Appointment"
 msgstr "Rendez-vous"
 
@@ -342,19 +359,19 @@ msgstr ""
 msgid "Assign pricelist to wholesale partners"
 msgstr "Attribuer la liste de prix aux partenaires grossistes"
 
-#: includes/modules/class-food-ordering-module.php:239
+#: includes/modules/class-food-ordering-module.php:251
 msgid "At least one food ordering plugin must be installed and activated."
 msgstr ""
 "Au moins un plugin de commande alimentaire doit être installé et activé."
 
-#: includes/modules/class-forms-module.php:615
+#: includes/modules/class-forms-module.php:627
 msgid ""
 "At least one form plugin must be installed and activated to use this module."
 msgstr ""
 "Au moins un plugin de formulaire doit être installé et activé pour utiliser "
 "ce module."
 
-#: includes/modules/class-survey-quiz-module.php:220
+#: includes/modules/class-survey-quiz-module.php:232
 msgid "At least one quiz or survey plugin must be installed and activated."
 msgstr "Au moins un plugin de quiz ou d'enquête doit être installé et activé."
 
@@ -367,7 +384,7 @@ msgstr "Tentatives"
 msgid "Authentication failed: %s"
 msgstr "Échec de l'authentification : %s"
 
-#: includes/api/class-odoo-json2.php:96 includes/api/class-odoo-jsonrpc.php:49
+#: includes/api/class-odoo-json2.php:96 includes/api/class-odoo-jsonrpc.php:110
 #: includes/api/class-odoo-xmlrpc.php:48
 msgid "Authentication failed: invalid credentials."
 msgstr "Échec de l'authentification : identifiants invalides."
@@ -495,7 +512,7 @@ msgstr "Valider automatiquement les dons dans Odoo après leur création."
 msgid "Automatically validate payments in Odoo after creation."
 msgstr "Valider automatiquement les paiements dans Odoo après leur création."
 
-#: admin/views/tab-health.php:59
+#: admin/views/tab-health.php:63
 msgid "Average latency"
 msgstr "Latence moyenne"
 
@@ -544,10 +561,10 @@ msgstr "Synchronisation bidirectionnelle du stock entre WooCommerce et Odoo."
 msgid "Blog ID %d does not exist."
 msgstr "L'identifiant de blog %d n'existe pas."
 
-#: includes/modules/class-bookly-module.php:190
-#: includes/modules/class-fluent-booking-module.php:177
-#: includes/modules/class-jet-booking-module.php:169
-#: includes/modules/class-wc-bookings-module.php:185
+#: includes/modules/class-bookly-module.php:202
+#: includes/modules/class-fluent-booking-module.php:189
+#: includes/modules/class-jet-booking-module.php:181
+#: includes/modules/class-wc-bookings-module.php:197
 msgid "Booking"
 msgstr "Réservation"
 
@@ -614,7 +631,7 @@ msgstr "Charitable"
 msgid "Checked: %d mapping(s)"
 msgstr "Vérifiées : %d correspondance(s)"
 
-#: admin/views/tab-health.php:72
+#: admin/views/tab-health.php:76
 msgid "Circuit Breaker"
 msgstr "Disjoncteur"
 
@@ -633,7 +650,7 @@ msgstr ""
 "Cliquez sur votre avatar (en haut à droite) > Mon profil > onglet "
 "« Préférences »."
 
-#: admin/views/tab-health.php:90
+#: admin/views/tab-health.php:94
 msgid "Closed"
 msgstr "Fermé"
 
@@ -657,7 +674,7 @@ msgstr "Société"
 msgid "Company: %s"
 msgstr "Entreprise : %s"
 
-#: admin/views/tab-health.php:163
+#: admin/views/tab-health.php:228
 msgid "Compatibility warnings"
 msgstr "Avertissements de compatibilité"
 
@@ -761,6 +778,14 @@ msgstr "Copier"
 msgid "Copy the key immediately — it will not be shown again."
 msgstr "Copiez la clé immédiatement — elle ne sera plus affichée."
 
+#: includes/admin/class-bulk-handler.php:244
+#, php-format
+msgid ""
+"Could not queue %d item(s): the sync queue could not be written. The plugin "
+"database tables may be missing — see the Health tab, or deactivate and "
+"reactivate the plugin."
+msgstr "Impossible de mettre %d élément(s) en file : la file de synchronisation n'est pas accessible en écriture. Les tables de la base du plugin sont peut-être manquantes — consultez l'onglet Santé, ou désactivez puis réactivez le plugin."
+
 #: includes/modules/class-forms-module.php:580
 msgid "Create Odoo leads from Bricks form submissions."
 msgstr "Créer des leads Odoo depuis les soumissions de formulaires Bricks."
@@ -846,13 +871,22 @@ msgstr "Critique"
 msgid "Critical messages are always logged."
 msgstr "Les messages critiques sont toujours enregistrés."
 
-#: admin/views/tab-health.php:152
+#: admin/views/tab-health.php:156
 msgid "Cron status"
 msgstr "État du cron"
 
 #: admin/views/network-settings.php:47 admin/views/tab-connection.php:72
 msgid "Database"
 msgstr "Base de données"
+
+#: admin/views/tab-health.php:193
+#, php-format
+msgid "Database error: %s"
+msgstr "Erreur de base de données : %s"
+
+#: admin/views/tab-health.php:179
+msgid "Database tables"
+msgstr "Tables de la base de données"
 
 #: admin/views/tab-logs.php:99 templates/customer-portal.php:39
 #: templates/customer-portal.php:84
@@ -871,7 +905,7 @@ msgstr "Rôle utilisateur par défaut"
 msgid "Default warehouse ID"
 msgstr "ID de l'entrepôt par défaut"
 
-#: admin/views/tab-health.php:29
+#: admin/views/tab-health.php:33
 msgid "Degraded"
 msgstr "Dégradé"
 
@@ -1025,7 +1059,7 @@ msgstr "Saisissez votre clé API Odoo."
 msgid "Entity type"
 msgstr "Type d'entité"
 
-#: includes/class-module-base.php:634
+#: includes/class-module-base.php:651
 #, php-format
 msgid "Entity type \"%1$s\" is not registered in module \"%2$s\"."
 msgstr ""
@@ -1051,7 +1085,7 @@ msgid "Events Calendar module enabled but The Events Calendar is not active."
 msgstr ""
 "Module Events Calendar activé mais The Events Calendar n'est pas actif."
 
-#: wp4odoo.php:398
+#: wp4odoo.php:403
 msgid "Every 15 Minutes"
 msgstr "Toutes les 15 minutes"
 
@@ -1059,7 +1093,7 @@ msgstr "Toutes les 15 minutes"
 msgid "Every 15 minutes"
 msgstr "Toutes les 15 minutes"
 
-#: wp4odoo.php:394
+#: wp4odoo.php:399
 msgid "Every 5 Minutes"
 msgstr "Toutes les 5 minutes"
 
@@ -1119,6 +1153,10 @@ msgstr "Tâches Field Service"
 #: includes/modules/class-jetengine-meta-module.php:175
 msgid "Field mappings"
 msgstr "Mappages de champs"
+
+#: admin/views/tab-health.php:202
+msgid "Fields skipped on push"
+msgstr "Champs ignorés lors de l'envoi"
 
 #: admin/views/tab-logs.php:80
 msgid "Filter"
@@ -1237,11 +1275,11 @@ msgstr "Erreur HTTP : %s"
 msgid "Have you backed up your WordPress and Odoo databases?"
 msgstr "Avez-vous sauvegardé vos bases de données WordPress et Odoo ?"
 
-#: admin/views/tab-health.php:33 includes/admin/class-settings-page.php:48
+#: admin/views/tab-health.php:37 includes/admin/class-settings-page.php:48
 msgid "Health"
 msgstr "Santé"
 
-#: admin/views/tab-health.php:30
+#: admin/views/tab-health.php:34
 msgid "Healthy"
 msgstr "Opérationnel"
 
@@ -1337,7 +1375,7 @@ msgid "Invalid JSON payload in job #%d."
 msgstr "Payload JSON invalide dans le job #%d."
 
 #: includes/api/class-odoo-json2.php:315
-#: includes/api/class-odoo-jsonrpc.php:137
+#: includes/api/class-odoo-jsonrpc.php:207
 #, php-format
 msgid "Invalid JSON response from Odoo (HTTP %d)."
 msgstr "Réponse JSON invalide depuis Odoo (HTTP %d)."
@@ -1666,6 +1704,10 @@ msgstr "Contribution minimum : %s"
 msgid "Minimum level"
 msgstr "Niveau minimum"
 
+#: admin/views/tab-health.php:187
+msgid "Missing"
+msgstr "Manquantes"
+
 #: includes/api/class-odoo-auth.php:249
 msgid "Missing connection credentials."
 msgstr "Identifiants de connexion manquants."
@@ -1683,7 +1725,7 @@ msgstr "Champs requis manquants : module, entity_type, odoo_id."
 msgid "Missing translation parameters."
 msgstr "Paramètres de traduction manquants."
 
-#: admin/views/tab-health.php:196 admin/views/tab-logs.php:96
+#: admin/views/tab-health.php:261 admin/views/tab-logs.php:96
 #: admin/views/tab-queue.php:82
 msgid "Module"
 msgstr "Module"
@@ -1719,11 +1761,11 @@ msgstr "Module « %s » introuvable ou non enregistré."
 msgid "Module \"%s\" not found."
 msgstr "Module « %s » introuvable."
 
-#: admin/views/tab-health.php:98
+#: admin/views/tab-health.php:102
 msgid "Module breakers"
 msgstr "Disjoncteurs par module"
 
-#: includes/class-module-registry.php:489
+#: includes/class-module-registry.php:475
 #, php-format
 msgid "Module failed to load (%1$s): %2$s"
 msgstr "Échec du chargement du module (%1$s) : %2$s"
@@ -1749,7 +1791,7 @@ msgstr "Le nom et l'e-mail sont requis."
 msgid "Newest wins"
 msgstr "Le plus récent gagne"
 
-#: admin/views/tab-health.php:126
+#: admin/views/tab-health.php:130
 msgid "Next cron run"
 msgstr "Prochaine exécution cron"
 
@@ -1772,7 +1814,7 @@ msgstr "Aucun mapping Odoo pour la traduction."
 msgid "No WC order mapped for the linked sale.order."
 msgstr "Aucune commande WC associée au sale.order lié."
 
-#: includes/admin/class-bulk-handler.php:181
+#: includes/admin/class-bulk-handler.php:202
 msgid "No WooCommerce products found."
 msgstr "Aucun produit WooCommerce trouvé."
 
@@ -1825,7 +1867,7 @@ msgstr "Aucune correspondance orpheline trouvée."
 msgid "No orphans found."
 msgstr "Aucun orphelin trouvé."
 
-#: includes/admin/class-bulk-handler.php:105
+#: includes/admin/class-bulk-handler.php:113
 msgid "No products found in Odoo."
 msgstr "Aucun produit trouvé dans Odoo."
 
@@ -1857,7 +1899,7 @@ msgstr "Non authentifié. Appelez authenticate() d'abord."
 msgid "Not configured — no Odoo URL set."
 msgstr "Non configuré — aucune URL Odoo définie."
 
-#: admin/views/tab-health.php:143
+#: admin/views/tab-health.php:147
 msgid "Not scheduled"
 msgstr "Non planifié"
 
@@ -1923,9 +1965,9 @@ msgstr ""
 msgid "Odoo Loyalty Program ID"
 msgstr "ID du programme de fidélité Odoo"
 
-#: includes/modules/class-gamipress-module.php:287
-#: includes/modules/class-mycred-module.php:263
-#: includes/modules/class-wc-points-rewards-module.php:292
+#: includes/modules/class-gamipress-module.php:299
+#: includes/modules/class-mycred-module.php:275
+#: includes/modules/class-wc-points-rewards-module.php:304
 msgid "Odoo Loyalty Program ID not configured."
 msgstr "ID du programme de fidélité Odoo non configuré."
 
@@ -1948,7 +1990,7 @@ msgstr ""
 "disponible."
 
 #: includes/api/class-odoo-json2.php:303
-#: includes/api/class-odoo-jsonrpc.php:166
+#: includes/api/class-odoo-jsonrpc.php:236
 #, php-format
 msgid "Odoo RPC error: %s"
 msgstr "Erreur RPC Odoo : %s"
@@ -1957,7 +1999,7 @@ msgstr "Erreur RPC Odoo : %s"
 msgid "Odoo URL"
 msgstr "URL Odoo"
 
-#: includes/api/class-odoo-xmlrpc.php:174
+#: includes/api/class-odoo-xmlrpc.php:182
 #, php-format
 msgid "Odoo XML-RPC error: %s"
 msgstr "Erreur XML-RPC Odoo : %s"
@@ -2007,6 +2049,10 @@ msgstr "ID du dossier racine Odoo"
 msgid "Odoo sync"
 msgstr "Synchronisation Odoo"
 
+#: admin/views/tab-health.php:167
+msgid "Odoo version"
+msgstr "Version d'Odoo"
+
 #: includes/modules/class-wc-inventory-module.php:182
 msgid "Odoo warehouse ID for stock movements (0 for auto-detect)."
 msgstr ""
@@ -2028,7 +2074,7 @@ msgstr ""
 "Ne synchroniser que les utilisateurs avec ce rôle. Laisser vide pour tout "
 "synchroniser."
 
-#: admin/views/tab-health.php:76
+#: admin/views/tab-health.php:80
 msgid "Open"
 msgstr "Ouvert"
 
@@ -2091,7 +2137,7 @@ msgstr "Page %1$d/%2$d (%3$d au total)"
 msgid "Payment"
 msgstr "Paiement"
 
-#: admin/views/tab-health.php:50 admin/views/tab-health.php:197
+#: admin/views/tab-health.php:54 admin/views/tab-health.php:262
 #: admin/views/tab-queue.php:23 admin/views/tab-queue.php:35
 #: includes/admin/class-admin.php:121
 msgid "Pending"
@@ -2712,7 +2758,9 @@ msgstr ""
 
 #: includes/modules/class-fluent-booking-module.php:133
 msgid "Push FluentBooking calendar events to Odoo as service products."
-msgstr "Envoyer les événements de calendrier FluentBooking vers Odoo en tant que produits de service."
+msgstr ""
+"Envoyer les événements de calendrier FluentBooking vers Odoo en tant que "
+"produits de service."
 
 #: includes/modules/class-fluentcrm-module.php:161
 msgid "Push FluentCRM mailing lists to Odoo."
@@ -3282,7 +3330,7 @@ msgstr ""
 msgid "Queue"
 msgstr "File d'attente"
 
-#: admin/views/tab-health.php:192
+#: admin/views/tab-health.php:257
 msgid "Queue Depth by Module"
 msgstr "Profondeur de la file par module"
 
@@ -3633,7 +3681,7 @@ msgstr "Envoi du stock : aucun identifiant produit Odoo."
 msgid "Store ID"
 msgstr "ID de la boutique"
 
-#: admin/views/tab-health.php:63
+#: admin/views/tab-health.php:67
 msgid "Success rate"
 msgstr "Taux de réussite"
 
@@ -3645,7 +3693,7 @@ msgstr "SupportCandy"
 msgid "SupportCandy module enabled but SupportCandy is not active."
 msgstr "Module SupportCandy activé mais SupportCandy n'est pas actif."
 
-#: includes/modules/class-surecart-module.php:437
+#: includes/modules/class-surecart-module.php:449
 msgid "SureCart Subscription"
 msgstr "Abonnement SureCart"
 
@@ -4112,6 +4160,13 @@ msgstr "Synchroniser les rôles grossistes en tant que listes de prix"
 msgid "Synchronization"
 msgstr "Synchronisation"
 
+#: admin/views/tab-health.php:191
+msgid ""
+"Synchronization cannot work without these tables. The plugin retries "
+"creating them on every admin page load; if they stay missing, the database "
+"user probably lacks the CREATE privilege."
+msgstr "La synchronisation ne peut pas fonctionner sans ces tables. Le plugin tente de les recréer à chaque chargement d'une page d'administration ; si elles restent manquantes, l'utilisateur de la base de données n'a probablement pas le privilège CREATE."
+
 #: includes/modules/class-edd-module.php:155
 msgid "Synchronize EDD downloads with Odoo products."
 msgstr "Synchroniser les téléchargements EDD avec les produits Odoo."
@@ -4144,7 +4199,7 @@ msgstr "Synchroniser les mouvements de stock entre WooCommerce et Odoo."
 msgid "System"
 msgstr "Système"
 
-#: admin/views/tab-health.php:38
+#: admin/views/tab-health.php:42
 msgid "System Status"
 msgstr "État du système"
 
@@ -4262,6 +4317,21 @@ msgstr ""
 "\n"
 "Veuillez vérifier la file de synchronisation à %2$s"
 
+#: includes/class-database-migration.php:149
+#, php-format
+msgid ""
+"The database tables (%1$s) could not be created, so synchronization is "
+"disabled. Check that the database user has the CREATE privilege, then reload "
+"this page. Database error: %2$s"
+msgstr "Les tables de la base de données (%1$s) n'ont pas pu être créées : la synchronisation est désactivée. Vérifiez que l'utilisateur de la base dispose du privilège CREATE, puis rechargez cette page. Erreur de base de données : %2$s"
+
+#: admin/views/tab-health.php:209
+msgid ""
+"These fields do not exist in the Odoo version you are connected to, so they "
+"were left out of the data sent to Odoo. The rest of each record is still "
+"synchronized."
+msgstr "Ces champs n'existent pas dans la version d'Odoo à laquelle vous êtes connecté ; ils ont donc été exclus des données envoyées à Odoo. Le reste de chaque enregistrement est toujours synchronisé."
+
 #: admin/views/network-settings.php:31
 msgid ""
 "This connection is shared across all sites in the network. Individual sites "
@@ -4299,7 +4369,7 @@ msgstr ""
 "Ceci supprimera définitivement les correspondances orphelines. Continuer ?"
 
 #: includes/modules/class-project-manager-handler.php:285
-#: includes/modules/class-project-manager-module.php:445
+#: includes/modules/class-project-manager-module.php:457
 msgid "Time entry"
 msgstr "Saisie de temps"
 
@@ -4383,7 +4453,7 @@ msgstr "Sous « Sécurité du compte », cliquez sur « Nouvelle clé API »."
 msgid "Unknown Form"
 msgstr "Formulaire inconnu"
 
-#: includes/api/class-odoo-jsonrpc.php:146
+#: includes/api/class-odoo-jsonrpc.php:216
 msgid "Unknown RPC error"
 msgstr "Erreur RPC inconnue"
 
@@ -4434,11 +4504,17 @@ msgstr "Sous-commande inconnue : %s. Utilisation : wp wp4odoo cleanup orphans"
 msgid "Unknown subcommand: %s. Usage: wp wp4odoo sync run"
 msgstr "Sous-commande inconnue : %s. Utilisation : wp wp4odoo sync run"
 
+#: admin/views/tab-health.php:172
+msgid "Unknown — run a connection test in the Connection tab."
+msgstr "Inconnue — lancez un test de connexion dans l'onglet Connexion."
+
 #: includes/modules/class-fluent-booking-module.php:143
 msgid ""
 "Update FluentBooking calendar events from Odoo service products (events are "
 "not created from Odoo)."
-msgstr "Mettre à jour les événements de calendrier FluentBooking depuis les produits de service Odoo (les événements ne sont pas créés depuis Odoo)."
+msgstr ""
+"Mettre à jour les événements de calendrier FluentBooking depuis les produits "
+"de service Odoo (les événements ne sont pas créés depuis Odoo)."
 
 #: includes/class-cli.php:329
 msgid "Usage: wp wp4odoo reconcile <module> <entity_type> [--fix]"
@@ -4816,7 +4892,7 @@ msgstr "par défaut"
 msgid "i18n"
 msgstr "i18n"
 
-#: admin/views/tab-health.php:134
+#: admin/views/tab-health.php:138
 #, php-format
 msgid "in %s"
 msgstr "dans %s"
@@ -4825,11 +4901,16 @@ msgstr "dans %s"
 msgid "is almost ready! Configure your Odoo connection to get started."
 msgstr "est presque prêt ! Configurez votre connexion Odoo pour commencer."
 
+#: admin/views/tab-health.php:218
+#, php-format
+msgid "last %s ago"
+msgstr "dernière il y a %s"
+
 #: includes/modules/class-mycred-module.php:107
 msgid "myCRED module enabled but myCRED is not active."
 msgstr "Le module myCRED est activé mais myCRED n'est pas actif."
 
-#: admin/views/tab-health.php:138
+#: admin/views/tab-health.php:142
 msgid "overdue"
 msgstr "en retard"
 

@@ -10,7 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Database table creation, versioned migrations, and default option seeding.
  *
- * Uses dbDelta() for initial table creation, then numbered migration
+ * Creates the tables with plain CREATE TABLE IF NOT EXISTS statements, then numbered migration
  * callbacks for schema changes that dbDelta cannot handle (column
  * modifications, data transforms, etc.). Each migration runs at most
  * once, tracked via the `wp4odoo_schema_version` option.
@@ -28,6 +28,133 @@ final class Database_Migration {
 	public const OPT_SCHEMA_VERSION = 'wp4odoo_schema_version';
 
 	/**
+	 * Option holding the last table-creation failure (tables still missing).
+	 */
+	public const OPT_DB_ERROR = 'wp4odoo_db_error';
+
+	/**
+	 * Transient set once the tables were verified, to avoid checking on every request.
+	 */
+	private const TRANSIENT_TABLES_OK = 'wp4odoo_tables_ok';
+
+	/**
+	 * Transient guarding against concurrent repairs.
+	 */
+	private const TRANSIENT_UPGRADING = 'wp4odoo_db_upgrading';
+
+	/**
+	 * Tables (without the WordPress prefix) the plugin cannot work without.
+	 *
+	 * @var array<int, string>
+	 */
+	private const REQUIRED_TABLES = [ 'wp4odoo_sync_queue', 'wp4odoo_entity_map', 'wp4odoo_logs' ];
+
+	/**
+	 * Names of the required tables that do not exist.
+	 *
+	 * @return array<int, string> Table names without the WordPress prefix.
+	 */
+	public static function missing_tables(): array {
+		global $wpdb;
+
+		$missing = [];
+		foreach ( self::REQUIRED_TABLES as $table ) {
+			$name = $wpdb->prefix . $table;
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+			$found = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $name ) ) );
+			if ( $found !== $name ) {
+				$missing[] = $table;
+			}
+		}
+
+		return $missing;
+	}
+
+	/**
+	 * Make sure the tables exist and the schema is current.
+	 *
+	 * Tables are normally created when the plugin is activated, but that hook does
+	 * not run when the files are copied or updated in place, or when the database
+	 * user lacked the CREATE privilege at that moment. This repairs those cases:
+	 * it runs the table creation and pending migrations when the stored plugin
+	 * version differs from the running one, or (in admin and cron requests, at most
+	 * every 12 hours) when a table is missing.
+	 *
+	 * @param \Closure|null $create Table creator (defaults to create_tables()); injectable for tests.
+	 * @return bool True when the tables are present afterwards.
+	 */
+	public static function ensure_tables( ?\Closure $create = null ): bool {
+		global $wpdb;
+
+		$current      = get_option( Settings_Repository::OPT_DB_VERSION ) === WP4ODOO_VERSION;
+		$check_tables = is_admin() || wp_doing_cron();
+
+		if ( $current && ( ! $check_tables || get_transient( self::TRANSIENT_TABLES_OK ) ) ) {
+			return true;
+		}
+
+		if ( $current && ! self::missing_tables() ) {
+			set_transient( self::TRANSIENT_TABLES_OK, '1', 12 * HOUR_IN_SECONDS );
+			delete_option( self::OPT_DB_ERROR );
+			return true;
+		}
+
+		if ( get_transient( self::TRANSIENT_UPGRADING ) ) {
+			return true; // Another request is repairing right now.
+		}
+		set_transient( self::TRANSIENT_UPGRADING, '1', MINUTE_IN_SECONDS );
+
+		try {
+			( $create ?? [ self::class, 'create_tables' ] )();
+		} catch ( \Throwable $e ) {
+			$wpdb->last_error = $e->getMessage();
+		}
+
+		delete_transient( self::TRANSIENT_UPGRADING );
+
+		$missing = self::missing_tables();
+		if ( $missing ) {
+			update_option(
+				self::OPT_DB_ERROR,
+				[
+					'tables' => $missing,
+					'error'  => (string) $wpdb->last_error,
+				],
+				false
+			);
+			return false;
+		}
+
+		delete_option( self::OPT_DB_ERROR );
+		set_transient( self::TRANSIENT_TABLES_OK, '1', 12 * HOUR_IN_SECONDS );
+		return true;
+	}
+
+	/**
+	 * Show an admin notice when the tables could not be created.
+	 *
+	 * @return void
+	 */
+	public static function render_error_notice(): void {
+		$error = get_option( self::OPT_DB_ERROR, [] );
+		if ( empty( $error ) || ! is_array( $error ) || ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+
+		printf(
+			'<div class="notice notice-error"><p><strong>WP4Odoo:</strong> %s</p></div>',
+			esc_html(
+				sprintf(
+					/* translators: 1: comma-separated table names, 2: database error message */
+					__( 'The database tables (%1$s) could not be created, so synchronization is disabled. Check that the database user has the CREATE privilege, then reload this page. Database error: %2$s', 'wp4odoo' ),
+					implode( ', ', (array) ( $error['tables'] ?? [] ) ),
+					(string) ( $error['error'] ?? '' )
+				)
+			)
+		);
+	}
+
+	/**
 	 * Create plugin database tables.
 	 *
 	 * @return void
@@ -37,7 +164,13 @@ final class Database_Migration {
 
 		$charset_collate = $wpdb->get_charset_collate();
 
-		$sql = "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}wp4odoo_sync_queue (
+		// Plain CREATE TABLE IF NOT EXISTS statements, executed one by one. dbDelta() must not
+		// be used here: it indexes statements by the word after "CREATE TABLE", which is "IF"
+		// for all three, so only the last statement ran and the queue and entity-map tables
+		// were never created on current WordPress versions. Later schema changes go through
+		// the numbered migrations, which dbDelta could not handle either.
+		$statements = [
+			"CREATE TABLE IF NOT EXISTS {$wpdb->prefix}wp4odoo_sync_queue (
 			id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
 			blog_id BIGINT(20) UNSIGNED NOT NULL DEFAULT 1,
 			correlation_id CHAR(36) DEFAULT NULL,
@@ -66,9 +199,8 @@ final class Database_Migration {
 			KEY idx_odoo_id (odoo_id),
 			KEY idx_correlation (correlation_id),
 			KEY idx_status_created (status, created_at)
-		) $charset_collate;
-
-		CREATE TABLE IF NOT EXISTS {$wpdb->prefix}wp4odoo_entity_map (
+		) $charset_collate;",
+			"CREATE TABLE IF NOT EXISTS {$wpdb->prefix}wp4odoo_entity_map (
 			id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
 			blog_id BIGINT(20) UNSIGNED NOT NULL DEFAULT 1,
 			module VARCHAR(50) NOT NULL,
@@ -85,9 +217,8 @@ final class Database_Migration {
 			KEY idx_wp_lookup (blog_id, module, entity_type, wp_id),
 			KEY idx_odoo_lookup (blog_id, module, entity_type, odoo_id),
 			KEY idx_poll_detection (blog_id, module, entity_type, last_polled_at)
-		) $charset_collate;
-
-		CREATE TABLE IF NOT EXISTS {$wpdb->prefix}wp4odoo_logs (
+		) $charset_collate;",
+			"CREATE TABLE IF NOT EXISTS {$wpdb->prefix}wp4odoo_logs (
 			id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
 			blog_id BIGINT(20) UNSIGNED NOT NULL DEFAULT 1,
 			correlation_id CHAR(36) DEFAULT NULL,
@@ -101,10 +232,12 @@ final class Database_Migration {
 			KEY idx_module (module),
 			KEY idx_correlation (correlation_id),
 			KEY idx_blog_cleanup (blog_id, created_at)
-		) $charset_collate;";
+		) $charset_collate;",
+		];
 
-		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
-		dbDelta( $sql );
+		foreach ( $statements as $statement ) {
+			$wpdb->query( $statement ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.SchemaChange,WordPress.DB.PreparedSQL.NotPrepared
+		}
 
 		self::run_migrations();
 

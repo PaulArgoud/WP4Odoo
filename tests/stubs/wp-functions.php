@@ -886,3 +886,15 @@ if ( ! function_exists( 'wp_clear_scheduled_hook' ) ) {
 		return 0;
 	}
 }
+
+if ( ! function_exists( 'is_admin' ) ) {
+	function is_admin() {
+		return (bool) ( $GLOBALS['_wp_is_admin'] ?? false );
+	}
+}
+
+if ( ! function_exists( 'wp_doing_cron' ) ) {
+	function wp_doing_cron() {
+		return (bool) ( $GLOBALS['_wp_doing_cron'] ?? false );
+	}
+}

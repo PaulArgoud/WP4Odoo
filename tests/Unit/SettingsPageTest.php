@@ -70,6 +70,34 @@ class SettingsPageTest extends TestCase {
 		$this->assertArrayHasKey( 'api_key', $result );
 		$this->assertArrayHasKey( 'protocol', $result );
 		$this->assertArrayHasKey( 'timeout', $result );
+		$this->assertArrayHasKey( 'company_id', $result );
+	}
+
+	/**
+	 * The Odoo company ID entered in the form must survive a save (GitHub issue #3).
+	 */
+	public function test_sanitize_connection_keeps_company_id(): void {
+		$result = $this->page->sanitize_connection(
+			[
+				'url'        => 'https://example.odoo.com',
+				'database'   => 'testdb',
+				'username'   => 'admin',
+				'api_key'    => 'k',
+				'protocol'   => 'jsonrpc',
+				'timeout'    => 30,
+				'company_id' => '3',
+			]
+		);
+
+		$this->assertSame( 3, $result['company_id'] );
+	}
+
+	public function test_sanitize_connection_company_id_defaults_to_zero_and_is_never_negative(): void {
+		$base = [ 'url' => 'https://example.odoo.com', 'database' => 'd', 'username' => 'a', 'api_key' => 'k' ];
+
+		$this->assertSame( 0, $this->page->sanitize_connection( $base )['company_id'] );
+		$this->assertSame( 5, $this->page->sanitize_connection( $base + [ 'company_id' => '-5' ] )['company_id'] );
+		$this->assertSame( 0, $this->page->sanitize_connection( $base + [ 'company_id' => 'abc' ] )['company_id'] );
 	}
 
 	/**

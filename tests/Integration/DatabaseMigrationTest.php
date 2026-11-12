@@ -8,7 +8,7 @@ use WP4Odoo\Database_Migration;
 /**
  * Integration tests for Database_Migration.
  *
- * Verifies that dbDelta creates the correct tables, columns,
+ * Verifies that create_tables() creates every table with the correct columns,
  * indexes, and that default options are seeded.
  *
  * @package WP4Odoo\Tests\Integration
@@ -85,6 +85,7 @@ class DatabaseMigrationTest extends WP4Odoo_TestCase {
 	}
 
 	public function test_create_tables_is_idempotent(): void {
+		$this->use_real_tables();
 		Database_Migration::create_tables();
 		Database_Migration::create_tables();
 
@@ -123,5 +124,55 @@ class DatabaseMigrationTest extends WP4Odoo_TestCase {
 
 		$connection = get_option( 'wp4odoo_connection' );
 		$this->assertSame( 'https://custom.example.com', $connection['url'] );
+	}
+
+	// ─── Regression: GitHub issue #4 ───────────────────────
+
+	/**
+	 * Recreate the tables after a test that dropped them (DDL cannot be rolled back).
+	 */
+	public function tear_down(): void {
+		$this->use_real_tables();
+		Database_Migration::create_tables();
+		parent::tear_down();
+	}
+
+	/**
+	 * WP_UnitTestCase rewrites CREATE/DROP TABLE into their TEMPORARY variants so that
+	 * tests leave no tables behind. These tests must act on the real tables.
+	 */
+	private function use_real_tables(): void {
+		remove_filter( 'query', [ $this, '_create_temporary_tables' ] );
+		remove_filter( 'query', [ $this, '_drop_temporary_tables' ] );
+	}
+
+	private function drop_plugin_tables( array $tables ): void {
+		global $wpdb;
+
+		$this->use_real_tables();
+
+		foreach ( $tables as $table ) {
+			$wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}{$table}" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.SchemaChange
+		}
+	}
+
+	public function test_create_tables_creates_all_three_tables_from_scratch(): void {
+		$this->drop_plugin_tables( [ 'wp4odoo_sync_queue', 'wp4odoo_entity_map', 'wp4odoo_logs' ] );
+		$this->assertCount( 3, Database_Migration::missing_tables() );
+
+		Database_Migration::create_tables();
+
+		// With dbDelta() only the last statement ran, leaving the queue and entity-map tables missing.
+		$this->assertSame( [], Database_Migration::missing_tables() );
+	}
+
+	public function test_ensure_tables_repairs_missing_tables_when_the_activation_hook_was_skipped(): void {
+		$this->drop_plugin_tables( [ 'wp4odoo_sync_queue', 'wp4odoo_entity_map' ] );
+		delete_option( \WP4Odoo\Settings_Repository::OPT_DB_VERSION );
+		delete_transient( 'wp4odoo_tables_ok' );
+
+		$this->assertTrue( Database_Migration::ensure_tables() );
+		$this->assertSame( [], Database_Migration::missing_tables() );
+		$this->assertSame( WP4ODOO_VERSION, get_option( \WP4Odoo\Settings_Repository::OPT_DB_VERSION ) );
 	}
 }

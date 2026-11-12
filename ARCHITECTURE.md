@@ -383,6 +383,7 @@ WordPress For Odoo/
 │   ├── class-cpt-helper.php           # Shared CPT register/load/save/parse helpers
 │   ├── class-webhook-handler.php      # REST API endpoints for Odoo webhooks, HMAC signature
 │   ├── class-rate-limiter.php        # Dual-strategy rate limiter (atomic wp_cache_incr + transient fallback)
+│   ├── class-schema-drop-log.php     # Fields dropped from pushes (unknown to the Odoo version): batched option write, shown in the Health tab
 │   ├── class-schema-cache.php        # fields_get() cache (memory + transient) for field validation; flush_all() clears transients + fires action
 │   ├── class-reconciler.php          # Entity map reconciliation against live Odoo records
 │   ├── class-cli.php                 # WP-CLI commands (loaded only in CLI context, includes cleanup orphans, cache flush)
@@ -401,7 +402,7 @@ WordPress For Odoo/
 │       ├── tab-modules.php            #   Module cards with AJAX toggles + inline settings panels
 │       ├── tab-queue.php              #   Stats cards + paginated jobs table
 │       ├── tab-logs.php               #   Filter bar + AJAX paginated log table
-│       ├── tab-health.php             #   Health dashboard (system status, queue stats, circuit breaker, module breakers, cron)
+│       ├── tab-health.php             #   Health dashboard (system status, queue stats, circuit breaker, module breakers, cron, Odoo version, database tables, skipped fields)
 │       └── network-settings.php       #   Network admin: shared connection + site → company_id table
 │
 ├── assets/                            # Frontend assets
@@ -418,7 +419,7 @@ WordPress For Odoo/
 │   └── customer-portal.php           #   Customer portal HTML template (orders/invoices tabs)
 │
 ├── tests/compat/                      # Compatibility run: real Odoo 19/20 + latest free plugins (see tests/compat/README.md)
-├── tests/                             # 5598 unit tests (8455 assertions) + 45 integration tests (wp-env)
+├── tests/                             # 5618 unit tests (8503 assertions) + 50 integration tests (wp-env)
 │   ├── bootstrap.php                 #   Unit test bootstrap: constants, stub loading, plugin class requires
 │   ├── bootstrap-integration.php     #   Integration test bootstrap: loads WP test framework (wp-env)
 │   ├── stubs/
@@ -936,7 +937,7 @@ The protocol is configurable in options (`wp4odoo_connection.protocol`). JSON-RP
 
 On Odoo 18+, `Stock_Handler::push_stock()` first calls `ensure_storable()`: Odoo rejects quants for non-storable products, so the product template is switched to `is_storable = true` when it is not already.
 
-**Server version detection:** All transports capture the Odoo server version during authentication. JSON-RPC extracts `server_version` from the `/web/session/authenticate` response. XML-RPC calls `version()` on `/xmlrpc/2/common` after auth (non-blocking try/catch). JSON-2 reads it from `/web/webclient/version_info` (best effort, since JSON-2 has no version call). The version is stored in `Odoo_Transport_Base::$server_version` and accessible via `get_server_version(): ?string`. On successful connection test, the AJAX handler persists the version in `wp4odoo_odoo_version` option for use in compatibility reporting and diagnostics.
+**Server version detection:** All transports capture the Odoo server version during authentication. JSON-RPC authenticates with `common.authenticate` on `/jsonrpc` (it accepts a password or an API key, whereas `/web/session/authenticate` rejects API keys; the session login is only a fallback) and reads `common.version`. XML-RPC calls `version()` on `/xmlrpc/2/common` after auth (non-blocking try/catch). JSON-2 reads it from `/web/webclient/version_info` (best effort, since JSON-2 has no version call). The version is stored in `Odoo_Transport_Base::$server_version` and accessible via `get_server_version(): ?string`. On successful connection test, the AJAX handler persists the version in `wp4odoo_odoo_version` option for use in compatibility reporting and diagnostics.
 
 ### 5. Entity Mapping
 
@@ -1158,7 +1159,7 @@ Translation_Service
 
 ### Tables Created on Activation
 
-Managed via `dbDelta()` in `Database_Migration::create_tables()`. Schema upgrades use versioned migrations (`run_migrations()` with `schema_version` tracking):
+Managed via `dbDelta()` in `Database_Migration::create_tables()`, which runs at activation and, as a self-repair, from `Database_Migration::ensure_tables()` on `plugins_loaded` (stored plugin version differs from the running one, or — in admin/cron requests, at most every 12 h — a table is missing; failures are kept in the `wp4odoo_db_error` option and shown as an admin notice and in the Health tab). Schema upgrades use versioned migrations (`run_migrations()` with `schema_version` tracking):
 
 **`{prefix}wp4odoo_sync_queue`** — Sync queue
 - Primary index: `(status, priority, scheduled_at)` for efficient polling
@@ -1298,7 +1299,7 @@ All user inputs are sanitized with:
 | Modules | `tab-modules.php` | Card grid with AJAX toggle switches, inline settings panels, dependency check, sync direction badges |
 | Queue | `tab-queue.php` | 4 status cards, jobs table with server-side pagination, retry/cleanup/cancel |
 | Logs | `tab-logs.php` | Filter bar (level, module, dates), AJAX paginated log table, purge |
-| Health | `tab-health.php` | System status banner, stats grid (modules/queue/latency/success rate), circuit breaker, cron status, compatibility warnings, queue depth by module |
+| Health | `tab-health.php` | System status banner, stats grid (modules/queue/latency/success rate), circuit breaker, cron status, Odoo version, database table status (missing tables + last creation error), fields skipped on push (`Schema_Drop_Log`), compatibility warnings, queue depth by module |
 
 **Key classes:**
 - `Admin` — orchestrator: menu registration, asset enqueuing, plugin settings link, activation redirect, setup notice, backup warning banner, version warnings with compatibility report links (`build_compat_report_url()`)
