@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: WP4Odoo 3.9.2\n"
 "Report-Msgid-Bugs-To: support@avalia.io\n"
-"POT-Creation-Date: 2026-11-12 01:36+0100\n"
+"POT-Creation-Date: 2026-11-12 02:27+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -138,7 +138,7 @@ msgstr ""
 msgid "%d product(s) enqueued for export."
 msgstr ""
 
-#: includes/modules/class-food-ordering-module.php:244
+#: includes/modules/class-food-ordering-module.php:253
 #: includes/modules/class-forms-module.php:629
 #: includes/modules/class-survey-quiz-module.php:234
 #, php-format
@@ -317,7 +317,7 @@ msgstr ""
 msgid "Assign pricelist to wholesale partners"
 msgstr ""
 
-#: includes/modules/class-food-ordering-module.php:230
+#: includes/modules/class-food-ordering-module.php:239
 msgid "At least one food ordering plugin must be installed and activated."
 msgstr ""
 
@@ -353,7 +353,7 @@ msgstr ""
 msgid "Auto-confirm orders"
 msgstr ""
 
-#: includes/modules/class-wc-returns-module.php:184
+#: includes/modules/class-wc-returns-module.php:193
 msgid "Auto-post credit notes"
 msgstr ""
 
@@ -364,7 +364,7 @@ msgstr ""
 #: includes/modules/class-pmpro-module.php:180
 #: includes/modules/class-rcp-module.php:168
 #: includes/modules/class-sensei-module.php:175
-#: includes/modules/class-sprout-invoices-module.php:160
+#: includes/modules/class-sprout-invoices-module.php:169
 #: includes/modules/class-tutorlms-module.php:171
 #: includes/modules/class-wc-subscriptions-module.php:184
 #: includes/modules/class-wp-invoice-module.php:141
@@ -372,7 +372,7 @@ msgid "Auto-post invoices"
 msgstr ""
 
 #: includes/modules/class-affiliatewp-module.php:147
-#: includes/modules/class-marketplace-module-base.php:206
+#: includes/modules/class-marketplace-module-base.php:215
 msgid "Auto-post vendor bills"
 msgstr ""
 
@@ -389,15 +389,15 @@ msgstr ""
 msgid "Auto-validate pickings"
 msgstr ""
 
-#: includes/modules/class-marketplace-module-base.php:208
+#: includes/modules/class-marketplace-module-base.php:217
 msgid "Automatically confirm commission vendor bills in Odoo."
 msgstr ""
 
-#: includes/modules/class-wc-returns-module.php:186
+#: includes/modules/class-wc-returns-module.php:195
 msgid "Automatically confirm credit notes in Odoo after creation."
 msgstr ""
 
-#: includes/modules/class-sprout-invoices-module.php:162
+#: includes/modules/class-sprout-invoices-module.php:171
 msgid "Automatically confirm invoices in Odoo for completed invoices."
 msgstr ""
 
@@ -767,7 +767,7 @@ msgstr ""
 msgid "Create new WordPress users when pulling contacts from Odoo."
 msgstr ""
 
-#: includes/modules/class-wc-returns-module.php:181
+#: includes/modules/class-wc-returns-module.php:190
 msgid "Create return stock pickings in Odoo when a refund is processed."
 msgstr ""
 
@@ -960,7 +960,7 @@ msgstr ""
 msgid "Entity type"
 msgstr ""
 
-#: includes/class-module-base.php:591
+#: includes/class-module-base.php:634
 #, php-format
 msgid "Entity type \"%1$s\" is not registered in module \"%2$s\"."
 msgstr ""
@@ -1062,7 +1062,7 @@ msgstr ""
 msgid "Fluent Support module enabled but Fluent Support is not active."
 msgstr ""
 
-#: includes/modules/trait-fluent-booking-hooks.php:32
+#: includes/modules/trait-fluent-booking-hooks.php:33
 msgid "FluentBooking module enabled but FluentBooking is not active."
 msgstr ""
 
@@ -1181,7 +1181,7 @@ msgstr ""
 msgid "Hook into Packlink for tracking updates."
 msgstr ""
 
-#: includes/modules/class-wc-returns-module.php:196
+#: includes/modules/class-wc-returns-module.php:205
 msgid "Hook into ReturnGO for automated return processing."
 msgstr ""
 
@@ -1193,7 +1193,7 @@ msgstr ""
 msgid "Hook into ShipStation for automatic tracking push."
 msgstr ""
 
-#: includes/modules/class-wc-returns-module.php:191
+#: includes/modules/class-wc-returns-module.php:200
 msgid ""
 "Hook into YITH WooCommerce Return & Warranty for enhanced return workflows."
 msgstr ""
@@ -1812,7 +1812,7 @@ msgstr ""
 msgid "Odoo Loyalty Program ID"
 msgstr ""
 
-#: includes/modules/class-gamipress-module.php:282
+#: includes/modules/class-gamipress-module.php:287
 #: includes/modules/class-mycred-module.php:263
 #: includes/modules/class-wc-points-rewards-module.php:292
 msgid "Odoo Loyalty Program ID not configured."
@@ -2109,10 +2109,6 @@ msgstr ""
 msgid "Pull Odoo service products into Bookly services."
 msgstr ""
 
-#: includes/modules/class-fluent-booking-module.php:143
-msgid "Pull Odoo service products into FluentBooking calendars."
-msgstr ""
-
 #: includes/modules/class-jet-appointments-module.php:132
 msgid "Pull Odoo service products into JetAppointments services."
 msgstr ""
@@ -2181,19 +2177,19 @@ msgstr ""
 msgid "Pull courses from Odoo"
 msgstr ""
 
-#: includes/modules/class-wc-returns-module.php:174
+#: includes/modules/class-wc-returns-module.php:183
 msgid "Pull credit notes"
 msgstr ""
 
-#: includes/modules/class-wc-returns-module.php:176
+#: includes/modules/class-wc-returns-module.php:185
 msgid "Pull credit notes from Odoo and create WooCommerce refunds."
 msgstr ""
 
-#: includes/modules/class-wperp-module.php:181
+#: includes/modules/class-wperp-module.php:190
 msgid "Pull department changes from Odoo back to WP ERP."
 msgstr ""
 
-#: includes/modules/class-wperp-module.php:179
+#: includes/modules/class-wperp-module.php:188
 msgid "Pull departments from Odoo"
 msgstr ""
 
@@ -2201,11 +2197,11 @@ msgstr ""
 msgid "Pull documents from Odoo"
 msgstr ""
 
-#: includes/modules/class-wperp-module.php:176
+#: includes/modules/class-wperp-module.php:185
 msgid "Pull employee changes from Odoo back to WP ERP."
 msgstr ""
 
-#: includes/modules/class-wperp-module.php:174
+#: includes/modules/class-wperp-module.php:183
 msgid "Pull employees from Odoo"
 msgstr ""
 
@@ -2238,11 +2234,11 @@ msgstr ""
 msgid "Pull groups from Odoo"
 msgstr ""
 
-#: includes/modules/class-sprout-invoices-module.php:167
+#: includes/modules/class-sprout-invoices-module.php:176
 msgid "Pull invoice changes from Odoo back to WordPress."
 msgstr ""
 
-#: includes/modules/class-sprout-invoices-module.php:165
+#: includes/modules/class-sprout-invoices-module.php:174
 msgid "Pull invoices from Odoo"
 msgstr ""
 
@@ -2278,11 +2274,11 @@ msgstr ""
 msgid "Pull leads from Odoo"
 msgstr ""
 
-#: includes/modules/class-wperp-module.php:186
+#: includes/modules/class-wperp-module.php:195
 msgid "Pull leave request changes from Odoo back to WP ERP."
 msgstr ""
 
-#: includes/modules/class-wperp-module.php:184
+#: includes/modules/class-wperp-module.php:193
 msgid "Pull leaves from Odoo"
 msgstr ""
 
@@ -2344,7 +2340,7 @@ msgstr ""
 msgid "Pull memberships from Odoo"
 msgstr ""
 
-#: includes/modules/class-sprout-invoices-module.php:172
+#: includes/modules/class-sprout-invoices-module.php:181
 msgid "Pull payment changes from Odoo back to WordPress."
 msgstr ""
 
@@ -2356,7 +2352,7 @@ msgstr ""
 msgid "Pull payment terms from Odoo for B2B order management."
 msgstr ""
 
-#: includes/modules/class-sprout-invoices-module.php:170
+#: includes/modules/class-sprout-invoices-module.php:179
 msgid "Pull payments from Odoo"
 msgstr ""
 
@@ -2463,12 +2459,12 @@ msgstr ""
 msgid "Pull tracking numbers from Odoo to WooCommerce order meta."
 msgstr ""
 
-#: includes/modules/class-marketplace-module-base.php:214
+#: includes/modules/class-marketplace-module-base.php:223
 #, php-format
 msgid "Pull vendor status changes from Odoo back to %s."
 msgstr ""
 
-#: includes/modules/class-marketplace-module-base.php:211
+#: includes/modules/class-marketplace-module-base.php:220
 msgid "Pull vendor updates from Odoo"
 msgstr ""
 
@@ -2476,12 +2472,12 @@ msgstr ""
 msgid "Purge logs"
 msgstr ""
 
-#: includes/modules/class-marketplace-module-base.php:193
+#: includes/modules/class-marketplace-module-base.php:202
 #, php-format
 msgid "Push %s sub-orders to Odoo as purchase orders."
 msgstr ""
 
-#: includes/modules/class-marketplace-module-base.php:187
+#: includes/modules/class-marketplace-module-base.php:196
 #, php-format
 msgid "Push %s vendors to Odoo as supplier partners."
 msgstr ""
@@ -2531,7 +2527,7 @@ msgid "Push FluentBooking bookings to Odoo as calendar events."
 msgstr ""
 
 #: includes/modules/class-fluent-booking-module.php:133
-msgid "Push FluentBooking calendars to Odoo as service products."
+msgid "Push FluentBooking calendar events to Odoo as service products."
 msgstr ""
 
 #: includes/modules/class-fluentcrm-module.php:161
@@ -2576,7 +2572,7 @@ msgstr ""
 msgid "Push GiveWP donation forms to Odoo as service products."
 msgstr ""
 
-#: includes/modules/class-food-ordering-module.php:193
+#: includes/modules/class-food-ordering-module.php:202
 msgid "Push GloriaFood orders to Odoo POS."
 msgstr ""
 
@@ -2686,7 +2682,7 @@ msgid ""
 "Push RSVP ticket types to Odoo as service products. Requires Event Tickets."
 msgstr ""
 
-#: includes/modules/class-food-ordering-module.php:203
+#: includes/modules/class-food-ordering-module.php:212
 msgid "Push RestroPress orders to Odoo POS."
 msgstr ""
 
@@ -2702,11 +2698,11 @@ msgstr ""
 msgid "Push ShopWP products to Odoo."
 msgstr ""
 
-#: includes/modules/class-sprout-invoices-module.php:152
+#: includes/modules/class-sprout-invoices-module.php:161
 msgid "Push Sprout Invoices invoices to Odoo as account moves."
 msgstr ""
 
-#: includes/modules/class-sprout-invoices-module.php:157
+#: includes/modules/class-sprout-invoices-module.php:166
 msgid "Push Sprout Invoices payments to Odoo."
 msgstr ""
 
@@ -2773,11 +2769,11 @@ msgstr ""
 msgid "Push WP ERP chart of accounts to Odoo."
 msgstr ""
 
-#: includes/modules/class-wperp-module.php:166
+#: includes/modules/class-wperp-module.php:175
 msgid "Push WP ERP departments to Odoo (hr.department)."
 msgstr ""
 
-#: includes/modules/class-wperp-module.php:161
+#: includes/modules/class-wperp-module.php:170
 msgid "Push WP ERP employees to Odoo (hr.employee)."
 msgstr ""
 
@@ -2789,7 +2785,7 @@ msgstr ""
 msgid "Push WP ERP journals to Odoo."
 msgstr ""
 
-#: includes/modules/class-wperp-module.php:171
+#: includes/modules/class-wperp-module.php:180
 msgid "Push WP ERP leave requests to Odoo (hr.leave)."
 msgstr ""
 
@@ -2813,7 +2809,7 @@ msgstr ""
 msgid "Push WP-Invoice invoices to Odoo as account moves."
 msgstr ""
 
-#: includes/modules/class-food-ordering-module.php:198
+#: includes/modules/class-food-ordering-module.php:207
 msgid "Push WPPizza orders to Odoo POS."
 msgstr ""
 
@@ -2831,7 +2827,7 @@ msgstr ""
 msgid "Push WooCommerce product add-ons/options to Odoo."
 msgstr ""
 
-#: includes/modules/class-wc-returns-module.php:171
+#: includes/modules/class-wc-returns-module.php:180
 msgid "Push WooCommerce refunds to Odoo as credit notes."
 msgstr ""
 
@@ -2871,7 +2867,7 @@ msgstr ""
 msgid "Push approved affiliates to Odoo as partners."
 msgstr ""
 
-#: includes/modules/class-marketplace-module-base.php:227
+#: includes/modules/class-marketplace-module-base.php:236
 msgid "Push approved payouts to Odoo as payments."
 msgstr ""
 
@@ -2995,7 +2991,7 @@ msgstr ""
 msgid "Push user memberships to Odoo membership lines."
 msgstr ""
 
-#: includes/modules/class-marketplace-module-base.php:198
+#: includes/modules/class-marketplace-module-base.php:207
 msgid "Push vendor commissions to Odoo as vendor bills."
 msgstr ""
 
@@ -3101,7 +3097,7 @@ msgstr ""
 msgid "Return item"
 msgstr ""
 
-#: includes/modules/class-wc-returns-module.php:194
+#: includes/modules/class-wc-returns-module.php:203
 msgid "ReturnGO hooks"
 msgstr ""
 
@@ -3313,7 +3309,7 @@ msgstr ""
 msgid "Sprout Invoices"
 msgstr ""
 
-#: includes/modules/class-sprout-invoices-module.php:112
+#: includes/modules/class-sprout-invoices-module.php:121
 msgid "Sprout Invoices module enabled but Sprout Invoices is not active."
 msgstr ""
 
@@ -3359,7 +3355,7 @@ msgstr ""
 msgid "SupportCandy module enabled but SupportCandy is not active."
 msgstr ""
 
-#: includes/modules/class-surecart-module.php:427
+#: includes/modules/class-surecart-module.php:437
 msgid "SureCart Subscription"
 msgstr ""
 
@@ -3403,7 +3399,7 @@ msgstr ""
 msgid "Sync Forminator"
 msgstr ""
 
-#: includes/modules/class-food-ordering-module.php:191
+#: includes/modules/class-food-ordering-module.php:200
 msgid "Sync GloriaFood orders"
 msgstr ""
 
@@ -3427,7 +3423,7 @@ msgstr ""
 msgid "Sync Quiz Maker (Ays)"
 msgstr ""
 
-#: includes/modules/class-food-ordering-module.php:201
+#: includes/modules/class-food-ordering-module.php:210
 msgid "Sync RestroPress orders"
 msgstr ""
 
@@ -3435,7 +3431,7 @@ msgstr ""
 msgid "Sync WPForms"
 msgstr ""
 
-#: includes/modules/class-food-ordering-module.php:196
+#: includes/modules/class-food-ordering-module.php:205
 msgid "Sync WPPizza orders"
 msgstr ""
 
@@ -3498,7 +3494,7 @@ msgstr ""
 msgid "Sync chart of accounts"
 msgstr ""
 
-#: includes/modules/class-marketplace-module-base.php:196
+#: includes/modules/class-marketplace-module-base.php:205
 msgid "Sync commissions"
 msgstr ""
 
@@ -3522,7 +3518,7 @@ msgstr ""
 msgid "Sync courses"
 msgstr ""
 
-#: includes/modules/class-wperp-module.php:164
+#: includes/modules/class-wperp-module.php:173
 msgid "Sync departments"
 msgstr ""
 
@@ -3543,7 +3539,7 @@ msgstr ""
 msgid "Sync downloads"
 msgstr ""
 
-#: includes/modules/class-wperp-module.php:159
+#: includes/modules/class-wperp-module.php:168
 msgid "Sync employees"
 msgstr ""
 
@@ -3578,7 +3574,7 @@ msgstr ""
 msgid "Sync groups"
 msgstr ""
 
-#: includes/modules/class-sprout-invoices-module.php:150
+#: includes/modules/class-sprout-invoices-module.php:159
 #: includes/modules/class-wp-invoice-module.php:136
 msgid "Sync invoices"
 msgstr ""
@@ -3595,7 +3591,7 @@ msgstr ""
 msgid "Sync journals"
 msgstr ""
 
-#: includes/modules/class-wperp-module.php:169
+#: includes/modules/class-wperp-module.php:178
 msgid "Sync leaves"
 msgstr ""
 
@@ -3643,11 +3639,11 @@ msgstr ""
 
 #: includes/modules/class-rcp-module.php:158
 #: includes/modules/class-simplepay-module.php:144
-#: includes/modules/class-sprout-invoices-module.php:155
+#: includes/modules/class-sprout-invoices-module.php:164
 msgid "Sync payments"
 msgstr ""
 
-#: includes/modules/class-marketplace-module-base.php:201
+#: includes/modules/class-marketplace-module-base.php:210
 msgid "Sync payouts"
 msgstr ""
 
@@ -3698,7 +3694,7 @@ msgstr ""
 msgid "Sync referrals"
 msgstr ""
 
-#: includes/modules/class-wc-returns-module.php:169
+#: includes/modules/class-wc-returns-module.php:178
 msgid "Sync refunds"
 msgstr ""
 
@@ -3710,7 +3706,7 @@ msgstr ""
 msgid "Sync rental orders"
 msgstr ""
 
-#: includes/modules/class-wc-returns-module.php:179
+#: includes/modules/class-wc-returns-module.php:188
 msgid "Sync return pickings"
 msgstr ""
 
@@ -3749,7 +3745,7 @@ msgstr ""
 msgid "Sync stock movements"
 msgstr ""
 
-#: includes/modules/class-marketplace-module-base.php:190
+#: includes/modules/class-marketplace-module-base.php:199
 msgid "Sync sub-orders"
 msgstr ""
 
@@ -3806,7 +3802,7 @@ msgstr ""
 msgid "Sync users as contacts"
 msgstr ""
 
-#: includes/modules/class-marketplace-module-base.php:184
+#: includes/modules/class-marketplace-module-base.php:193
 msgid "Sync vendors"
 msgstr ""
 
@@ -3977,7 +3973,7 @@ msgid "This will permanently remove orphaned entity mappings. Continue?"
 msgstr ""
 
 #: includes/modules/class-project-manager-handler.php:285
-#: includes/modules/class-project-manager-module.php:440
+#: includes/modules/class-project-manager-module.php:445
 msgid "Time entry"
 msgstr ""
 
@@ -4108,6 +4104,12 @@ msgstr ""
 msgid "Unknown subcommand: %s. Usage: wp wp4odoo sync run"
 msgstr ""
 
+#: includes/modules/class-fluent-booking-module.php:143
+msgid ""
+"Update FluentBooking calendar events from Odoo service products (events are "
+"not created from Odoo)."
+msgstr ""
+
 #: includes/class-cli.php:329
 msgid "Usage: wp wp4odoo reconcile <module> <entity_type> [--fix]"
 msgstr ""
@@ -4186,7 +4188,7 @@ msgstr ""
 msgid "WC Rental module enabled but WooCommerce is not active."
 msgstr ""
 
-#: includes/modules/class-wc-returns-module.php:124
+#: includes/modules/class-wc-returns-module.php:133
 msgid "WC Returns module enabled but WooCommerce is not active."
 msgstr ""
 
@@ -4267,7 +4269,7 @@ msgstr ""
 msgid "WP ERP CRM module enabled but WP ERP is not active."
 msgstr ""
 
-#: includes/modules/class-wperp-module.php:114
+#: includes/modules/class-wperp-module.php:123
 msgid "WP ERP module enabled but WP ERP is not active."
 msgstr ""
 
@@ -4393,7 +4395,7 @@ msgstr ""
 msgid "XML-RPC (Odoo 14+)"
 msgstr ""
 
-#: includes/modules/class-wc-returns-module.php:189
+#: includes/modules/class-wc-returns-module.php:198
 msgid "YITH Return hooks"
 msgstr ""
 

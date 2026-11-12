@@ -10,9 +10,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * FluentBooking Handler — data access for FluentBooking custom tables.
  *
- * FluentBooking stores all data in its own tables
- * ({prefix}fluentbooking_calendars, {prefix}fluentbooking_bookings).
- * This handler queries them via $wpdb.
+ * FluentBooking stores its data in its own tables: calendar events (the
+ * bookable "services": title, description, duration) in
+ * {prefix}fcal_calendar_events and bookings in {prefix}fcal_bookings.
+ * This handler queries them via $wpdb. The "service" entity is a calendar
+ * event, not a calendar (a calendar only represents a host).
  *
  * Called by Fluent_Booking_Module via Booking_Module_Base dispatch.
  *
@@ -22,23 +24,23 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Fluent_Booking_Handler extends Booking_Handler_Base {
 
 	/**
-	 * Load a FluentBooking calendar (service) by ID.
+	 * Load a FluentBooking calendar event (service) by ID.
 	 *
-	 * @param int $calendar_id Calendar ID.
+	 * @param int $event_id Calendar event ID.
 	 * @return array<string, mixed> Service data, or empty if not found.
 	 */
-	public function load_service( int $calendar_id ): array {
+	public function load_service( int $event_id ): array {
 		global $wpdb;
 
-		$table = $wpdb->prefix . 'fluentbooking_calendars';
+		$table = $wpdb->prefix . 'fcal_calendar_events';
 		$row   = $wpdb->get_row(
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix.
-			$wpdb->prepare( "SELECT id, title, description, duration, status FROM {$table} WHERE id = %d", $calendar_id ),
+			$wpdb->prepare( "SELECT id, title, description, duration, status FROM {$table} WHERE id = %d", $event_id ),
 			ARRAY_A
 		);
 
 		if ( ! $row ) {
-			$this->logger->warning( 'FluentBooking calendar not found.', [ 'calendar_id' => $calendar_id ] );
+			$this->logger->warning( 'FluentBooking calendar event not found.', [ 'event_id' => $event_id ] );
 			return [];
 		}
 
@@ -59,7 +61,7 @@ class Fluent_Booking_Handler extends Booking_Handler_Base {
 	public function load_booking( int $booking_id ): array {
 		global $wpdb;
 
-		$table = $wpdb->prefix . 'fluentbooking_bookings';
+		$table = $wpdb->prefix . 'fcal_bookings';
 		$row   = $wpdb->get_row(
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix.
 			$wpdb->prepare( "SELECT * FROM {$table} WHERE id = %d", $booking_id ),
@@ -74,29 +76,30 @@ class Fluent_Booking_Handler extends Booking_Handler_Base {
 		return [
 			'booking_id'  => (int) $row['id'],
 			'calendar_id' => (int) ( $row['calendar_id'] ?? 0 ),
+			'event_id'    => (int) ( $row['event_id'] ?? 0 ),
 			'email'       => $row['email'] ?? '',
 			'first_name'  => $row['first_name'] ?? '',
 			'last_name'   => $row['last_name'] ?? '',
 			'start_time'  => $row['start_time'] ?? '',
 			'end_time'    => $row['end_time'] ?? '',
 			'status'      => $row['status'] ?? '',
-			'description' => $row['description'] ?? '',
+			'description' => $row['message'] ?? '',
 		];
 	}
 
 	/**
-	 * Get the calendar (service) ID for a booking.
+	 * Get the service (calendar event) ID for a booking.
 	 *
 	 * @param int $booking_id Booking ID.
-	 * @return int Calendar ID, or 0 if not found.
+	 * @return int Calendar event ID, or 0 if not found.
 	 */
 	public function get_service_id_for_booking( int $booking_id ): int {
 		global $wpdb;
 
-		$table = $wpdb->prefix . 'fluentbooking_bookings';
+		$table = $wpdb->prefix . 'fcal_bookings';
 		return (int) $wpdb->get_var(
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix.
-			$wpdb->prepare( "SELECT calendar_id FROM {$table} WHERE id = %d", $booking_id )
+			$wpdb->prepare( "SELECT event_id FROM {$table} WHERE id = %d", $booking_id )
 		);
 	}
 
@@ -118,42 +121,50 @@ class Fluent_Booking_Handler extends Booking_Handler_Base {
 	// ─── Pull: save service ────────────────────────────────
 
 	/**
-	 * Save a calendar pulled from Odoo to FluentBooking's custom table.
+	 * Update a calendar event pulled from Odoo.
 	 *
-	 * @param array<string, mixed> $data  Parsed calendar data.
-	 * @param int                  $wp_id Existing calendar ID (0 to create new).
-	 * @return int The calendar ID, or 0 on failure.
+	 * Only existing events are updated (title and description). A new event
+	 * needs a calendar, a host user, a slug and availability settings that
+	 * only FluentBooking can provide, so events are not created from Odoo.
+	 *
+	 * @param array<string, mixed> $data  Parsed event data.
+	 * @param int                  $wp_id Existing calendar event ID (0 to create new).
+	 * @return int The event ID, or 0 when nothing was saved.
 	 */
 	public function save_service( array $data, int $wp_id = 0 ): int {
 		global $wpdb;
 
-		$table = $wpdb->prefix . 'fluentbooking_calendars';
-		$row   = [
-			'title'       => $data['title'] ?? '',
-			'description' => $data['description'] ?? '',
-		];
-
-		if ( $wp_id > 0 ) {
-			$result = $wpdb->update( $table, $row, [ 'id' => $wp_id ] );
-			return false !== $result ? $wp_id : 0;
+		if ( $wp_id <= 0 ) {
+			$this->logger->warning( 'Creating FluentBooking calendar events from Odoo is not supported; create the event in FluentBooking first.' );
+			return 0;
 		}
 
-		$result = $wpdb->insert( $table, $row );
-		return false !== $result ? (int) $wpdb->insert_id : 0;
+		$table  = $wpdb->prefix . 'fcal_calendar_events';
+		$result = $wpdb->update(
+			$table,
+			[
+				'title'       => $data['title'] ?? '',
+				'description' => $data['description'] ?? '',
+			],
+			[ 'id' => $wp_id ]
+		);
+
+		return false !== $result ? $wp_id : 0;
 	}
 
 	// ─── Pull: delete service ──────────────────────────────
 
 	/**
-	 * Delete a calendar from FluentBooking's custom table.
+	 * Keep a calendar event whose Odoo product was deleted.
 	 *
-	 * @param int $calendar_id Calendar ID.
-	 * @return bool True on success.
+	 * Deleting an event row directly would orphan its bookings and
+	 * availability, so the event is left untouched.
+	 *
+	 * @param int $event_id Calendar event ID.
+	 * @return bool Always true (nothing to delete).
 	 */
-	public function delete_service( int $calendar_id ): bool {
-		global $wpdb;
-
-		$table = $wpdb->prefix . 'fluentbooking_calendars';
-		return false !== $wpdb->delete( $table, [ 'id' => $calendar_id ] );
+	public function delete_service( int $event_id ): bool {
+		$this->logger->info( 'Odoo product deleted; the FluentBooking calendar event was kept.', [ 'event_id' => $event_id ] );
+		return true;
 	}
 }

@@ -126,8 +126,8 @@ WordPress For Odoo/
 │   │   ├── trait-bookly-cron-hooks.php       # Bookly: WP-Cron polling (no hooks available)
 │   │   ├── class-bookly-handler.php          # Bookly: $wpdb queries on bookly_* tables (batch + individual)
 │   │   ├── class-bookly-module.php           # Bookly: extends Booking_Module_Base (uses Bookly_Cron_Hooks trait)
-│   │   ├── trait-fluent-booking-hooks.php   # FluentBooking: hook callbacks (booking scheduled, status changed, calendar created/updated)
-│   │   ├── class-fluent-booking-handler.php # FluentBooking: $wpdb queries on fluentbooking_* tables (no CPT)
+│   │   ├── trait-fluent-booking-hooks.php   # FluentBooking: hook callbacks (booking scheduled/completed/rescheduled/cancelled, event created/updated)
+│   │   ├── class-fluent-booking-handler.php # FluentBooking: $wpdb queries on fcal_calendar_events / fcal_bookings (no CPT)
 │   │   ├── class-fluent-booking-module.php  # FluentBooking: extends Booking_Module_Base (uses Fluent_Booking_Hooks trait)
 │   │   ├── trait-jet-appointments-hooks.php  # JetAppointments: hook callbacks (appointment after-insert/update, service save)
 │   │   ├── class-jet-appointments-handler.php # JetAppointments: CPT-based (jet-appointment + jet-service), meta fields
@@ -417,7 +417,7 @@ WordPress For Odoo/
 ├── templates/
 │   └── customer-portal.php           #   Customer portal HTML template (orders/invoices tabs)
 │
-├── tests/                             # 5443 unit tests (8211 assertions) + 45 integration tests (wp-env)
+├── tests/                             # 5450 unit tests (8227 assertions) + 45 integration tests (wp-env)
 │   ├── bootstrap.php                 #   Unit test bootstrap: constants, stub loading, plugin class requires
 │   ├── bootstrap-integration.php     #   Integration test bootstrap: loads WP test framework (wp-env)
 │   ├── stubs/
@@ -555,7 +555,7 @@ WordPress For Odoo/
 │       ├── EventsCalendarHandlerTest.php # 30 tests for Events_Calendar_Handler
 │       ├── MECModuleTest.php            # 30 tests for MEC_Module
 │       ├── FooEventsModuleTest.php      # 28 tests for FooEvents_Module
-│       ├── FluentBookingModuleTest.php  # 38 tests for Fluent_Booking_Module
+│       ├── FluentBookingModuleTest.php  # 18 tests for Fluent_Booking_Module
 │       ├── WCBookingsModuleTest.php     # 25 tests for WC_Bookings_Module
 │       ├── WCBookingsHandlerTest.php    # 24 tests for WC_Bookings_Handler
 │       ├── SproutInvoicesModuleTest.php  # 46 tests for Sprout_Invoices_Module
@@ -1564,13 +1564,13 @@ All user inputs are sanitized with:
 
 **Files:** `class-fluent-booking-module.php` (extends `Booking_Module_Base`, uses `Fluent_Booking_Hooks` trait), `trait-fluent-booking-hooks.php` (hook callbacks), `class-fluent-booking-handler.php` ($wpdb queries on FluentBooking tables)
 
-**Odoo models:** `product.product` (services/calendars), `calendar.event` (bookings)
+**Odoo models:** `product.product` (services = FluentBooking calendar events), `calendar.event` (bookings)
 
 **Key features:**
-- Bidirectional: services ↔ Odoo, bookings → Odoo only
+- Services: calendar events are pushed to Odoo; from Odoo only the title and description of an existing event are updated (creating an event needs a calendar, host and availability that only FluentBooking can provide, and a deleted Odoo product leaves the event untouched). Bookings → Odoo only
 - Requires FluentBooking; `boot()` guards with `defined('FLUENT_BOOKING_VERSION')`
-- Hook-based sync: `fluent_booking/after_booking_scheduled`, `fluent_booking/booking_status_changed` for bookings; `fluent_booking/after_calendar_created`, `fluent_booking/after_calendar_updated` for services
-- Data access via `$wpdb` on FluentBooking custom tables (`fluentbooking_calendars`, `fluentbooking_bookings`)
+- Hook-based sync (FluentBooking passes its model objects, so callbacks only read the record ID): `fluent_booking/after_booking_scheduled`, `after_booking_completed`, `after_booking_rescheduled` and `booking_schedule_cancelled` / `booking_schedule_rejected` for bookings; `fluent_booking/after_create_calendar_slot` and `after_update_event_details` for services
+- Data access via `$wpdb` on FluentBooking custom tables (`fcal_calendar_events` for services, `fcal_bookings` for bookings); verified against FluentBooking 2.6.0
 - Service auto-sync via `Booking_Module_Base::ensure_service_synced()`
 - Customer resolution via `Partner_Service` (from email/name in booking)
 - Event naming: "Service — Customer"

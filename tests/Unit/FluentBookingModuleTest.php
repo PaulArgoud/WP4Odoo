@@ -17,7 +17,7 @@ class FluentBookingModuleTest extends BookingModuleTestBase {
 		global $wpdb;
 		$wpdb = new \WP_DB_Stub();
 		// Simulate required tables exist.
-		$wpdb->get_var_return = 'wp_fluentbooking_calendars';
+		$wpdb->get_var_return = 'wp_fcal_calendar_events';
 
 		$GLOBALS['_wp_options'] = [];
 
@@ -139,5 +139,86 @@ class FluentBookingModuleTest extends BookingModuleTestBase {
 		$result = $ref->invoke( $this->module, 999 );
 
 		$this->assertSame( [], $result );
+	}
+
+	// ─── Handler: real FluentBooking schema ─────────────────
+
+	public function test_handler_load_booking_reads_event_id_and_message(): void {
+		global $wpdb;
+		$wpdb->get_row_return = [
+			'id'          => 7,
+			'calendar_id' => 2,
+			'event_id'    => 5,
+			'email'       => 'jo@example.com',
+			'first_name'  => 'Jo',
+			'last_name'   => 'Doe',
+			'start_time'  => '2026-03-01 10:00:00',
+			'end_time'    => '2026-03-01 10:30:00',
+			'status'      => 'scheduled',
+			'message'     => 'Please call',
+		];
+
+		$handler = new \WP4Odoo\Modules\Fluent_Booking_Handler( new \WP4Odoo\Logger( 'test' ) );
+		$booking = $handler->load_booking( 7 );
+
+		$this->assertSame( 5, $booking['event_id'] );
+		$this->assertSame( 2, $booking['calendar_id'] );
+		$this->assertSame( 'Please call', $booking['description'] );
+	}
+
+	public function test_handler_service_id_for_booking_is_the_event_id(): void {
+		global $wpdb;
+		$wpdb->get_var_return = '5';
+
+		$handler = new \WP4Odoo\Modules\Fluent_Booking_Handler( new \WP4Odoo\Logger( 'test' ) );
+
+		$this->assertSame( 5, $handler->get_service_id_for_booking( 7 ) );
+	}
+
+	public function test_handler_does_not_create_events_from_odoo(): void {
+		global $wpdb;
+		$wpdb->calls = [];
+
+		$handler = new \WP4Odoo\Modules\Fluent_Booking_Handler( new \WP4Odoo\Logger( 'test' ) );
+
+		$this->assertSame( 0, $handler->save_service( [ 'title' => 'New' ], 0 ) );
+		$this->assertSame( [], array_filter( $wpdb->calls, fn( $c ) => 'insert' === $c['method'] ) );
+	}
+
+	public function test_handler_updates_existing_event_in_fcal_table(): void {
+		global $wpdb;
+		$wpdb->calls = [];
+
+		$handler = new \WP4Odoo\Modules\Fluent_Booking_Handler( new \WP4Odoo\Logger( 'test' ) );
+
+		$this->assertSame( 5, $handler->save_service( [ 'title' => 'Renamed', 'description' => 'd' ], 5 ) );
+		$update = array_values( array_filter( $wpdb->calls, fn( $c ) => 'update' === $c['method'] ) )[0];
+		$this->assertSame( 'wp_fcal_calendar_events', $update['args'][0] );
+		$this->assertSame( [ 'id' => 5 ], $update['args'][2] );
+	}
+
+	public function test_handler_keeps_event_when_odoo_product_is_deleted(): void {
+		global $wpdb;
+		$wpdb->calls = [];
+
+		$handler = new \WP4Odoo\Modules\Fluent_Booking_Handler( new \WP4Odoo\Logger( 'test' ) );
+
+		$this->assertTrue( $handler->delete_service( 5 ) );
+		$this->assertSame( [], array_filter( $wpdb->calls, fn( $c ) => 'delete' === $c['method'] ) );
+	}
+
+	public function test_required_tables_are_the_fcal_tables(): void {
+		$method = new \ReflectionMethod( $this->module, 'get_required_tables' );
+
+		$this->assertSame( [ 'fcal_calendar_events', 'fcal_bookings' ], $method->invoke( $this->module ) );
+	}
+
+	public function test_hooks_read_record_id_from_models_and_arrays(): void {
+		$method = new \ReflectionMethod( $this->module, 'fluent_booking_record_id' );
+
+		$this->assertSame( 12, $method->invoke( $this->module, (object) [ 'id' => 12 ] ) );
+		$this->assertSame( 13, $method->invoke( $this->module, [ 'id' => 13 ] ) );
+		$this->assertSame( 14, $method->invoke( $this->module, '14' ) );
+		$this->assertSame( 0, $method->invoke( $this->module, null ) );
 	}
 }

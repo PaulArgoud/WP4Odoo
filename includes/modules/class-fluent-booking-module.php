@@ -29,7 +29,7 @@ class Fluent_Booking_Module extends Booking_Module_Base {
 	use Fluent_Booking_Hooks;
 
 	protected const PLUGIN_MIN_VERSION  = '1.0';
-	protected const PLUGIN_TESTED_UP_TO = '1.5';
+	protected const PLUGIN_TESTED_UP_TO = '2.6';
 
 	/**
 	 * Odoo models by entity type.
@@ -115,8 +115,8 @@ class Fluent_Booking_Module extends Booking_Module_Base {
 	 */
 	protected function get_required_tables(): array {
 		return [
-			'fluentbooking_calendars',
-			'fluentbooking_bookings',
+			'fcal_calendar_events',
+			'fcal_bookings',
 		];
 	}
 
@@ -130,7 +130,7 @@ class Fluent_Booking_Module extends Booking_Module_Base {
 			'sync_services' => [
 				'label'       => __( 'Sync calendars', 'wp4odoo' ),
 				'type'        => 'checkbox',
-				'description' => __( 'Push FluentBooking calendars to Odoo as service products.', 'wp4odoo' ),
+				'description' => __( 'Push FluentBooking calendar events to Odoo as service products.', 'wp4odoo' ),
 			],
 			'sync_bookings' => [
 				'label'       => __( 'Sync bookings', 'wp4odoo' ),
@@ -140,7 +140,7 @@ class Fluent_Booking_Module extends Booking_Module_Base {
 			'pull_services' => [
 				'label'       => __( 'Pull calendars', 'wp4odoo' ),
 				'type'        => 'checkbox',
-				'description' => __( 'Pull Odoo service products into FluentBooking calendars.', 'wp4odoo' ),
+				'description' => __( 'Update FluentBooking calendar events from Odoo service products (events are not created from Odoo).', 'wp4odoo' ),
 			],
 		];
 	}
@@ -193,14 +193,14 @@ class Fluent_Booking_Module extends Booking_Module_Base {
 			return [];
 		}
 
-		$calendar_id   = (int) ( $data['calendar_id'] ?? 0 );
-		$calendar_data = $calendar_id > 0 ? $this->handler->load_service( $calendar_id ) : [];
-		$service_name  = $calendar_data['name'] ?? '';
+		$event_id     = (int) ( $data['event_id'] ?? 0 );
+		$event_data   = $event_id > 0 ? $this->handler->load_service( $event_id ) : [];
+		$service_name = $event_data['name'] ?? '';
 
 		$customer_name = trim( ( $data['first_name'] ?? '' ) . ' ' . ( $data['last_name'] ?? '' ) );
 
 		return [
-			'service_id'     => $calendar_id,
+			'service_id'     => $event_id,
 			'customer_email' => $data['email'] ?? '',
 			'customer_name'  => $customer_name,
 			'service_name'   => $service_name,

@@ -12,8 +12,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * FluentBooking hook callbacks for push operations.
  *
- * Handles booking scheduled/status changes and calendar create/update
- * via FluentBooking's WordPress action hooks.
+ * FluentBooking passes its Eloquent-style models (Booking, CalendarSlot) to
+ * its action hooks, so callbacks accept an object or an array and only read
+ * the record ID; the data itself is loaded from the custom tables.
  *
  * @package WP4Odoo
  * @since   3.8.0
@@ -36,30 +37,28 @@ trait Fluent_Booking_Hooks {
 		$settings = $this->get_settings();
 
 		if ( ! empty( $settings['sync_bookings'] ) ) {
-			\add_action( 'fluent_booking/after_booking_scheduled', $this->safe_callback( [ $this, 'on_booking_scheduled' ] ), 10, 2 );
-			\add_action( 'fluent_booking/booking_status_changed', $this->safe_callback( [ $this, 'on_booking_status_changed' ] ), 10, 2 );
+			// Fired with ( $booking, $calendar_event, $booking_data ) when the booking reaches that status.
+			\add_action( 'fluent_booking/after_booking_scheduled', $this->safe_callback( [ $this, 'on_booking_scheduled' ] ), 10, 1 );
+			\add_action( 'fluent_booking/after_booking_completed', $this->safe_callback( [ $this, 'on_booking_scheduled' ] ), 10, 1 );
+			\add_action( 'fluent_booking/after_booking_rescheduled', $this->safe_callback( [ $this, 'on_booking_scheduled' ] ), 10, 1 );
+			\add_action( 'fluent_booking/booking_schedule_cancelled', $this->safe_callback( [ $this, 'on_booking_cancelled' ] ), 10, 1 );
+			\add_action( 'fluent_booking/booking_schedule_rejected', $this->safe_callback( [ $this, 'on_booking_cancelled' ] ), 10, 1 );
 		}
 
 		if ( ! empty( $settings['sync_services'] ) ) {
-			\add_action( 'fluent_booking/after_calendar_created', $this->safe_callback( [ $this, 'on_calendar_saved' ] ), 10, 1 );
-			\add_action( 'fluent_booking/after_calendar_updated', $this->safe_callback( [ $this, 'on_calendar_saved' ] ), 10, 1 );
+			\add_action( 'fluent_booking/after_create_calendar_slot', $this->safe_callback( [ $this, 'on_event_saved' ] ), 10, 1 );
+			\add_action( 'fluent_booking/after_update_event_details', $this->safe_callback( [ $this, 'on_event_saved' ] ), 10, 1 );
 		}
 	}
 
 	/**
-	 * Handle new booking scheduled.
+	 * Handle a booking that was scheduled, completed or rescheduled.
 	 *
-	 * @param array $booking  FluentBooking booking data.
-	 * @param array $calendar FluentBooking calendar data.
+	 * @param mixed $booking FluentBooking Booking model (or array).
 	 * @return void
 	 */
-	public function on_booking_scheduled( array $booking, array $calendar ): void {
-		$status = $booking['status'] ?? '';
-		if ( 'scheduled' !== $status && 'completed' !== $status ) {
-			return;
-		}
-
-		$booking_id = (int) ( $booking['id'] ?? 0 );
+	public function on_booking_scheduled( $booking ): void {
+		$booking_id = $this->fluent_booking_record_id( $booking );
 		if ( $booking_id <= 0 ) {
 			return;
 		}
@@ -68,49 +67,59 @@ trait Fluent_Booking_Hooks {
 	}
 
 	/**
-	 * Handle booking status change.
+	 * Handle a booking that was cancelled or rejected.
 	 *
-	 * @param array  $booking    FluentBooking booking data.
-	 * @param string $new_status New booking status.
+	 * @param mixed $booking FluentBooking Booking model (or array).
 	 * @return void
 	 */
-	public function on_booking_status_changed( array $booking, string $new_status ): void {
+	public function on_booking_cancelled( $booking ): void {
 		if ( ! $this->should_sync( 'sync_bookings' ) ) {
 			return;
 		}
 
-		$booking_id = (int) ( $booking['id'] ?? 0 );
+		$booking_id = $this->fluent_booking_record_id( $booking );
 		if ( $booking_id <= 0 ) {
 			return;
 		}
 
-		if ( 'cancelled' === $new_status ) {
-			$odoo_id = $this->get_mapping( 'booking', $booking_id );
-			if ( ! $odoo_id ) {
-				return;
-			}
-			Queue_Manager::push( 'fluent_booking', 'booking', 'delete', $booking_id, $odoo_id );
+		$odoo_id = $this->get_mapping( 'booking', $booking_id );
+		if ( ! $odoo_id ) {
 			return;
 		}
 
-		$odoo_id = $this->get_mapping( 'booking', $booking_id );
-		if ( $odoo_id ) {
-			Queue_Manager::push( 'fluent_booking', 'booking', 'update', $booking_id, $odoo_id );
-		}
+		Queue_Manager::push( 'fluent_booking', 'booking', 'delete', $booking_id, $odoo_id );
 	}
 
 	/**
-	 * Handle calendar (service) created or updated.
+	 * Handle a calendar event (service) created or updated.
 	 *
-	 * @param array $calendar FluentBooking calendar data.
+	 * @param mixed $event FluentBooking CalendarSlot model (or array).
 	 * @return void
 	 */
-	public function on_calendar_saved( array $calendar ): void {
-		$calendar_id = (int) ( $calendar['id'] ?? 0 );
-		if ( $calendar_id <= 0 ) {
+	public function on_event_saved( $event ): void {
+		$event_id = $this->fluent_booking_record_id( $event );
+		if ( $event_id <= 0 ) {
 			return;
 		}
 
-		$this->push_entity( 'service', 'sync_services', $calendar_id );
+		$this->push_entity( 'service', 'sync_services', $event_id );
+	}
+
+	/**
+	 * Read the ID of a FluentBooking record passed to a hook.
+	 *
+	 * @param mixed $record Model object, array or scalar ID.
+	 * @return int Record ID, or 0 when unavailable.
+	 */
+	private function fluent_booking_record_id( $record ): int {
+		if ( is_array( $record ) ) {
+			return (int) ( $record['id'] ?? 0 );
+		}
+
+		if ( is_object( $record ) ) {
+			return (int) ( $record->id ?? 0 );
+		}
+
+		return is_numeric( $record ) ? (int) $record : 0;
 	}
 }
