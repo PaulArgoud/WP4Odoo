@@ -416,7 +416,7 @@ WordPress For Odoo/
 ├── templates/
 │   └── customer-portal.php           #   Customer portal HTML template (orders/invoices tabs)
 │
-├── tests/                             # 5410 unit tests (8141 assertions) + 45 integration tests (wp-env)
+├── tests/                             # 5414 unit tests (8147 assertions) + 45 integration tests (wp-env)
 │   ├── bootstrap.php                 #   Unit test bootstrap: constants, stub loading, plugin class requires
 │   ├── bootstrap-integration.php     #   Integration test bootstrap: loads WP test framework (wp-env)
 │   ├── stubs/
@@ -924,6 +924,8 @@ POST /jsonrpc           POST /xmlrpc/2/common (auth)
 `Odoo_Client::call()` includes automatic session re-authentication: if an API call throws a session-related error (HTTP 403, "session expired", "access denied"), the client resets the transport, re-authenticates, and retries the call once. This handles long-running batch processing where Odoo sessions may expire mid-sync.
 
 The protocol is configurable in options (`wp4odoo_connection.protocol`). JSON-RPC is the default for Odoo 17+.
+
+**Compatibility status:** both transports were verified against live Odoo 19.0 and 20.0 servers (authentication, CRUD, `search_read`, `fields_get`, sale order confirmation, invoice posting, modern context-based translations) and the integration suite against WordPress 7.1.4. Both transports target `/jsonrpc` and `/xmlrpc/2`, which Odoo has deprecated in favour of `/json/2` (bearer API key, `POST /json/2/<model>/<method>`); they still work on Odoo 20, and a future `Odoo_Json2` transport implementing `Transport` would be the migration path. On Odoo 18+, `Stock_Handler::push_via_quant()` requires the target product to be storable (`is_storable`): Odoo rejects quants for non-storable products.
 
 **Server version detection:** Both transports capture the Odoo server version during authentication. JSON-RPC extracts `server_version` from the `/web/session/authenticate` response. XML-RPC calls `version()` on `/xmlrpc/2/common` after auth (non-blocking try/catch). The version is stored in `Odoo_Transport_Base::$server_version` and accessible via `get_server_version(): ?string`. On successful connection test, the AJAX handler persists the version in `wp4odoo_odoo_version` option for use in compatibility reporting and diagnostics.
 

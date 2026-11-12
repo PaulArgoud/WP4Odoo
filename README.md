@@ -36,7 +36,7 @@ PHP 8.2+, MySQL 8.0+ / MariaDB 10.5+, WordPress 6.0+, Odoo 17+ (JSON-RPC) or 14+
 
 | Versions | On-Premise | Odoo.sh   | Online  | One App Free |
 |:---------|:----------:|:---------:|:-------:|:------------:|
-| 17 – 19  | ✅ Full³   | ✅ Full³ | ✅ Full | ⚠️ Partial²  |
+| 17 – 20  | ✅ Full³   | ✅ Full³ | ✅ Full | ⚠️ Partial²  |
 | 14 – 16  | ✅ Full³   | ✅ Full³ | N/A¹    | N/A¹         |
 | < 14     | ❌         | ❌       | N/A¹    | N/A¹         |
 
@@ -46,9 +46,13 @@ PHP 8.2+, MySQL 8.0+ / MariaDB 10.5+, WordPress 6.0+, Odoo 17+ (JSON-RPC) or 14+
 >
 > ³ Works with both Odoo **Community** (free) and **Enterprise** editions — all required apps are included in Community.
 
-- **Odoo 17+** — uses JSON-RPC 2.0 (default, recommended)
+- **Odoo 17+** — uses JSON-RPC 2.0 (default, recommended). Verified against live Odoo 19.0 and 20.0 instances (core flows: Contacts, CRM, Sales, Invoicing, Inventory) over both JSON-RPC and XML-RPC
 - **Odoo 14 – 16** — uses XML-RPC (legacy transport, select in plugin settings)
 - **Odoo < 14** — not supported (external API incompatibilities)
+
+WordPress compatibility: tested up to **WordPress 7.1** (PHP 8.3, WooCommerce 11.x).
+
+> **Note on Odoo's external API:** Odoo has deprecated the `/jsonrpc` and `/xmlrpc` endpoints in favour of `/json/2`, which the plugin does not use yet. The deprecated endpoints still work on Odoo 20. For products tracked in stock on Odoo 18+, the Odoo product must have *Track Inventory* enabled (`is_storable`) for stock pushes to succeed.
 
 All hosting types expose the standard Odoo external API used by the plugin. No custom Odoo modules are required — only the standard apps listed in the module tables below.
 

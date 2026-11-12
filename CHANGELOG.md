@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+- **WordPress 7.1 compatibility** — `Tested up to` raised from 6.7 to 7.1 in `readme.txt` after running the unit suite (5414 tests) and the 45 integration tests on WordPress 7.1.4 (PHP 8.3, WooCommerce 11.3)
+- **Odoo 19 / 20 verification** — Authentication, CRUD, search, `fields_get`, sale order confirmation, invoice posting and context-based translation writes confirmed against live Odoo 19.0 and 20.0 servers over both JSON-RPC and XML-RPC. README compatibility table now lists Odoo 17 – 20
+
+### Documentation
+- Noted that Odoo has deprecated `/jsonrpc` and `/xmlrpc` in favour of `/json/2` (still functional on Odoo 20; a `/json/2` transport is not implemented yet)
+- Noted that stock pushes on Odoo 18+ require the Odoo product to be storable (`is_storable`)
+
 ## [3.9.2] - 2026-06-11
 
 ### Added
