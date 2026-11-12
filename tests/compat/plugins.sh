@@ -17,7 +17,7 @@ while read -r mod slug; do
 		wp plugin is-installed "$slug" 2>/dev/null || wp plugin install "$slug" >/dev/null 2>&1
 		# An activation failure is not fatal here: check-plugin.php then reports the
 		# module as not detected, which is a failure unless listed in known-issues.php.
-		wp plugin activate "$slug" >/dev/null 2>&1 || echo "note: $slug could not be activated"
+		act=$(wp plugin activate "$slug" 2>&1) || echo "note: $slug could not be activated: $(echo "$act" | tail -1)"
 		ver=$(wp plugin get "$slug" --field=version 2>/dev/null)
 	else
 		ver=$(wp plugin get woocommerce --field=version 2>/dev/null)
@@ -25,7 +25,10 @@ while read -r mod slug; do
 	out=$(wp eval-file "$DIR/check-plugin.php" "$mod" 2>&1 | grep -E '^\[(PASS|FAIL|KNOWN)\]|Fatal error' | head -3)
 	[ -z "$out" ] && out="[FAIL] $mod — no result (fatal error while loading the module?)"
 	echo "$out  <- $slug $ver"
-	echo "$out" | grep -q '^\[FAIL\]\|Fatal error' && fail=$((fail + 1))
+	if echo "$out" | grep -q '^\[FAIL\]\|Fatal error'; then
+		fail=$((fail + 1))
+		echo "  diagnostics: active plugins = $(wp plugin list --status=active --field=name 2>/dev/null | tr '\n' ' ')"
+	fi
 	[ "$slug" != "woocommerce" ] && wp plugin deactivate "$slug" >/dev/null 2>&1
 done < "$DIR/plugins.txt"
 
