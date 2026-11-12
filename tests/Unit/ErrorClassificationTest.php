@@ -146,4 +146,9 @@ class ErrorClassificationTest extends TestCase {
 		$e = new \RuntimeException( 'ACCESSERROR: NO RIGHTS', 200 );
 		$this->assertSame( Error_Type::Permanent, ErrorClassificationTestModule::test_classify( $e ) );
 	}
+
+	public function test_invalid_field_is_permanent_even_in_an_http_500(): void {
+		$e = new \RuntimeException( "Odoo RPC error: Invalid field 'nope' in 'res.partner' (builtins.ValueError)", 500 );
+		$this->assertSame( Error_Type::Permanent, ErrorClassificationTestModule::test_classify( $e ) );
+	}
 }

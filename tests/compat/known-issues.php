@@ -39,12 +39,11 @@ return [
 	'fields_absent' => [
 		'res.partner.company_name'                                  => 'Removed in Odoo 20.',
 		'crm.lead.mobile'                                           => 'Removed from crm.lead in Odoo 17+.',
-		'hr.job.state'                                              => 'Removed from hr.job; the publish/recruit status mapping is lost.',
+		'hr.job.state'                                              => 'Removed from hr.job; the module now expresses the status through no_of_recruitment and drops state.',
 		'product.product.membership'                                => 'Belongs to the Members app, removed in Odoo 18+.',
 		'stock.move.name'                                           => 'Removed from stock.move in recent Odoo versions.',
 		'sale.order.is_rental'                                      => 'Odoo Rental app (Enterprise).',
 		'sale.order.pickup_date'                                    => 'Odoo Rental app (Enterprise).',
 		'sale.order.return_date'                                    => 'Odoo Rental app (Enterprise).',
-		'product.template.attribute.line.attribute_line_ids'        => 'WC Add-ons maps a product.template field onto the attribute-line model; to be reviewed.',
 	],
 ];

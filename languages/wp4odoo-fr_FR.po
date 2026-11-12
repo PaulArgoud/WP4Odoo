@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: WP4Odoo 3.9.2\n"
 "Report-Msgid-Bugs-To: support@avalia.io\n"
-"POT-Creation-Date: 2026-11-12 04:38+0100\n"
+"POT-Creation-Date: 2026-11-12 05:04+0100\n"
 "PO-Revision-Date: 2026-02-15 12:00+0100\n"
 "Last-Translator: \n"
 "Language-Team: French\n"
@@ -53,7 +53,8 @@ msgstr "%1$d tâche(s) supprimée(s) (plus de %2$d jours)."
 #: includes/trait-cli-system-commands.php:83
 #, php-format
 msgid "%1$d pending, %2$d processing, %3$d failed, success rate %4$.1f%%"
-msgstr "%1$d en attente, %2$d en cours, %3$d en échec, taux de réussite %4$.1f%%"
+msgstr ""
+"%1$d en attente, %2$d en cours, %3$d en échec, taux de réussite %4$.1f%%"
 
 #: includes/admin/class-bulk-handler.php:126
 #, php-format
@@ -70,7 +71,7 @@ msgstr ""
 "%1$d produit(s) mis en file d'attente pour l'import (%2$d trouvés dans "
 "Odoo). Opération expirée — relancez pour continuer."
 
-#: includes/trait-dependency-helpers.php:172
+#: includes/trait-dependency-helpers.php:211
 #, php-format
 msgid ""
 "%1$s %2$s has not been tested (tested up to %3$s). Incompatibilities may "
@@ -79,12 +80,12 @@ msgstr ""
 "%1$s %2$s n'a pas été testé (testé jusqu'à %3$s). Des incompatibilités "
 "peuvent survenir."
 
-#: includes/trait-dependency-helpers.php:149
+#: includes/trait-dependency-helpers.php:188
 #, php-format
 msgid "%1$s %2$s is not supported (minimum required: %3$s)."
 msgstr "%1$s %2$s n'est pas supporté (minimum requis : %3$s)."
 
-#: includes/trait-dependency-helpers.php:189
+#: includes/trait-dependency-helpers.php:228
 #, php-format
 msgid ""
 "%1$s database tables missing: %2$s. The plugin may not be fully installed."
@@ -127,7 +128,7 @@ msgstr "%d tâche(s) échouée(s) relancée(s)."
 msgid "%d job(s) deleted."
 msgstr "%d job(s) supprimé(s)."
 
-#: includes/class-cli.php:264
+#: includes/class-cli.php:272
 #, php-format
 msgid "%d job(s) processed."
 msgstr "%d tâche(s) traitée(s)."
@@ -137,7 +138,7 @@ msgstr "%d tâche(s) traitée(s)."
 msgid "%d job(s) retried."
 msgstr "%d job(s) relancé(s)."
 
-#: includes/class-cli.php:261
+#: includes/class-cli.php:269
 #, php-format
 msgid "%d job(s) would be processed (dry-run)."
 msgstr "%d tâche(s) serai(en)t traitée(s) (simulation)."
@@ -148,7 +149,7 @@ msgstr "%d tâche(s) serai(en)t traitée(s) (simulation)."
 msgid "%d log entry(ies) deleted."
 msgstr "%d entrée(s) de journal supprimée(s)."
 
-#: includes/class-cli.php:412 includes/class-cli.php:518
+#: includes/class-cli.php:420 includes/class-cli.php:526
 #, php-format
 msgid "%d orphaned mapping(s) removed."
 msgstr "%d correspondance(s) orpheline(s) supprimée(s)."
@@ -186,7 +187,7 @@ msgstr "%s n'est pas actif."
 msgid "%s item(s)"
 msgstr "%s élément(s)"
 
-#: includes/trait-dependency-helpers.php:128
+#: includes/trait-dependency-helpers.php:167
 #, php-format
 msgid "%s must be installed and activated to use this module."
 msgstr "%s doit être installé et activé pour utiliser ce module."
@@ -223,7 +224,7 @@ msgstr "API"
 msgid "API Key"
 msgstr "Clé API"
 
-#: admin/views/tab-connection.php:129
+#: admin/views/tab-connection.php:132
 msgid ""
 "API keys are encrypted at rest. For multi-environment or staging setups, "
 "define WP4ODOO_ENCRYPTION_KEY in wp-config.php to ensure keys remain "
@@ -246,7 +247,7 @@ msgstr "Action"
 msgid "Actions"
 msgstr "Actions"
 
-#: admin/views/tab-connection.php:247
+#: admin/views/tab-connection.php:250
 msgid ""
 "Activate the developer mode, then go to Settings > Technical > Automation > "
 "Automated Actions."
@@ -274,7 +275,7 @@ msgstr "Ajouter une commande"
 msgid "Add New Task"
 msgstr "Ajouter une tâche"
 
-#: admin/views/tab-connection.php:238
+#: admin/views/tab-connection.php:241
 #, php-format
 msgid "Add a custom header %s with the token shown above."
 msgstr "Ajoutez un en-tête personnalisé %s avec le jeton ci-dessus."
@@ -295,7 +296,7 @@ msgstr "AffiliateWP"
 msgid "AffiliateWP module enabled but AffiliateWP is not active."
 msgstr "Module AffiliateWP activé mais AffiliateWP n'est pas actif."
 
-#: includes/class-cli.php:559
+#: includes/class-cli.php:567
 #, php-format
 msgid "All caches flushed (%d schema transient(s) deleted)."
 msgstr "Tous les caches vidés (%d transient(s) de schéma supprimé(s))."
@@ -560,7 +561,7 @@ msgstr "Awesome Support"
 msgid "Awesome Support module enabled but Awesome Support is not active."
 msgstr "Module Awesome Support activé mais Awesome Support n'est pas actif."
 
-#: includes/modules/class-wc-addons-module.php:145
+#: includes/modules/class-wc-addons-module.php:144
 msgid "BOM components (requires Manufacturing)"
 msgstr "Composants de nomenclature (nécessite Fabrication)"
 
@@ -569,7 +570,7 @@ msgstr "Composants de nomenclature (nécessite Fabrication)"
 msgid "BOM type"
 msgstr "Type de nomenclature"
 
-#: includes/class-cli.php:231
+#: includes/class-cli.php:239
 msgid ""
 "Back up your WordPress and Odoo databases before running sync operations."
 msgstr ""
@@ -662,7 +663,7 @@ msgstr "Filtre par catégorie"
 msgid "Charitable"
 msgstr "Charitable"
 
-#: includes/class-cli.php:395
+#: includes/class-cli.php:403
 #, php-format
 msgid "Checked: %d mapping(s)"
 msgstr "Vérifiées : %d correspondance(s)"
@@ -680,7 +681,7 @@ msgstr "Disjoncteur réinitialisé pour le module « %s »."
 msgid "Clean up (> 7 days)"
 msgstr "Nettoyer (> 7 jours)"
 
-#: includes/class-cli.php:492
+#: includes/class-cli.php:500
 #, php-format
 msgid "Cleaning up orphaned mappings (%s)..."
 msgstr "Nettoyage des correspondances orphelines (%s)…"
@@ -714,7 +715,7 @@ msgstr "Commission #%1$d — %2$s"
 msgid "Company"
 msgstr "Société"
 
-#: includes/modules/class-job-manager-handler.php:153
+#: includes/modules/class-job-manager-handler.php:154
 #, php-format
 msgid "Company: %s"
 msgstr "Entreprise : %s"
@@ -728,7 +729,7 @@ msgstr "Avertissements de compatibilité"
 msgid "Completed"
 msgstr "Terminé"
 
-#: admin/views/tab-connection.php:202
+#: admin/views/tab-connection.php:205
 #, php-format
 msgid "Configure this token in Odoo as the %s header."
 msgstr "Configurez ce token dans Odoo comme en-tête %s."
@@ -758,7 +759,7 @@ msgstr "Connexion"
 msgid "Connection failed."
 msgstr "Échec de la connexion."
 
-#: includes/class-cli.php:179
+#: includes/class-cli.php:187
 #, php-format
 msgid "Connection failed: %s"
 msgstr "Échec de la connexion : %s"
@@ -776,7 +777,7 @@ msgstr "Connexion réussie !"
 msgid "Connection successful! UID: %d"
 msgstr "Connexion réussie ! UID : %d"
 
-#: includes/api/class-odoo-auth.php:269
+#: includes/api/class-odoo-auth.php:318
 msgid "Connection successful."
 msgstr "Connexion réussie."
 
@@ -819,7 +820,7 @@ msgstr "Cuisson : %smin"
 msgid "Copied!"
 msgstr "Copié !"
 
-#: admin/views/tab-connection.php:196
+#: admin/views/tab-connection.php:199
 msgid "Copy"
 msgstr "Copier"
 
@@ -889,7 +890,7 @@ msgstr "Créer des leads Odoo depuis les soumissions Ninja Forms."
 msgid "Create Odoo leads from WPForms submissions."
 msgstr "Créer des leads Odoo à partir des soumissions WPForms."
 
-#: admin/views/tab-connection.php:224
+#: admin/views/tab-connection.php:227
 msgid ""
 "Create a new webhook for each model you want to sync (e.g. res.partner, "
 "sale.order)."
@@ -897,7 +898,7 @@ msgstr ""
 "Créez un nouveau webhook pour chaque modèle à synchroniser (par ex. "
 "res.partner, sale.order)."
 
-#: admin/views/tab-connection.php:248
+#: admin/views/tab-connection.php:251
 msgid "Create an action for each model (e.g. res.partner)."
 msgstr "Créez une action pour chaque modèle (par ex. res.partner)."
 
@@ -1123,7 +1124,7 @@ msgid "Entity type \"%1$s\" is not registered in module \"%2$s\"."
 msgstr ""
 "Le type d'entité « %1$s » n'est pas enregistré dans le module « %2$s »."
 
-#: includes/class-cli.php:357
+#: includes/class-cli.php:365
 #, php-format
 msgid "Entity type \"%1$s\" not found in module \"%2$s\". Available: %3$s"
 msgstr ""
@@ -1260,7 +1261,7 @@ msgstr "Forminator : %s"
 msgid "Forms"
 msgstr "Formulaires"
 
-#: includes/class-cli.php:501
+#: includes/class-cli.php:509
 #, php-format
 msgid "Found %d orphaned mapping(s):"
 msgstr "%d correspondance(s) orpheline(s) trouvée(s) :"
@@ -1285,7 +1286,9 @@ msgstr "Module GamiPress activé mais GamiPress n'est pas actif."
 #: includes/trait-cli-config-commands.php:154
 msgid ""
 "Generate a new webhook token? Odoo automated actions must be updated with it."
-msgstr "Générer un nouveau jeton de webhook ? Les actions automatisées d'Odoo devront être mises à jour avec celui-ci."
+msgstr ""
+"Générer un nouveau jeton de webhook ? Les actions automatisées d'Odoo "
+"devront être mises à jour avec celui-ci."
 
 #: admin/views/tab-connection.php:19
 msgid "Getting Started"
@@ -1315,7 +1318,7 @@ msgstr ""
 "Allez dans Paramètres > Activez le mode développeur (depuis la page des "
 "paramètres généraux)."
 
-#: admin/views/tab-connection.php:223
+#: admin/views/tab-connection.php:226
 msgid "Go to Settings > Technical > Automation > Webhooks."
 msgstr "Allez dans Paramètres > Technique > Automatisation > Webhooks."
 
@@ -1383,7 +1386,7 @@ msgstr ""
 "S'intégrer à YITH WooCommerce Return & Warranty pour des processus de retour "
 "améliorés."
 
-#: admin/views/tab-connection.php:219
+#: admin/views/tab-connection.php:222
 msgid "How to configure webhooks in Odoo"
 msgstr "Comment configurer les webhooks dans Odoo"
 
@@ -1391,7 +1394,7 @@ msgstr "Comment configurer les webhooks dans Odoo"
 msgid "How to generate an API key in Odoo"
 msgstr "Comment générer une clé API dans Odoo"
 
-#: includes/modules/class-wc-addons-module.php:142
+#: includes/modules/class-wc-addons-module.php:141
 msgid ""
 "How to represent add-ons in Odoo: as product attributes or as BOM lines."
 msgstr ""
@@ -1502,11 +1505,11 @@ msgstr "Facture %s"
 msgid "Invoices"
 msgstr "Factures"
 
-#: admin/views/network-settings.php:92 admin/views/tab-connection.php:147
+#: admin/views/network-settings.php:92 admin/views/tab-connection.php:150
 msgid "JSON-2 (Odoo 19+, API key required)"
 msgstr "JSON-2 (Odoo 19+, clé API requise)"
 
-#: admin/views/network-settings.php:86 admin/views/tab-connection.php:141
+#: admin/views/network-settings.php:86 admin/views/tab-connection.php:144
 msgid "JSON-RPC (Odoo 17+)"
 msgstr "JSON-RPC (Odoo 17+)"
 
@@ -1638,7 +1641,7 @@ msgstr "Charger depuis Odoo"
 msgid "Loading..."
 msgstr "Chargement…"
 
-#: includes/modules/class-job-manager-handler.php:149
+#: includes/modules/class-job-manager-handler.php:150
 #, php-format
 msgid "Location: %s"
 msgstr "Lieu : %s"
@@ -1787,7 +1790,7 @@ msgstr "Niveau minimum"
 msgid "Missing"
 msgstr "Manquantes"
 
-#: includes/api/class-odoo-auth.php:249
+#: includes/api/class-odoo-auth.php:298
 msgid "Missing connection credentials."
 msgstr "Identifiants de connexion manquants."
 
@@ -1840,7 +1843,7 @@ msgstr "Module « %s » activé."
 msgid "Module \"%s\" not found or not registered."
 msgstr "Module « %s » introuvable ou non enregistré."
 
-#: includes/class-cli.php:348 includes/class-webhook-handler.php:356
+#: includes/class-cli.php:356 includes/class-webhook-handler.php:356
 #, php-format
 msgid "Module \"%s\" not found."
 msgstr "Module « %s » introuvable."
@@ -1957,11 +1960,11 @@ msgstr "Aucune commande trouvée dans la corbeille."
 msgid "No orders found."
 msgstr "Aucune commande trouvée."
 
-#: includes/class-cli.php:498
+#: includes/class-cli.php:506
 msgid "No orphaned mappings found."
 msgstr "Aucune correspondance orpheline trouvée."
 
-#: includes/class-cli.php:416
+#: includes/class-cli.php:424
 msgid "No orphans found."
 msgstr "Aucun orphelin trouvé."
 
@@ -2013,7 +2016,9 @@ msgstr "Non planifié"
 msgid ""
 "Nothing to change. Pass at least one of: --odoo-url, --database, --username, "
 "--api-key, --protocol, --timeout, --company-id."
-msgstr "Rien à modifier. Indiquez au moins une des options : --odoo-url, --database, --username, --api-key, --protocol, --timeout, --company-id."
+msgstr ""
+"Rien à modifier. Indiquez au moins une des options : --odoo-url, --database, "
+"--username, --api-key, --protocol, --timeout, --company-id."
 
 #: admin/views/tab-queue.php:134
 msgid "Now"
@@ -2032,11 +2037,11 @@ msgstr ""
 msgid "Odoo 14-16"
 msgstr "Odoo 14-16"
 
-#: admin/views/tab-connection.php:245
+#: admin/views/tab-connection.php:248
 msgid "Odoo 14-16 (Automated Actions)"
 msgstr "Odoo 14-16 (Actions automatisées)"
 
-#: admin/views/tab-connection.php:221
+#: admin/views/tab-connection.php:224
 msgid "Odoo 17+ (native webhooks)"
 msgstr "Odoo 17+ (webhooks natifs)"
 
@@ -2044,7 +2049,7 @@ msgstr "Odoo 17+ (webhooks natifs)"
 msgid "Odoo 17+ (recommended)"
 msgstr "Odoo 17+ (recommandé)"
 
-#: admin/views/network-settings.php:122 admin/views/tab-connection.php:164
+#: admin/views/network-settings.php:122 admin/views/tab-connection.php:167
 msgid "Odoo Company ID"
 msgstr "ID de la société Odoo"
 
@@ -2140,7 +2145,7 @@ msgstr "Odoo prioritaire"
 msgid "Odoo product.pricelist ID for wholesale pricing rules."
 msgstr "ID product.pricelist Odoo pour les règles de tarification grossiste."
 
-#: admin/views/tab-connection.php:171
+#: admin/views/tab-connection.php:174
 msgid ""
 "Odoo res.company ID for multi-company setups. Leave at 0 for no company "
 "restriction."
@@ -2199,7 +2204,9 @@ msgstr "Ouvert pour : %s"
 msgid ""
 "Open: synchronization is paused after repeated failures. Run: wp wp4odoo "
 "breaker reset"
-msgstr "Ouvert : la synchronisation est suspendue après des échecs répétés. Lancez : wp wp4odoo breaker reset"
+msgstr ""
+"Ouvert : la synchronisation est suspendue après des échecs répétés. Lancez : "
+"wp wp4odoo breaker reset"
 
 #: includes/modules/class-sales-module.php:167
 #: includes/modules/class-sales-module.php:253
@@ -2227,7 +2234,7 @@ msgstr "Commandes"
 msgid "Orders per page"
 msgstr "Commandes par page"
 
-#: includes/class-cli.php:397
+#: includes/class-cli.php:405
 #, php-format
 msgid "Orphaned: %d"
 msgstr "Orphelins : %d"
@@ -2333,9 +2340,11 @@ msgstr "ID de la liste de prix"
 msgid ""
 "Process the queue with \"wp wp4odoo sync run\" (or wait for the next cron "
 "run)."
-msgstr "Traitez la file avec « wp wp4odoo sync run » (ou attendez la prochaine exécution du cron)."
+msgstr ""
+"Traitez la file avec « wp wp4odoo sync run » (ou attendez la prochaine "
+"exécution du cron)."
 
-#: includes/class-cli.php:236
+#: includes/class-cli.php:244
 msgid "Process the sync queue now?"
 msgstr "Traiter la file de synchronisation maintenant ?"
 
@@ -2344,11 +2353,11 @@ msgstr "Traiter la file de synchronisation maintenant ?"
 msgid "Processing"
 msgstr "En cours"
 
-#: includes/class-cli.php:242
+#: includes/class-cli.php:250
 msgid "Processing sync queue (dry-run mode)..."
 msgstr "Traitement de la file de synchronisation (mode simulation)…"
 
-#: includes/class-cli.php:244
+#: includes/class-cli.php:252
 msgid "Processing sync queue..."
 msgstr "Traitement de la file de synchronisation…"
 
@@ -2356,7 +2365,7 @@ msgstr "Traitement de la file de synchronisation…"
 msgid "Product"
 msgstr "Produit"
 
-#: includes/modules/class-wc-addons-module.php:144
+#: includes/modules/class-wc-addons-module.php:143
 msgid "Product attributes"
 msgstr "Attributs de produit"
 
@@ -2370,7 +2379,7 @@ msgstr "Clé meta produit identifiant un produit de location (ex. _rental)."
 msgid "Project ID"
 msgstr "ID du projet"
 
-#: admin/views/network-settings.php:81 admin/views/tab-connection.php:136
+#: admin/views/network-settings.php:81 admin/views/tab-connection.php:139
 msgid "Protocol"
 msgstr "Protocole"
 
@@ -3259,7 +3268,7 @@ msgstr ""
 msgid "Push WooCommerce membership plans to Odoo."
 msgstr "Envoyer les plans d'adhésion WooCommerce vers Odoo."
 
-#: includes/modules/class-wc-addons-module.php:137
+#: includes/modules/class-wc-addons-module.php:136
 msgid "Push WooCommerce product add-ons/options to Odoo."
 msgstr "Envoyer les options/suppléments de produits WooCommerce vers Odoo."
 
@@ -3505,7 +3514,7 @@ msgstr "Module RCP activé mais Restrict Content Pro n'est pas actif."
 msgid "Reconcile"
 msgstr "Réconciliation"
 
-#: includes/class-cli.php:376
+#: includes/class-cli.php:384
 #, php-format
 msgid "Reconciling %1$s/%2$s against Odoo model %3$s%4$s..."
 msgstr "Réconciliation de %1$s/%2$s avec le modèle Odoo %3$s%4$s…"
@@ -3584,11 +3593,11 @@ msgstr "Rôle attribué aux utilisateurs créés par l'import Odoo."
 msgid "Run \"wp wp4odoo test\" to check the connection."
 msgstr "Lancez « wp wp4odoo test » pour vérifier la connexion."
 
-#: includes/class-cli.php:414
+#: includes/class-cli.php:422
 msgid "Run with --fix to remove orphaned mappings."
 msgstr "Exécutez avec --fix pour supprimer les correspondances orphelines."
 
-#: includes/class-cli.php:515
+#: includes/class-cli.php:523
 msgid "Run without --dry-run to remove orphaned mappings."
 msgstr "Relancez sans --dry-run pour supprimer les correspondances orphelines."
 
@@ -3604,7 +3613,7 @@ msgstr "Ventes (sale_management) + Facturation (account)"
 msgid "Sales:"
 msgstr "Ventes :"
 
-#: admin/views/tab-connection.php:184 admin/views/tab-sync.php:143
+#: admin/views/tab-connection.php:187 admin/views/tab-sync.php:143
 msgid "Save"
 msgstr "Enregistrer"
 
@@ -3616,7 +3625,7 @@ msgstr "Enregistrer les paramètres réseau"
 msgid "Save settings"
 msgstr "Enregistrer les paramètres"
 
-#: includes/class-cli.php:489
+#: includes/class-cli.php:497
 #, php-format
 msgid "Scanning for orphaned mappings (%s, dry-run)..."
 msgstr "Recherche des correspondances orphelines (%s, simulation)…"
@@ -3665,7 +3674,7 @@ msgstr ""
 "Sélectionnez les langues pour importer les traductions produits depuis Odoo "
 "(nécessite WPML ou Polylang)."
 
-#: admin/views/tab-connection.php:243
+#: admin/views/tab-connection.php:246
 msgid "Select the events: Create, Update, Delete (as needed)."
 msgstr ""
 "Sélectionnez les événements : Création, Modification, Suppression (selon les "
@@ -3718,7 +3727,7 @@ msgstr "Portions : %s"
 msgid "Set active=false in Odoo instead of deleting the record."
 msgstr "Définir active=false dans Odoo au lieu de supprimer l'enregistrement."
 
-#: admin/views/tab-connection.php:229
+#: admin/views/tab-connection.php:232
 #, php-format
 msgid "Set the URL to: %s"
 msgstr "Définissez l'URL : %s"
@@ -3729,7 +3738,7 @@ msgstr ""
 "Définir la liste de prix Odoo correspondante sur les partenaires clients "
 "grossistes."
 
-#: admin/views/tab-connection.php:249
+#: admin/views/tab-connection.php:252
 msgid ""
 "Set trigger to \"On Creation & Update\" and action type to \"Execute Python "
 "Code\"."
@@ -4124,7 +4133,7 @@ msgstr "Synchroniser les plans d'adhésion"
 msgid "Sync memberships"
 msgstr "Synchroniser les adhésions"
 
-#: includes/modules/class-wc-addons-module.php:140
+#: includes/modules/class-wc-addons-module.php:139
 msgid "Sync mode"
 msgstr "Mode de synchronisation"
 
@@ -4164,7 +4173,7 @@ msgstr "Synchroniser les soldes de points"
 msgid "Sync pricelist prices"
 msgstr "Synchroniser les prix de liste"
 
-#: includes/modules/class-wc-addons-module.php:135
+#: includes/modules/class-wc-addons-module.php:134
 msgid "Sync product add-ons"
 msgstr "Synchroniser les suppléments produit"
 
@@ -4384,7 +4393,7 @@ msgstr "Module cible"
 msgid "Tax mapping"
 msgstr "Association des taxes"
 
-#: admin/views/tab-connection.php:179
+#: admin/views/tab-connection.php:182
 msgid "Test connection"
 msgstr "Tester la connexion"
 
@@ -4432,12 +4441,25 @@ msgstr ""
 msgid "The Odoo CRM team (pipeline) ID to assign stages to."
 msgstr "L'ID de l'équipe CRM Odoo (pipeline) à laquelle affecter les étapes."
 
+#: includes/modules/class-memberpress-module.php:188
+#: includes/modules/class-memberships-module.php:194
+#: includes/modules/class-pmpro-module.php:209
+#: includes/modules/class-rcp-module.php:197
+msgid ""
+"The Odoo Members app (membership.membership_line) does not exist on this "
+"Odoo server (it was removed in recent Odoo versions), so memberships cannot "
+"be synchronized to Odoo."
+msgstr "L'application Odoo Adhésions (membership.membership_line) n'existe pas sur ce serveur Odoo (elle a été supprimée dans les versions récentes d'Odoo) : les adhésions ne peuvent donc pas être synchronisées vers Odoo."
+
 #: includes/trait-cli-config-commands.php:92
 msgid ""
 "The Odoo URL must point to a public address (private IPs and localhost are "
 "refused). Pass --allow-private-url to override, e.g. for a local development "
 "server."
-msgstr "L'URL d'Odoo doit pointer vers une adresse publique (les IP privées et localhost sont refusées). Ajoutez --allow-private-url pour l'autoriser, par exemple pour un serveur de développement local."
+msgstr ""
+"L'URL d'Odoo doit pointer vers une adresse publique (les IP privées et "
+"localhost sont refusées). Ajoutez --allow-private-url pour l'autoriser, par "
+"exemple pour un serveur de développement local."
 
 #: includes/admin/class-settings-page.php:246
 msgid ""
@@ -4488,7 +4510,9 @@ msgstr ""
 msgid ""
 "The WooCommerce module is not registered (is WooCommerce active and the "
 "module enabled?)."
-msgstr "Le module WooCommerce n'est pas enregistré (WooCommerce est-il actif et le module activé ?)."
+msgstr ""
+"Le module WooCommerce n'est pas enregistré (WooCommerce est-il actif et le "
+"module activé ?)."
 
 #: includes/class-failure-notifier.php:233
 #, php-format
@@ -4529,6 +4553,13 @@ msgstr ""
 "connecté ; ils ont donc été exclus des données envoyées à Odoo. Le reste de "
 "chaque enregistrement est toujours synchronisé."
 
+#: includes/api/class-odoo-auth.php:254
+msgid ""
+"This Odoo version supports the JSON-2 API, which replaces the deprecated "
+"JSON-RPC and XML-RPC endpoints. You can switch the protocol to JSON-2 (an "
+"API key is required)."
+msgstr "Cette version d'Odoo prend en charge l'API JSON-2, qui remplace les points d'accès JSON-RPC et XML-RPC dépréciés. Vous pouvez passer le protocole en JSON-2 (une clé API est requise)."
+
 #: admin/views/network-settings.php:31
 msgid ""
 "This connection is shared across all sites in the network. Individual sites "
@@ -4539,9 +4570,10 @@ msgstr ""
 
 #: includes/trait-cli-system-commands.php:286
 msgid "This deletes ALL log entries of this site. Continue?"
-msgstr "Cette action supprime TOUTES les entrées de journal de ce site. Continuer ?"
+msgstr ""
+"Cette action supprime TOUTES les entrées de journal de ce site. Continuer ?"
 
-#: includes/trait-dependency-helpers.php:200
+#: includes/trait-dependency-helpers.php:239
 msgid ""
 "This module relies on WP-Cron polling. For reliable 5-minute intervals, set "
 "up a system cron job and define DISABLE_WP_CRON in wp-config.php."
@@ -4556,7 +4588,9 @@ msgstr "Ce réglage est un booléen : utilisez true ou false."
 
 #: includes/trait-cli-module-commands.php:237
 msgid "This setting is a list or map; edit it in the Modules tab."
-msgstr "Ce réglage est une liste ou une table de correspondance ; modifiez-le dans l'onglet Modules."
+msgstr ""
+"Ce réglage est une liste ou une table de correspondance ; modifiez-le dans "
+"l'onglet Modules."
 
 #: includes/trait-cli-module-commands.php:232
 msgid "This setting is a number."
@@ -4570,13 +4604,13 @@ msgstr ""
 "Ce site utilise la connexion réseau partagée. Configurez une connexion "
 "spécifique au site ci-dessous pour la remplacer."
 
-#: includes/class-cli.php:480
+#: includes/class-cli.php:488
 msgid "This will permanently remove orphaned entity map entries. Continue?"
 msgstr ""
 "Cela supprimera définitivement les entrées orphelines de la table de "
 "correspondances. Continuer ?"
 
-#: includes/class-cli.php:369
+#: includes/class-cli.php:377
 msgid "This will permanently remove orphaned entity mappings. Continue?"
 msgstr ""
 "Ceci supprimera définitivement les correspondances orphelines. Continuer ?"
@@ -4586,15 +4620,22 @@ msgstr ""
 msgid "Time entry"
 msgstr "Saisie de temps"
 
-#: admin/views/network-settings.php:99 admin/views/tab-connection.php:154
+#: admin/views/network-settings.php:99 admin/views/tab-connection.php:157
 msgid "Timeout (seconds)"
 msgstr "Timeout (secondes)"
+
+#: admin/views/tab-connection.php:129
+msgid ""
+"Tip: create a dedicated Odoo user for the synchronization, with only the "
+"access rights the enabled modules need, and generate the API key from that "
+"user. You can revoke it at any time without affecting a person's account."
+msgstr "Astuce : créez un utilisateur Odoo dédié à la synchronisation, avec uniquement les droits d'accès dont les modules activés ont besoin, et générez la clé API depuis cet utilisateur. Vous pourrez la révoquer à tout moment sans toucher au compte d'une personne."
 
 #: admin/views/tab-logs.php:77
 msgid "To"
 msgstr "Au"
 
-#: admin/views/tab-connection.php:192
+#: admin/views/tab-connection.php:195
 msgid "Token"
 msgstr "Token"
 
@@ -4607,7 +4648,9 @@ msgstr "Jeton : %s"
 msgid ""
 "Token: (none yet — it is generated when the REST routes are first "
 "registered, or run \"wp wp4odoo webhook rotate\")"
-msgstr "Jeton : (aucun pour l'instant — il est généré à la première inscription des routes REST, ou lancez « wp wp4odoo webhook rotate »)"
+msgstr ""
+"Jeton : (aucun pour l'instant — il est généré à la première inscription des "
+"routes REST, ou lancez « wp wp4odoo webhook rotate »)"
 
 #: includes/class-rate-limiter.php:177
 msgid "Too many requests. Please try again later."
@@ -4707,27 +4750,31 @@ msgstr ""
 msgid "Unknown setting \"%1$s\" for module \"%2$s\". Available: %3$s"
 msgstr "Réglage « %1$s » inconnu pour le module « %2$s ». Disponibles : %3$s"
 
-#: includes/class-cli.php:546
+#: includes/class-cli.php:554
 #, php-format
 msgid "Unknown subcommand: %s. Available: flush"
 msgstr "Sous-commande inconnue : %s. Disponibles : flush"
 
-#: includes/class-cli.php:588
+#: includes/class-cli.php:596
 #, php-format
 msgid ""
 "Unknown subcommand: %s. Available: list, enable, disable, info, settings, set"
-msgstr "Sous-commande inconnue : %s. Disponibles : list, enable, disable, info, settings, set"
+msgstr ""
+"Sous-commande inconnue : %s. Disponibles : list, enable, disable, info, "
+"settings, set"
 
 #: includes/trait-cli-system-commands.php:300
 #, php-format
 msgid "Unknown subcommand: %s. Available: list, purge"
 msgstr "Sous-commande inconnue : %s. Disponibles : list, purge"
 
-#: includes/class-cli.php:225
+#: includes/class-cli.php:233
 #, php-format
 msgid ""
 "Unknown subcommand: %s. Available: run, export-products, import-products"
-msgstr "Sous-commande inconnue : %s. Disponibles : run, export-products, import-products"
+msgstr ""
+"Sous-commande inconnue : %s. Disponibles : run, export-products, import-"
+"products"
 
 #: includes/trait-cli-config-commands.php:163
 #, php-format
@@ -4739,14 +4786,14 @@ msgstr "Sous-commande inconnue : %s. Disponibles : show, rotate"
 msgid "Unknown subcommand: %s. Available: show, set"
 msgstr "Sous-commande inconnue : %s. Disponibles : show, set"
 
-#: includes/class-cli.php:297
+#: includes/class-cli.php:305
 #, php-format
 msgid "Unknown subcommand: %s. Available: stats, list, retry, cleanup, cancel"
 msgstr ""
 "Sous-commande inconnue : %s. Disponibles : stats, list, retry, cleanup, "
 "cancel"
 
-#: includes/class-cli.php:642
+#: includes/class-cli.php:650
 #, php-format
 msgid "Unknown subcommand: %s. Available: status, repair"
 msgstr "Sous-commande inconnue : %s. Disponibles : status, repair"
@@ -4756,7 +4803,7 @@ msgstr "Sous-commande inconnue : %s. Disponibles : status, repair"
 msgid "Unknown subcommand: %s. Available: status, reset"
 msgstr "Sous-commande inconnue : %s. Disponibles : status, reset"
 
-#: includes/class-cli.php:469
+#: includes/class-cli.php:477
 #, php-format
 msgid "Unknown subcommand: %s. Usage: wp wp4odoo cleanup orphans"
 msgstr "Sous-commande inconnue : %s. Utilisation : wp wp4odoo cleanup orphans"
@@ -4773,11 +4820,11 @@ msgstr ""
 "Mettre à jour les événements de calendrier FluentBooking depuis les produits "
 "de service Odoo (les événements ne sont pas créés depuis Odoo)."
 
-#: includes/class-cli.php:341
+#: includes/class-cli.php:349
 msgid "Usage: wp wp4odoo reconcile <module> <entity_type> [--fix]"
 msgstr "Utilisation : wp wp4odoo reconcile <module> <entity_type> [--fix]"
 
-#: admin/views/tab-connection.php:251
+#: admin/views/tab-connection.php:254
 msgid "Use the following Python code template:"
 msgstr "Utilisez le modèle de code Python suivant :"
 
@@ -4806,7 +4853,7 @@ msgstr "Voir la tâche"
 msgid "WC #%1$d (sub-order of #%2$d)"
 msgstr "WC #%1$d (sous-commande de #%2$d)"
 
-#: includes/modules/class-wc-addons-module.php:108
+#: includes/modules/class-wc-addons-module.php:107
 msgid "WC Add-Ons module enabled but no compatible add-on plugin is active."
 msgstr ""
 "Le module WC Add-Ons est activé mais aucun plugin d'options compatible n'est "
@@ -5023,11 +5070,11 @@ msgstr "WPRM"
 msgid "Warning"
 msgstr "Avertissement"
 
-#: admin/views/tab-connection.php:189
+#: admin/views/tab-connection.php:192
 msgid "Webhook"
 msgstr "Webhook"
 
-#: admin/views/tab-connection.php:210
+#: admin/views/tab-connection.php:213
 msgid "Webhook URL"
 msgstr "URL du webhook"
 
@@ -5040,7 +5087,7 @@ msgstr "URL du webhook : %s"
 msgid "Webhook token not configured."
 msgstr "Token de webhook non configuré."
 
-#: includes/admin/trait-ajax-setup-handlers.php:119
+#: includes/admin/trait-ajax-setup-handlers.php:124
 msgid "Webhooks marked as configured."
 msgstr "Webhooks marqués comme configurés."
 
@@ -5086,7 +5133,7 @@ msgstr "WordPress prioritaire"
 msgid "WordPress → Odoo"
 msgstr "WordPress → Odoo"
 
-#: admin/views/network-settings.php:89 admin/views/tab-connection.php:144
+#: admin/views/network-settings.php:89 admin/views/tab-connection.php:147
 msgid "XML-RPC (Odoo 14+)"
 msgstr "XML-RPC (Odoo 14+)"
 
@@ -5138,7 +5185,7 @@ msgstr "[WP4Odoo] Disjoncteur activé"
 msgid "[WP4Odoo] Module circuit breaker opened: %s"
 msgstr "[WP4Odoo] Disjoncteur de module activé : %s"
 
-#: includes/class-cli.php:489 includes/class-cli.php:492
+#: includes/class-cli.php:497 includes/class-cli.php:500
 msgid "all modules"
 msgstr "tous les modules"
 

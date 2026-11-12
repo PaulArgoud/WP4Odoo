@@ -202,7 +202,12 @@ class PMPro_Module extends Membership_Module_Base {
 	 * @return array{available: bool, notices: array<array{type: string, message: string}>}
 	 */
 	public function get_dependency_status(): array {
-		return $this->check_dependency( static::detect(), 'Paid Memberships Pro' );
+		return $this->warn_if_odoo_model_missing(
+			$this->check_dependency( static::detect(), 'Paid Memberships Pro' ),
+			'membership.membership_line',
+			'wp4odoo_has_membership_line',
+			__( 'The Odoo Members app (membership.membership_line) does not exist on this Odoo server (it was removed in recent Odoo versions), so memberships cannot be synchronized to Odoo.', 'wp4odoo' )
+		);
 	}
 
 	/**

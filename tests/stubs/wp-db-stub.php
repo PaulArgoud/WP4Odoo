@@ -18,6 +18,7 @@ class WP_DB_Stub {
 
 	public string $prefix = 'wp_';
 	public string $posts = 'wp_posts';
+	public string $options = 'wp_options';
 	public int $insert_id = 0;
 	public string $last_error = '';
 

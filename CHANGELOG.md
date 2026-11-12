@@ -10,10 +10,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - **WP-CLI: new commands** — `health` (one row per check: connection, database, queue, circuit breakers, cron, compatibility, skipped fields; `--format`, exits 1 on error or, with `--strict`, on warning — usable for monitoring), `db status|repair`, `breaker status|reset [<module>]`, `logs list|purge` (filters, pagination, `--all`), `connection show|set` (`--odoo-url`, since `--url` is WP-CLI's own global option; `--database`, `--username`, `--api-key`, `--protocol`, `--timeout`, `--company-id`, `--test`; the API key is stored encrypted, never printed and kept when omitted; private URLs are refused unless `--allow-private-url`), `webhook show|rotate`, `sync export-products|import-products`, and `module info|settings|set`. The CLI now covers every operation of the admin UI, so a site can be provisioned and operated headlessly
 
+- **JSON-2 suggestion** — The connection test (admin and `wp wp4odoo test`) suggests switching to JSON-2 when the Odoo server is version 19 or later and another protocol is selected, and the Connection tab recommends a dedicated Odoo user with minimal access rights for the API key
+- **Members app warning** — The MemberPress, Paid Memberships Pro, Restrict Content Pro and WooCommerce Memberships modules show a warning when the Odoo Members app (`membership.membership_line`) does not exist on the server, instead of failing silently on every membership push. The module stays available because its other entities (plans, payments) still work
+
 ### Changed
-- **Translations** — The new CLI messages are translated in French and Spanish (1074 strings)
+- **Translations** — New CLI, hint and warning messages are translated in French and Spanish (1077 strings)
+- **Schema cache follows the Odoo version** — A connection test that reports a different Odoo version than the stored one now flushes the cached model schemas (previously up to four hours of decisions based on the old version)
 
 ### Fixed
+- **API key erased by `Odoo_Auth::save_credentials()`** — Saving credentials without an API key replaced the stored key with an empty one; it is now kept
+- **"Invalid field" errors were retried** — Odoo reports them as HTTP 500, which was classified as transient; they are now permanent errors
+- **Job Manager status on recent Odoo** — `hr.job.state` no longer exists, so every pulled job became "expired" and the status was lost on push. The status is now carried by `no_of_recruitment` (recruiting when above zero), and pulled jobs without `state` derive their status from it
+- **WC Product Add-Ons (attribute mode)** — The module sent `attribute_line_ids` to the `product.template.attribute.line` model (which has no such field) with nested objects instead of IDs, so it could never work. It now finds or creates the `product.attribute` and `product.attribute.value` records and writes the attribute lines and extra prices on the product template, idempotently; verified on Odoo 19 and 20. The BOM mode is unchanged and still needs its components mapped (its lines have no product)
+- **Wrong product template resolved (Add-Ons, Bundles/Composites BOM, Jeero)** — These modules read a `product.product` using the ID of the mapped WooCommerce product, which is a `product.template` ID, so they could pick an unrelated record or fail. The ID is now used as the template when such a template exists
 - **WP-CLI `sync run` and `cleanup orphans` failed** with "Too many positional arguments" because their docblock synopsis did not declare the subcommand argument (WP-CLI validates against it). A unit test now checks every command that reads positional arguments declares them
 - **`uninstall.php` left data behind** — It now also removes the posts of the Field Service CPT, the meta the plugin added to other content (`_wp4odoo_*` on posts, users, terms and HPOS orders), site transients, persistent object-cache entries, and — on multisite — cleans every site plus the network options (shared connection, site → company mapping). Covered by an integration test that runs the real file and checks that unrelated data is kept
 

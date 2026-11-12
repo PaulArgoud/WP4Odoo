@@ -107,6 +107,45 @@ trait Dependency_Helpers {
 	}
 
 	/**
+	 * Add a warning when an Odoo model the module relies on does not exist on the server.
+	 *
+	 * Used for Odoo apps that were removed in recent versions (e.g. Members). The module
+	 * stays available (its other entities still work); the notice tells the administrator
+	 * what will not be synchronized. Nothing is reported while the answer is unknown (no
+	 * connection configured, Odoo unreachable), and only a definite answer is cached.
+	 *
+	 * @param array{available: bool, notices: array<array{type: string, message: string}>} $status        Status from check_dependency().
+	 * @param string                                                                      $model         Odoo model to probe.
+	 * @param string                                                                      $transient_key Transient caching the answer for an hour.
+	 * @param string                                                                      $message       Translated warning shown when the model is missing.
+	 * @return array{available: bool, notices: array<array{type: string, message: string}>}
+	 */
+	protected function warn_if_odoo_model_missing( array $status, string $model, string $transient_key, string $message ): array {
+		if ( ! $status['available'] || '' === API\Odoo_Auth::get_credentials()['url'] ) {
+			return $status;
+		}
+
+		$cached = get_transient( $transient_key );
+		if ( false === $cached ) {
+			try {
+				$cached = $this->client()->search_count( Odoo_Model::IrModel->value, [ [ 'model', '=', $model ] ] ) > 0 ? 1 : 0;
+				set_transient( $transient_key, $cached, HOUR_IN_SECONDS );
+			} catch ( \Throwable $e ) {
+				return $status; // Unknown: do not warn.
+			}
+		}
+
+		if ( ! $cached ) {
+			$status['notices'][] = [
+				'type'    => 'warning',
+				'message' => $message,
+			];
+		}
+
+		return $status;
+	}
+
+	/**
 	 * Check whether an external plugin dependency is available.
 	 *
 	 * Helper for get_dependency_status() — returns a standard

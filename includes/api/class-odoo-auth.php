@@ -4,6 +4,7 @@ declare( strict_types=1 );
 namespace WP4Odoo\API;
 
 use WP4Odoo\Logger;
+use WP4Odoo\Schema_Cache;
 use WP4Odoo\Settings_Repository;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -198,11 +199,59 @@ class Odoo_Auth {
 
 		if ( ! empty( $credentials['api_key'] ) ) {
 			$sanitized['api_key'] = self::encrypt( $credentials['api_key'] );
+		} else {
+			// No key supplied: keep the stored (already encrypted) one instead of erasing it.
+			$stored = get_option( Settings_Repository::OPT_CONNECTION, [] );
+			if ( is_array( $stored ) && ! empty( $stored['api_key'] ) ) {
+				$sanitized['api_key'] = (string) $stored['api_key'];
+			}
 		}
 
 		self::flush_credentials_cache();
 
 		return update_option( Settings_Repository::OPT_CONNECTION, $sanitized );
+	}
+
+	/**
+	 * Remember the Odoo server version reported by a connection test.
+	 *
+	 * When the version changed, the cached model schemas describe the previous
+	 * Odoo version (fields added, removed or renamed), so they are flushed.
+	 *
+	 * @param string $version Odoo server version string (e.g. "19.0+e").
+	 * @return bool True when the stored version changed.
+	 */
+	public static function remember_server_version( string $version ): bool {
+		$version = sanitize_text_field( $version );
+		if ( '' === $version ) {
+			return false;
+		}
+
+		$previous = (string) get_option( 'wp4odoo_odoo_version', '' );
+		update_option( 'wp4odoo_odoo_version', $version, false );
+
+		if ( $version === $previous ) {
+			return false;
+		}
+
+		Schema_Cache::flush_all();
+
+		return true;
+	}
+
+	/**
+	 * Suggest the JSON-2 protocol when the Odoo server supports it.
+	 *
+	 * @param string $version  Odoo server version string.
+	 * @param string $protocol Protocol currently selected.
+	 * @return string Translated hint, or an empty string when there is nothing to suggest.
+	 */
+	public static function protocol_hint( string $version, string $protocol ): string {
+		if ( 'json2' === $protocol || (int) $version < 19 ) {
+			return '';
+		}
+
+		return __( 'This Odoo version supports the JSON-2 API, which replaces the deprecated JSON-RPC and XML-RPC endpoints. You can switch the protocol to JSON-2 (an API key is required).', 'wp4odoo' );
 	}
 
 	/**

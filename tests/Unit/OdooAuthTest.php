@@ -425,4 +425,45 @@ class OdooAuthTest extends TestCase {
 			}
 		};
 	}
+
+	// ─── Stored key, server version, protocol hint ─────────
+
+	public function test_save_credentials_keeps_the_stored_key_when_none_is_supplied(): void {
+		Odoo_Auth::save_credentials( [ 'url' => 'https://erp.example.com', 'database' => 'd', 'username' => 'u', 'api_key' => 'first-key' ] );
+		Odoo_Auth::save_credentials( [ 'url' => 'https://erp.example.com', 'database' => 'd2', 'username' => 'u' ] );
+
+		$credentials = Odoo_Auth::get_credentials();
+		$this->assertSame( 'first-key', $credentials['api_key'] );
+		$this->assertSame( 'd2', $credentials['database'] );
+	}
+
+	public function test_remember_server_version_flushes_schemas_only_when_it_changes(): void {
+		global $wpdb;
+		$flushes = static fn( \WP_DB_Stub $db ): int => count(
+			array_filter( $db->calls, static fn( $c ) => 'prepare' === $c['method'] && str_contains( (string) ( $c['args'][1] ?? '' ), '_transient_wp4odoo_schema_' ) )
+		);
+
+		$this->assertTrue( Odoo_Auth::remember_server_version( '18.0' ), 'The first version seen counts as a change.' );
+		$this->assertSame( 1, $flushes( $wpdb ) );
+
+		$this->assertFalse( Odoo_Auth::remember_server_version( '18.0' ) );
+		$this->assertSame( 1, $flushes( $wpdb ), 'Same version: the schema cache is kept.' );
+
+		$this->assertTrue( Odoo_Auth::remember_server_version( '19.0' ) );
+		$this->assertSame( 2, $flushes( $wpdb ) );
+		$this->assertSame( '19.0', $GLOBALS['_wp_options']['wp4odoo_odoo_version'] );
+	}
+
+	public function test_remember_server_version_ignores_an_empty_version(): void {
+		$this->assertFalse( Odoo_Auth::remember_server_version( '' ) );
+		$this->assertArrayNotHasKey( 'wp4odoo_odoo_version', $GLOBALS['_wp_options'] );
+	}
+
+	public function test_protocol_hint_suggests_json2_from_odoo_19(): void {
+		$this->assertNotSame( '', Odoo_Auth::protocol_hint( '19.2+e', 'jsonrpc' ) );
+		$this->assertNotSame( '', Odoo_Auth::protocol_hint( '20.0', 'xmlrpc' ) );
+		$this->assertSame( '', Odoo_Auth::protocol_hint( '19.0', 'json2' ) );
+		$this->assertSame( '', Odoo_Auth::protocol_hint( '18.0', 'jsonrpc' ) );
+		$this->assertSame( '', Odoo_Auth::protocol_hint( '', 'jsonrpc' ) );
+	}
 }

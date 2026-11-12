@@ -48,9 +48,14 @@ trait Ajax_Setup_Handlers {
 
 		$result = Odoo_Auth::test_connection( $url, $database, $username, $api_key, $protocol, $check_models );
 
-		// Store the Odoo version for display and compat report links.
+		// Store the Odoo version for display and compat report links; flush stale schemas if it changed.
 		if ( ! empty( $result['version'] ) ) {
-			update_option( 'wp4odoo_odoo_version', sanitize_text_field( $result['version'] ), false );
+			Odoo_Auth::remember_server_version( (string) $result['version'] );
+
+			$hint = Odoo_Auth::protocol_hint( (string) $result['version'], $protocol );
+			if ( '' !== $hint ) {
+				$result['protocol_hint'] = $hint;
+			}
 		}
 
 		// Add human-readable warning for missing models.

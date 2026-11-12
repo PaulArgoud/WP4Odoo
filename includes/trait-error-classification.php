@@ -39,6 +39,7 @@ trait Error_Classification {
 			|| str_contains( $message, 'validationerror' )
 			|| str_contains( $message, 'userinputerror' )
 			|| str_contains( $message, 'missing required' )
+			|| str_contains( $message, 'invalid field' )
 			|| str_contains( $message, 'constraint' ) ) {
 			return Error_Type::Permanent;
 		}

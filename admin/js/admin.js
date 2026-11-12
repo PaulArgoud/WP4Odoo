@@ -159,6 +159,10 @@
 						);
 
 						// Show missing Odoo modules warning if detected.
+						if ( data.protocol_hint ) {
+							WP4Odoo.showNotice( 'info', data.protocol_hint );
+						}
+
 						if ( data.model_warning ) {
 							WP4Odoo.showNotice( 'warning', data.model_warning );
 						}

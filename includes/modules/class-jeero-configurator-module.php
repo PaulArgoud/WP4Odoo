@@ -346,7 +346,7 @@ class Jeero_Configurator_Module extends Module_Base {
 	}
 
 	/**
-	 * Resolve an Odoo product.product ID to its product.template ID.
+	 * Resolve a mapped Odoo product ID (a product.template, or a product.product) to its product.template ID.
 	 *
 	 * Reads the product_tmpl_id Many2one field from Odoo.
 	 *
@@ -356,6 +356,12 @@ class Jeero_Configurator_Module extends Module_Base {
 	private function resolve_product_template_id( int $odoo_product_id ): int {
 		try {
 			$client = $this->client();
+
+			// WooCommerce products are mapped to product.template, so the ID is normally the template's own.
+			if ( ! empty( $client->search( 'product.template', [ [ 'id', '=', $odoo_product_id ] ], 0, 1 ) ) ) {
+				return $odoo_product_id;
+			}
+
 			$result = $client->read( 'product.product', [ $odoo_product_id ], [ 'product_tmpl_id' ] );
 
 			if ( ! empty( $result[0]['product_tmpl_id'] ) && is_array( $result[0]['product_tmpl_id'] ) ) {

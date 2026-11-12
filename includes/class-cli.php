@@ -174,6 +174,14 @@ class CLI {
 		if ( $result['success'] ) {
 			/* translators: %d: Odoo user ID */
 			\WP_CLI::success( sprintf( __( 'Connection successful! UID: %d', 'wp4odoo' ), $result['uid'] ?? 0 ) );
+
+			if ( ! empty( $result['version'] ) ) {
+				Odoo_Auth::remember_server_version( (string) $result['version'] );
+				$hint = Odoo_Auth::protocol_hint( (string) $result['version'], (string) $credentials['protocol'] );
+				if ( '' !== $hint ) {
+					\WP_CLI::line( $hint );
+				}
+			}
 		} else {
 			/* translators: %s: error message */
 			\WP_CLI::error( sprintf( __( 'Connection failed: %s', 'wp4odoo' ), $result['message'] ) );

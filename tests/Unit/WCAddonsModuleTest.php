@@ -49,7 +49,7 @@ class WCAddonsModuleTest extends TestCase {
 
 	public function test_declares_addon_model(): void {
 		$ref = new \ReflectionProperty( $this->module, 'odoo_models' );
-		$this->assertSame( 'product.template.attribute.line', $ref->getValue( $this->module )['addon'] );
+		$this->assertSame( 'product.template', $ref->getValue( $this->module )['addon'] );
 	}
 
 	public function test_declares_exactly_one_entity_type(): void {

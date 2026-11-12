@@ -419,7 +419,7 @@ WordPress For Odoo/
 │   └── customer-portal.php           #   Customer portal HTML template (orders/invoices tabs)
 │
 ├── tests/compat/                      # Compatibility run: real Odoo 19/20 + latest free plugins (see tests/compat/README.md)
-├── tests/                             # 5633 unit tests (8551 assertions) + 52 integration tests (wp-env)
+├── tests/                             # 5656 unit tests (8611 assertions) + 52 integration tests (wp-env)
 │   ├── bootstrap.php                 #   Unit test bootstrap: constants, stub loading, plugin class requires
 │   ├── bootstrap-integration.php     #   Integration test bootstrap: loads WP test framework (wp-env)
 │   ├── stubs/
@@ -939,6 +939,8 @@ The protocol is configurable in options (`wp4odoo_connection.protocol`). JSON-RP
 `Odoo_Json2` targets `POST /json/2/<model>/<method>` (Odoo's replacement for the deprecated `/jsonrpc` and `/xmlrpc/2`). It authenticates with a bearer API key and the `X-Odoo-Database` header, resolves the uid through `res.users/context_get`, and reads the server version from `/web/webclient/version_info` (best effort). Because `Odoo_Client` speaks the `execute_kw` dialect, the transport translates positional arguments into JSON-2 named arguments (`search`/`search_read`/`search_count` → `domain`, `read` → `ids`+`fields`, `write` → `ids`+`vals`, `create` → `vals_list`, record actions such as `action_confirm` → `ids`); a single-dict `create` still returns an int. JSON-2 reports Odoo errors with HTTP 4xx/5xx and a JSON body, so the transport parses 5xx bodies (via the `$parse_server_errors` flag of `Retryable_Http::http_post_with_retry()`) and appends the Odoo exception class to the message; 401/403/404/422 are classified as permanent by `Error_Classification`.
 
 **Schema reconciliation:** the sync orchestrator (`push_to_odoo()` and the batch-create path) calls `reconcile_with_schema()` on the final values, using the model actually targeted (`get_odoo_model()`), which compares the values with the model's `fields_get()` result (via `Schema_Cache`). A field the Odoo version does not know is renamed when the module declares an alias in `$odoo_field_renames` (`[entity_type => [old_field => new_field]]`, e.g. `hr.employee` `gender` → `sex`, `account.payment` `ref` → `memo`) and otherwise dropped with a warning, because Odoo rejects a whole record that contains an unknown field. Because it runs after `map_to_odoo()` and its filters, modules with pre-formatted data and fields added by filters (e.g. ACF `x_*`) are covered without any module code. Nothing is changed when the schema is unavailable. De-duplication domains must account for renamed fields (marketplace payouts and Sprout Invoices payments search `memo` or `ref`).
+
+`Odoo_Auth::remember_server_version()` stores the version found by a connection test and flushes the cached model schemas when it changed; `Odoo_Auth::protocol_hint()` suggests JSON-2 from Odoo 19. Modules that rely on an Odoo app that may be missing wrap their dependency status in `warn_if_odoo_model_missing()` (warning only, probe cached for an hour, nothing reported while the answer is unknown).
 
 On Odoo 18+, `Stock_Handler::push_stock()` first calls `ensure_storable()`: Odoo rejects quants for non-storable products, so the product template is switched to `is_storable = true` when it is not already.
 

@@ -55,7 +55,7 @@ class WC_Addons_Module extends Module_Base {
 	 * @var array<string, string>
 	 */
 	protected array $odoo_models = [
-		'addon' => 'product.template.attribute.line',
+		'addon' => 'product.template',
 	];
 
 	/**
@@ -67,7 +67,6 @@ class WC_Addons_Module extends Module_Base {
 	 */
 	protected array $default_mappings = [
 		'addon' => [
-			'product_tmpl_id'    => 'product_tmpl_id',
 			'attribute_line_ids' => 'attribute_line_ids',
 		],
 	];
@@ -219,9 +218,197 @@ class WC_Addons_Module extends Module_Base {
 				$this->logger->info( 'mrp.bom not available — Manufacturing module not installed in Odoo.' );
 				return Sync_Result::success();
 			}
+
+			if ( 'bom_components' !== $mode ) {
+				return $this->push_attribute_lines( $wp_id, (int) $product_odoo_id );
+			}
+		}
+
+		// Deleting add-ons never removes attribute lines or BOMs from Odoo.
+		if ( 'addon' === $entity_type && 'delete' === $action ) {
+			return Sync_Result::success();
 		}
 
 		return parent::push_to_odoo( $entity_type, $action, $wp_id, $odoo_id, $payload );
+	}
+
+	/**
+	 * Odoo model targeted by the current add-on mode.
+	 *
+	 * Attribute mode writes to product.template (see push_attribute_lines()); BOM mode creates mrp.bom records.
+	 *
+	 * @param string $entity_type Entity type.
+	 * @return string Odoo model name.
+	 */
+	protected function get_odoo_model( string $entity_type ): string {
+		if ( 'addon' === $entity_type && 'bom_components' === ( $this->get_settings()['addon_mode'] ?? '' ) ) {
+			return Odoo_Model::MrpBom->value;
+		}
+
+		return parent::get_odoo_model( $entity_type );
+	}
+
+	// ─── Attribute mode ───────────────────────────────────
+
+	/**
+	 * Push a product's add-ons as product attributes on its Odoo product.template.
+	 *
+	 * Each add-on becomes a `product.attribute` (found by name or created, without variants), each
+	 * option a `product.attribute.value`, and the product template gets one attribute line per
+	 * add-on. The option price is stored as the extra price of the template's attribute value.
+	 * Safe to run repeatedly: everything is found before it is created.
+	 *
+	 * @param int $wp_id           WooCommerce product ID.
+	 * @param int $product_odoo_id Odoo product.template or product.product ID of the parent product.
+	 * @return Sync_Result
+	 */
+	private function push_attribute_lines( int $wp_id, int $product_odoo_id ): Sync_Result {
+		$addons = $this->handler->load_addons( $wp_id );
+		if ( empty( $addons ) ) {
+			return Sync_Result::success();
+		}
+
+		$tmpl_id = $this->resolve_product_template_id( $product_odoo_id );
+		if ( ! $tmpl_id ) {
+			return Sync_Result::failure( 'Cannot resolve the Odoo product template — retrying later.', Error_Type::Transient );
+		}
+
+		try {
+			$lines = $this->sync_attribute_lines( $tmpl_id, $addons );
+		} catch ( \Throwable $e ) {
+			$this->logger->error(
+				'Add-on attribute sync failed.',
+				[
+					'product_id' => $wp_id,
+					'error'      => $e->getMessage(),
+				]
+			);
+
+			return Sync_Result::failure(
+				$e->getMessage(),
+				$e instanceof \RuntimeException ? static::classify_exception( $e ) : Error_Type::Transient
+			);
+		}
+
+		$this->save_mapping( 'addon', $wp_id, $tmpl_id, $this->generate_sync_hash( $addons ) );
+		$this->logger->info(
+			'Synced add-on attribute lines.',
+			[
+				'product_id'  => $wp_id,
+				'template_id' => $tmpl_id,
+				'lines'       => $lines,
+			]
+		);
+
+		return Sync_Result::success( $tmpl_id );
+	}
+
+	/**
+	 * Create or update the attribute lines of a product template.
+	 *
+	 * @param int                                                                                                     $tmpl_id Odoo product.template ID.
+	 * @param array<int, array{name: string, type: string, options: array<int, array{label: string, price: float}>}> $addons  Normalized add-ons.
+	 * @return int Number of attribute lines written.
+	 */
+	private function sync_attribute_lines( int $tmpl_id, array $addons ): int {
+		$client  = $this->client();
+		$written = 0;
+
+		foreach ( $addons as $addon ) {
+			if ( empty( $addon['options'] ) ) {
+				continue;
+			}
+
+			$attribute_id = $client->search( 'product.attribute', [ [ 'name', '=', $addon['name'] ] ], 0, 1 )[0]
+				?? $client->create(
+					'product.attribute',
+					[
+						'name'           => $addon['name'],
+						'create_variant' => 'no_variant',
+					]
+				);
+
+			$value_ids = [];
+			$prices    = [];
+			foreach ( $addon['options'] as $option ) {
+				$value_id = $client->search(
+					'product.attribute.value',
+					[
+						[ 'attribute_id', '=', $attribute_id ],
+						[ 'name', '=', $option['label'] ],
+					],
+					0,
+					1
+				)[0]
+					?? $client->create(
+						'product.attribute.value',
+						[
+							'attribute_id' => $attribute_id,
+							'name'         => $option['label'],
+						]
+					);
+
+				$value_ids[]         = (int) $value_id;
+				$prices[ $value_id ] = (float) $option['price'];
+			}
+
+			$line = [
+				'product_tmpl_id' => $tmpl_id,
+				'attribute_id'    => (int) $attribute_id,
+				'value_ids'       => [ [ 6, 0, $value_ids ] ],
+			];
+
+			$existing = $client->search(
+				'product.template.attribute.line',
+				[
+					[ 'product_tmpl_id', '=', $tmpl_id ],
+					[ 'attribute_id', '=', $attribute_id ],
+				],
+				0,
+				1
+			);
+
+			if ( ! empty( $existing ) ) {
+				$client->write( 'product.template.attribute.line', [ (int) $existing[0] ], [ 'value_ids' => $line['value_ids'] ] );
+			} else {
+				$client->create( 'product.template.attribute.line', $line );
+			}
+
+			$this->apply_extra_prices( $tmpl_id, $prices );
+			++$written;
+		}
+
+		return $written;
+	}
+
+	/**
+	 * Store each option's price as the template attribute value's extra price.
+	 *
+	 * @param int                $tmpl_id Odoo product.template ID.
+	 * @param array<int, float> $prices  Extra price keyed by product.attribute.value ID.
+	 * @return void
+	 */
+	private function apply_extra_prices( int $tmpl_id, array $prices ): void {
+		$client = $this->client();
+
+		$records = $client->search_read(
+			'product.template.attribute.value',
+			[
+				[ 'product_tmpl_id', '=', $tmpl_id ],
+				[ 'product_attribute_value_id', 'in', array_map( 'intval', array_keys( $prices ) ) ],
+			],
+			[ 'product_attribute_value_id', 'price_extra' ]
+		);
+
+		foreach ( $records as $record ) {
+			$value = $record['product_attribute_value_id'];
+			$value = is_array( $value ) ? (int) $value[0] : (int) $value;
+			$price = $prices[ $value ] ?? null;
+
+			if ( null !== $price && (float) ( $record['price_extra'] ?? 0 ) !== $price ) {
+				$client->write( 'product.template.attribute.value', [ (int) $record['id'] ], [ 'price_extra' => $price ] );
+			}
+		}
 	}
 
 	// ─── Data access ──────────────────────────────────────
@@ -323,7 +510,7 @@ class WC_Addons_Module extends Module_Base {
 	}
 
 	/**
-	 * Resolve an Odoo product.product ID to its product.template ID.
+	 * Resolve a mapped Odoo product ID (a product.template, or a product.product) to its product.template ID.
 	 *
 	 * @param int $odoo_product_id Odoo product.product ID.
 	 * @return int Odoo product.template ID, or 0 on failure.
@@ -331,6 +518,12 @@ class WC_Addons_Module extends Module_Base {
 	private function resolve_product_template_id( int $odoo_product_id ): int {
 		try {
 			$client = $this->client();
+
+			// WooCommerce products are mapped to product.template, so the ID is normally the template's own.
+			if ( ! empty( $client->search( 'product.template', [ [ 'id', '=', $odoo_product_id ] ], 0, 1 ) ) ) {
+				return $odoo_product_id;
+			}
+
 			$result = $client->read( 'product.product', [ $odoo_product_id ], [ 'product_tmpl_id' ] );
 
 			if ( ! empty( $result[0]['product_tmpl_id'] ) && is_array( $result[0]['product_tmpl_id'] ) ) {

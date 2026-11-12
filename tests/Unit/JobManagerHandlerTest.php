@@ -347,4 +347,22 @@ class JobManagerHandlerTest extends TestCase {
 
 		$this->assertGreaterThan( 0, $post_id );
 	}
+
+	// ─── Recent Odoo versions: no hr.job.state ──────────────
+
+	public function test_expired_job_is_not_recruiting_in_odoo(): void {
+		$this->create_job( 10, 'Designer', 'expired' );
+
+		$this->assertSame( 0, $this->handler->load_job( 10 )['no_of_recruitment'] );
+	}
+
+	public function test_parse_job_without_state_uses_recruitment_count(): void {
+		$open   = $this->handler->parse_job_from_odoo( [ 'name' => 'A', 'no_of_recruitment' => 2 ] );
+		$closed = $this->handler->parse_job_from_odoo( [ 'name' => 'B', 'no_of_recruitment' => 0 ] );
+
+		$this->assertSame( 'publish', $open['post_status'] );
+		$this->assertFalse( $open['filled'] );
+		$this->assertSame( 'expired', $closed['post_status'] );
+		$this->assertTrue( $closed['filled'] );
+	}
 }

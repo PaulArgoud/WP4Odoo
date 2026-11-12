@@ -91,8 +91,9 @@ class Job_Manager_Handler {
 		return [
 			'name'              => $post->post_title,
 			'description'       => $description,
+			// `state` only exists in Odoo < 17; later versions express "recruiting" as no_of_recruitment > 0.
 			'state'             => $state,
-			'no_of_recruitment' => '1' === $filled ? 0 : 1,
+			'no_of_recruitment' => 'recruit' === $state ? 1 : 0,
 		];
 	}
 
@@ -171,7 +172,10 @@ class Job_Manager_Handler {
 	 * @return array<string, mixed> WordPress job data.
 	 */
 	public function parse_job_from_odoo( array $odoo_data ): array {
-		$state       = (string) ( $odoo_data['state'] ?? 'open' );
+		$no_of_recruitment = (int) ( $odoo_data['no_of_recruitment'] ?? 0 );
+
+		// hr.job has no `state` field in recent Odoo versions: a job is open when it is still recruiting.
+		$state       = (string) ( $odoo_data['state'] ?? ( $no_of_recruitment > 0 ? 'recruit' : 'open' ) );
 		$post_status = $this->map_status_from_odoo( $state );
 
 		// department_id is Many2one: [id, "Department Name"] or false.
@@ -180,8 +184,6 @@ class Job_Manager_Handler {
 		if ( is_array( $department_id ) && count( $department_id ) >= 2 ) {
 			$department_name = (string) $department_id[1];
 		}
-
-		$no_of_recruitment = (int) ( $odoo_data['no_of_recruitment'] ?? 0 );
 
 		return [
 			'name'              => (string) ( $odoo_data['name'] ?? '' ),
