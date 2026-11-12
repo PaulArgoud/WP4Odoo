@@ -151,7 +151,7 @@ trait Retryable_Http {
 	 * @param array<string, mixed> $request_args wp_remote_post() compatible args.
 	 * @return array|null WP HTTP API response array, or null on pool failure.
 	 */
-	// phpcs:disable WordPress.WP.AlternativeFunctions.curl_curl_init, WordPress.WP.AlternativeFunctions.curl_curl_setopt_array, WordPress.WP.AlternativeFunctions.curl_curl_setopt, WordPress.WP.AlternativeFunctions.curl_curl_exec, WordPress.WP.AlternativeFunctions.curl_curl_close, WordPress.WP.AlternativeFunctions.curl_curl_getinfo -- Intentional: persistent cURL pool for TCP+TLS reuse; wp_remote_post() cannot reuse connections.
+	// phpcs:disable WordPress.WP.AlternativeFunctions.curl_curl_init, WordPress.WP.AlternativeFunctions.curl_curl_setopt_array, WordPress.WP.AlternativeFunctions.curl_curl_setopt, WordPress.WP.AlternativeFunctions.curl_curl_exec, WordPress.WP.AlternativeFunctions.curl_curl_getinfo -- Intentional: persistent cURL pool for TCP+TLS reuse; wp_remote_post() cannot reuse connections.
 	private function http_post_via_pool( string $url, array $request_args ): ?array {
 		$host = (string) wp_parse_url( $url, PHP_URL_HOST );
 		if ( '' === $host ) {
@@ -211,8 +211,7 @@ trait Retryable_Http {
 		$raw_response = curl_exec( $ch );
 
 		if ( false === $raw_response || ! is_string( $raw_response ) ) {
-			// Connection failed — drop the stale handle and fall back.
-			curl_close( $ch );
+			// Connection failed — drop the stale handle (freed on unset since PHP 8.0) and fall back.
 			unset( self::$curl_pool[ $host ] );
 			return null;
 		}
@@ -256,8 +255,6 @@ trait Retryable_Http {
 	 * @return void
 	 */
 	public static function reset_pool(): void {
-		// phpcs:ignore WordPress.WP.AlternativeFunctions.curl_curl_close -- Pool cleanup.
-		array_map( 'curl_close', self::$curl_pool );
 		self::$curl_pool = [];
 	}
 }

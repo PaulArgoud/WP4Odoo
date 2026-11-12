@@ -40,6 +40,11 @@ jobs:
 
       - name: Build the ZIP
         run: |
+          # Manual re-run on an older tag: use the current packaging rules.
+          if [ -n "${{ inputs.tag }}" ]; then
+            git fetch --depth=1 origin main
+            git checkout FETCH_HEAD -- .distignore
+          fi
           mkdir -p build/wp4odoo
           rsync -a --exclude-from=.distignore ./ build/wp4odoo/
           (cd build && zip -qr "wp4odoo-$TAG.zip" wp4odoo)
