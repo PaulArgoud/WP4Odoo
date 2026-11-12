@@ -1,9 +1,10 @@
 name: API Surface Tests
 
+# On demand only (Actions > API Surface Tests > Run workflow). It used to run weekly, but
+# GitHub disables scheduled workflows after 60 days without repository activity, and the
+# weekly Compatibility workflow already covers the plugins at execution level.
 on:
-  schedule:
-    - cron: '0 6 * * 1' # Weekly on Monday at 6:00 UTC
-  workflow_dispatch: # Manual trigger
+  workflow_dispatch:
 
 jobs:
   api-surface:
