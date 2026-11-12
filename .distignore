@@ -1,10 +1,12 @@
 # Files and directories excluded from the distributed plugin build.
-# Used by `wp dist-archive` / release tooling to produce a clean ZIP.
+# Used by .github/workflows/release.yml (and `wp dist-archive`) to build the
+# installable ZIP attached to each GitHub release.
 
 # VCS
 /.git
 /.github
 /.gitignore
+/.smbdelete*
 /.distignore
 
 # Dev dependencies & lockfiles

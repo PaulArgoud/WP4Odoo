@@ -64,7 +64,7 @@ All hosting types expose the standard Odoo external API used by the plugin. No c
 
 ## Installation
 
-1. Download or clone this repository into `wp-content/plugins/wp4odoo/`
+1. Download `wp4odoo-<version>.zip` from the [latest release](https://github.com/PaulArgoud/WP4Odoo/releases/latest) and upload it in **Plugins → Add New → Upload Plugin** (or clone this repository into `wp-content/plugins/wp4odoo/`)
 2. Activate the plugin from the WordPress admin
 3. Go to **Odoo Connector** in the admin menu
 4. Enter your Odoo credentials (URL, database, username, API key) in the **Connection** tab
@@ -228,7 +228,7 @@ composer install
 composer check          # Runs PHPCS + PHPUnit + PHPStan (mirrors CI)
 ```
 
-Integration tests require Docker. A compatibility run against real Odoo servers and the latest releases of the free third-party plugins is described in [tests/compat/README.md](tests/compat/README.md).
+CI runs the suite on PHP 8.2 to 8.5, the integration tests on the current and the development version of WordPress, and — weekly — the compatibility run below. Pushing a version tag builds the installable ZIP and attaches it to the GitHub release. Integration tests require Docker. A compatibility run against real Odoo servers and the latest releases of the free third-party plugins is described in [tests/compat/README.md](tests/compat/README.md).
 
 - 📖 [ARCHITECTURE.md](ARCHITECTURE.md) — Class diagrams, data flows, REST API endpoints, hooks & filters reference
 - 📝 [CHANGELOG.md](CHANGELOG.md) — Version history

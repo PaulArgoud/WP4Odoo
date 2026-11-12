@@ -418,8 +418,10 @@ WordPress For Odoo/
 ├── templates/
 │   └── customer-portal.php           #   Customer portal HTML template (orders/invoices tabs)
 │
-├── tests/compat/                      # Compatibility run: real Odoo 19/20 + latest free plugins (see tests/compat/README.md)
-├── tests/                             # 5656 unit tests (8611 assertions) + 52 integration tests (wp-env)
+├── .github/workflows/                 # ci.yml (PHP 8.2–8.5, integration incl. WordPress dev), compat.yml (Odoo 17–20, weekly), api-surface.yml (on demand), release.yml (ZIP on version tag)
+├── .distignore                        # Files left out of the release ZIP
+├── tests/compat/                      # Compatibility run: real Odoo 17 to 20 + latest free plugins (see tests/compat/README.md)
+├── tests/                             # 5659 unit tests (8617 assertions) + 52 integration tests (wp-env)
 │   ├── bootstrap.php                 #   Unit test bootstrap: constants, stub loading, plugin class requires
 │   ├── bootstrap-integration.php     #   Integration test bootstrap: loads WP test framework (wp-env)
 │   ├── stubs/
