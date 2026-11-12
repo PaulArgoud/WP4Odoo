@@ -210,6 +210,20 @@ abstract class Module_Base {
 	}
 
 	/**
+	 * Whether the third-party plugin(s) this module integrates with are active.
+	 *
+	 * Single source of truth for module activation: the registry calls it
+	 * (statically, so no module is instantiated for an absent plugin) and the
+	 * module's dependency check reuses it. Modules without a WordPress plugin
+	 * dependency keep the default.
+	 *
+	 * @return bool
+	 */
+	public static function detect(): bool {
+		return true;
+	}
+
+	/**
 	 * Boot the module: register WordPress hooks.
 	 *
 	 * Called only when the module is enabled.
@@ -299,8 +313,6 @@ abstract class Module_Base {
 			}
 		}
 
-		$odoo_values = $this->reconcile_with_schema( $entity_type, $odoo_values );
-
 		/**
 		 * Filter the mapped Odoo values before push.
 		 *
@@ -321,19 +333,23 @@ abstract class Module_Base {
 	 * A field Odoo does not know (removed or renamed in this Odoo version) would
 	 * make Odoo reject the whole record, so it is renamed when an alias is declared
 	 * in `$odoo_field_renames`, otherwise dropped with a warning. Does nothing when
-	 * the schema is unavailable (API unreachable). Modules that return pre-formatted
-	 * Odoo data from `map_to_odoo()` should call this too.
+	 * the schema is unavailable (API unreachable). The sync orchestrator calls this
+	 * on the final values of every push, after `map_to_odoo()` and its filters, so
+	 * modules never need to call it themselves.
 	 *
 	 * @param string               $entity_type Entity type.
 	 * @param array<string, mixed> $odoo_values Odoo-ready values.
+	 * @param string|null          $model       Odoo model actually targeted (defaults to the entity's model).
 	 * @return array<string, mixed> Reconciled values.
 	 */
-	protected function reconcile_with_schema( string $entity_type, array $odoo_values ): array {
-		if ( empty( $odoo_values ) || ! isset( $this->odoo_models[ $entity_type ] ) ) {
+	protected function reconcile_with_schema( string $entity_type, array $odoo_values, ?string $model = null ): array {
+		$model ??= $this->get_odoo_model( $entity_type );
+
+		if ( empty( $odoo_values ) || '' === $model ) {
 			return $odoo_values;
 		}
 
-		$schema = Schema_Cache::get_fields( fn() => $this->client(), $this->odoo_models[ $entity_type ] );
+		$schema = Schema_Cache::get_fields( fn() => $this->client(), $model );
 		if ( empty( $schema ) ) {
 			return $odoo_values;
 		}
@@ -355,7 +371,7 @@ abstract class Module_Base {
 				"Mapped Odoo field '{$field}' not found in model schema; dropped from the push.",
 				[
 					'entity_type' => $entity_type,
-					'model'       => $this->odoo_models[ $entity_type ],
+					'model'       => $model,
 				]
 			);
 		}

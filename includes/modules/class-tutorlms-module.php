@@ -181,12 +181,24 @@ class TutorLMS_Module extends LMS_Module_Base {
 	}
 
 	/**
+	 * Whether the third-party plugin(s) this module integrates with are active.
+	 *
+	 * Single source of truth for module activation, shared by the registry
+	 * and the dependency check.
+	 *
+	 * @return bool
+	 */
+	public static function detect(): bool {
+		return defined( 'TUTOR_VERSION' );
+	}
+
+	/**
 	 * Get external dependency status for TutorLMS.
 	 *
 	 * @return array{available: bool, notices: array<array{type: string, message: string}>}
 	 */
 	public function get_dependency_status(): array {
-		return $this->check_dependency( defined( 'TUTOR_VERSION' ), 'Tutor LMS' );
+		return $this->check_dependency( static::detect(), 'Tutor LMS' );
 	}
 
 	/**

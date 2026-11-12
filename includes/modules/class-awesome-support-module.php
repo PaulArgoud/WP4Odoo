@@ -134,12 +134,24 @@ class Awesome_Support_Module extends Helpdesk_Module_Base {
 	}
 
 	/**
+	 * Whether the third-party plugin(s) this module integrates with are active.
+	 *
+	 * Single source of truth for module activation, shared by the registry
+	 * and the dependency check.
+	 *
+	 * @return bool
+	 */
+	public static function detect(): bool {
+		return defined( 'WPAS_VERSION' );
+	}
+
+	/**
 	 * Get external dependency status.
 	 *
 	 * @return array{available: bool, notices: array<array{type: string, message: string}>}
 	 */
 	public function get_dependency_status(): array {
-		return $this->check_dependency( defined( 'WPAS_VERSION' ), 'Awesome Support' );
+		return $this->check_dependency( static::detect(), 'Awesome Support' );
 	}
 
 	/**

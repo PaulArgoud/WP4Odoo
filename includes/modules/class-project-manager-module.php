@@ -172,13 +172,25 @@ class Project_Manager_Module extends Module_Base {
 	}
 
 	/**
+	 * Whether the third-party plugin(s) this module integrates with are active.
+	 *
+	 * Single source of truth for module activation, shared by the registry
+	 * and the dependency check.
+	 *
+	 * @return bool
+	 */
+	public static function detect(): bool {
+		return defined( 'CPM_VERSION' ) || class_exists( 'WeDevs\PM\Core\WP\WP_Project_Manager' ) || ( defined( 'PM_VERSION' ) && class_exists( 'WeDevs\PM\Core\Config\Config' ) );
+	}
+
+	/**
 	 * Get external dependency status.
 	 *
 	 * @return array{available: bool, notices: array<array{type: string, message: string}>}
 	 */
 	public function get_dependency_status(): array {
 		return $this->check_dependency(
-			defined( 'CPM_VERSION' ) || class_exists( 'WeDevs\PM\Core\WP\WP_Project_Manager' ) || ( defined( 'PM_VERSION' ) && class_exists( 'WeDevs\PM\Core\Config\Config' ) ),
+			static::detect(),
 			'WP Project Manager'
 		);
 	}

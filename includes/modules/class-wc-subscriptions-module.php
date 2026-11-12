@@ -194,12 +194,24 @@ class WC_Subscriptions_Module extends Module_Base {
 	}
 
 	/**
+	 * Whether the third-party plugin(s) this module integrates with are active.
+	 *
+	 * Single source of truth for module activation, shared by the registry
+	 * and the dependency check.
+	 *
+	 * @return bool
+	 */
+	public static function detect(): bool {
+		return class_exists( 'WC_Subscriptions' );
+	}
+
+	/**
 	 * Get external dependency status for WooCommerce Subscriptions.
 	 *
 	 * @return array{available: bool, notices: array<array{type: string, message: string}>}
 	 */
 	public function get_dependency_status(): array {
-		return $this->check_dependency( class_exists( 'WC_Subscriptions' ), 'WooCommerce Subscriptions' );
+		return $this->check_dependency( static::detect(), 'WooCommerce Subscriptions' );
 	}
 
 	/**

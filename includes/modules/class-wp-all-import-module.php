@@ -134,13 +134,25 @@ class WP_All_Import_Module extends \WP4Odoo\Module_Base {
 	}
 
 	/**
+	 * Whether the third-party plugin(s) this module integrates with are active.
+	 *
+	 * Single source of truth for module activation, shared by the registry
+	 * and the dependency check.
+	 *
+	 * @return bool
+	 */
+	public static function detect(): bool {
+		return defined( 'PMXI_VERSION' ) || class_exists( 'PMXI_Plugin' );
+	}
+
+	/**
 	 * Get external dependency status for WP All Import.
 	 *
 	 * @return array{available: bool, notices: array<array{type: string, message: string}>}
 	 */
 	public function get_dependency_status(): array {
 		return $this->check_dependency(
-			defined( 'PMXI_VERSION' ) || class_exists( 'PMXI_Plugin' ),
+			static::detect(),
 			'WP All Import'
 		);
 	}

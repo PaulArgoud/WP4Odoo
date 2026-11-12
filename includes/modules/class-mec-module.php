@@ -154,13 +154,24 @@ class MEC_Module extends Events_Module_Base {
 	}
 
 	/**
+	 * Whether the third-party plugin(s) this module integrates with are active.
+	 *
+	 * Single source of truth for module activation, shared by the registry
+	 * and the dependency check.
+	 *
+	 * @return bool
+	 */
+	public static function detect(): bool {
+		return defined( 'MEC_VERSION' ) || class_exists( 'MEC' );
+	}
+
+	/**
 	 * Get external dependency status for Modern Events Calendar.
 	 *
 	 * @return array{available: bool, notices: array<array{type: string, message: string}>}
 	 */
 	public function get_dependency_status(): array {
-		$available = defined( 'MEC_VERSION' ) || class_exists( 'MEC' );
-		return $this->check_dependency( $available, 'Modern Events Calendar' );
+		return $this->check_dependency( static::detect(), 'Modern Events Calendar' );
 	}
 
 	/**

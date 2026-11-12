@@ -169,13 +169,25 @@ class ACF_Module extends Module_Base {
 	}
 
 	/**
+	 * Whether the third-party plugin(s) this module integrates with are active.
+	 *
+	 * Single source of truth for module activation, shared by the registry
+	 * and the dependency check.
+	 *
+	 * @return bool
+	 */
+	public static function detect(): bool {
+		return class_exists( 'ACF' ) || defined( 'ACF_MAJOR_VERSION' );
+	}
+
+	/**
 	 * Get external dependency status for ACF.
 	 *
 	 * @return array{available: bool, notices: array<array{type: string, message: string}>}
 	 */
 	public function get_dependency_status(): array {
 		return $this->check_dependency(
-			class_exists( 'ACF' ) || defined( 'ACF_MAJOR_VERSION' ),
+			static::detect(),
 			'Advanced Custom Fields'
 		);
 	}

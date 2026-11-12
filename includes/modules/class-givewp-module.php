@@ -151,12 +151,24 @@ class GiveWP_Module extends Dual_Accounting_Module_Base {
 	}
 
 	/**
+	 * Whether the third-party plugin(s) this module integrates with are active.
+	 *
+	 * Single source of truth for module activation, shared by the registry
+	 * and the dependency check.
+	 *
+	 * @return bool
+	 */
+	public static function detect(): bool {
+		return defined( 'GIVE_VERSION' );
+	}
+
+	/**
 	 * Get external dependency status for GiveWP.
 	 *
 	 * @return array{available: bool, notices: array<array{type: string, message: string}>}
 	 */
 	public function get_dependency_status(): array {
-		return $this->check_dependency( defined( 'GIVE_VERSION' ), 'GiveWP' );
+		return $this->check_dependency( static::detect(), 'GiveWP' );
 	}
 
 	/**

@@ -583,6 +583,18 @@ class Forms_Module extends Module_Base {
 	}
 
 	/**
+	 * Whether the third-party plugin(s) this module integrates with are active.
+	 *
+	 * Single source of truth for module activation, shared by the registry
+	 * and the dependency check.
+	 *
+	 * @return bool
+	 */
+	public static function detect(): bool {
+		return class_exists( 'GFAPI' ) || function_exists( 'wpforms' ) || defined( 'WPCF7_VERSION' ) || defined( 'FLUENTFORM' ) || class_exists( 'FrmAppHelper' ) || class_exists( 'Ninja_Forms' ) || defined( 'FORMINATOR_VERSION' ) || defined( 'JET_FORM_BUILDER_VERSION' ) || defined( 'ELEMENTOR_PRO_VERSION' ) || function_exists( 'et_setup_theme' ) || defined( 'BRICKS_VERSION' );
+	}
+
+	/**
 	 * Check external dependency status.
 	 *
 	 * At least one supported form plugin must be active.

@@ -147,140 +147,126 @@ class Module_Registry {
 		// phpcs:disable Squiz.PHP.CommentedOutCode.Found
 		$module_defs = [
 			// Commerce group (WC > EDD > Sales).
-			[ 'woocommerce', Modules\WooCommerce_Module::class, fn() => class_exists( 'WooCommerce' ) ],
-			[ 'edd', Modules\EDD_Module::class, fn() => class_exists( 'Easy_Digital_Downloads' ) ],
-			[ 'sales', Modules\Sales_Module::class, null ],
+			[ 'woocommerce', Modules\WooCommerce_Module::class ],
+			[ 'edd', Modules\EDD_Module::class ],
+			[ 'sales', Modules\Sales_Module::class ],
 
 			// Membership group.
-			[ 'memberships', Modules\Memberships_Module::class, fn() => class_exists( 'WooCommerce' ) ],
-			[ 'memberpress', Modules\MemberPress_Module::class, fn() => defined( 'MEPR_VERSION' ) ],
-			[ 'pmpro', Modules\PMPro_Module::class, fn() => defined( 'PMPRO_VERSION' ) ],
-			[ 'rcp', Modules\RCP_Module::class, fn() => function_exists( 'rcp_get_membership' ) ],
+			[ 'memberships', Modules\Memberships_Module::class ],
+			[ 'memberpress', Modules\MemberPress_Module::class ],
+			[ 'pmpro', Modules\PMPro_Module::class ],
+			[ 'rcp', Modules\RCP_Module::class ],
 
 			// Independent modules.
-			[ 'givewp', Modules\GiveWP_Module::class, fn() => defined( 'GIVE_VERSION' ) ],
-			[ 'charitable', Modules\Charitable_Module::class, fn() => class_exists( 'Charitable' ) ],
-			[ 'simplepay', Modules\SimplePay_Module::class, fn() => defined( 'SIMPLE_PAY_VERSION' ) ],
-			[ 'wprm', Modules\WPRM_Module::class, fn() => defined( 'WPRM_VERSION' ) ],
-			[ 'amelia', Modules\Amelia_Module::class, fn() => defined( 'AMELIA_VERSION' ) ],
-			[ 'bookly', Modules\Bookly_Module::class, fn() => class_exists( 'Bookly\Lib\Plugin' ) ],
-			[ 'fluent_booking', Modules\Fluent_Booking_Module::class, fn() => defined( 'FLUENT_BOOKING_VERSION' ) ],
-			[ 'jet_appointments', Modules\Jet_Appointments_Module::class, fn() => defined( 'JET_APB_VERSION' ) || class_exists( 'JET_APB\Plugin' ) ],
-			[ 'jet_booking', Modules\Jet_Booking_Module::class, fn() => defined( 'JET_ABAF_VERSION' ) || class_exists( 'JET_ABAF\Plugin' ) ],
-			[ 'project_manager', Modules\Project_Manager_Module::class, fn() => defined( 'CPM_VERSION' ) || class_exists( 'WeDevs\PM\Core\WP\WP_Project_Manager' ) || ( defined( 'PM_VERSION' ) && class_exists( 'WeDevs\PM\Core\Config\Config' ) ) ],
-			[ 'learndash', Modules\LearnDash_Module::class, fn() => defined( 'LEARNDASH_VERSION' ) ],
-			[ 'tutorlms', Modules\TutorLMS_Module::class, fn() => defined( 'TUTOR_VERSION' ) ],
-			[ 'lifterlms', Modules\LifterLMS_Module::class, fn() => defined( 'LLMS_VERSION' ) ],
-			[ 'wc_subscriptions', Modules\WC_Subscriptions_Module::class, fn() => class_exists( 'WC_Subscriptions' ) ],
-			[ 'wc_b2b', Modules\WC_B2B_Module::class, fn() => defined( 'WWP_PLUGIN_VERSION' ) || defined( 'WWP_PLUGIN_FILE' ) || class_exists( 'B2bking' ) ],
-			[ 'wc_points_rewards', Modules\WC_Points_Rewards_Module::class, fn() => class_exists( 'WC_Points_Rewards' ) ],
-			[ 'wc_bookings', Modules\WC_Bookings_Module::class, fn() => class_exists( 'WC_Product_Booking' ) ],
-			[ 'events_calendar', Modules\Events_Calendar_Module::class, fn() => class_exists( 'Tribe__Events__Main' ) ],
-			[ 'mec', Modules\MEC_Module::class, fn() => defined( 'MEC_VERSION' ) || class_exists( 'MEC' ) ],
-			[ 'fooevents', Modules\FooEvents_Module::class, fn() => class_exists( 'FooEvents' ) || defined( 'FOOEVENTS_VERSION' ) ],
-			[ 'job_manager', Modules\Job_Manager_Module::class, fn() => defined( 'JOB_MANAGER_VERSION' ) ],
-			[ 'wc_bundle_bom', Modules\WC_Bundle_BOM_Module::class, fn() => class_exists( 'WC_Bundles' ) || class_exists( 'WC_Composite_Products' ) ],
-			[ 'wc_addons', Modules\WC_Addons_Module::class, fn() => class_exists( 'WC_Product_Addons' ) || defined( 'THWEPO_VERSION' ) || defined( 'PPOM_VERSION' ) ],
-			[ 'jeero_configurator', Modules\Jeero_Configurator_Module::class, fn() => class_exists( 'Jeero_Product_Configurator' ) || defined( 'JEERO_VERSION' ) ],
+			[ 'givewp', Modules\GiveWP_Module::class ],
+			[ 'charitable', Modules\Charitable_Module::class ],
+			[ 'simplepay', Modules\SimplePay_Module::class ],
+			[ 'wprm', Modules\WPRM_Module::class ],
+			[ 'amelia', Modules\Amelia_Module::class ],
+			[ 'bookly', Modules\Bookly_Module::class ],
+			[ 'fluent_booking', Modules\Fluent_Booking_Module::class ],
+			[ 'jet_appointments', Modules\Jet_Appointments_Module::class ],
+			[ 'jet_booking', Modules\Jet_Booking_Module::class ],
+			[ 'project_manager', Modules\Project_Manager_Module::class ],
+			[ 'learndash', Modules\LearnDash_Module::class ],
+			[ 'tutorlms', Modules\TutorLMS_Module::class ],
+			[ 'lifterlms', Modules\LifterLMS_Module::class ],
+			[ 'wc_subscriptions', Modules\WC_Subscriptions_Module::class ],
+			[ 'wc_b2b', Modules\WC_B2B_Module::class ],
+			[ 'wc_points_rewards', Modules\WC_Points_Rewards_Module::class ],
+			[ 'wc_bookings', Modules\WC_Bookings_Module::class ],
+			[ 'events_calendar', Modules\Events_Calendar_Module::class ],
+			[ 'mec', Modules\MEC_Module::class ],
+			[ 'fooevents', Modules\FooEvents_Module::class ],
+			[ 'job_manager', Modules\Job_Manager_Module::class ],
+			[ 'wc_bundle_bom', Modules\WC_Bundle_BOM_Module::class ],
+			[ 'wc_addons', Modules\WC_Addons_Module::class ],
+			[ 'jeero_configurator', Modules\Jeero_Configurator_Module::class ],
 
 			// WooCommerce extensions — advanced stock/shipping/returns.
-			[ 'wc_inventory', Modules\WC_Inventory_Module::class, fn() => class_exists( 'WooCommerce' ) ],
-			[ 'wc_shipping', Modules\WC_Shipping_Module::class, fn() => class_exists( 'WooCommerce' ) ],
-			[ 'wc_returns', Modules\WC_Returns_Module::class, fn() => class_exists( 'WooCommerce' ) ],
-			[ 'wc_rental', Modules\WC_Rental_Module::class, fn() => class_exists( 'WooCommerce' ) ],
+			[ 'wc_inventory', Modules\WC_Inventory_Module::class ],
+			[ 'wc_shipping', Modules\WC_Shipping_Module::class ],
+			[ 'wc_returns', Modules\WC_Returns_Module::class ],
+			[ 'wc_rental', Modules\WC_Rental_Module::class ],
 
 			// Invoicing group.
-			[ 'sprout_invoices', Modules\Sprout_Invoices_Module::class, fn() => class_exists( 'SI_Invoice' ) ],
-			[ 'wp_invoice', Modules\WP_Invoice_Module::class, fn() => class_exists( 'WPI_Invoice' ) ],
+			[ 'sprout_invoices', Modules\Sprout_Invoices_Module::class ],
+			[ 'wp_invoice', Modules\WP_Invoice_Module::class ],
 
 			// E-commerce group (secondary).
-			[ 'surecart', Modules\SureCart_Module::class, fn() => defined( 'SURECART_VERSION' ) || class_exists( 'SureCart' ) ],
-			[ 'ecwid', Modules\Ecwid_Module::class, fn() => defined( 'ECWID_PLUGIN_DIR' ) ],
-			[ 'shopwp', Modules\ShopWP_Module::class, fn() => defined( 'SHOPWP_PLUGIN_DIR' ) ],
-			[ 'crowdfunding', Modules\Crowdfunding_Module::class, fn() => defined( 'WPCF_VERSION' ) ],
+			[ 'surecart', Modules\SureCart_Module::class ],
+			[ 'ecwid', Modules\Ecwid_Module::class ],
+			[ 'shopwp', Modules\ShopWP_Module::class ],
+			[ 'crowdfunding', Modules\Crowdfunding_Module::class ],
 
 			// Marketplace group.
-			[ 'dokan', Modules\Dokan_Module::class, fn() => defined( 'DOKAN_PLUGIN_VERSION' ) ],
-			[ 'wcfm', Modules\WCFM_Module::class, fn() => defined( 'WCFM_VERSION' ) ],
-			[ 'wc_vendors', Modules\WC_Vendors_Module::class, fn() => class_exists( 'WCV_Vendors' ) || defined( 'WCV_PRO_VERSION' ) ],
+			[ 'dokan', Modules\Dokan_Module::class ],
+			[ 'wcfm', Modules\WCFM_Module::class ],
+			[ 'wc_vendors', Modules\WC_Vendors_Module::class ],
 
 			// Helpdesk group.
-			[ 'awesome_support', Modules\Awesome_Support_Module::class, fn() => defined( 'WPAS_VERSION' ) ],
-			[ 'supportcandy', Modules\SupportCandy_Module::class, fn() => defined( 'WPSC_VERSION' ) ],
-			[ 'fluent_support', Modules\Fluent_Support_Module::class, fn() => defined( 'FLUENT_SUPPORT_VERSION' ) ],
+			[ 'awesome_support', Modules\Awesome_Support_Module::class ],
+			[ 'supportcandy', Modules\SupportCandy_Module::class ],
+			[ 'fluent_support', Modules\Fluent_Support_Module::class ],
 
 			// Affiliate.
-			[ 'affiliatewp', Modules\AffiliateWP_Module::class, fn() => function_exists( 'affiliate_wp' ) ],
+			[ 'affiliatewp', Modules\AffiliateWP_Module::class ],
 
 			// Marketing CRM.
-			[ 'fluentcrm', Modules\FluentCRM_Module::class, fn() => defined( 'FLUENTCRM' ) ],
-			[ 'mailpoet', Modules\MailPoet_Module::class, fn() => defined( 'MAILPOET_VERSION' ) ],
-			[ 'mc4wp', Modules\MC4WP_Module::class, fn() => defined( 'MC4WP_VERSION' ) ],
+			[ 'fluentcrm', Modules\FluentCRM_Module::class ],
+			[ 'mailpoet', Modules\MailPoet_Module::class ],
+			[ 'mc4wp', Modules\MC4WP_Module::class ],
 
 			// Funnel / Sales pipeline.
-			[ 'funnelkit', Modules\FunnelKit_Module::class, fn() => defined( 'WFFN_VERSION' ) ],
+			[ 'funnelkit', Modules\FunnelKit_Module::class ],
 
 			// Gamification / Loyalty.
-			[ 'gamipress', Modules\GamiPress_Module::class, fn() => defined( 'GAMIPRESS_VERSION' ) || defined( 'GAMIPRESS_VER' ) ],
-			[ 'mycred', Modules\MyCRED_Module::class, fn() => defined( 'myCRED_VERSION' ) ],
+			[ 'gamipress', Modules\GamiPress_Module::class ],
+			[ 'mycred', Modules\MyCRED_Module::class ],
 
 			// Community.
-			[ 'buddyboss', Modules\BuddyBoss_Module::class, fn() => defined( 'BP_VERSION' ) ],
-			[ 'ultimate_member', Modules\Ultimate_Member_Module::class, fn() => class_exists( 'UM' ) ],
+			[ 'buddyboss', Modules\BuddyBoss_Module::class ],
+			[ 'ultimate_member', Modules\Ultimate_Member_Module::class ],
 
 			// HR.
-			[ 'wperp', Modules\WPERP_Module::class, fn() => defined( 'WPERP_VERSION' ) ],
+			[ 'wperp', Modules\WPERP_Module::class ],
 
 			// CRM (WP ERP) — separate from the core CRM module.
-			[ 'wperp_crm', Modules\WPERP_CRM_Module::class, fn() => defined( 'WPERP_VERSION' ) ],
+			[ 'wperp_crm', Modules\WPERP_CRM_Module::class ],
 
 			// Accounting (WP ERP).
-			[ 'wperp_accounting', Modules\WPERP_Accounting_Module::class, fn() => defined( 'WPERP_VERSION' ) ],
+			[ 'wperp_accounting', Modules\WPERP_Accounting_Module::class ],
 
 			// LMS.
-			[ 'learnpress', Modules\LearnPress_Module::class, fn() => defined( 'LP_PLUGIN_FILE' ) ],
-			[ 'sensei', Modules\Sensei_Module::class, fn() => defined( 'SENSEI_LMS_VERSION' ) ],
+			[ 'learnpress', Modules\LearnPress_Module::class ],
+			[ 'sensei', Modules\Sensei_Module::class ],
 
 			// Field Service — always registered; detection is Odoo-side (Enterprise).
-			[ 'field_service', Modules\Field_Service_Module::class, null ],
+			[ 'field_service', Modules\Field_Service_Module::class ],
 
 			// Knowledge — always registered; detection is Odoo-side.
-			[ 'knowledge', Modules\Knowledge_Module::class, null ],
+			[ 'knowledge', Modules\Knowledge_Module::class ],
 
 			// Documents — WP Document Revisions / WP Download Manager.
-			[ 'documents', Modules\Documents_Module::class, fn() => class_exists( 'Document_Revisions' ) || class_exists( 'WP_Document_Revisions' ) || defined( 'WPDM_VERSION' ) ],
+			[ 'documents', Modules\Documents_Module::class ],
 
 			// Generic CPT mapping.
-			[ 'jetengine', Modules\JetEngine_Module::class, fn() => defined( 'JET_ENGINE_VERSION' ) || class_exists( 'Jet_Engine' ) ],
+			[ 'jetengine', Modules\JetEngine_Module::class ],
 
 			// Meta-modules (enrich other modules, no own entity types).
-			[ 'acf', Modules\ACF_Module::class, fn() => class_exists( 'ACF' ) || defined( 'ACF_MAJOR_VERSION' ) ],
-			[ 'jetengine_meta', Modules\JetEngine_Meta_Module::class, fn() => defined( 'JET_ENGINE_VERSION' ) || class_exists( 'Jet_Engine' ) ],
-			[ 'wpai', Modules\WP_All_Import_Module::class, fn() => defined( 'PMXI_VERSION' ) || class_exists( 'PMXI_Plugin' ) ],
+			[ 'acf', Modules\ACF_Module::class ],
+			[ 'jetengine_meta', Modules\JetEngine_Meta_Module::class ],
+			[ 'wpai', Modules\WP_All_Import_Module::class ],
 
 			// Aggregate modules — compound detection (any of N plugins).
-			[ 'food_ordering', Modules\Food_Ordering_Module::class, fn() => defined( 'FLAVOR_FLAVOR_VERSION' ) || defined( 'WPPIZZA_VERSION' ) || defined( 'RP_VERSION' ) ],
-			[ 'survey_quiz', Modules\Survey_Quiz_Module::class, fn() => defined( 'QUIZ_MAKER_VERSION' ) || defined( 'AYS_QUIZ_VERSION' ) || defined( 'QSM_PLUGIN_INSTALLED' ) ],
-			[
-				'forms',
-				Modules\Forms_Module::class,
-				fn() => class_exists( 'GFAPI' )
-					|| function_exists( 'wpforms' )
-					|| defined( 'WPCF7_VERSION' )
-					|| defined( 'FLUENTFORM' )
-					|| class_exists( 'FrmAppHelper' )
-					|| class_exists( 'Ninja_Forms' )
-					|| defined( 'FORMINATOR_VERSION' )
-					|| defined( 'JET_FORM_BUILDER_VERSION' )
-					|| defined( 'ELEMENTOR_PRO_VERSION' )
-					|| function_exists( 'et_setup_theme' )
-					|| defined( 'BRICKS_VERSION' ),
-			],
+			[ 'food_ordering', Modules\Food_Ordering_Module::class ],
+			[ 'survey_quiz', Modules\Survey_Quiz_Module::class ],
+			[ 'forms', Modules\Forms_Module::class ],
 		];
 		// phpcs:enable
 
-		foreach ( $module_defs as [ $id, $class, $detect ] ) {
-			if ( null === $detect || $detect() ) {
+		foreach ( $module_defs as [ $id, $class ] ) {
+			if ( $class::detect() ) {
 				if ( $this->settings->is_module_enabled( $id ) ) {
 					$this->register( $id, new $class( $client_provider, $entity_map, $settings ) );
 				} else {

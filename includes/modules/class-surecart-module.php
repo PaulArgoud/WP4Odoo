@@ -194,12 +194,24 @@ class SureCart_Module extends Module_Base {
 	}
 
 	/**
+	 * Whether the third-party plugin(s) this module integrates with are active.
+	 *
+	 * Single source of truth for module activation, shared by the registry
+	 * and the dependency check.
+	 *
+	 * @return bool
+	 */
+	public static function detect(): bool {
+		return defined( 'SURECART_VERSION' ) || class_exists( 'SureCart' );
+	}
+
+	/**
 	 * Get external dependency status for SureCart.
 	 *
 	 * @return array{available: bool, notices: array<array{type: string, message: string}>}
 	 */
 	public function get_dependency_status(): array {
-		return $this->check_dependency( defined( 'SURECART_VERSION' ) || class_exists( 'SureCart' ), 'SureCart' );
+		return $this->check_dependency( static::detect(), 'SureCart' );
 	}
 
 	/**

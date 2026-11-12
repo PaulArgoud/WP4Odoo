@@ -197,13 +197,25 @@ class WC_B2B_Module extends Module_Base {
 	}
 
 	/**
+	 * Whether the third-party plugin(s) this module integrates with are active.
+	 *
+	 * Single source of truth for module activation, shared by the registry
+	 * and the dependency check.
+	 *
+	 * @return bool
+	 */
+	public static function detect(): bool {
+		return defined( 'WWP_PLUGIN_VERSION' ) || defined( 'WWP_PLUGIN_FILE' ) || class_exists( 'B2bking' );
+	}
+
+	/**
 	 * Get external dependency status for Wholesale Suite or B2BKing.
 	 *
 	 * @return array{available: bool, notices: array<array{type: string, message: string}>}
 	 */
 	public function get_dependency_status(): array {
 		return $this->check_dependency(
-			defined( 'WWP_PLUGIN_VERSION' ) || defined( 'WWP_PLUGIN_FILE' ) || class_exists( 'B2bking' ),
+			static::detect(),
 			'Wholesale Suite or B2BKing'
 		);
 	}

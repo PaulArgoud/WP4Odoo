@@ -1,0 +1,92 @@
+<?php
+/**
+ * Consolidated constants for third-party plugins that only need a
+ * version or directory constant defined (no class/function stubs).
+ *
+ * @package WP4Odoo\Tests
+ */
+
+// Amelia.
+if ( ! defined( 'AMELIA_VERSION' ) ) {
+	define( 'AMELIA_VERSION', '1.2.37' );
+}
+
+// WP Crowdfunding.
+if ( ! defined( 'WPCF_VERSION' ) ) {
+	define( 'WPCF_VERSION', '2.1.17' );
+}
+
+// Ecwid.
+if ( ! defined( 'ECWID_PLUGIN_DIR' ) ) {
+	define( 'ECWID_PLUGIN_DIR', '/tmp/ecwid/' );
+}
+
+// Fluent Booking.
+if ( ! defined( 'FLUENT_BOOKING_VERSION' ) ) {
+	define( 'FLUENT_BOOKING_VERSION', '1.5.0' );
+}
+
+// JetBooking.
+if ( ! defined( 'JET_ABAF_VERSION' ) ) {
+	define( 'JET_ABAF_VERSION', '3.8.0' );
+}
+
+// JetFormBuilder.
+if ( ! defined( 'JET_FORM_BUILDER_VERSION' ) ) {
+	define( 'JET_FORM_BUILDER_VERSION', '3.3.0' );
+}
+
+// WP Job Manager.
+if ( ! defined( 'JOB_MANAGER_VERSION' ) ) {
+	define( 'JOB_MANAGER_VERSION', '2.4.0' );
+}
+
+// Sensei LMS.
+if ( ! defined( 'SENSEI_LMS_VERSION' ) ) {
+	define( 'SENSEI_LMS_VERSION', '4.20.0' );
+}
+
+// WP Simple Pay.
+if ( ! defined( 'SIMPLE_PAY_VERSION' ) ) {
+	define( 'SIMPLE_PAY_VERSION', '4.16.1' );
+}
+
+// ShopWP.
+if ( ! defined( 'SHOPWP_PLUGIN_DIR' ) ) {
+	define( 'SHOPWP_PLUGIN_DIR', '/tmp/shopwp/' );
+}
+
+// TutorLMS.
+if ( ! defined( 'TUTOR_VERSION' ) ) {
+	define( 'TUTOR_VERSION', '3.0.0' );
+}
+
+// WP Project Manager.
+if ( ! defined( 'CPM_VERSION' ) ) {
+	define( 'CPM_VERSION', '2.6.14' );
+}
+
+// WP ERP.
+if ( ! defined( 'WPERP_VERSION' ) ) {
+	define( 'WPERP_VERSION', '1.12.0' );
+}
+
+// WP Recipe Maker.
+if ( ! defined( 'WPRM_VERSION' ) ) {
+	define( 'WPRM_VERSION', '10.3.2' );
+}
+
+// Paid Memberships Pro.
+if ( ! defined( 'PMPRO_VERSION' ) ) {
+	define( 'PMPRO_VERSION', '3.5.0' );
+}
+
+// LearnDash.
+if ( ! defined( 'LEARNDASH_VERSION' ) ) {
+	define( 'LEARNDASH_VERSION', '4.20.0' );
+}
+
+// LifterLMS.
+if ( ! defined( 'LLMS_VERSION' ) ) {
+	define( 'LLMS_VERSION', '9.2.0' );
+}

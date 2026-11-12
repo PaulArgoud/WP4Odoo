@@ -49,7 +49,7 @@ trait Sync_Orchestrator {
 
 			$wp_data                  = ! empty( $payload ) ? $payload : $this->load_wp_data( $entity_type, $wp_id );
 			$wp_data['_wp_entity_id'] = $wp_id;
-			$odoo_values              = $this->map_to_odoo( $entity_type, $wp_data );
+			$odoo_values              = $this->reconcile_with_schema( $entity_type, $this->map_to_odoo( $entity_type, $wp_data ), $model );
 			$odoo_values              = $this->maybe_inject_company_id( $odoo_values, $model );
 
 			if ( empty( $odoo_values ) ) {
@@ -168,7 +168,7 @@ trait Sync_Orchestrator {
 
 			$wp_data                  = ! empty( $item['payload'] ) ? $item['payload'] : $this->load_wp_data( $entity_type, $wp_id );
 			$wp_data['_wp_entity_id'] = $wp_id;
-			$odoo_values              = $this->map_to_odoo( $entity_type, $wp_data );
+			$odoo_values              = $this->reconcile_with_schema( $entity_type, $this->map_to_odoo( $entity_type, $wp_data ), $model );
 			$odoo_values              = $this->maybe_inject_company_id( $odoo_values, $model );
 
 			if ( empty( $odoo_values ) ) {

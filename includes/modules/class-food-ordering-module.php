@@ -215,6 +215,18 @@ class Food_Ordering_Module extends Module_Base {
 	}
 
 	/**
+	 * Whether the third-party plugin(s) this module integrates with are active.
+	 *
+	 * Single source of truth for module activation, shared by the registry
+	 * and the dependency check.
+	 *
+	 * @return bool
+	 */
+	public static function detect(): bool {
+		return defined( 'FLAVOR_FLAVOR_VERSION' ) || defined( 'WPPIZZA_VERSION' ) || defined( 'RP_VERSION' );
+	}
+
+	/**
 	 * Check external dependency status.
 	 *
 	 * At least one supported food ordering plugin must be active.
@@ -309,7 +321,7 @@ class Food_Ordering_Module extends Module_Base {
 	 * @return array<string, mixed>
 	 */
 	public function map_to_odoo( string $entity_type, array $wp_data ): array {
-		return $this->reconcile_with_schema( $entity_type, $wp_data );
+		return $wp_data;
 	}
 
 	// ─── Private Helpers ─────────────────────────────────────

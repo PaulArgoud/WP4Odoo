@@ -180,13 +180,25 @@ class JetEngine_Meta_Module extends Module_Base {
 	}
 
 	/**
+	 * Whether the third-party plugin(s) this module integrates with are active.
+	 *
+	 * Single source of truth for module activation, shared by the registry
+	 * and the dependency check.
+	 *
+	 * @return bool
+	 */
+	public static function detect(): bool {
+		return defined( 'JET_ENGINE_VERSION' ) || class_exists( 'Jet_Engine' );
+	}
+
+	/**
 	 * Get external dependency status for JetEngine.
 	 *
 	 * @return array{available: bool, notices: array<array{type: string, message: string}>}
 	 */
 	public function get_dependency_status(): array {
 		return $this->check_dependency(
-			defined( 'JET_ENGINE_VERSION' ) || class_exists( 'Jet_Engine' ),
+			static::detect(),
 			'JetEngine'
 		);
 	}

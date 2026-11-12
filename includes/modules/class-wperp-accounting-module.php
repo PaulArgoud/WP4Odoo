@@ -197,12 +197,24 @@ class WPERP_Accounting_Module extends Module_Base {
 	}
 
 	/**
+	 * Whether the third-party plugin(s) this module integrates with are active.
+	 *
+	 * Single source of truth for module activation, shared by the registry
+	 * and the dependency check.
+	 *
+	 * @return bool
+	 */
+	public static function detect(): bool {
+		return defined( 'WPERP_VERSION' );
+	}
+
+	/**
 	 * Get external dependency status for WP ERP.
 	 *
 	 * @return array{available: bool, notices: array<array{type: string, message: string}>}
 	 */
 	public function get_dependency_status(): array {
-		return $this->check_dependency( defined( 'WPERP_VERSION' ), 'WP ERP' );
+		return $this->check_dependency( static::detect(), 'WP ERP' );
 	}
 
 	/**

@@ -164,12 +164,24 @@ class MemberPress_Module extends Membership_Module_Base {
 	}
 
 	/**
+	 * Whether the third-party plugin(s) this module integrates with are active.
+	 *
+	 * Single source of truth for module activation, shared by the registry
+	 * and the dependency check.
+	 *
+	 * @return bool
+	 */
+	public static function detect(): bool {
+		return defined( 'MEPR_VERSION' );
+	}
+
+	/**
 	 * Get external dependency status for MemberPress.
 	 *
 	 * @return array{available: bool, notices: array<array{type: string, message: string}>}
 	 */
 	public function get_dependency_status(): array {
-		return $this->check_dependency( defined( 'MEPR_VERSION' ), 'MemberPress' );
+		return $this->check_dependency( static::detect(), 'MemberPress' );
 	}
 
 	/**
